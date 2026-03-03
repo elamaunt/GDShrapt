@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Semantics
 {
@@ -12,14 +13,19 @@ namespace GDShrapt.Semantics
     {
         private readonly GDSemanticModel _semanticModel;
         private readonly GDMethodFlowSummaryRegistry _registry;
+        private readonly IReadOnlyList<GDSignalConnectionEntry>? _signalConnections;
         private readonly Dictionary<string, HashSet<string>> _callerGraph = new();
 
         private const int MaxIterations = 100;
 
-        public GDMethodOnreadySafetyAnalyzer(GDSemanticModel semanticModel, GDMethodFlowSummaryRegistry registry)
+        public GDMethodOnreadySafetyAnalyzer(
+            GDSemanticModel semanticModel,
+            GDMethodFlowSummaryRegistry registry,
+            IReadOnlyList<GDSignalConnectionEntry>? signalConnections = null)
         {
             _semanticModel = semanticModel;
             _registry = registry;
+            _signalConnections = signalConnections;
         }
 
         /// <summary>
@@ -60,13 +66,13 @@ namespace GDShrapt.Semantics
                         safety[methodName] = GDMethodOnreadySafety.Unsafe;
                         changed = true;
                     }
-                    else if (callers.All(c => safety.TryGetValue(c, out var s) && s == GDMethodOnreadySafety.Safe))
+                    else if (callers.All(c => GetSafety(c, safety) == GDMethodOnreadySafety.Safe))
                     {
                         // All callers are safe → method is safe
                         safety[methodName] = GDMethodOnreadySafety.Safe;
                         changed = true;
                     }
-                    else if (callers.Any(c => safety.TryGetValue(c, out var s) && s == GDMethodOnreadySafety.Unsafe))
+                    else if (callers.Any(c => GetSafety(c, safety) == GDMethodOnreadySafety.Unsafe))
                     {
                         // At least one unsafe caller → method is unsafe
                         safety[methodName] = GDMethodOnreadySafety.Unsafe;
@@ -111,6 +117,48 @@ namespace GDShrapt.Semantics
                     _callerGraph[calledMethod].Add(callerName);
                 }
             }
+
+            // Add signal connections as caller edges:
+            // signal.connect(callback) in method X means callback is "called from" X
+            if (_signalConnections != null)
+            {
+                var selfTypeName = _semanticModel.ScriptFile?.TypeName;
+
+                foreach (var conn in _signalConnections)
+                {
+                    if (string.IsNullOrEmpty(conn.CallbackMethodName))
+                        continue;
+
+                    // Only self-connections (callback is in this class) or scene connections targeting this class
+                    if (conn.CallbackClassName != null && conn.CallbackClassName != selfTypeName)
+                        continue;
+
+                    if (!_callerGraph.ContainsKey(conn.CallbackMethodName))
+                        _callerGraph[conn.CallbackMethodName] = new HashSet<string>();
+
+                    if (conn.IsSceneConnection)
+                    {
+                        // Scene connections always fire after _ready(), so add _ready as virtual caller
+                        _callerGraph[conn.CallbackMethodName].Add(GDSpecialMethodHelper.Ready);
+                    }
+                    else if (!string.IsNullOrEmpty(conn.SourceMethodName))
+                    {
+                        _callerGraph[conn.CallbackMethodName].Add(conn.SourceMethodName);
+                    }
+                }
+            }
+        }
+
+        private GDMethodOnreadySafety GetSafety(string methodName, Dictionary<string, GDMethodOnreadySafety> safety)
+        {
+            if (safety.TryGetValue(methodName, out var s))
+                return s;
+
+            // Lifecycle methods after _ready are implicitly Safe even when not defined in this script
+            if (GDSpecialMethodHelper.IsLifecycleMethodAfterReady(methodName))
+                return GDMethodOnreadySafety.Safe;
+
+            return GDMethodOnreadySafety.Unknown;
         }
 
         private IEnumerable<string> GetCallers(string methodName)

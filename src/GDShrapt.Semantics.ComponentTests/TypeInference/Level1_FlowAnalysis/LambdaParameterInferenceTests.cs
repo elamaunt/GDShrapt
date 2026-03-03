@@ -38,7 +38,7 @@ var callback = func(items):
 ";
         var type = InferVariableType(code, "callback");
         // append() is a common Array method
-        Assert.IsTrue(type.Contains("Array") || type.StartsWith("Callable[[Variant"),
+        Assert.IsTrue(type.Contains("Array") || type.StartsWith("Callable(Variant"),
             $"Lambda with items.append() should infer Array parameter. Got: {type}");
     }
 
@@ -53,7 +53,7 @@ var callback = func(items):
         var type = InferVariableType(code, "callback");
         // size() is available on many types (Array, Dictionary, String, etc.)
         // May return Variant if multiple types have this method
-        Assert.IsTrue(type.Contains("Callable[["),
+        Assert.IsTrue(type.StartsWith("Callable("),
             $"Lambda with items.size() should return a Callable type. Got: {type}");
     }
 
@@ -85,7 +85,7 @@ var callback = func(config):
 ";
         var type = InferVariableType(code, "callback");
         // has() exists on Dictionary, Array, and other containers
-        Assert.IsTrue(type.Contains("Callable[["),
+        Assert.IsTrue(type.StartsWith("Callable("),
             $"Lambda with config.has() should return a Callable type. Got: {type}");
     }
 
@@ -159,7 +159,7 @@ var callback = func(data, items):
 ";
         var type = InferVariableType(code, "callback");
         // Should have two parameters inferred
-        Assert.IsTrue(type.Contains("Callable[[") && type.Contains(","),
+        Assert.IsTrue(type.StartsWith("Callable(") && type.Contains(","),
             $"Lambda with two parameters should have both inferred. Got: {type}");
         // One should be Dictionary-like
         Assert.IsTrue(type.Contains("Dictionary") || type.Contains("Variant"),
@@ -177,7 +177,7 @@ var callback = func(left, right):
 ";
         var type = InferVariableType(code, "callback");
         // Should have two Array parameters
-        Assert.IsTrue(type.Contains("Callable[[Array, Array"),
+        Assert.IsTrue(type.StartsWith("Callable(Array, Array"),
             $"Lambda with two array operations should infer Array for both. Got: {type}");
     }
 
@@ -194,7 +194,7 @@ var callback = func(x):
     return 42
 ";
         var type = InferVariableType(code, "callback");
-        Assert.AreEqual("Callable[[Variant], int]", type,
+        Assert.AreEqual("Callable(Variant) -> int", type,
             "Lambda parameter with no usage should default to Variant");
     }
 
@@ -210,7 +210,7 @@ var callback = func(value):
         var type = InferVariableType(code, "callback");
         // Parameter has no constraining usage, should be Variant
         // Return type inferred from variable (which is also untyped)
-        Assert.IsTrue(type.StartsWith("Callable[[Variant"),
+        Assert.IsTrue(type.StartsWith("Callable(Variant"),
             $"Lambda parameter only assigned to variable should be Variant. Got: {type}");
     }
 
@@ -227,7 +227,7 @@ var callback = func(items: Array):
     items.append(1)
 ";
         var type = InferVariableType(code, "callback");
-        Assert.AreEqual("Callable[[Array], void]", type,
+        Assert.AreEqual("Callable(Array)", type,
             "Lambda with explicit parameter type should use annotation");
     }
 
@@ -241,7 +241,7 @@ var callback = func(data: Dictionary):
     return data
 ";
         var type = InferVariableType(code, "callback");
-        Assert.AreEqual("Callable[[Dictionary], Dictionary]", type,
+        Assert.AreEqual("Callable(Dictionary) -> Dictionary", type,
             "Explicit type annotation should override duck-type inference");
     }
 
@@ -258,7 +258,7 @@ var callback = func(count = 42):
     return count * 2
 ";
         var type = InferVariableType(code, "callback");
-        Assert.AreEqual("Callable[[int], int]", type,
+        Assert.AreEqual("Callable(int) -> int", type,
             "Lambda parameter with default value should infer from default");
     }
 

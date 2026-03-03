@@ -30,6 +30,22 @@ public static class GDProjectLoader
     }
 
     /// <summary>
+    /// Loads a project without analyzing, using custom options.
+    /// </summary>
+    public static GDScriptProject LoadProjectWithoutAnalysis(string projectPath, GDScriptProjectOptions options)
+    {
+        return SemanticProjectLoader.LoadProjectWithoutAnalysis(projectPath, options);
+    }
+
+    /// <summary>
+    /// Loads a project without analyzing.
+    /// </summary>
+    public static GDScriptProject LoadProjectWithoutAnalysis(string projectPath, IGDLogger? logger = null)
+    {
+        return SemanticProjectLoader.LoadProjectWithoutAnalysis(projectPath, logger);
+    }
+
+    /// <summary>
     /// Finds the project root by looking for project.godot file.
     /// </summary>
     /// <param name="startPath">Starting path to search from.</param>

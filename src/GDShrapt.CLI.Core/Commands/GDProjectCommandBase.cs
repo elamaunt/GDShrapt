@@ -79,9 +79,13 @@ public abstract class GDProjectCommandBase : IGDCommand
             using (new GDConsoleSpinner($"Loading project: {projectRoot}"))
             {
                 project = projectOptions != null
-                    ? GDProjectLoader.LoadProject(projectRoot, projectOptions)
-                    : GDProjectLoader.LoadProject(projectRoot, _logger);
+                    ? GDProjectLoader.LoadProjectWithoutAnalysis(projectRoot, projectOptions)
+                    : GDProjectLoader.LoadProjectWithoutAnalysis(projectRoot, _logger);
             }
+
+            project.AnalyzeAll();
+            project.ResolveTresClassNames();
+            InjectSceneSignalConnections(project);
 
             using (project)
             {
@@ -183,6 +187,57 @@ public abstract class GDProjectCommandBase : IGDCommand
             case GDSeverity.Information:
                 hints++;
                 break;
+        }
+    }
+
+    private static void InjectSceneSignalConnections(GDScriptProject project)
+    {
+        var sceneProvider = project.SceneTypesProvider;
+        if (sceneProvider == null)
+            return;
+
+        var connectionsByType = new Dictionary<string, List<GDSignalConnectionEntry>>();
+
+        foreach (var sceneInfo in sceneProvider.AllScenes)
+        {
+            foreach (var conn in sceneInfo.SignalConnections)
+            {
+                var toNode = sceneInfo.Nodes.FirstOrDefault(n => n.Path == conn.ToNode);
+                var callbackType = toNode?.ScriptTypeName ?? toNode?.NodeType;
+                if (string.IsNullOrEmpty(callbackType) || string.IsNullOrEmpty(conn.Method))
+                    continue;
+
+                var fromNode = sceneInfo.Nodes.FirstOrDefault(n => n.Path == conn.FromNode);
+
+                if (!connectionsByType.TryGetValue(callbackType, out var list))
+                {
+                    list = new List<GDSignalConnectionEntry>();
+                    connectionsByType[callbackType] = list;
+                }
+
+                list.Add(GDSignalConnectionEntry.FromScene(
+                    sceneInfo.FullPath,
+                    conn.LineNumber,
+                    fromNode?.ScriptTypeName ?? fromNode?.NodeType ?? conn.SourceNodeType ?? "",
+                    conn.SignalName,
+                    callbackType,
+                    conn.Method));
+            }
+        }
+
+        foreach (var script in project.ScriptFiles)
+        {
+            if (script.SemanticModel == null)
+                continue;
+
+            var typeName = script.TypeName;
+            if (string.IsNullOrEmpty(typeName))
+                continue;
+
+            if (connectionsByType.TryGetValue(typeName, out var connections))
+            {
+                script.SemanticModel.InjectExternalSignalConnections(connections);
+            }
         }
     }
 }

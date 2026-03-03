@@ -378,6 +378,40 @@ func test():
 
     #endregion
 
+    #region Dictionary For-Loop Key Type
+
+    [TestMethod]
+    public void TypedDictionary_ForLoopKey_NoDiagnostic()
+    {
+        var code = @"
+func test():
+    var dict: Dictionary[int, bool] = {}
+    for id in dict:
+        var val = dict[id]
+";
+        var diagnostics = ValidateCode(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+        Assert.AreEqual(0, indexerDiagnostics.Count,
+            $"For-loop over Dictionary[int, bool] should iterate keys (int), not values. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypedDictionary_StringKey_ForLoopAccess_NoDiagnostic()
+    {
+        var code = @"
+func test():
+    var dict: Dictionary[String, int] = {}
+    for key in dict:
+        var val = dict[key]
+";
+        var diagnostics = ValidateCode(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+        Assert.AreEqual(0, indexerDiagnostics.Count,
+            $"For-loop key should match Dictionary key type. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)

@@ -87,6 +87,10 @@ internal class GDNullabilityService
             if (symbol.Kind == GDSymbolKind.Signal)
                 return false;
 
+            // Constants are always non-null (evaluated at load time)
+            if (symbol.Kind == GDSymbolKind.Constant)
+                return false;
+
             if (symbol.Kind == GDSymbolKind.Variable || symbol.Kind == GDSymbolKind.Property)
             {
                 if (HasNonNullInitializer(symbol))
@@ -146,7 +150,8 @@ internal class GDNullabilityService
         return typeName is "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i"
             or "Color" or "Rect2" or "Rect2i" or "Transform2D" or "Transform3D"
             or "Basis" or "Quaternion" or "Plane" or "AABB" or "Projection"
-            or "int" or "float" or "bool" or "String" or "StringName" or "RID" or "Callable" or "Signal";
+            or "int" or "float" or "bool" or "String" or "StringName" or "RID" or "Callable" or "Signal"
+            || GDWellKnownTypes.IsCallableType(typeName);
     }
 
     /// <summary>

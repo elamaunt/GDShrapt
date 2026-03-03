@@ -110,6 +110,15 @@ internal class GDCrossMethodFlowService
     }
 
     /// <summary>
+    /// Resets cached analysis state so it's recomputed on next access.
+    /// </summary>
+    public void ResetCache()
+    {
+        _crossMethodState = null;
+        _flowSummaryRegistry = null;
+    }
+
+    /// <summary>
     /// Ensures cross-method analysis has been performed.
     /// </summary>
     private void EnsureCrossMethodAnalysis()

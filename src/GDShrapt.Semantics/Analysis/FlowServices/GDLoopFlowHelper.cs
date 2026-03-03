@@ -89,9 +89,12 @@ internal static class GDLoopFlowHelper
         if (collectionType == GDWellKnownTypes.Strings.String)
             return GDWellKnownTypes.Strings.String;
 
-        // Handle Dictionary -> Variant (iterating keys)
+        // Handle Dictionary -> key type (iterating keys)
         if (GDGenericTypeHelper.IsDictionaryType(collectionType))
-            return GDWellKnownTypes.Variant;
+        {
+            var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(collectionType);
+            return keyType ?? GDWellKnownTypes.Variant;
+        }
 
         // Handle PackedArray types
         var packedElement = GDPackedArrayTypes.GetElementType(collectionType);

@@ -135,6 +135,37 @@ func test():
 
     #endregion
 
+    #region Implicit Conversions - String → NodePath
+
+    [TestMethod]
+    public void Assignment_StringToNodePath_NoDiagnostic()
+    {
+        var code = @"
+func test():
+    var path: NodePath = ""some/node/path""
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"String→NodePath is implicit in GDScript. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Assignment_StringToNodePath_Variable_NoDiagnostic()
+    {
+        var code = @"
+func test():
+    var s: String = ""path/to/node""
+    var path: NodePath = s
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"String variable→NodePath is implicit in GDScript. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    #endregion
+
     #region Enum ↔ int Conversions
 
     [TestMethod]
@@ -167,6 +198,38 @@ func test():
         var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
         Assert.AreEqual(0, typeDiagnostics.Count,
             $"int→enum is allowed in GDScript. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Return_LocalEnumValue_NoDiagnostic()
+    {
+        var code = @"
+enum Points { NORTH, EAST, SOUTH, WEST }
+
+func direction() -> Points:
+    return Points.NORTH
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.IncompatibleReturnType).ToList();
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"Returning local enum value from enum-typed function should not produce GD3007. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Return_IntFromLocalEnumFunc_NoDiagnostic()
+    {
+        var code = @"
+enum Points { NORTH, EAST, SOUTH, WEST }
+
+func direction() -> Points:
+    return 0
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.IncompatibleReturnType).ToList();
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"Returning int from local enum-typed function should not produce GD3007. Found: {FormatDiagnostics(typeDiagnostics)}");
     }
 
     #endregion
@@ -355,6 +418,81 @@ func test():
     private static string FormatDiagnostics(IEnumerable<GDDiagnostic> diagnostics)
     {
         return string.Join("; ", diagnostics.Select(d => $"[{d.Code}] {d.Message}"));
+    }
+
+    #endregion
+
+    #region Qualified Type Name Matching
+
+    [TestMethod]
+    public void Assignment_QualifiedEnumType_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+enum GameState { MENU, PLAYING, PAUSED }
+
+var state: GameState = GameState.MENU
+";
+        var diagnostics = ValidateCode(code);
+        var typeDiags = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiags.Count,
+            $"Enum assignment should not produce type mismatch. Found: {FormatDiagnostics(typeDiags)}");
+    }
+
+    [TestMethod]
+    public void Reassignment_QualifiedTypeName_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+enum TowerType { BASIC, FIRE, ICE }
+
+var tower_type: TowerType = TowerType.BASIC
+
+func change_type():
+    tower_type = TowerType.FIRE
+";
+        var diagnostics = ValidateCode(code);
+        var gd3001 = diagnostics.Where(d => d.Code == GDDiagnosticCode.TypeMismatch).ToList();
+        Assert.AreEqual(0, gd3001.Count,
+            $"Re-assignment with qualified enum value should not produce GD3001. Found: {FormatDiagnostics(gd3001)}");
+    }
+
+    #endregion
+
+    #region Vector Negation
+
+    [TestMethod]
+    public void Negation_Vector2_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var v := Vector2(10, 20)
+    var neg := -v
+";
+        var diagnostics = ValidateCode(code);
+        var operandDiags = diagnostics.Where(d => d.Code == GDDiagnosticCode.InvalidOperandType).ToList();
+        Assert.AreEqual(0, operandDiags.Count,
+            $"Vector2 supports unary negation. Found: {FormatDiagnostics(operandDiags)}");
+    }
+
+    [TestMethod]
+    public void Negation_Vector3_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var v := Vector3(1, 2, 3)
+    var neg := -v
+";
+        var diagnostics = ValidateCode(code);
+        var operandDiags = diagnostics.Where(d => d.Code == GDDiagnosticCode.InvalidOperandType).ToList();
+        Assert.AreEqual(0, operandDiags.Count,
+            $"Vector3 supports unary negation. Found: {FormatDiagnostics(operandDiags)}");
     }
 
     #endregion

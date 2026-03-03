@@ -85,11 +85,11 @@ internal class GDCallableFlowCollector : GDVisitor
                 var paramName = param.Identifier?.Sequence;
 
                 if (!string.IsNullOrEmpty(paramName) &&
-                    (paramType == "Callable" || paramType == null))
+                    (GDWellKnownTypes.IsCallableType(paramType) || paramType == null))
                 {
                     // Track as potential Callable parameter
                     // Type == null means untyped, could be Callable
-                    if (paramType == "Callable")
+                    if (GDWellKnownTypes.IsCallableType(paramType))
                     {
                         _callableParams.Add(paramName);
                         _currentProfile.RegisterCallableParameter(paramName, index);

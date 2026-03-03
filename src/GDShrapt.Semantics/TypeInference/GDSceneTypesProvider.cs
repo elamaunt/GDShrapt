@@ -621,11 +621,47 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
 
     private string GetTypeNameFromScriptPath(string scriptPath)
     {
-        // Extract type name from script path
-        // e.g., "res://scripts/player.gd" -> "Player" (if class_name is used)
-        // Otherwise use filename: "player"
+        var className = ExtractClassNameFromScript(scriptPath);
+        if (!string.IsNullOrEmpty(className))
+            return className;
+
         var fileName = Path.GetFileNameWithoutExtension(scriptPath);
         return ToPascalCase(fileName);
+    }
+
+    private string? ExtractClassNameFromScript(string scriptPath)
+    {
+        try
+        {
+            var fullPath = GetFullPath(scriptPath);
+            if (!_fileSystem.FileExists(fullPath))
+                return null;
+
+            var content = _fileSystem.ReadAllText(fullPath);
+            using var reader = new StringReader(content);
+            for (var i = 0; i < 20; i++)
+            {
+                var line = reader.ReadLine();
+                if (line == null)
+                    break;
+
+                var trimmed = line.TrimStart();
+                if (trimmed.StartsWith("class_name "))
+                {
+                    var name = trimmed.Substring("class_name ".Length).Trim();
+                    var endIdx = name.IndexOfAny(new[] { ' ', '\t', '#' });
+                    if (endIdx > 0)
+                        name = name.Substring(0, endIdx);
+                    if (!string.IsNullOrEmpty(name))
+                        return name;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore read errors
+        }
+        return null;
     }
 
     private string ToPascalCase(string input)

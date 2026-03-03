@@ -999,7 +999,228 @@ func test():
 
     #endregion
 
+    #region Signal Handler Safety
+
+    [TestMethod]
+    public void OnreadyInSignalHandler_ConnectedInReady_NoWarning()
+    {
+        var code = @"
+extends Node2D
+
+signal my_signal
+
+@onready var _label := $Label
+
+func _ready():
+    my_signal.connect(_on_my_signal)
+
+func _on_my_signal():
+    _label.text = ""updated""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Signal handler connected in _ready() should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSignalHandler_ConnectedInUnsafeMethod_Warning()
+    {
+        var code = @"
+extends Node2D
+
+signal my_signal
+
+@onready var _label := $Label
+
+func setup():
+    my_signal.connect(_on_my_signal)
+
+func _on_my_signal():
+    _label.text = ""updated""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Any(),
+            "Signal handler connected in unsafe method should warn");
+    }
+
+    [TestMethod]
+    public void OnreadyInSignalHandler_SelfDotCallback_NoWarning()
+    {
+        var code = @"
+extends Node2D
+
+signal my_signal
+
+@onready var _label := $Label
+
+func _ready():
+    my_signal.connect(self._on_my_signal)
+
+func _on_my_signal():
+    _label.text = ""updated""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Signal handler via self.callback connected in _ready() should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSignalHandler_TransitiveConnect_NoWarning()
+    {
+        var code = @"
+extends Node2D
+
+signal my_signal
+
+@onready var _label := $Label
+
+func _ready():
+    setup_signals()
+
+func setup_signals():
+    my_signal.connect(_on_my_signal)
+
+func _on_my_signal():
+    _label.text = ""updated""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Signal handler connected in method called from _ready() should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Callable / Method Reference - Should NOT Report
+
+    [TestMethod]
+    public void Callable_Bind_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func _on_event(value: int):
+    pass
+
+func test():
+    var cb: Callable = _on_event
+    cb.bind(42)
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Callable variable .bind() should not report null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void Callable_CallDeferred_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+func _on_event():
+    pass
+
+func test():
+    var cb: Callable = _on_event
+    cb.call_deferred()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Callable variable .call_deferred() should not report null. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void MethodRef_CallDeferred_NoDiagnostic()
+    {
+        var code = @"
+extends Timer
+
+func test():
+    start.call_deferred()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Method reference .call_deferred() should not report null (Callable). Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Scene Signal Connections - Should Make Methods Safe
+
+    [TestMethod]
+    public void SceneSignalCallback_OnreadyAccess_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+@onready var label = $Label
+
+func _on_button_pressed():
+    label.text = ""clicked""
+";
+        // Without scene connections, _on_button_pressed has no callers → Unsafe
+        var diagnosticsWithout = ValidateCode(code);
+        var nullWithout = FilterNullableDiagnostics(diagnosticsWithout);
+        Assert.IsTrue(nullWithout.Count > 0,
+            "Without scene connections, _on_button_pressed should warn about @onready access");
+
+        // With scene connection injected, _on_button_pressed is called from scene → Safe
+        var (diagnosticsWith, safety) = ValidateCodeWithSceneConnection(code, "_on_button_pressed");
+        Assert.AreEqual(GDMethodOnreadySafety.Safe, safety,
+            $"With scene signal connection, _on_button_pressed should be Safe");
+        var nullWith = FilterNullableDiagnostics(diagnosticsWith);
+        Assert.AreEqual(0, nullWith.Count,
+            $"With scene signal connection, callback should be safe for @onready. Found: {FormatDiagnostics(nullWith)}");
+    }
+
+    #endregion
+
     #region Helper Methods
+
+    private static (IEnumerable<GDDiagnostic> diagnostics, GDMethodOnreadySafety safety) ValidateCodeWithSceneConnection(string code, string callbackMethod)
+    {
+        var options = new GDSemanticValidatorOptions
+        {
+            CheckTypes = true,
+            CheckMemberAccess = true,
+            CheckNullableAccess = true,
+            NullableAccessSeverity = GDDiagnosticSeverity.Warning
+        };
+
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+        if (classDecl == null)
+            return (Enumerable.Empty<GDDiagnostic>(), GDMethodOnreadySafety.Unknown);
+
+        var reference = new GDScriptReference("test://virtual/test_script.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
+
+        // Inject scene signal connection (callback class matches script TypeName)
+        var typeName = scriptFile.TypeName ?? "test_script";
+        var sceneConnection = GDSignalConnectionEntry.FromScene(
+            "test://scene.tscn", 1, "Button", "pressed", typeName, callbackMethod);
+        semanticModel.InjectExternalSignalConnections(new[] { sceneConnection });
+
+        // Check safety
+        var safety = semanticModel.GetMethodOnreadySafety(callbackMethod);
+
+        var validator = new GDSemanticValidator(semanticModel, options);
+        var result = validator.Validate(classDecl);
+        return (result.Diagnostics, safety);
+    }
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
     {

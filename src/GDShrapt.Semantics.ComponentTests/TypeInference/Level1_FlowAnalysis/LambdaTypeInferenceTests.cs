@@ -229,7 +229,7 @@ var callback = func(): print(""hello"")
     /// <summary>
     /// Tests that lambda with typed parameters has full signature inferred.
     /// Example: func(x: int, y: String) -> bool: return x > 0
-    /// Expected type: Callable[[int, String], bool]
+    /// Expected type: Callable(int, String) -> bool
     /// </summary>
     [TestMethod]
     public void InferType_LambdaWithTypedParams_InfersSignature()
@@ -350,7 +350,7 @@ var cb: Callable = func(x: int): return x * 2
     }
 
     /// <summary>
-    /// Tests exact semantic signature format: Callable[[int, String], bool]
+    /// Tests exact semantic signature format: Callable(int, String) -> bool
     /// </summary>
     [TestMethod]
     public void InferType_LambdaWithTypedParams_ExactSignatureFormat()
@@ -373,15 +373,15 @@ var cb = func(x: int, y: String) -> bool:
         // Act - InferType returns semantic type with full signature
         var type = engine.InferSemanticType(lambda).DisplayName;
 
-        // Assert exact format: Callable[[int, String], bool]
-        Assert.AreEqual("Callable[[int, String], bool]", type,
-            $"Lambda semantic type should be 'Callable[[int, String], bool]'. Got: {type}");
+        // Assert exact format: Callable(int, String) -> bool
+        Assert.AreEqual("Callable(int, String) -> bool", type,
+            $"Lambda semantic type should be 'Callable(int, String) -> bool'. Got: {type}");
     }
 
     /// <summary>
     /// Tests that lambda with return type but no params has correct format.
     /// Example: func() -> int: return 42
-    /// Expected: Callable[[], int]
+    /// Expected: Callable() -> int
     /// </summary>
     [TestMethod]
     public void InferType_LambdaNoParamsWithReturn_InfersSignature()
@@ -403,15 +403,15 @@ var cb = func() -> int: return 42
         // Act
         var type = engine.InferSemanticType(lambda).DisplayName;
 
-        // Assert - no params but has return type: Callable[[], int]
-        Assert.AreEqual("Callable[[], int]", type,
-            $"Lambda with no params but return type should be 'Callable[[], int]'. Got: {type}");
+        // Assert - no params but has return type: Callable() -> int
+        Assert.AreEqual("Callable() -> int", type,
+            $"Lambda with no params but return type should be 'Callable() -> int'. Got: {type}");
     }
 
     /// <summary>
     /// Tests that lambda with single param has correct format.
     /// Example: func(x: int): return x * 2
-    /// Expected: Callable[[int], int]
+    /// Expected: Callable(int) -> int
     /// </summary>
     [TestMethod]
     public void InferType_LambdaSingleParam_InfersSignature()
@@ -433,9 +433,9 @@ var cb = func(x: int): return x * 2
         // Act
         var type = engine.InferSemanticType(lambda).DisplayName;
 
-        // Assert: Callable[[int], int]
-        Assert.AreEqual("Callable[[int], int]", type,
-            $"Lambda with int param returning int should be 'Callable[[int], int]'. Got: {type}");
+        // Assert: Callable(int) -> int
+        Assert.AreEqual("Callable(int) -> int", type,
+            $"Lambda with int param returning int should be 'Callable(int) -> int'. Got: {type}");
     }
 
     /// <summary>
@@ -444,10 +444,19 @@ var cb = func(x: int): return x * 2
     [TestMethod]
     public void ExtractCallableReturnType_WithSignature_ReturnsCorrectType()
     {
+        // New format: Callable(params) -> return
+        Assert.AreEqual("bool", GDTypeInferenceEngine.ExtractCallableReturnType("Callable(int, String) -> bool"));
+        Assert.AreEqual("int", GDTypeInferenceEngine.ExtractCallableReturnType("Callable(String) -> int"));
+        Assert.AreEqual("int", GDTypeInferenceEngine.ExtractCallableReturnType("Callable() -> int"));
+        Assert.AreEqual("Array[int]", GDTypeInferenceEngine.ExtractCallableReturnType("Callable(int) -> Array[int]"));
+
+        // Legacy format: Callable[[params], return]
         Assert.AreEqual("bool", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[int, String], bool]"));
         Assert.AreEqual("int", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[String], int]"));
         Assert.AreEqual("void", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[], void]"));
         Assert.AreEqual("Array[int]", GDTypeInferenceEngine.ExtractCallableReturnType("Callable[[int], Array[int]]"));
+
+        // No signature
         Assert.IsNull(GDTypeInferenceEngine.ExtractCallableReturnType("Callable"));
         Assert.IsNull(GDTypeInferenceEngine.ExtractCallableReturnType(null));
     }
@@ -458,18 +467,26 @@ var cb = func(x: int): return x * 2
     [TestMethod]
     public void ExtractCallableParameterTypes_WithSignature_ReturnsCorrectTypes()
     {
-        var types = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[int, String], bool]");
+        // New format: Callable(params) -> return
+        var types = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable(int, String) -> bool");
         Assert.AreEqual(2, types.Count);
         Assert.AreEqual("int", types[0]);
         Assert.AreEqual("String", types[1]);
 
-        var singleParam = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[String], int]");
+        var singleParam = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable(String) -> int");
         Assert.AreEqual(1, singleParam.Count);
         Assert.AreEqual("String", singleParam[0]);
 
-        var noParams = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[], void]");
+        var noParams = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable() -> int");
         Assert.AreEqual(0, noParams.Count);
 
+        // Legacy format: Callable[[params], return]
+        var legacyTypes = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable[[int, String], bool]");
+        Assert.AreEqual(2, legacyTypes.Count);
+        Assert.AreEqual("int", legacyTypes[0]);
+        Assert.AreEqual("String", legacyTypes[1]);
+
+        // Simple Callable
         var simple = GDTypeInferenceEngine.ExtractCallableParameterTypes("Callable");
         Assert.AreEqual(0, simple.Count);
     }

@@ -81,7 +81,7 @@ internal static class GDTypeInferenceUtilities
             return arrayNode.InnerType?.BuildName() ?? "Variant";
 
         if (typeNode is GDDictionaryTypeNode dictNode)
-            return dictNode.ValueType?.BuildName() ?? "Variant";
+            return dictNode.KeyType?.BuildName() ?? "Variant";
 
         // PackedArrays
         var packedElement = GetPackedArrayElementType(collectionType);

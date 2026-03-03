@@ -324,7 +324,7 @@ func debounce(key, delay, callback):
 	var timer = Timer.new()
 	timer.wait_time = delay
 	timer.one_shot = true
-	timer.timeout.connect(_on_debounce_timeout.bind(timer)) # 327:23-GD7007-OK
+	timer.timeout.connect(_on_debounce_timeout.bind(timer))
 	add_child(timer)
 	timer.start()
 	debounce_timers[key] = timer
@@ -346,7 +346,7 @@ func throttle(key, delay, callback):
 	var timer = Timer.new()
 	timer.wait_time = delay
 	timer.one_shot = true
-	timer.timeout.connect(_on_throttle_timeout.bind(key, timer)) # 349:23-GD7007-OK
+	timer.timeout.connect(_on_throttle_timeout.bind(key, timer))
 	add_child(timer)
 	timer.start()
 
@@ -460,14 +460,14 @@ func wait_for_signal(target, signal_name, timeout = 5.0):
 	ctx.target = target
 	ctx.signal_name = signal_name
 	ctx.operation = operation
-	ctx.connection = _on_signal_received.bind(ctx) # 463:18-GD7007-OK
+	ctx.connection = _on_signal_received.bind(ctx)
 
 	target.connect(signal_name, ctx.connection) # 465:1-GD7007-OK
 
 	# Timeout
 	if timeout > 0: # 468:4-GD3020-OK
 		var timer = get_tree().create_timer(timeout)
-		timer.timeout.connect(_on_wait_timeout.bind(ctx)) # 470:2-GD7005-OK 470:24-GD7007-OK
+		timer.timeout.connect(_on_wait_timeout.bind(ctx)) # 470:2-GD7005-OK
 
 	return operation
 
@@ -500,9 +500,9 @@ class ConditionalCallback:
 	var false_cb: Callable
 
 	func call_conditional(value):
-		if predicate.call(value): # 503:5-GD7007-OK
-			return true_cb.call(value) # 504:10-GD7007-OK
-		return false_cb.call(value) # 505:9-GD7007-OK
+		if predicate.call(value):
+			return true_cb.call(value)
+		return false_cb.call(value)
 
 
 class RetryCallback:
@@ -515,10 +515,10 @@ class RetryCallback:
 		var last_error = null
 
 		while attempt <= max_retries:
-			var result = callback.call(value) # 518:16-GD7007-OK
+			var result = callback.call(value)
 			if result is Dictionary and result.has("error"):
 				last_error = result["error"]
-				if not should_retry.call(last_error, attempt): # 521:11-GD7007-OK
+				if not should_retry.call(last_error, attempt):
 					return result
 				attempt += 1
 			else:

@@ -123,6 +123,7 @@ internal class GDConfidenceService
                         return GDReferenceConfidence.Potential;
                 }
             }
+
         }
 
         // Type is Variant or unknown without type guard

@@ -15,7 +15,7 @@ enum AIState { IDLE, PATROL, CHASE, ATTACK, FLEE }
 @export var detection_range: float = 200.0  # 15:29-GD7022-OK
 @export var attack_range: float = 50.0  # 16:26-GD7022-OK
 
-var current_state: AIState = AIState.IDLE  # 18:0-GD3004-OK
+var current_state: AIState = AIState.IDLE
 var current_target_index: int = 0  # 19:26-GD7022-OK
 var target_entity: Node2D = null
 var _path: Array[Vector2] = []

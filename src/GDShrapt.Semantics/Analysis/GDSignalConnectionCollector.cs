@@ -1,5 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -34,6 +35,20 @@ internal class GDSignalConnectionCollector
         }
 
         return connections;
+    }
+
+    /// <summary>
+    /// Collects signal connections in a specific file without requiring a project context.
+    /// </summary>
+    public static IReadOnlyList<GDSignalConnectionEntry> CollectConnectionsInFile(
+        GDScriptFile scriptFile, IGDRuntimeProvider? runtimeProvider)
+    {
+        if (scriptFile.Class == null)
+            return Array.Empty<GDSignalConnectionEntry>();
+
+        var visitor = new SignalConnectionVisitor(scriptFile, runtimeProvider);
+        scriptFile.Class.WalkIn(visitor);
+        return visitor.Connections;
     }
 
     /// <summary>
@@ -92,7 +107,10 @@ internal class GDSignalConnectionCollector
         public override void Visit(GDMethodDeclaration method)
         {
             _currentMethodName = method.Identifier?.Sequence;
-            base.Visit(method);
+        }
+
+        public override void Left(GDMethodDeclaration method)
+        {
             _currentMethodName = null;
         }
 

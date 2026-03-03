@@ -1030,6 +1030,275 @@ func test():
         Assert.AreEqual("CollisionShape2D", children[1].NodeType);
     }
 
+    #region get_child on self (scene-based)
+
+    [TestMethod]
+    public void InjectType_GetChildOnSelf_LiteralIndex_InfersFromScene()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://main.gd"" id=""1""]
+[node name=""Main"" type=""Node2D""]
+script = ExtResource(""1"")
+[node name=""Sprite"" type=""Sprite2D"" parent="".""]
+[node name=""Collision"" type=""CollisionShape2D"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "main.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://main.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+extends Node2D
+func test():
+    var child0 = get_child(0)
+    var child1 = get_child(1)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://main.gd" };
+
+        var getChild0 = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild0, "Should find get_child(0) in AST");
+        var type0 = injector.InjectType(getChild0, context);
+        Assert.AreEqual("Sprite2D", type0);
+
+        var getChild1 = FindCallExpressionWithArg(classDecl, "get_child", "1");
+        Assert.IsNotNull(getChild1, "Should find get_child(1) in AST");
+        var type1 = injector.InjectType(getChild1, context);
+        Assert.AreEqual("CollisionShape2D", type1);
+    }
+
+    [TestMethod]
+    public void InjectType_SelfGetChild_LiteralIndex_InfersFromScene()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://main.gd"" id=""1""]
+[node name=""Main"" type=""Node2D""]
+script = ExtResource(""1"")
+[node name=""Label"" type=""Label"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "main.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://main.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+extends Node2D
+func test():
+    var child = self.get_child(0)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://main.gd" };
+
+        var getChild = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild);
+        var type = injector.InjectType(getChild, context);
+        Assert.AreEqual("Label", type);
+    }
+
+    [TestMethod]
+    public void InjectType_GetChildOnSelf_AllSameType_InfersCommon()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://container.gd"" id=""1""]
+[node name=""Container"" type=""VBoxContainer""]
+script = ExtResource(""1"")
+[node name=""Button1"" type=""Button"" parent="".""]
+[node name=""Button2"" type=""Button"" parent="".""]
+[node name=""Button3"" type=""Button"" parent="".""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "container.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://container.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        // Variable index (not literal) — all children are Button, so inferred as Button
+        var code = @"
+extends VBoxContainer
+func test():
+    for i in get_child_count():
+        get_child(i).text = ""hello""
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://container.gd" };
+
+        var getChild = FindCallExpression(classDecl, "get_child");
+        Assert.IsNotNull(getChild);
+        var type = injector.InjectType(getChild, context);
+        Assert.AreEqual("Button", type);
+    }
+
+    [TestMethod]
+    public void InjectType_GetChildOnSelf_NoScene_ReturnsNull()
+    {
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+extends Node
+func test():
+    var child = get_child(0)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://unknown.gd" };
+
+        var getChild = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild);
+        var type = injector.InjectType(getChild, context);
+        Assert.IsNull(type);
+    }
+
+    #endregion
+
+    #region get_child from add_child tracking (flow-based)
+
+    [TestMethod]
+    public void InjectType_GetChildFromAddChild_VariableFromInstantiate()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://energy_point.gd"" id=""1""]
+[node name=""EnergyPoint"" type=""MarginContainer""]
+script = ExtResource(""1"")
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "energy_point.tscn"), sceneContent);
+        mockFs.AddFile(Path.Combine(projectPath, "energy_point.gd"), @"
+class_name UIEnergyPoint
+extends MarginContainer
+func appear(): pass
+");
+
+        var scriptProvider = new MockScriptProvider();
+        scriptProvider.AddScript("res://energy_point.gd", "UIEnergyPoint");
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://energy_point.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider, scriptProvider);
+
+        var code = @"
+extends Node
+const SCENE: = preload(""res://energy_point.tscn"")
+
+var max_value: = 0:
+    set(v):
+        for i in v:
+            var point: = SCENE.instantiate()
+            add_child(point)
+
+func test():
+    get_child(0).appear()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://energy_bar.gd" };
+
+        var getChild = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild, "Should find get_child(0)");
+        var type = injector.InjectType(getChild, context);
+
+        // Should infer UIEnergyPoint (from scene root's script type name)
+        Assert.IsNotNull(type, "get_child should infer type from add_child tracking");
+        Assert.IsTrue(type == "UIEnergyPoint" || type == "MarginContainer",
+            $"Expected UIEnergyPoint or MarginContainer, got: {type}");
+    }
+
+    [TestMethod]
+    public void InjectType_GetChildFromAddChild_NoAddChild_ReturnsNull()
+    {
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+extends Node
+func test():
+    var child = get_child(0)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+
+        var getChild = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild);
+        var type = injector.InjectType(getChild, context);
+        Assert.IsNull(type);
+    }
+
+    [TestMethod]
+    public void InjectType_GetChildFromAddChild_PrefersScriptProviderClassName()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://ui_energy_point.gd"" id=""1""]
+[node name=""EnergyPoint"" type=""MarginContainer""]
+script = ExtResource(""1"")
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "ui_energy_point.tscn"), sceneContent);
+
+        var scriptProvider = new MockScriptProvider();
+        scriptProvider.AddScript("res://ui_energy_point.gd", "UIEnergyPoint");
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://ui_energy_point.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider, scriptProvider);
+
+        var code = @"
+extends Node
+const SCENE: = preload(""res://ui_energy_point.tscn"")
+var max_value: = 0:
+    set(v):
+        for i in v:
+            add_child(SCENE.instantiate())
+func test():
+    get_child(0)
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+
+        var getChild = FindCallExpressionWithArg(classDecl, "get_child", "0");
+        Assert.IsNotNull(getChild);
+        var type = injector.InjectType(getChild, context);
+
+        Assert.AreEqual("UIEnergyPoint", type);
+    }
+
+    #endregion
+
     private static GDCallExpression? FindCallExpression(GDClassDeclaration classDecl, string methodName)
     {
         GDCallExpression? found = null;

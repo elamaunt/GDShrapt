@@ -512,8 +512,25 @@ namespace GDShrapt.Semantics
             if (expression == null)
                 return GDVariantSemanticType.Instance;
 
+            // Lambda → GDCallableSemanticType directly (no string roundtrip)
             if (expression is GDMethodExpression lambda)
-                return GDSemanticType.FromRuntimeTypeName(InferLambdaSemanticType(lambda));
+                return BuildCallableSemanticTypeForLambda(lambda);
+
+            // Method reference (identifier resolving to method) → GDCallableSemanticType
+            if (expression is GDIdentifierExpression identExpr)
+            {
+                var callableType = TryBuildCallableForIdentifier(identExpr);
+                if (callableType != null)
+                    return callableType;
+            }
+
+            // Member method reference (obj.method without call) → GDCallableSemanticType
+            if (expression is GDMemberOperatorExpression memberExpr)
+            {
+                var callableType = TryBuildCallableForMemberRef(memberExpr);
+                if (callableType != null)
+                    return callableType;
+            }
 
             var typeNode = InferTypeNode(expression);
             return GDSemanticType.FromTypeNode(typeNode);
@@ -1208,7 +1225,7 @@ namespace GDShrapt.Semantics
                         }
 
                         // Special handling for Callable.call() - extract return type from signature
-                        if ((methodName == "call" || methodName == "callv") && callerType.StartsWith("Callable["))
+                        if ((methodName == "call" || methodName == "callv") && GDWellKnownTypes.IsCallableType(callerType))
                         {
                             var callableReturnType = ExtractCallableReturnType(callerType);
                             if (!string.IsNullOrEmpty(callableReturnType))
@@ -1393,12 +1410,234 @@ namespace GDShrapt.Semantics
         private GDTypeNode InferLambdaReturnTypeNode(GDMethodExpression lambda)
             => MethodReturnAnalyzer.InferLambdaReturnTypeNode(lambda);
 
+        #region Callable Semantic Type Builders
+
+        private GDCallableSemanticType BuildCallableSemanticType(GDMethodDeclaration method)
+        {
+            var paramTypes = new List<GDSemanticType>();
+            if (method.Parameters != null)
+            {
+                foreach (var param in method.Parameters)
+                {
+                    if (param.Type != null)
+                        paramTypes.Add(GDSemanticType.FromTypeNode(param.Type));
+                    else if (param.DefaultValue != null)
+                    {
+                        var inferredType = InferTypeNode(param.DefaultValue)?.BuildName();
+                        if (!string.IsNullOrEmpty(inferredType) && inferredType != "null")
+                            paramTypes.Add(GDSemanticType.FromRuntimeTypeName(inferredType));
+                        else
+                            paramTypes.Add(GDVariantSemanticType.Instance);
+                    }
+                    else
+                        paramTypes.Add(GDVariantSemanticType.Instance);
+                }
+            }
+
+            GDSemanticType returnType = null;
+            if (method.ReturnType != null)
+            {
+                returnType = GDSemanticType.FromTypeNode(method.ReturnType);
+                if (returnType.IsVariant)
+                    returnType = null;
+            }
+
+            return new GDCallableSemanticType(returnType, paramTypes);
+        }
+
+        private GDCallableSemanticType BuildCallableSemanticTypeForLambda(GDMethodExpression lambda)
+        {
+            if (lambda == null)
+                return new GDCallableSemanticType();
+
+            var paramTypes = new List<GDSemanticType>();
+            bool hasTypedParams = false;
+
+            if (lambda.Parameters != null)
+            {
+                foreach (var param in lambda.Parameters)
+                {
+                    var typeName = param.Type?.BuildName();
+                    if (!string.IsNullOrEmpty(typeName))
+                    {
+                        hasTypedParams = true;
+                        paramTypes.Add(GDSemanticType.FromRuntimeTypeName(typeName));
+                    }
+                    else if (param.DefaultValue != null)
+                    {
+                        var inferredType = InferTypeNode(param.DefaultValue)?.BuildName();
+                        if (!string.IsNullOrEmpty(inferredType) && inferredType != "null")
+                        {
+                            hasTypedParams = true;
+                            paramTypes.Add(GDSemanticType.FromRuntimeTypeName(inferredType));
+                        }
+                        else
+                        {
+                            paramTypes.Add(GDVariantSemanticType.Instance);
+                        }
+                    }
+                    else
+                    {
+                        var bodyInferred = InferLambdaParameterType(lambda, param);
+                        if (!string.IsNullOrEmpty(bodyInferred) && bodyInferred != GDWellKnownTypes.Variant)
+                        {
+                            hasTypedParams = true;
+                            paramTypes.Add(GDSemanticType.FromRuntimeTypeName(bodyInferred));
+                        }
+                        else
+                        {
+                            paramTypes.Add(GDVariantSemanticType.Instance);
+                        }
+                    }
+                }
+            }
+
+            var returnTypeName = InferLambdaReturnType(lambda);
+            GDSemanticType returnType = null;
+            if (!string.IsNullOrEmpty(returnTypeName) && returnTypeName != "void" && returnTypeName != "null")
+            {
+                hasTypedParams = true;
+                returnType = GDSemanticType.FromRuntimeTypeName(returnTypeName);
+            }
+
+            if (!hasTypedParams && paramTypes.Count == 0)
+                return new GDCallableSemanticType();
+
+            return new GDCallableSemanticType(returnType, paramTypes);
+        }
+
+        private GDCallableSemanticType TryBuildCallableForIdentifier(GDIdentifierExpression identExpr)
+        {
+            var name = identExpr.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            // Check scope for method symbol
+            GDSymbol symbol = null;
+            if (_scopes != null)
+                symbol = _scopes.Lookup(name);
+            if (symbol == null && _symbolLookupFallback != null)
+                symbol = _symbolLookupFallback(name, identExpr);
+
+            if (symbol?.Kind == GDSymbolKind.Method)
+            {
+                if (symbol.Declaration is GDMethodDeclaration methodDecl)
+                    return BuildCallableSemanticType(methodDecl);
+            }
+
+            // Check class members
+            var classDecl = identExpr.RootClassDeclaration;
+            if (classDecl != null)
+            {
+                foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
+                {
+                    if (member is GDMethodDeclaration md && md.Identifier?.Sequence == name)
+                    {
+                        // Only if not called directly (method reference, not call)
+                        bool isCalledDirectly = identExpr.Parent is GDCallExpression call
+                            && call.CallerExpression == identExpr;
+                        if (!isCalledDirectly)
+                            return BuildCallableSemanticType(md);
+                    }
+                }
+
+                // Check inherited methods
+                var baseTypeName = GetClassBaseType(classDecl);
+                if (!string.IsNullOrEmpty(baseTypeName))
+                {
+                    var memberInfo = FindMemberWithInheritance(baseTypeName, name);
+                    if (memberInfo?.Kind == GDRuntimeMemberKind.Method)
+                    {
+                        bool isCalledDirectly = identExpr.Parent is GDCallExpression call
+                            && call.CallerExpression == identExpr;
+                        if (!isCalledDirectly)
+                            return BuildCallableFromRuntimeMember(memberInfo);
+                    }
+                }
+            }
+
+            // Check global functions
+            if (_runtimeProvider != null)
+            {
+                var globalFunc = _runtimeProvider.GetGlobalFunction(name);
+                if (globalFunc != null)
+                    return BuildCallableFromGlobalFunction(globalFunc);
+            }
+
+            return null;
+        }
+
+        private GDCallableSemanticType TryBuildCallableForMemberRef(GDMemberOperatorExpression memberExpr)
+        {
+            // If it's a direct call (obj.method()), this is NOT a method reference
+            if (memberExpr.Parent is GDCallExpression call && call.CallerExpression == memberExpr)
+                return null;
+
+            var memberName = memberExpr.Identifier?.Sequence;
+            var callerType = InferTypeNode(memberExpr.CallerExpression)?.BuildName();
+            if (string.IsNullOrEmpty(callerType) || string.IsNullOrEmpty(memberName))
+                return null;
+
+            var memberInfo = FindMemberWithInheritance(callerType, memberName);
+            if (memberInfo?.Kind != GDRuntimeMemberKind.Method)
+                return null;
+
+            return BuildCallableFromRuntimeMember(memberInfo);
+        }
+
+        private GDCallableSemanticType BuildCallableFromRuntimeMember(GDRuntimeMemberInfo memberInfo)
+        {
+            var paramTypes = new List<GDSemanticType>();
+            if (memberInfo.Parameters != null)
+            {
+                foreach (var param in memberInfo.Parameters)
+                {
+                    paramTypes.Add(!string.IsNullOrEmpty(param.Type)
+                        ? GDSemanticType.FromRuntimeTypeName(param.Type)
+                        : GDVariantSemanticType.Instance);
+                }
+            }
+            else if (memberInfo.MaxArgs > 0 || memberInfo.IsVarArgs)
+            {
+                // No parameter info available, use Variant for each
+                for (int i = 0; i < Math.Max(memberInfo.MinArgs, 1); i++)
+                    paramTypes.Add(GDVariantSemanticType.Instance);
+            }
+
+            GDSemanticType returnType = null;
+            if (!string.IsNullOrEmpty(memberInfo.Type) && memberInfo.Type != "void" && memberInfo.Type != "Variant")
+                returnType = GDSemanticType.FromRuntimeTypeName(memberInfo.Type);
+
+            return new GDCallableSemanticType(returnType, paramTypes, memberInfo.IsVarArgs);
+        }
+
+        private GDCallableSemanticType BuildCallableFromGlobalFunction(GDRuntimeFunctionInfo funcInfo)
+        {
+            var paramTypes = new List<GDSemanticType>();
+            if (funcInfo.Parameters != null)
+            {
+                foreach (var param in funcInfo.Parameters)
+                {
+                    paramTypes.Add(!string.IsNullOrEmpty(param.Type)
+                        ? GDSemanticType.FromRuntimeTypeName(param.Type)
+                        : GDVariantSemanticType.Instance);
+                }
+            }
+
+            GDSemanticType returnType = null;
+            if (!string.IsNullOrEmpty(funcInfo.ReturnType) && funcInfo.ReturnType != "void" && funcInfo.ReturnType != "Variant")
+                returnType = GDSemanticType.FromRuntimeTypeName(funcInfo.ReturnType);
+
+            return new GDCallableSemanticType(returnType, paramTypes, funcInfo.IsVarArgs);
+        }
+
+        #endregion
+
         /// <summary>
-        /// Infers the Callable type for a lambda expression with full signature.
-        /// Returns a semantic type like Callable[[int, String], bool] for internal analysis.
-        /// Note: GDTypeNode.BuildName() will return just "Callable" since GDScript
-        /// doesn't have syntax for Callable generic parameters.
-        /// Use InferSemanticType() to get the full semantic type.
+        /// Infers the Callable type for a lambda expression.
+        /// Returns just "Callable" for GDTypeNode since GDScript parser
+        /// doesn't support typed Callable syntax.
+        /// Use InferSemanticType() to get the full GDCallableSemanticType.
         /// </summary>
         private GDTypeNode InferLambdaTypeWithSignature(GDMethodExpression lambda)
         {
@@ -1410,75 +1649,11 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Infers the full semantic Callable type for a lambda expression.
-        /// Returns format: Callable[[param1, param2], return] for type checking.
-        /// If lambda has no typed parameters and returns void, returns simple "Callable".
+        /// Returns the DisplayName of the GDCallableSemanticType (e.g. "Callable(int, String) -> bool").
+        /// Delegates to BuildCallableSemanticTypeForLambda() for the actual inference.
         /// </summary>
         public string InferLambdaSemanticType(GDMethodExpression lambda)
-        {
-            if (lambda == null)
-                return "Callable";
-
-            // Collect parameter types
-            var paramTypes = new List<string>();
-            bool hasTypedParams = false;
-
-            if (lambda.Parameters != null)
-            {
-                foreach (var param in lambda.Parameters)
-                {
-                    var typeName = param.Type?.BuildName();
-                    if (!string.IsNullOrEmpty(typeName))
-                    {
-                        hasTypedParams = true;
-                        paramTypes.Add(typeName);
-                    }
-                    else if (param.DefaultValue != null)
-                    {
-                        // Infer type from default value
-                        var inferredType = InferTypeNode(param.DefaultValue)?.BuildName();
-                        if (!string.IsNullOrEmpty(inferredType) && inferredType != "null")
-                        {
-                            hasTypedParams = true;
-                            paramTypes.Add(inferredType);
-                        }
-                        else
-                        {
-                            paramTypes.Add(GDWellKnownTypes.Variant);
-                        }
-                    }
-                    else
-                    {
-                        // Infer from lambda parameter usage (duck typing)
-                        var inferredType = InferLambdaParameterType(lambda, param);
-                        paramTypes.Add(inferredType);
-                    }
-                }
-            }
-
-            // Infer return type
-            var returnType = InferLambdaReturnType(lambda);
-            var hasReturnType = !string.IsNullOrEmpty(returnType) && returnType != "void" && returnType != "null";
-
-            // If no typed parameters and no return type, return simple Callable
-            if (!hasTypedParams && !hasReturnType && paramTypes.Count == 0)
-            {
-                return "Callable";
-            }
-
-            // Build semantic type: Callable[[param1, param2], return]
-            // If no return type, use void
-            var actualReturn = hasReturnType ? returnType : "void";
-
-            if (paramTypes.Count == 0)
-            {
-                // No parameters: Callable[[], void] or Callable[[], ReturnType]
-                return $"Callable[[], {actualReturn}]";
-            }
-
-            // With parameters: Callable[[int, String], bool]
-            var paramsStr = string.Join(", ", paramTypes);
-            return $"Callable[[{paramsStr}], {actualReturn}]";
-        }
+            => BuildCallableSemanticTypeForLambda(lambda).DisplayName;
 
         /// <summary>
         /// Infers a lambda parameter type from its usage patterns within the lambda body.
@@ -1674,67 +1849,100 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Extracts the return type from a Callable semantic type signature.
-        /// For example: Callable[[int, String], bool] returns "bool"
+        /// Supports both formats:
+        ///   New: Callable(int, String) -> bool
+        ///   Legacy: Callable[[int, String], bool]
         /// For simple Callable without signature, returns null.
         /// </summary>
         public static string ExtractCallableReturnType(string callableType)
         {
-            if (string.IsNullOrEmpty(callableType) || !callableType.StartsWith("Callable["))
+            if (string.IsNullOrEmpty(callableType) || !callableType.StartsWith("Callable"))
                 return null;
 
-            // Format: Callable[[param1, param2], return]
-            // Find the last comma followed by the return type before the closing ]
-            // We need to find the "], " that separates params from return type
+            // New format: Callable(params) -> returnType
+            var arrowIndex = callableType.IndexOf(" -> ");
+            if (arrowIndex >= 0)
+            {
+                return callableType.Substring(arrowIndex + 4);
+            }
 
-            var paramsEndIndex = callableType.LastIndexOf("], ");
-            if (paramsEndIndex < 0)
-                return null;
+            // Legacy format: Callable[[param1, param2], return]
+            if (callableType.StartsWith("Callable["))
+            {
+                var paramsEndIndex = callableType.LastIndexOf("], ");
+                if (paramsEndIndex < 0)
+                    return null;
 
-            // Extract return type: everything after "], " and before final "]"
-            var returnStart = paramsEndIndex + 3; // Skip "], "
-            var returnEnd = callableType.Length - 1; // Before final "]"
+                var returnStart = paramsEndIndex + 3;
+                var returnEnd = callableType.Length - 1;
 
-            if (returnStart >= returnEnd)
-                return null;
+                if (returnStart >= returnEnd)
+                    return null;
 
-            return callableType.Substring(returnStart, returnEnd - returnStart);
+                return callableType.Substring(returnStart, returnEnd - returnStart);
+            }
+
+            return null;
         }
 
         /// <summary>
         /// Extracts the parameter types from a Callable semantic type signature.
-        /// For example: Callable[[int, String], bool] returns ["int", "String"]
+        /// Supports both formats:
+        ///   New: Callable(int, String) -> bool
+        ///   Legacy: Callable[[int, String], bool]
         /// For simple Callable without signature, returns empty list.
         /// </summary>
         public static IReadOnlyList<string> ExtractCallableParameterTypes(string callableType)
         {
-            if (string.IsNullOrEmpty(callableType) || !callableType.StartsWith("Callable[["))
+            if (string.IsNullOrEmpty(callableType) || callableType == "Callable")
                 return Array.Empty<string>();
 
-            // Format: Callable[[param1, param2], return]
-            // Extract the [[...]] part
+            string paramsSection = null;
 
-            var paramsStart = "Callable[[".Length;
-            var paramsEnd = callableType.IndexOf("], ");
-            if (paramsEnd < 0)
-                return Array.Empty<string>();
+            // New format: Callable(params) -> returnType  or  Callable(params)
+            if (callableType.StartsWith("Callable("))
+            {
+                var parenStart = "Callable(".Length;
+                // Find matching closing paren, handling nested parens/brackets
+                var depth = 1;
+                var i = parenStart;
+                for (; i < callableType.Length && depth > 0; i++)
+                {
+                    var c = callableType[i];
+                    if (c == '(' || c == '[')
+                        depth++;
+                    else if (c == ')' || c == ']')
+                        depth--;
+                }
+                // i is now past the closing ')'
+                paramsSection = callableType.Substring(parenStart, i - 1 - parenStart);
+            }
+            // Legacy format: Callable[[param1, param2], return]
+            else if (callableType.StartsWith("Callable[["))
+            {
+                var paramsStart = "Callable[[".Length;
+                var paramsEnd = callableType.IndexOf("], ");
+                if (paramsEnd < 0)
+                    return Array.Empty<string>();
+                paramsSection = callableType.Substring(paramsStart, paramsEnd - paramsStart);
+            }
 
-            var paramsSection = callableType.Substring(paramsStart, paramsEnd - paramsStart);
             if (string.IsNullOrEmpty(paramsSection))
                 return Array.Empty<string>();
 
             // Split by ", " - but need to handle nested types like Array[int]
             var types = new List<string>();
-            var depth = 0;
+            var splitDepth = 0;
             var start = 0;
 
             for (int i = 0; i < paramsSection.Length; i++)
             {
                 var c = paramsSection[i];
-                if (c == '[')
-                    depth++;
-                else if (c == ']')
-                    depth--;
-                else if (c == ',' && depth == 0)
+                if (c == '[' || c == '(')
+                    splitDepth++;
+                else if (c == ']' || c == ')')
+                    splitDepth--;
+                else if (c == ',' && splitDepth == 0)
                 {
                     var type = paramsSection.Substring(start, i - start).Trim();
                     if (!string.IsNullOrEmpty(type))

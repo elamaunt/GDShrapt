@@ -552,6 +552,10 @@ public class GDFlowState
         if (bracketIndex > 0)
             return typeName.Substring(0, bracketIndex);
 
+        var parenIndex = typeName.IndexOf('(');
+        if (parenIndex > 0)
+            return typeName.Substring(0, parenIndex);
+
         return typeName;
     }
 

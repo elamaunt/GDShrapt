@@ -125,17 +125,25 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         }
 
         // preload("scene.tscn").instantiate() or scene_var.instantiate()
-        if (callName == "instantiate")
+        if (callName == GDWellKnownFunctions.Instantiate)
         {
-            var scenePath = ExtractScenePathFromCaller(call);
+            var scenePath = ExtractScenePathFromCaller(call, context.ScriptPath);
             if (!string.IsNullOrEmpty(scenePath))
                 return ResolveSceneRootType(scenePath);
         }
 
-        // instance.get_child(N) where instance comes from scene instantiate
-        if (callName == "get_child" || callName == "get_child_or_null")
+        // get_child(N) — try scene instance, then self scene, then add_child tracking
+        if (GDWellKnownFunctions.IsGetChild(callName))
         {
             var result = InferGetChildOnSceneInstance(call);
+            if (!string.IsNullOrEmpty(result))
+                return result;
+
+            result = InferGetChildOnSelf(call, context);
+            if (!string.IsNullOrEmpty(result))
+                return result;
+
+            result = InferGetChildFromAddChildTracking(call, context);
             if (!string.IsNullOrEmpty(result))
                 return result;
         }
@@ -284,7 +292,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
 
     public string? GetMethodReturnType(string methodName, string receiverType, IReadOnlyList<string> argumentTypes) => null;
 
-    private string? ExtractScenePathFromCaller(GDCallExpression instantiateCall)
+    private string? ExtractScenePathFromCaller(GDCallExpression instantiateCall, string? scriptPath = null)
     {
         var caller = instantiateCall.CallerExpression;
         if (caller is not GDMemberOperatorExpression memberExpr)
@@ -296,7 +304,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
 
         // Variable: scene_var.instantiate()
         if (memberExpr.CallerExpression is GDIdentifierExpression identExpr)
-            return ExtractScenePathFromVariable(identExpr, instantiateCall);
+            return ExtractScenePathFromVariable(identExpr, instantiateCall, scriptPath);
 
         return null;
     }
@@ -317,7 +325,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         return null;
     }
 
-    private string? ExtractScenePathFromVariable(GDIdentifierExpression identExpr, GDCallExpression contextCall)
+    private string? ExtractScenePathFromVariable(GDIdentifierExpression identExpr, GDCallExpression contextCall, string? scriptPath)
     {
         var varName = identExpr.Identifier?.Sequence;
         if (string.IsNullOrEmpty(varName))
@@ -327,9 +335,41 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         if (classDecl == null)
             return null;
 
+        // Check code-level initializer (preload)
         var initExpr = FindVariableInitializerInHierarchy(classDecl, varName);
         if (initExpr is GDCallExpression preloadCall)
             return ExtractScenePathFromPreloadCall(preloadCall);
+
+        // Check .tscn resource references for @export PackedScene variables
+        if (_sceneProvider != null && !string.IsNullOrEmpty(scriptPath))
+        {
+            var scenePath = FindExportedScenePathFromTscn(scriptPath, varName);
+            if (!string.IsNullOrEmpty(scenePath))
+                return scenePath;
+        }
+
+        return null;
+    }
+
+    private string? FindExportedScenePathFromTscn(string scriptPath, string varName)
+    {
+        var scenes = _sceneProvider!.GetScenesForScript(scriptPath);
+
+        foreach (var (scenePath, nodePath) in scenes)
+        {
+            var resourceRefs = _sceneProvider.GetSceneResourceReferences(scenePath);
+
+            foreach (var resourceRef in resourceRefs)
+            {
+                if (resourceRef.PropertyName == varName &&
+                    resourceRef.NodePath == nodePath &&
+                    resourceRef.ResourceType == "PackedScene" &&
+                    (resourceRef.ResourcePath.EndsWith(".tscn") || resourceRef.ResourcePath.EndsWith(".scn")))
+                {
+                    return resourceRef.ResourcePath;
+                }
+            }
+        }
 
         return null;
     }
@@ -342,7 +382,25 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         if (_sceneProvider.GetSceneInfo(scenePath) == null)
             _sceneProvider.LoadScene(scenePath);
 
-        return _sceneProvider.GetRootNodeType(scenePath);
+        var sceneInfo = _sceneProvider.GetSceneInfo(scenePath);
+        if (sceneInfo == null || sceneInfo.Nodes.Count == 0)
+            return null;
+
+        var rootNode = sceneInfo.Nodes[0];
+
+        if (!string.IsNullOrEmpty(rootNode.ScriptPath) && _scriptProvider != null)
+        {
+            // ScriptPath from scene is res:// format; try direct path lookup first,
+            // then match against ResPath for res:// paths
+            var scriptInfo = _scriptProvider.GetScriptByPath(rootNode.ScriptPath);
+            if (scriptInfo == null && rootNode.ScriptPath.StartsWith("res://"))
+                scriptInfo = _scriptProvider.Scripts.FirstOrDefault(s => s.ResPath == rootNode.ScriptPath);
+
+            if (!string.IsNullOrEmpty(scriptInfo?.TypeName))
+                return scriptInfo.TypeName;
+        }
+
+        return rootNode.ScriptTypeName ?? rootNode.NodeType;
     }
 
     private string? InferGetChildOnSceneInstance(GDCallExpression getChildCall)
@@ -370,7 +428,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
             return null;
 
         var instantiateName = GDNodePathExtractor.GetCallName(instantiateCall);
-        if (instantiateName != "instantiate")
+        if (instantiateName != GDWellKnownFunctions.Instantiate)
             return null;
 
         var scenePath = ExtractScenePathFromCaller(instantiateCall);
@@ -395,6 +453,253 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         }
 
         return null;
+    }
+
+    private string? InferGetChildOnSelf(GDCallExpression call, GDTypeInjectionContext context)
+    {
+        if (_sceneProvider == null || string.IsNullOrEmpty(context.ScriptPath))
+            return null;
+
+        if (!IsCallOnSelf(call))
+            return null;
+
+        var scenes = _sceneProvider.GetScenesForScript(context.ScriptPath).ToList();
+        if (scenes.Count == 0)
+            return null;
+
+        int? index = ExtractLiteralIndex(call);
+
+        var allChildTypes = new HashSet<string>();
+        foreach (var (scenePath, scriptNodePath) in scenes)
+        {
+            if (_sceneProvider.GetSceneInfo(scenePath) == null)
+                _sceneProvider.LoadScene(scenePath);
+
+            var children = _sceneProvider.GetDirectChildren(scenePath, scriptNodePath);
+            if (children.Count == 0)
+                continue;
+
+            if (index.HasValue && index.Value >= 0 && index.Value < children.Count)
+            {
+                var childType = children[index.Value].ScriptTypeName ?? children[index.Value].NodeType;
+                if (!string.IsNullOrEmpty(childType))
+                    allChildTypes.Add(childType);
+            }
+            else
+            {
+                foreach (var child in children)
+                {
+                    var childType = child.ScriptTypeName ?? child.NodeType;
+                    if (!string.IsNullOrEmpty(childType))
+                        allChildTypes.Add(childType);
+                }
+            }
+        }
+
+        if (allChildTypes.Count == 1)
+            return allChildTypes.First();
+
+        if (allChildTypes.Count > 1)
+            return FindCommonBaseType(allChildTypes);
+
+        return null;
+    }
+
+    private string? InferGetChildFromAddChildTracking(GDCallExpression call, GDTypeInjectionContext context)
+    {
+        if (!IsCallOnSelf(call))
+            return null;
+
+        var classDecl = call.RootClassDeclaration;
+        if (classDecl == null)
+            return null;
+
+        var collector = GetOrCollectAddChildInfo(classDecl);
+        if (collector == null || collector.AddChildCalls.Count == 0)
+            return null;
+
+        var selfChildTypes = new HashSet<string>();
+        foreach (var addChildInfo in collector.AddChildCalls)
+        {
+            if (addChildInfo.ParentPath != null && addChildInfo.ParentPath != "self")
+                continue;
+
+            var childType = ResolveAddChildArgumentType(addChildInfo, classDecl);
+            if (!string.IsNullOrEmpty(childType))
+                selfChildTypes.Add(childType);
+        }
+
+        if (selfChildTypes.Count == 1)
+            return selfChildTypes.First();
+
+        if (selfChildTypes.Count > 1)
+            return FindCommonBaseType(selfChildTypes);
+
+        return null;
+    }
+
+    private string? ResolveAddChildArgumentType(GDAddChildInfo addChildInfo, GDClassDeclaration classDecl)
+    {
+        // Case 1: add_child(SCENE.instantiate()) — inline instantiate call
+        if (addChildInfo.ChildArgument is GDCallExpression callExpr)
+        {
+            var callName = GDNodePathExtractor.GetCallName(callExpr);
+            if (callName == GDWellKnownFunctions.Instantiate)
+            {
+                var scenePath = ExtractScenePathFromCaller(callExpr);
+                if (!string.IsNullOrEmpty(scenePath))
+                    return ResolveSceneRootType(scenePath);
+            }
+        }
+
+        // Case 2: add_child(var_name) — variable
+        if (!string.IsNullOrEmpty(addChildInfo.ChildVariableName))
+        {
+            // Check class-level variable (const/var with initializer)
+            var initExpr = FindVariableInitializerInHierarchy(classDecl, addChildInfo.ChildVariableName);
+            if (initExpr is GDCallExpression initCall)
+            {
+                var initCallName = GDNodePathExtractor.GetCallName(initCall);
+                if (initCallName == GDWellKnownFunctions.Instantiate)
+                {
+                    var scenePath = ExtractScenePathFromCaller(initCall);
+                    if (!string.IsNullOrEmpty(scenePath))
+                        return ResolveSceneRootType(scenePath);
+                }
+            }
+
+            // Check local variable in same scope (for-loop pattern)
+            var localInit = FindLocalVariableInitializer(addChildInfo.ChildArgument as GDIdentifierExpression);
+            if (localInit is GDCallExpression localCall)
+            {
+                var localCallName = GDNodePathExtractor.GetCallName(localCall);
+                if (localCallName == GDWellKnownFunctions.Instantiate)
+                {
+                    var scenePath = ExtractScenePathFromCaller(localCall);
+                    if (!string.IsNullOrEmpty(scenePath))
+                        return ResolveSceneRootType(scenePath);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsCallOnSelf(GDCallExpression call)
+    {
+        // Bare call: get_child(N) — CallerExpression is GDIdentifierExpression
+        if (call.CallerExpression is GDIdentifierExpression)
+            return true;
+
+        // self.get_child(N)
+        if (call.CallerExpression is GDMemberOperatorExpression memberExpr &&
+            memberExpr.CallerExpression is GDIdentifierExpression selfIdent &&
+            selfIdent.Identifier?.Sequence == "self")
+            return true;
+
+        return false;
+    }
+
+    private static int? ExtractLiteralIndex(GDCallExpression call)
+    {
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+        if (args[0] is GDNumberExpression numExpr &&
+            int.TryParse(numExpr.Number?.Sequence, out var idx))
+            return idx;
+        return null;
+    }
+
+    private string? FindCommonBaseType(HashSet<string> types)
+    {
+        if (_godotTypesProvider == null || types.Count == 0)
+            return null;
+
+        var first = types.First();
+        var chain = GetInheritanceChain(first);
+
+        foreach (var baseType in chain)
+        {
+            if (types.All(t => t == baseType || InheritsFrom(t, baseType)))
+                return baseType;
+        }
+
+        return "Node";
+    }
+
+    private List<string> GetInheritanceChain(string typeName)
+    {
+        var chain = new List<string> { typeName };
+        var current = typeName;
+        var visited = new HashSet<string> { current };
+        while (true)
+        {
+            var baseType = _godotTypesProvider!.GetBaseType(current);
+            if (string.IsNullOrEmpty(baseType) || !visited.Add(baseType))
+                break;
+            chain.Add(baseType);
+            current = baseType;
+        }
+        return chain;
+    }
+
+    private bool InheritsFrom(string typeName, string baseTypeName)
+    {
+        if (typeName == baseTypeName)
+            return true;
+
+        var current = typeName;
+        var visited = new HashSet<string> { current };
+        while (true)
+        {
+            var baseType = _godotTypesProvider!.GetBaseType(current);
+            if (string.IsNullOrEmpty(baseType) || !visited.Add(baseType))
+                return false;
+            if (baseType == baseTypeName)
+                return true;
+            current = baseType;
+        }
+    }
+
+    private static GDExpression? FindLocalVariableInitializer(GDIdentifierExpression? identExpr)
+    {
+        if (identExpr == null)
+            return null;
+        var varName = identExpr.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(varName))
+            return null;
+
+        var parent = identExpr.Parent;
+        while (parent != null)
+        {
+            if (parent is GDStatementsList stmts)
+            {
+                foreach (var stmt in stmts)
+                {
+                    if (stmt is GDVariableDeclarationStatement varStmt &&
+                        varStmt.Identifier?.Sequence == varName)
+                    {
+                        return varStmt.Initializer;
+                    }
+                }
+            }
+            parent = parent.Parent;
+        }
+        return null;
+    }
+
+    private readonly Dictionary<GDClassDeclaration, GDSceneInstantiationCollector?> _addChildCache = new();
+
+    private GDSceneInstantiationCollector? GetOrCollectAddChildInfo(GDClassDeclaration classDecl)
+    {
+        if (_addChildCache.TryGetValue(classDecl, out var cached))
+            return cached;
+
+        var collector = new GDSceneInstantiationCollector();
+        classDecl.WalkIn(collector);
+        _addChildCache[classDecl] = collector;
+        return collector;
     }
 
     private GDExpression? FindVariableInitializerInHierarchy(GDClassDeclaration classDecl, string variableName)

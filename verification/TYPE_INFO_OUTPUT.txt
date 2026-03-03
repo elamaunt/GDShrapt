@@ -7945,8 +7945,8 @@ test_scripts/dynamic_dispatch.gd
 
   412:3 Variable proceed
     declared: (none)
-    inferred: Callable[[], Variant]
-    effective: Callable[[], Variant]
+    inferred: Callable()
+    effective: Callable()
     confidence: Medium
     nullable: no
 
@@ -12512,8 +12512,8 @@ test_scripts/local_variables.gd
 
   69:1 Variable transform
     declared: (none)
-    inferred: Callable[[int], Variant]
-    effective: Callable[[int], Variant]
+    inferred: Callable(int)
+    effective: Callable(int)
     confidence: Medium
     nullable: no
 
@@ -17166,8 +17166,8 @@ test_scripts/signal_callback_chains.gd
 
   199:1 Variable next
     declared: (none)
-    inferred: Callable[[Variant], Variant]
-    effective: Callable[[Variant], Variant]
+    inferred: Callable(Variant)
+    effective: Callable(Variant)
     confidence: Medium
     nullable: no
 
@@ -17252,8 +17252,8 @@ test_scripts/signal_callback_chains.gd
 
   231:1 Variable next
     declared: (none)
-    inferred: Callable[[Variant], Variant]
-    effective: Callable[[Variant], Variant]
+    inferred: Callable(Variant)
+    effective: Callable(Variant)
     confidence: Medium
     nullable: no
 
@@ -17434,8 +17434,8 @@ test_scripts/signal_callback_chains.gd
 
   283:2 Variable on_next_filter
     declared: (none)
-    inferred: Callable[[Variant], void]
-    effective: Callable[[Variant], void]
+    inferred: Callable(Variant)
+    effective: Callable(Variant)
     confidence: Medium
     nullable: no
 
@@ -20702,8 +20702,8 @@ test_scripts/type_guards.gd
 
   265:2 Variable inner_func
     declared: (none)
-    inferred: Callable[[], Array]
-    effective: Callable[[], Array]
+    inferred: Callable() -> Array
+    effective: Callable() -> Array
     confidence: Medium
     nullable: no
 

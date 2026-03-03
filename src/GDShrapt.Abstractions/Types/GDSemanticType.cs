@@ -50,6 +50,11 @@ public abstract class GDSemanticType
     public virtual bool IsContainer => false;
 
     /// <summary>
+    /// Gets whether this type is a Callable type.
+    /// </summary>
+    public virtual bool IsCallable => false;
+
+    /// <summary>
     /// Gets whether this type is a union type.
     /// </summary>
     public virtual bool IsUnion => false;
@@ -163,8 +168,21 @@ public abstract class GDSemanticType
             },
             GDStringExpression => new GDSimpleSemanticType("String"),
             GDBoolExpression => new GDSimpleSemanticType("bool"),
+            GDCallExpression call => InferFromCallExpression(call),
             _ => GDVariantSemanticType.Instance
         };
+    }
+
+    private static GDSemanticType InferFromCallExpression(GDCallExpression call)
+    {
+        if (call.CallerExpression is GDIdentifierExpression identExpr)
+        {
+            var name = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(name) && char.IsUpper(name[0]))
+                return new GDSimpleSemanticType(name);
+        }
+
+        return GDVariantSemanticType.Instance;
     }
 
     /// <summary>

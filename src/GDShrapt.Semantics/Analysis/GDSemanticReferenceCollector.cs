@@ -636,11 +636,49 @@ internal class GDSemanticReferenceCollector : GDVisitor
         {
             if (current is GDVariableDeclaration varDecl)
             {
-                return varDecl.Type?.BuildName();
+                var typeName = varDecl.Type?.BuildName();
+                if (typeName != null)
+                    return typeName;
+
+                return InferTypeFromInitializer(varDecl.Initializer);
             }
             current = current.Parent;
         }
         return null;
+    }
+
+    private static string? InferTypeFromInitializer(GDExpression? initializer)
+    {
+        if (initializer == null)
+            return null;
+
+        return initializer switch
+        {
+            GDBoolExpression => "bool",
+            GDNumberExpression num => num.Number?.ResolveNumberType() switch
+            {
+                GDNumberType.Double => "float",
+                _ => "int"
+            },
+            GDStringExpression => "String",
+            GDArrayInitializerExpression => "Array",
+            GDDictionaryInitializerExpression => "Dictionary",
+            GDMemberOperatorExpression member => BuildCallerChain(member.CallerExpression),
+            _ => null
+        };
+    }
+
+    private static string? BuildCallerChain(GDExpression? expr)
+    {
+        return expr switch
+        {
+            GDIdentifierExpression ident => ident.Identifier?.Sequence,
+            GDMemberOperatorExpression nested =>
+                BuildCallerChain(nested.CallerExpression) is { } parent && nested.Identifier?.Sequence is { } name
+                    ? $"{parent}.{name}"
+                    : null,
+            _ => null
+        };
     }
 
     #endregion

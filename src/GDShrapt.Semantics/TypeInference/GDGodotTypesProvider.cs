@@ -56,11 +56,11 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
                     // Enum types have built-in methods: values(), keys(), size(), has(), find_key()
                     typeData.MethodDatas ??= new Dictionary<string, List<GDMethodData>>();
-                    AddEnumBuiltinMethod(typeData.MethodDatas, "values", "Array");
-                    AddEnumBuiltinMethod(typeData.MethodDatas, "keys", "Array");
-                    AddEnumBuiltinMethod(typeData.MethodDatas, "size", "int");
-                    AddEnumBuiltinMethodWithParam(typeData.MethodDatas, "has", "bool", "value", "int");
-                    AddEnumBuiltinMethodWithParam(typeData.MethodDatas, "find_key", "Variant", "value", "int");
+                    foreach (var (name, methods) in GDTypeData.CreateEnumBuiltinMethods())
+                    {
+                        if (!typeData.MethodDatas.ContainsKey(name))
+                            typeData.MethodDatas[name] = methods;
+                    }
                 }
 
                 _typeCache.TryAdd(gdScriptName, typeData);
@@ -1133,38 +1133,4 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         return typeName;
     }
 
-    private static void AddEnumBuiltinMethod(Dictionary<string, List<GDMethodData>> methods, string name, string returnType)
-    {
-        if (!methods.ContainsKey(name))
-        {
-            methods[name] = new List<GDMethodData>
-            {
-                new GDMethodData
-                {
-                    GDScriptName = name,
-                    GDScriptReturnTypeName = returnType,
-                    Parameters = Array.Empty<GDParameterInfo>()
-                }
-            };
-        }
-    }
-
-    private static void AddEnumBuiltinMethodWithParam(Dictionary<string, List<GDMethodData>> methods, string name, string returnType, string paramName, string paramType)
-    {
-        if (!methods.ContainsKey(name))
-        {
-            methods[name] = new List<GDMethodData>
-            {
-                new GDMethodData
-                {
-                    GDScriptName = name,
-                    GDScriptReturnTypeName = returnType,
-                    Parameters = new[]
-                    {
-                        new GDParameterInfo { CSharpName = paramName, GDScriptTypeName = paramType }
-                    }
-                }
-            };
-        }
-    }
 }

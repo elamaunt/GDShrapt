@@ -17,7 +17,7 @@ var my_array: Array[int] = []
 var my_dict: Dictionary = {}
 var my_vector: Vector2 = Vector2.ZERO
 var my_color: Color = Color.WHITE
-var my_enum: TestEnum = TestEnum.VALUE_ONE  # 20:0-GD3004-OK
+var my_enum: TestEnum = TestEnum.VALUE_ONE
 
 @onready var child_sprite: Sprite2D = $ChildSprite
 @onready var child_label: Label = $UI/Label
@@ -104,9 +104,9 @@ func test_timer_completion() -> void:
 
 func test_enum_completion() -> void:
 	# After typing 'TestEnum.' - should show enum values
-	my_enum = TestEnum.VALUE_ONE  # 107:1-GD3001-OK
-	my_enum = TestEnum.VALUE_TWO  # 108:1-GD3001-OK
-	my_enum = TestEnum.VALUE_THREE  # 109:1-GD3001-OK
+	my_enum = TestEnum.VALUE_ONE
+	my_enum = TestEnum.VALUE_TWO
+	my_enum = TestEnum.VALUE_THREE
 
 	# After typing 'Key.' - should show global Key enum
 	var space_key: Key = KEY_SPACE

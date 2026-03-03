@@ -80,6 +80,37 @@ internal class GDExpressionTypeService
     }
 
     /// <summary>
+    /// Gets the semantic type for an expression, preserving GDCallableSemanticType.
+    /// Use this when you need callable signature information.
+    /// For simple string type names, use GetExpressionType() instead.
+    /// </summary>
+    public GDSemanticType? GetExpressionSemanticType(GDExpression? expression)
+    {
+        if (expression == null)
+            return null;
+
+        // For identifier expressions, check flow state first
+        if (expression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var scope = expression.GetContainingMethodScope();
+                if (scope != null)
+                {
+                    var flowAnalyzer = GetOrCreateFlowAnalyzer(scope);
+                    var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
+                    if (flowType != null && !flowType.IsVariant)
+                        return flowType;
+                }
+            }
+        }
+
+        // Fallback: type engine semantic inference (direct path)
+        return _typeEngine?.InferSemanticType(expression);
+    }
+
+    /// <summary>
     /// Gets the inferred type for an expression.
     /// Uses flow-sensitive analysis when available.
     /// </summary>
@@ -202,6 +233,14 @@ internal class GDExpressionTypeService
                 // Check if method reference
                 if (symbol?.Kind == GDSymbolKind.Method)
                     return "Callable";
+
+                // For class members with explicit type annotation, return the declared type
+                if (symbol != null && symbol.Kind != GDSymbolKind.Method
+                    && !string.IsNullOrEmpty(symbol.TypeName)
+                    && symbol.TypeName != "Variant")
+                {
+                    return symbol.TypeName;
+                }
 
                 // Fall back to initializer
                 if (scope != null)

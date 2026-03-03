@@ -661,6 +661,23 @@ namespace GDShrapt.Semantics.Validator
             if (targetType == "Variant")
                 return true;
 
+            // Local enum ↔ int compatibility
+            if (_semanticModel != null)
+            {
+                if ((sourceType == "int" && _semanticModel.IsLocalEnumType(targetType)) ||
+                    (targetType == "int" && _semanticModel.IsLocalEnumType(sourceType)))
+                    return true;
+            }
+
+            // Qualified type name matching (Constants.TowerType == TowerType)
+            if (sourceType.Contains('.') || targetType.Contains('.'))
+            {
+                var sourceName = sourceType.Contains('.') ? sourceType.Substring(sourceType.LastIndexOf('.') + 1) : sourceType;
+                var targetName = targetType.Contains('.') ? targetType.Substring(targetType.LastIndexOf('.') + 1) : targetType;
+                if (sourceName == targetName)
+                    return true;
+            }
+
             // Extract base types for generics (Array[int] -> Array)
             var sourceBase = ExtractBaseTypeName(sourceType);
             var targetBase = ExtractBaseTypeName(targetType);
@@ -758,6 +775,23 @@ namespace GDShrapt.Semantics.Validator
             // null is compatible with any reference type
             if (actualType == "null")
                 return true;
+
+            // Local enum ↔ int compatibility
+            if (_semanticModel != null)
+            {
+                if ((actualType == "int" && _semanticModel.IsLocalEnumType(declaredType)) ||
+                    (declaredType == "int" && _semanticModel.IsLocalEnumType(actualType)))
+                    return true;
+            }
+
+            // Qualified type name matching (Constants.TowerType == TowerType)
+            if (actualType.Contains('.') || declaredType.Contains('.'))
+            {
+                var actualName = actualType.Contains('.') ? actualType.Substring(actualType.LastIndexOf('.') + 1) : actualType;
+                var declaredName = declaredType.Contains('.') ? declaredType.Substring(declaredType.LastIndexOf('.') + 1) : declaredType;
+                if (actualName == declaredName)
+                    return true;
+            }
 
             // Use semantic model for detailed compatibility check
             if (_semanticModel != null)
@@ -1162,6 +1196,23 @@ namespace GDShrapt.Semantics.Validator
             if (targetType == valueType)
                 return;
 
+            // Qualified type name matching (Constants.TowerType == TowerType)
+            if (targetType.Contains('.') || valueType.Contains('.'))
+            {
+                var targetName = targetType.Contains('.') ? targetType.Substring(targetType.LastIndexOf('.') + 1) : targetType;
+                var valueName = valueType.Contains('.') ? valueType.Substring(valueType.LastIndexOf('.') + 1) : valueType;
+                if (targetName == valueName)
+                    return;
+            }
+
+            // Local enum ↔ int compatibility
+            if (_semanticModel != null)
+            {
+                if ((valueType == "int" && _semanticModel.IsLocalEnumType(targetType)) ||
+                    (targetType == "int" && _semanticModel.IsLocalEnumType(valueType)))
+                    return;
+            }
+
             // Check if target is an untyped variable (Variant) - allow any assignment
             if (IsUntypedVariable(target))
                 return;
@@ -1232,7 +1283,9 @@ namespace GDShrapt.Semantics.Validator
             switch (op)
             {
                 case GDSingleOperatorType.Negate:
-                    if (!IsNumericType(operandType) && operandType != "Unknown")
+                    if (!IsNumericType(operandType) && !IsVectorType(operandType) &&
+                        operandType != "Color" && operandType != "Quaternion" &&
+                        operandType != "Unknown")
                     {
                         ReportWarning(
                             GDDiagnosticCode.InvalidOperandType,

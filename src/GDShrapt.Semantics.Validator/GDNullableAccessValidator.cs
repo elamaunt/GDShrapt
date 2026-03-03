@@ -166,9 +166,13 @@ public class GDNullableAccessValidator : GDValidationVisitor
         if (varName == "super")
             return null;
 
-        // Skip Signal type - signals are never null, they're built-in class properties
+        // Skip Signal and Callable types - they're never null
         var exprTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
-        if (exprTypeInfo.DisplayName == "Signal")
+        if (exprTypeInfo.DisplayName == "Signal" || exprTypeInfo.DisplayName == "Callable" || exprTypeInfo.DisplayName.StartsWith("Callable("))
+            return null;
+
+        // Skip method references used as Callable (e.g., start.call_deferred(), _on_event.bind())
+        if (callerExpr is GDIdentifierExpression && IsMethodReference(varName))
             return null;
 
         // Check if guarded by null check in 'and' expression
@@ -654,5 +658,25 @@ public class GDNullableAccessValidator : GDValidationVisitor
             GDIndexerExpression => "[...]",
             _ => null
         };
+    }
+
+    private bool IsMethodReference(string name)
+    {
+        // Check if identifier is a local method
+        var localMethods = _semanticModel.GetMethods();
+        if (localMethods.Any(m => m.Name == name))
+            return true;
+
+        // Check if identifier is an inherited method from base class
+        var runtimeProvider = _semanticModel.RuntimeProvider;
+        if (runtimeProvider != null)
+        {
+            var baseType = _semanticModel.BaseTypeName;
+            var member = runtimeProvider.GetMember(baseType, name);
+            if (member != null && member.Kind == GDRuntimeMemberKind.Method)
+                return true;
+        }
+
+        return false;
     }
 }

@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using System.Collections.Generic;
 
 namespace GDShrapt.Semantics
 {
@@ -10,11 +11,16 @@ namespace GDShrapt.Semantics
     {
         private readonly GDSemanticModel _semanticModel;
         private readonly GDMethodFlowSummaryRegistry _registry;
+        private readonly IReadOnlyList<GDSignalConnectionEntry>? _externalSignalConnections;
 
-        public GDCrossMethodFlowAnalyzer(GDSemanticModel semanticModel, GDMethodFlowSummaryRegistry registry)
+        public GDCrossMethodFlowAnalyzer(
+            GDSemanticModel semanticModel,
+            GDMethodFlowSummaryRegistry registry,
+            IReadOnlyList<GDSignalConnectionEntry>? externalSignalConnections = null)
         {
             _semanticModel = semanticModel;
             _registry = registry;
+            _externalSignalConnections = externalSignalConnections;
         }
 
         /// <summary>
@@ -26,7 +32,8 @@ namespace GDShrapt.Semantics
 
             BuildMethodSummaries();
 
-            var safetyAnalyzer = new GDMethodOnreadySafetyAnalyzer(_semanticModel, _registry);
+            var signalConnections = CollectSignalConnections();
+            var safetyAnalyzer = new GDMethodOnreadySafetyAnalyzer(_semanticModel, _registry, signalConnections);
             state.CallGraph.Clear();
             foreach (var kvp in safetyAnalyzer.GetCallGraph())
             {
@@ -49,6 +56,21 @@ namespace GDShrapt.Semantics
             }
 
             return state;
+        }
+
+        private IReadOnlyList<GDSignalConnectionEntry> CollectSignalConnections()
+        {
+            var scriptFile = _semanticModel.ScriptFile;
+            var local = scriptFile?.Class != null
+                ? GDSignalConnectionCollector.CollectConnectionsInFile(scriptFile, _semanticModel.RuntimeProvider)
+                : System.Array.Empty<GDSignalConnectionEntry>();
+
+            if (_externalSignalConnections == null || _externalSignalConnections.Count == 0)
+                return local;
+
+            var merged = new List<GDSignalConnectionEntry>(local);
+            merged.AddRange(_externalSignalConnections);
+            return merged;
         }
 
         private void BuildMethodSummaries()

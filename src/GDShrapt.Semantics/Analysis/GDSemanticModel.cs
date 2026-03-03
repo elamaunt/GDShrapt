@@ -99,6 +99,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly GDFlowQueryService _flowQueryService;
     private readonly GDLambdaTypeService _lambdaTypeService;
 
+    private IReadOnlyList<GDSignalConnectionEntry>? _externalSignalConnections;
+
     private readonly Dictionary<GDNode, string> _nodeTypes = new();
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes = new();
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
@@ -214,7 +216,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             () =>
             {
                 var registry = new GDMethodFlowSummaryRegistry();
-                var analyzer = new GDCrossMethodFlowAnalyzer(this, registry);
+                var analyzer = new GDCrossMethodFlowAnalyzer(this, registry, _externalSignalConnections);
                 return (analyzer.Analyze(), registry);
             },
             IsOnreadyOrReadyInitializedVariable,
@@ -803,8 +805,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Checks if a type is a local enum type.
     /// </summary>
-    internal bool IsLocalEnumType(string typeName)
+    public bool IsLocalEnumType(string typeName)
         => _nullabilityService.IsEnumType(typeName);
+
+    /// <summary>
+    /// Injects external signal connections (e.g., from .tscn scene files) for cross-method safety analysis.
+    /// Resets cached cross-method analysis state so it's recomputed with the new connections.
+    /// </summary>
+    public void InjectExternalSignalConnections(IReadOnlyList<GDSignalConnectionEntry> connections)
+    {
+        _externalSignalConnections = connections;
+        _crossMethodFlowService.ResetCache();
+    }
 
     /// <summary>
     /// Checks if a variable has the @onready attribute.

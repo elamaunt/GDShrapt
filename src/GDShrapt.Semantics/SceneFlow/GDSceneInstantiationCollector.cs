@@ -20,9 +20,9 @@ internal class GDSceneInstantiationCollector : GDVisitor
     {
         var callName = GDNodePathExtractor.GetCallName(node);
 
-        if (callName == "instantiate")
+        if (callName == GDWellKnownFunctions.Instantiate)
             TryCollectInstantiation(node);
-        else if (callName == "add_child" || callName == "add_sibling")
+        else if (GDWellKnownFunctions.IsAddChild(callName))
             TryCollectAddChild(node, callName);
         else if (callName == "set_script")
             TryCollectSetScript(node);
@@ -121,9 +121,16 @@ internal class GDSceneInstantiationCollector : GDVisitor
                 parentPath = GDNodePathExtractor.ExtractFromGetNodeExpression(getNodeExpr);
         }
 
+        var childArg = args[0];
+        string? childVarName = null;
+        if (childArg is GDIdentifierExpression childIdent)
+            childVarName = childIdent.Identifier?.Sequence;
+
         AddChildCalls.Add(new GDAddChildInfo
         {
             ParentPath = parentPath,
+            ChildArgument = childArg,
+            ChildVariableName = childVarName,
             IsConditional = _conditionalDepth > 0,
             LineNumber = GetLineNumber(call)
         });
@@ -252,6 +259,8 @@ internal class GDInstantiationInfo
 internal class GDAddChildInfo
 {
     public string? ParentPath { get; init; }
+    public GDExpression? ChildArgument { get; init; }
+    public string? ChildVariableName { get; init; }
     public bool IsConditional { get; init; }
     public int LineNumber { get; init; }
 }

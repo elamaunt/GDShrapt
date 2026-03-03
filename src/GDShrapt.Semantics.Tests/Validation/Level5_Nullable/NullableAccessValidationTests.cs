@@ -149,6 +149,24 @@ func setup():
     }
 
     [TestMethod]
+    public void ConstPreload_MethodCall_NoDiagnostic()
+    {
+        var code = @"
+extends Node
+
+const MY_SCENE: = preload(""res://scene.tscn"")
+
+func test():
+    var instance = MY_SCENE.instantiate()
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        var constDiags = nullDiagnostics.Where(d => d.Message.Contains("'MY_SCENE'")).ToList();
+        Assert.AreEqual(0, constDiags.Count,
+            $"const with preload() is always non-null. Found: {FormatDiagnostics(constDiags)}");
+    }
+
+    [TestMethod]
     public void TypedNode_ExportWithoutGuard_PropertyAccess_ReportsForExportVar()
     {
         var code = @"

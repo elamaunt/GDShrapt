@@ -196,7 +196,7 @@ func trigger_chain():
 
 # Binding arguments
 func connect_with_bind():
-	simple_signal.connect(_on_simple_with_context.bind("extra_data", 42))  # 199:23-GD7007-OK
+	simple_signal.connect(_on_simple_with_context.bind("extra_data", 42))
 
 
 func _on_simple_with_context(context: String, value: int):

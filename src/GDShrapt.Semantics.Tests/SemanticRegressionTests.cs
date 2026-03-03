@@ -266,6 +266,216 @@ func test():
 
     #endregion
 
+    #region P7: Setter Parameter Type Inference
+
+    [TestMethod]
+    public void SetterParameter_InferredBool_NoTypeMismatch()
+    {
+        var code = @"
+extends Node
+
+@export var scene: PackedScene
+var is_player := false:
+    set(value):
+        is_player = value
+";
+        var diagnostics = ValidateCode(code);
+        var typeErrors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.TypeMismatch &&
+            d.Message?.Contains("bool") == true).ToList();
+
+        Assert.AreEqual(0, typeErrors.Count,
+            $"Setter 'value' should be inferred as bool from ':= false'. Found: {FormatDiagnostics(typeErrors)}");
+    }
+
+    [TestMethod]
+    public void SetterParameter_InferredFloat_NoTypeMismatch()
+    {
+        var code = @"
+extends Node
+
+@export var scene: PackedScene
+var speed := 1.0:
+    set(value):
+        speed = value
+";
+        var diagnostics = ValidateCode(code);
+        var typeErrors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.TypeMismatch &&
+            d.Message?.Contains("float") == true).ToList();
+
+        Assert.AreEqual(0, typeErrors.Count,
+            $"Setter 'value' should be inferred as float from ':= 1.0'. Found: {FormatDiagnostics(typeErrors)}");
+    }
+
+    [TestMethod]
+    public void SetterParameter_InferredString_NoTypeMismatch()
+    {
+        var code = @"
+extends Node
+
+@export var scene: PackedScene
+var label := ""hello"":
+    set(value):
+        label = value
+";
+        var diagnostics = ValidateCode(code);
+        var typeErrors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.TypeMismatch &&
+            d.Message?.Contains("String") == true).ToList();
+
+        Assert.AreEqual(0, typeErrors.Count,
+            $"Setter 'value' should be inferred as String from ':= \"hello\"'. Found: {FormatDiagnostics(typeErrors)}");
+    }
+
+    [TestMethod]
+    public void SetterParameter_ExplicitType_NoTypeMismatch()
+    {
+        var code = @"
+extends Node
+
+@export var scene: PackedScene
+var health: float = 100.0:
+    set(value):
+        health = value
+";
+        var diagnostics = ValidateCode(code);
+        var typeErrors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.TypeMismatch &&
+            d.Message?.Contains("float") == true).ToList();
+
+        Assert.AreEqual(0, typeErrors.Count,
+            $"Setter 'value' should use explicit type 'float'. Found: {FormatDiagnostics(typeErrors)}");
+    }
+
+    [TestMethod]
+    public void SetterParameter_AfterExportVar_NoTypeLeak()
+    {
+        var code = @"
+extends Node
+
+@export var battler_anim_scene: PackedScene
+@export var ai_scene: PackedScene
+@export var actor_scene: PackedScene
+var is_player := false:
+    set(value):
+        is_player = value
+";
+        var diagnostics = ValidateCode(code);
+        var typeErrors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.TypeMismatch &&
+            d.Message?.Contains("PackedScene") == true).ToList();
+
+        Assert.AreEqual(0, typeErrors.Count,
+            $"Setter 'value' after @export PackedScene should not get PackedScene type. Found: {FormatDiagnostics(typeErrors)}");
+    }
+
+    #endregion
+
+    #region P8: User-Defined Enum Built-in Methods
+
+    [TestMethod]
+    public void UserEnum_ValuesMethod_NoMethodNotFound()
+    {
+        var code = @"
+extends Node
+
+enum Colors { RED, GREEN, BLUE }
+
+func test():
+    var v = Colors.values()
+";
+        var diagnostics = ValidateCode(code);
+        var errors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message?.Contains("values") == true).ToList();
+
+        Assert.AreEqual(0, errors.Count,
+            $"Enum.values() should be recognized. Found: {FormatDiagnostics(errors)}");
+    }
+
+    [TestMethod]
+    public void UserEnum_KeysMethod_NoMethodNotFound()
+    {
+        var code = @"
+extends Node
+
+enum Colors { RED, GREEN, BLUE }
+
+func test():
+    var k = Colors.keys()
+";
+        var diagnostics = ValidateCode(code);
+        var errors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message?.Contains("keys") == true).ToList();
+
+        Assert.AreEqual(0, errors.Count,
+            $"Enum.keys() should be recognized. Found: {FormatDiagnostics(errors)}");
+    }
+
+    [TestMethod]
+    public void UserEnum_SizeMethod_NoMethodNotFound()
+    {
+        var code = @"
+extends Node
+
+enum Colors { RED, GREEN, BLUE }
+
+func test():
+    var s = Colors.size()
+";
+        var diagnostics = ValidateCode(code);
+        var errors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message?.Contains("size") == true).ToList();
+
+        Assert.AreEqual(0, errors.Count,
+            $"Enum.size() should be recognized. Found: {FormatDiagnostics(errors)}");
+    }
+
+    [TestMethod]
+    public void UserEnum_HasMethod_NoMethodNotFound()
+    {
+        var code = @"
+extends Node
+
+enum Colors { RED, GREEN, BLUE }
+
+func test():
+    var h = Colors.has(1)
+";
+        var diagnostics = ValidateCode(code);
+        var errors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message?.Contains("has") == true).ToList();
+
+        Assert.AreEqual(0, errors.Count,
+            $"Enum.has() should be recognized. Found: {FormatDiagnostics(errors)}");
+    }
+
+    [TestMethod]
+    public void UserEnum_FindKeyMethod_NoMethodNotFound()
+    {
+        var code = @"
+extends Node
+
+enum Colors { RED, GREEN, BLUE }
+
+func test():
+    var fk = Colors.find_key(1)
+";
+        var diagnostics = ValidateCode(code);
+        var errors = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message?.Contains("find_key") == true).ToList();
+
+        Assert.AreEqual(0, errors.Count,
+            $"Enum.find_key() should be recognized. Found: {FormatDiagnostics(errors)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)

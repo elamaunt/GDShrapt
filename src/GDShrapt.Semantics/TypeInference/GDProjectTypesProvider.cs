@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using GDShrapt.TypesMap;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -199,6 +200,24 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     };
                 }
             }
+        }
+
+        foreach (var (name, methodDatas) in GDTypeData.CreateEnumBuiltinMethods())
+        {
+            var md = methodDatas[0];
+            info.Methods[name] = new GDProjectMethodInfo
+            {
+                Name = md.GDScriptName!,
+                ReturnTypeName = md.GDScriptReturnTypeName ?? "Variant",
+                IsStatic = md.IsStatic,
+                Parameters = md.Parameters?
+                    .Select(p => new GDProjectParameterInfo
+                    {
+                        Name = p.CSharpName ?? "arg",
+                        TypeName = p.GDScriptTypeName ?? "Variant"
+                    })
+                    .ToList() ?? new()
+            };
         }
 
         return info;
@@ -566,7 +585,6 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 memberInfo = GDRuntimeMemberInfo.Property(property.Name, propertyType, property.IsStatic);
             return (memberInfo, typeName);
         }
-
         // Check signals
         if (projectType.Signals.TryGetValue(memberName, out var signal))
         {

@@ -54,7 +54,7 @@ namespace GDShrapt.Reader
             if (char.IsNumber(value[0]))
                 throw new ArgumentException("Invalid identifier format");
 
-            if (value.Any(x => !char.IsLetter(x) && !char.IsDigit(x) && x != '_'))
+            if (value.Any(x => !char.IsLetter(x) && !char.IsDigit(x) && x != '_' && x != '.'))
                 throw new ArgumentException("Invalid identifier format");
 
         }

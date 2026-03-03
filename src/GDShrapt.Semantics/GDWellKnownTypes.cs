@@ -132,6 +132,9 @@ internal static class GDWellKnownTypes
 
     public static bool IsContainerType(string typeName) => typeName is Containers.Array or Containers.Dictionary;
 
+    public static bool IsCallableType(string? typeName) =>
+        typeName != null && (typeName == Other.Callable || typeName.StartsWith("Callable("));
+
     public static bool IsPrimitiveType(string typeName) =>
         typeName is Numeric.Int or Numeric.Float or Numeric.Bool or Strings.String or Void;
 

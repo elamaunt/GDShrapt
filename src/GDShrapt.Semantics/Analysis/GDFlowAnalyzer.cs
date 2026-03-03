@@ -193,12 +193,14 @@ internal class GDFlowAnalyzer : GDVisitor
         if (string.IsNullOrEmpty(name))
             return;
 
-        var declType = varDecl.Type?.BuildName();
-        var initType = varDecl.Initializer != null
-            ? ResolveTypeWithFallback(varDecl.Initializer)
+        var declSemType = varDecl.Type != null
+            ? GDSemanticType.FromTypeNode(varDecl.Type)
+            : null;
+        var initSemType = varDecl.Initializer != null
+            ? ResolveSemanticType(varDecl.Initializer)
             : null;
 
-        _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(declType), GDSemanticType.FromRuntimeTypeName(initType));
+        _currentState.DeclareVariable(name, declSemType, initSemType);
         RecordState(varDecl);
     }
 
@@ -224,11 +226,14 @@ internal class GDFlowAnalyzer : GDVisitor
                     // Ensure class member variables have their declared type registered
                     EnsureClassMemberDeclared(name, identExpr);
 
-                    var rhsType = ResolveTypeWithFallback(dualOp.RightExpression);
-                    if (!string.IsNullOrEmpty(rhsType))
+                    var rhsSemType = ResolveSemanticType(dualOp.RightExpression);
+                    if (rhsSemType != null && !rhsSemType.IsVariant)
                     {
-                        var adjustedType = AdjustTypeForDeclaredType(name, rhsType);
-                        _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(adjustedType), dualOp);
+                        var adjustedType = AdjustTypeForDeclaredType(name, rhsSemType.DisplayName);
+                        if (adjustedType != rhsSemType.DisplayName)
+                            _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(adjustedType), dualOp);
+                        else
+                            _currentState.SetVariableType(name, rhsSemType, dualOp);
                     }
                 }
             }
@@ -308,6 +313,42 @@ internal class GDFlowAnalyzer : GDVisitor
             current = provider.GetBaseType(current);
         }
         return false;
+    }
+
+    /// <summary>
+    /// Resolves semantic type for an expression without string roundtrip.
+    /// Returns GDSemanticType directly, preserving GDCallableSemanticType for method refs.
+    /// </summary>
+    private GDSemanticType? ResolveSemanticType(GDExpression? expr)
+    {
+        if (expr == null)
+            return null;
+
+        if (_resolvingExpressions.Contains(expr))
+            return null;
+
+        if (_resolvingExpressions.Count >= MaxResolveDepth)
+            return null;
+
+        _resolvingExpressions.Add(expr);
+        try
+        {
+            // Try expression type provider first (string path — legacy)
+            var primaryType = _expressionTypeProvider?.Invoke(expr);
+            if (!string.IsNullOrEmpty(primaryType) && primaryType != "Variant")
+                return GDSemanticType.FromRuntimeTypeName(primaryType);
+
+            // Semantic type engine — direct path, preserves GDCallableSemanticType
+            var semanticType = _typeEngine?.InferSemanticType(expr);
+            if (semanticType != null && !semanticType.IsVariant)
+                return semanticType;
+
+            return primaryType != null ? GDSemanticType.FromRuntimeTypeName(primaryType) : semanticType;
+        }
+        finally
+        {
+            _resolvingExpressions.Remove(expr);
+        }
     }
 
     /// <summary>

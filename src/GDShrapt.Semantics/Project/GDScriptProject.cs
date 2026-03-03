@@ -297,7 +297,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// Resolves .tres resource class names using loaded scripts.
     /// Should be called after LoadScripts + LoadResources but before dead code analysis.
     /// </summary>
-    internal void ResolveTresClassNames()
+    public void ResolveTresClassNames()
     {
         _tresResourceProvider?.ResolveClassNames(this);
     }
