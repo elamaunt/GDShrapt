@@ -497,7 +497,7 @@ test_scripts/completion_test.gd
 40:20 GDIdentifierExpression my_string -> String
 40:36 GDStringExpression "," -> String
 41:1 GDCallExpression print() -> void
-41:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+41:1 GDIdentifierExpression print -> Callable(Array...) -> void
 41:7 GDIdentifierExpression upper -> String
 41:14 GDIdentifierExpression lower -> String
 41:21 GDIdentifierExpression length -> int
@@ -535,7 +535,7 @@ test_scripts/completion_test.gd
 53:1 GDMemberOperatorExpression my_array.reverse -> void
 53:1 GDIdentifierExpression my_array -> Array[int]
 54:1 GDCallExpression print() -> void
-54:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+54:1 GDIdentifierExpression print -> Callable(Array...) -> void
 54:7 GDIdentifierExpression size -> int
 54:13 GDIdentifierExpression first -> int
 54:20 GDIdentifierExpression last -> int
@@ -568,7 +568,7 @@ test_scripts/completion_test.gd
 64:1 GDMemberOperatorExpression my_dict.clear -> void
 64:1 GDIdentifierExpression my_dict -> Dictionary
 65:1 GDCallExpression print() -> void
-65:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+65:1 GDIdentifierExpression print -> Callable(Array...) -> void
 65:7 GDIdentifierExpression keys -> Array
 65:13 GDIdentifierExpression values -> Array
 65:21 GDIdentifierExpression has_key -> bool
@@ -598,7 +598,7 @@ test_scripts/completion_test.gd
 74:38 GDMemberOperatorExpression Vector2.ONE -> Vector2
 74:38 GDIdentifierExpression Vector2 -> Vector2
 75:1 GDCallExpression print() -> void
-75:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+75:1 GDIdentifierExpression print -> Callable(Array...) -> void
 75:7 GDIdentifierExpression normalized -> Vector2
 75:19 GDIdentifierExpression length -> float
 75:27 GDIdentifierExpression length_squared -> float
@@ -644,7 +644,7 @@ test_scripts/completion_test.gd
 91:11 GDMemberOperatorExpression my_color.to_html -> String
 91:11 GDIdentifierExpression my_color -> Color
 92:1 GDCallExpression print() -> void
-92:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+92:1 GDIdentifierExpression print -> Callable(Array...) -> void
 92:7 GDIdentifierExpression lighter -> Color
 92:16 GDIdentifierExpression darker -> Color
 92:24 GDIdentifierExpression inverted -> Color
@@ -668,7 +668,7 @@ test_scripts/completion_test.gd
 101:17 GDMemberOperatorExpression timer_node.time_left -> float
 101:17 GDIdentifierExpression timer_node -> Timer
 102:1 GDCallExpression print() -> void
-102:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+102:1 GDIdentifierExpression print -> Callable(Array...) -> void
 102:7 GDIdentifierExpression time_left -> float
 105:0 Method test_enum_completion -> void
 107:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_ONE -> TestEnum
@@ -688,7 +688,7 @@ test_scripts/completion_test.gd
 113:1 Variable enter_key -> Key
 113:22 GDIdentifierExpression KEY_ENTER -> Variant
 114:1 GDCallExpression print() -> void
-114:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+114:1 GDIdentifierExpression print -> Callable(Array...) -> void
 114:7 GDIdentifierExpression space_key -> Key
 114:18 GDIdentifierExpression enter_key -> Key
 117:0 Method test_global_completion -> void
@@ -707,7 +707,7 @@ test_scripts/completion_test.gd
 124:17 GDCallExpression get_global_mouse_position() -> Vector2
 124:17 GDIdentifierExpression get_global_mouse_position -> Vector2
 126:1 GDCallExpression print() -> void
-126:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+126:1 GDIdentifierExpression print -> Callable(Array...) -> void
 126:7 GDIdentifierExpression viewport -> Viewport
 126:17 GDIdentifierExpression tree -> SceneTree
 126:23 GDIdentifierExpression pressed -> bool
@@ -739,7 +739,7 @@ test_scripts/completion_test.gd
 140:1 Iterator v -> Variant
 140:10 GDIdentifierExpression vectors -> Array[Vector2]
 142:2 GDCallExpression print() -> void
-142:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+142:2 GDIdentifierExpression print -> Callable(Array...) -> void
 142:8 GDCallExpression v.length() -> float
 142:8 GDMemberOperatorExpression v.length -> float
 142:8 GDIdentifierExpression v -> Vector2
@@ -1500,7 +1500,7 @@ test_scripts/cross_file_inference.gd
 332:35 GDMemberOperatorExpression entity_manager.create_entity -> Entity
 332:35 GDIdentifierExpression entity_manager -> ECSLikeSystem
 332:64 GDCallExpression str() -> String
-332:64 GDIdentifierExpression str -> Callable(Object[]...) -> String
+332:64 GDIdentifierExpression str -> Callable(Array...) -> String
 332:68 GDIdentifierExpression input -> Variant
 333:2 GDCallExpression results[].append() -> void
 333:2 GDMemberOperatorExpression results[].append -> void
@@ -1597,7 +1597,7 @@ test_scripts/cycles_test.gd
 39:11 GDDualOperatorExpression resultAdditionstr() -> String
 39:11 GDIdentifierExpression result -> String
 39:20 GDCallExpression str() -> String
-39:20 GDIdentifierExpression str -> Callable(Object[]...) -> String
+39:20 GDIdentifierExpression str -> Callable(Array...) -> String
 39:24 GDIdentifierExpression i -> Variant
 40:1 GDReturnExpression return result -> Variant
 40:8 GDIdentifierExpression result -> String
@@ -1719,7 +1719,7 @@ test_scripts/cycles_test.gd
 96:7 GDIdentifierExpression node -> Dictionary
 96:15 GDIdentifierExpression null -> null
 97:2 GDCallExpression print() -> void
-97:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+97:2 GDIdentifierExpression print -> Callable(Array...) -> void
 97:8 GDCallExpression node.get() -> Variant
 97:8 GDMemberOperatorExpression node.get -> Variant
 97:8 GDIdentifierExpression node -> Dictionary
@@ -1793,7 +1793,7 @@ test_scripts/cycles_test.gd
 128:9 GDDualOperatorExpression accAdditionstr() -> String
 128:9 GDIdentifierExpression acc -> Variant
 128:15 GDCallExpression str() -> String
-128:15 GDIdentifierExpression str -> Callable(Object[]...) -> String
+128:15 GDIdentifierExpression str -> Callable(Array...) -> String
 128:19 GDIdentifierExpression item -> Variant
 129:1 GDReturnExpression return acc -> Variant
 129:8 GDIdentifierExpression acc -> Variant
@@ -1926,7 +1926,7 @@ test_scripts/cyclic_inference.gd
 51:8 GDCallExpression transform_stage_1() -> Variant
 51:8 GDIdentifierExpression transform_stage_1 -> Callable
 51:26 GDCallExpression str() -> String
-51:26 GDIdentifierExpression str -> Callable(Object[]...) -> String
+51:26 GDIdentifierExpression str -> Callable(Array...) -> String
 51:30 GDIdentifierExpression value -> Variant
 56:0 Method even_check -> bool
 56:16 Parameter n -> Variant
@@ -2317,7 +2317,7 @@ test_scripts/cyclic_inference.gd
 236:9 GDDualOperatorExpression currentAdditionstr() -> String
 236:9 GDIdentifierExpression current -> Variant
 236:19 GDCallExpression str() -> String
-236:19 GDIdentifierExpression str -> Callable(Object[]...) -> String
+236:19 GDIdentifierExpression str -> Callable(Array...) -> String
 236:23 GDIdentifierExpression step -> Variant
 238:1 GDReturnExpression return current -> Variant
 238:8 GDIdentifierExpression current -> Variant
@@ -2564,7 +2564,7 @@ test_scripts/diagnostics_issues.gd
 16:0 Signal used_signal -> Signal(value: int)
 19:0 Method _ready -> void
 20:1 GDCallExpression print() -> void
-20:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+20:1 GDIdentifierExpression print -> Callable(Array...) -> void
 20:7 GDIdentifierExpression used_variable -> int
 21:1 GDCallExpression used_signal.emit() -> void
 21:1 GDMemberOperatorExpression used_signal.emit -> void
@@ -2574,7 +2574,7 @@ test_scripts/diagnostics_issues.gd
 26:1 GDPassExpression pass -> void
 29:0 Method used_function -> void
 30:1 GDCallExpression print() -> void
-30:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+30:1 GDIdentifierExpression print -> Callable(Array...) -> void
 30:7 GDStringExpression "This funct..." -> String
 33:0 Method missing_return_path -> int
 34:1 Variable x -> int
@@ -2589,13 +2589,13 @@ test_scripts/diagnostics_issues.gd
 42:16 GDMemberOperatorExpression Vector2.ZERO -> Vector2
 42:16 GDIdentifierExpression Vector2 -> Vector2
 43:1 GDCallExpression print() -> void
-43:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+43:1 GDIdentifierExpression print -> Callable(Array...) -> void
 43:7 GDIdentifierExpression position -> Vector2
 46:0 Method another_shadowing -> void
 48:1 Variable used_variable -> int
 48:22 GDNumberExpression 100 -> int
 49:1 GDCallExpression print() -> void
-49:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+49:1 GDIdentifierExpression print -> Callable(Array...) -> void
 49:7 GDIdentifierExpression used_variable -> int
 52:0 Method unreachable_code -> int
 53:1 GDReturnExpression return 42 -> Variant
@@ -2603,7 +2603,7 @@ test_scripts/diagnostics_issues.gd
 55:1 Variable x -> int
 55:10 GDNumberExpression 10 -> int
 56:1 GDCallExpression print() -> void
-56:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+56:1 GDIdentifierExpression print -> Callable(Array...) -> void
 56:7 GDIdentifierExpression x -> int
 57:1 GDReturnExpression return x -> Variant
 57:8 GDIdentifierExpression x -> int
@@ -2615,7 +2615,7 @@ test_scripts/diagnostics_issues.gd
 62:12 GDNumberExpression 5 -> int
 63:2 GDPassExpression pass -> void
 65:2 GDCallExpression print() -> void
-65:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+65:2 GDIdentifierExpression print -> Callable(Array...) -> void
 65:8 GDStringExpression "Less than ..." -> String
 68:0 Method redundant_condition -> void
 69:1 Variable flag -> bool
@@ -2624,13 +2624,13 @@ test_scripts/diagnostics_issues.gd
 70:4 GDIdentifierExpression flag -> bool
 70:12 GDBoolExpression true -> bool
 71:2 GDCallExpression print() -> void
-71:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+71:2 GDIdentifierExpression print -> Callable(Array...) -> void
 71:8 GDStringExpression "Flag is tr..." -> String
 73:4 GDDualOperatorExpression flagNotEqualfalse -> bool
 73:4 GDIdentifierExpression flag -> bool
 73:12 GDBoolExpression false -> bool
 74:2 GDCallExpression print() -> void
-74:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+74:2 GDIdentifierExpression print -> Callable(Array...) -> void
 74:8 GDStringExpression "Still true" -> String
 77:0 Method deprecated_style -> void
 79:1 Variable name -> String
@@ -2640,7 +2640,7 @@ test_scripts/diagnostics_issues.gd
 80:15 GDStringExpression "Hello, %s!" -> String
 80:30 GDIdentifierExpression name -> String
 81:1 GDCallExpression print() -> void
-81:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+81:1 GDIdentifierExpression print -> Callable(Array...) -> void
 81:7 GDIdentifierExpression message -> String
 84:0 Method potential_null_access -> void
 85:1 Variable node -> Node
@@ -2648,7 +2648,7 @@ test_scripts/diagnostics_issues.gd
 85:12 GDIdentifierExpression get_node_or_null -> Node
 85:29 GDStringExpression "MaybeExist..." -> String
 87:1 GDCallExpression print() -> void
-87:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+87:1 GDIdentifierExpression print -> Callable(Array...) -> void
 87:7 GDMemberOperatorExpression node.name -> StringName
 87:7 GDIdentifierExpression node -> Node
 90:0 Method unused_loop_variable -> void
@@ -2657,7 +2657,7 @@ test_scripts/diagnostics_issues.gd
 91:10 GDIdentifierExpression range -> Callable(int) -> Array
 91:16 GDNumberExpression 10 -> int
 93:2 GDCallExpression print() -> void
-93:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+93:2 GDIdentifierExpression print -> Callable(Array...) -> void
 93:8 GDStringExpression "Iteration" -> String
 96:0 Method modifying_loop_variable -> void
 97:1 Variable items -> Array[int]
@@ -2673,7 +2673,7 @@ test_scripts/diagnostics_issues.gd
 99:2 GDIdentifierExpression item -> int
 99:10 GDNumberExpression 1 -> int
 100:2 GDCallExpression print() -> void
-100:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+100:2 GDIdentifierExpression print -> Callable(Array...) -> void
 100:8 GDIdentifierExpression item -> int
 103:0 Method duplicate_keys -> Dictionary
 105:1 GDReturnExpression return {...} -> Variant
@@ -2693,7 +2693,7 @@ test_scripts/diagnostics_issues.gd
 114:8 GDNumberExpression 0 -> int
 114:13 GDBoolExpression true -> bool
 115:2 GDCallExpression print() -> void
-115:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+115:2 GDIdentifierExpression print -> Callable(Array...) -> void
 115:8 GDStringExpression "Always exe..." -> String
 118:0 Method always_false_condition -> void
 119:1 Variable x -> int
@@ -2704,7 +2704,7 @@ test_scripts/diagnostics_issues.gd
 120:8 GDNumberExpression 0 -> int
 120:14 GDBoolExpression false -> bool
 121:2 GDCallExpression print() -> void
-121:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+121:2 GDIdentifierExpression print -> Callable(Array...) -> void
 121:8 GDStringExpression "Never exec..." -> String
 124:0 Method integer_division_issue -> float
 126:1 Variable a -> int
@@ -2726,38 +2726,38 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 26:1 Variable used_var -> int
 26:17 GDNumberExpression 42 -> int
 27:1 GDCallExpression print() -> void
-27:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+27:1 GDIdentifierExpression print -> Callable(Array...) -> void
 27:7 GDIdentifierExpression used_var -> int
 31:0 Method test_gdl201_invalid -> void
 32:1 Variable unused_var -> int
 32:19 GDNumberExpression 42 -> int
 33:1 GDCallExpression print() -> void
-33:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+33:1 GDIdentifierExpression print -> Callable(Array...) -> void
 33:7 GDStringExpression "Not using ..." -> String
 37:0 Method test_gdl201_suppressed -> void
 39:1 Variable suppressed_unused -> int
 39:26 GDNumberExpression 42 -> int
 40:1 GDCallExpression print() -> void
-40:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+40:1 GDIdentifierExpression print -> Callable(Array...) -> void
 40:7 GDStringExpression "Done" -> String
 48:0 Method test_gdl202_valid -> void
 48:23 Parameter param -> int
 49:1 GDCallExpression print() -> void
-49:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+49:1 GDIdentifierExpression print -> Callable(Array...) -> void
 49:7 GDIdentifierExpression param -> int
 53:0 Method test_gdl202_invalid -> void
 53:25 Parameter unused_param -> int
 54:1 GDCallExpression print() -> void
-54:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+54:1 GDIdentifierExpression print -> Callable(Array...) -> void
 54:7 GDStringExpression "Not using ..." -> String
 59:0 Method test_gdl202_suppressed -> void
 59:28 Parameter suppressed_param -> int
 60:1 GDCallExpression print() -> void
-60:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+60:1 GDIdentifierExpression print -> Callable(Array...) -> void
 60:7 GDStringExpression "Done" -> String
 68:0 Method test_gdl203_valid -> void
 69:1 GDCallExpression print() -> void
-69:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+69:1 GDIdentifierExpression print -> Callable(Array...) -> void
 69:7 GDStringExpression "This funct..." -> String
 73:0 Method test_gdl203_invalid -> void
 74:1 GDPassExpression pass -> void
@@ -2791,19 +2791,19 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 116:1 Variable local_only_var -> int
 116:23 GDNumberExpression 50 -> int
 117:1 GDCallExpression print() -> void
-117:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+117:1 GDIdentifierExpression print -> Callable(Array...) -> void
 117:7 GDIdentifierExpression local_only_var -> int
 121:0 Method test_gdl211_invalid -> void
 122:1 Variable class_level_var -> int
 122:24 GDNumberExpression 200 -> int
 123:1 GDCallExpression print() -> void
-123:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+123:1 GDIdentifierExpression print -> Callable(Array...) -> void
 123:7 GDIdentifierExpression class_level_var -> int
 127:0 Method test_gdl211_suppressed -> void
 129:1 Variable class_level_var -> int
 129:24 GDNumberExpression 300 -> int
 130:1 GDCallExpression print() -> void
-130:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+130:1 GDIdentifierExpression print -> Callable(Array...) -> void
 130:7 GDIdentifierExpression class_level_var -> int
 138:0 Method test_gdl213_valid -> bool
 138:23 Parameter a -> int
@@ -2858,7 +2858,7 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 191:5 GDIdentifierExpression x -> int
 191:9 GDNumberExpression 1 -> int
 192:1 GDCallExpression print() -> void
-192:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+192:1 GDIdentifierExpression print -> Callable(Array...) -> void
 192:7 GDIdentifierExpression x -> int
 196:0 Method test_gdl230_invalid -> void
 197:1 Variable x -> int
@@ -2867,7 +2867,7 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 198:1 GDIdentifierExpression x -> int
 198:5 GDIdentifierExpression x -> int
 199:1 GDCallExpression print() -> void
-199:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+199:1 GDIdentifierExpression print -> Callable(Array...) -> void
 199:7 GDIdentifierExpression x -> int
 203:0 Method test_gdl230_suppressed -> void
 204:1 Variable x -> int
@@ -2876,7 +2876,7 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 206:1 GDIdentifierExpression x -> int
 206:5 GDIdentifierExpression x -> int
 207:1 GDCallExpression print() -> void
-207:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+207:1 GDIdentifierExpression print -> Callable(Array...) -> void
 207:7 GDIdentifierExpression x -> int
 
 test_scripts/diagnostics/linter/complexity_rules.gd
@@ -2892,7 +2892,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 23:6 GDIdentifierExpression x -> int
 23:10 GDNumberExpression 100 -> int
 24:4 GDCallExpression print() -> void
-24:4 GDIdentifierExpression print -> Callable(Object[]...) -> void
+24:4 GDIdentifierExpression print -> Callable(Array...) -> void
 24:10 GDStringExpression "Deep but O..." -> String
 28:0 Method test_gdl225_invalid -> void
 28:25 Parameter x -> int
@@ -2912,7 +2912,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 33:8 GDIdentifierExpression x -> int
 33:12 GDNumberExpression 10000 -> int
 34:6 GDCallExpression print() -> void
-34:6 GDIdentifierExpression print -> Callable(Object[]...) -> void
+34:6 GDIdentifierExpression print -> Callable(Array...) -> void
 34:12 GDStringExpression "Too deep!" -> String
 39:0 Method test_gdl225_suppressed -> void
 39:28 Parameter x -> int
@@ -2932,7 +2932,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 44:8 GDIdentifierExpression x -> int
 44:12 GDNumberExpression 10000 -> int
 45:6 GDCallExpression print() -> void
-45:6 GDIdentifierExpression print -> Callable(Object[]...) -> void
+45:6 GDIdentifierExpression print -> Callable(Array...) -> void
 45:12 GDStringExpression "Suppressed" -> String
 53:0 Method test_gdl226_valid -> void
 54:1 Variable a -> int
@@ -2946,7 +2946,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 58:1 Variable e -> int
 58:10 GDNumberExpression 5 -> int
 59:1 GDCallExpression print() -> void
-59:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+59:1 GDIdentifierExpression print -> Callable(Array...) -> void
 59:7 GDIdentifierExpression a -> int
 59:10 GDIdentifierExpression b -> int
 59:13 GDIdentifierExpression c -> int
@@ -2986,7 +2986,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 79:1 Variable v16 -> int
 79:12 GDNumberExpression 16 -> int
 80:1 GDCallExpression print() -> void
-80:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+80:1 GDIdentifierExpression print -> Callable(Array...) -> void
 80:7 GDIdentifierExpression v1 -> int
 80:11 GDIdentifierExpression v2 -> int
 80:15 GDIdentifierExpression v3 -> int
@@ -3037,7 +3037,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 101:1 Variable v16 -> int
 101:12 GDNumberExpression 16 -> int
 102:1 GDCallExpression print() -> void
-102:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+102:1 GDIdentifierExpression print -> Callable(Array...) -> void
 102:7 GDIdentifierExpression v1 -> int
 102:11 GDIdentifierExpression v2 -> int
 102:15 GDIdentifierExpression v3 -> int
@@ -3315,36 +3315,36 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 20:1 Variable short_line -> String
 20:19 GDStringExpression "This is a ..." -> String
 21:1 GDCallExpression print() -> void
-21:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+21:1 GDIdentifierExpression print -> Callable(Array...) -> void
 21:7 GDIdentifierExpression short_line -> String
 25:0 Method test_gdl101_invalid -> void
 26:1 Variable very_long_line -> String
 26:23 GDStringExpression "This is an..." -> String
 27:1 GDCallExpression print() -> void
-27:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+27:1 GDIdentifierExpression print -> Callable(Array...) -> void
 27:7 GDIdentifierExpression very_long_line -> String
 31:0 Method test_gdl101_suppressed -> void
 32:1 Variable suppressed_long -> String
 32:24 GDStringExpression "This is al..." -> String
 42:0 Method test_gdl513_valid_a -> void
 43:1 GDCallExpression print() -> void
-43:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+43:1 GDIdentifierExpression print -> Callable(Array...) -> void
 43:7 GDStringExpression "Function A" -> String
 46:0 Method test_gdl513_valid_b -> void
 47:1 GDCallExpression print() -> void
-47:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+47:1 GDIdentifierExpression print -> Callable(Array...) -> void
 47:7 GDStringExpression "Function B" -> String
 50:0 Method test_gdl513_invalid -> void
 51:1 GDCallExpression print() -> void
-51:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+51:1 GDIdentifierExpression print -> Callable(Array...) -> void
 51:7 GDStringExpression "Too close ..." -> String
 54:0 Method test_gdl513_after_invalid -> void
 55:1 GDCallExpression print() -> void
-55:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+55:1 GDIdentifierExpression print -> Callable(Array...) -> void
 55:7 GDStringExpression "After inva..." -> String
 60:0 Method test_gdl513_suppressed -> void
 61:1 GDCallExpression print() -> void
-61:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+61:1 GDIdentifierExpression print -> Callable(Array...) -> void
 61:7 GDStringExpression "Suppressed..." -> String
 69:0 Method formatting_examples -> void
 71:1 Variable a -> int
@@ -3363,7 +3363,7 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 75:22 GDNumberExpression 4 -> int
 75:25 GDNumberExpression 5 -> int
 76:1 GDCallExpression print() -> void
-76:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+76:1 GDIdentifierExpression print -> Callable(Array...) -> void
 76:7 GDIdentifierExpression arr -> Array[int]
 79:1 Variable dict -> Dictionary[String]
 79:13 GDDictionaryInitializerExpression {...} -> Dictionary
@@ -3372,7 +3372,7 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 81:2 GDStringExpression "key2" -> String
 81:10 GDStringExpression "value2" -> String
 83:1 GDCallExpression print() -> void
-83:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+83:1 GDIdentifierExpression print -> Callable(Array...) -> void
 83:7 GDIdentifierExpression dict -> Dictionary
 86:1 GDCallExpression _helper_function() -> void
 86:1 GDIdentifierExpression _helper_function -> Callable
@@ -3384,7 +3384,7 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 89:30 Parameter y -> int
 89:38 Parameter z -> Array
 90:1 GDCallExpression print() -> void
-90:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+90:1 GDIdentifierExpression print -> Callable(Array...) -> void
 90:7 GDIdentifierExpression x -> int
 90:10 GDIdentifierExpression y -> int
 90:13 GDIdentifierExpression z -> Array
@@ -3489,7 +3489,7 @@ test_scripts/diagnostics/suppression/linter_suppression.gd
 98:1 Variable this_is_a_very_long_variable_name_that_would_normally_trigger_the_line_length_rule_but_it_is_suppressed -> int
 98:112 GDNumberExpression 1 -> int
 99:1 GDCallExpression print() -> void
-99:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+99:1 GDIdentifierExpression print -> Callable(Array...) -> void
 99:7 GDIdentifierExpression this_is_a_very_long_variable_name_that_would_normally_trigger_the_line_length_rule_but_it_is_suppressed -> int
 107:0 Variable ControlBadVar1 -> int
 107:22 GDNumberExpression 500 -> int
@@ -3503,34 +3503,34 @@ test_scripts/diagnostics/suppression/linter_suppression.gd
 test_scripts/diagnostics/suppression/validator_suppression.gd
 19:0 Method test_ignore_next_line -> void
 21:1 GDCallExpression print() -> void
-21:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+21:1 GDIdentifierExpression print -> Callable(Array...) -> void
 21:7 GDIdentifierExpression undefined_var_suppressed_1 -> Variant
 23:1 GDCallExpression print() -> void
-23:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+23:1 GDIdentifierExpression print -> Callable(Array...) -> void
 23:7 GDIdentifierExpression undefined_var_not_suppressed_1 -> Variant
 30:0 Method test_ignore_inline -> void
 31:1 GDCallExpression print() -> void
-31:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+31:1 GDIdentifierExpression print -> Callable(Array...) -> void
 31:7 GDIdentifierExpression undefined_var_suppressed_2 -> Variant
 33:1 GDCallExpression print() -> void
-33:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+33:1 GDIdentifierExpression print -> Callable(Array...) -> void
 33:7 GDIdentifierExpression undefined_var_not_suppressed_2 -> Variant
 40:0 Method test_disable_enable_block -> void
 42:1 GDCallExpression print() -> void
-42:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+42:1 GDIdentifierExpression print -> Callable(Array...) -> void
 42:7 GDIdentifierExpression undefined_in_block_1 -> Variant
 43:1 GDCallExpression print() -> void
-43:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+43:1 GDIdentifierExpression print -> Callable(Array...) -> void
 43:7 GDIdentifierExpression undefined_in_block_2 -> Variant
 44:1 GDCallExpression print() -> void
-44:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+44:1 GDIdentifierExpression print -> Callable(Array...) -> void
 44:7 GDIdentifierExpression undefined_in_block_3 -> Variant
 47:1 GDCallExpression print() -> void
-47:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+47:1 GDIdentifierExpression print -> Callable(Array...) -> void
 47:7 GDIdentifierExpression undefined_after_enable -> Variant
 54:0 Method test_disable_to_eof -> void
 55:1 GDCallExpression print() -> void
-55:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+55:1 GDIdentifierExpression print -> Callable(Array...) -> void
 55:7 GDIdentifierExpression before_disable -> Variant
 58:1 GDBreakExpression break -> Variant
 59:1 GDBreakExpression break -> Variant
@@ -3543,17 +3543,17 @@ test_scripts/diagnostics/suppression/validator_suppression.gd
 73:20 GDIdentifierExpression undefined_multi_var_2 -> Variant
 80:0 Method test_case_insensitive -> void
 82:1 GDCallExpression print() -> void
-82:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+82:1 GDIdentifierExpression print -> Callable(Array...) -> void
 82:7 GDIdentifierExpression undefined_case_test -> Variant
 90:0 Method test_control_unsuppressed -> void
 91:1 GDCallExpression print() -> void
-91:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+91:1 GDIdentifierExpression print -> Callable(Array...) -> void
 91:7 GDIdentifierExpression control_undefined_1 -> Variant
 92:1 GDCallExpression print() -> void
-92:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+92:1 GDIdentifierExpression print -> Callable(Array...) -> void
 92:7 GDIdentifierExpression control_undefined_2 -> Variant
 93:1 GDCallExpression print() -> void
-93:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+93:1 GDIdentifierExpression print -> Callable(Array...) -> void
 93:7 GDIdentifierExpression control_undefined_3 -> Variant
 
 test_scripts/diagnostics/validator/abstract_errors.gd
@@ -3562,12 +3562,12 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 26:0 Class InvalidAbstractWithBody -> InvalidAbstractWithBody
 28:1 Method abstract_with_body -> void
 29:2 GDCallExpression print() -> void
-29:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+29:2 GDIdentifierExpression print -> Callable(Array...) -> void
 29:8 GDStringExpression "This shoul..." -> String
 33:0 Class SuppressedAbstractBody -> SuppressedAbstractBody
 36:1 Method suppressed_abstract -> void
 37:2 GDCallExpression print() -> void
-37:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+37:2 GDIdentifierExpression print -> Callable(Array...) -> void
 37:8 GDStringExpression "Suppressed..." -> String
 46:0 Class ValidAbstractAnnotation -> ValidAbstractAnnotation
 48:1 Method must_implement -> void
@@ -3582,7 +3582,7 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 75:0 Class MissingImplementation -> MissingImplementation
 76:1 Method other_method -> void
 77:2 GDCallExpression print() -> void
-77:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+77:2 GDIdentifierExpression print -> Callable(Array...) -> void
 77:8 GDStringExpression "Other" -> String
 85:0 Class CannotInstantiate -> CannotInstantiate
 87:1 Method do_something -> void
@@ -3592,7 +3592,7 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 92:13 GDMemberOperatorExpression ValidImplementation.new -> Variant
 92:13 GDIdentifierExpression ValidImplementation -> ValidImplementation
 93:1 GDCallExpression print() -> void
-93:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+93:1 GDIdentifierExpression print -> Callable(Array...) -> void
 93:7 GDCallExpression impl.required_method() -> int
 93:7 GDMemberOperatorExpression impl.required_method -> int
 93:7 GDIdentifierExpression impl -> ValidImplementation
@@ -3602,7 +3602,7 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 98:12 GDMemberOperatorExpression CannotInstantiate.new -> Variant
 98:12 GDIdentifierExpression CannotInstantiate -> CannotInstantiate
 99:1 GDCallExpression print() -> void
-99:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+99:1 GDIdentifierExpression print -> Callable(Array...) -> void
 99:7 GDIdentifierExpression obj -> CannotInstantiate
 103:0 Method test_gd8005_suppressed -> void
 105:1 Variable obj -> CannotInstantiate
@@ -3610,7 +3610,7 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 105:12 GDMemberOperatorExpression CannotInstantiate.new -> Variant
 105:12 GDIdentifierExpression CannotInstantiate -> CannotInstantiate
 106:1 GDCallExpression print() -> void
-106:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+106:1 GDIdentifierExpression print -> Callable(Array...) -> void
 106:7 GDIdentifierExpression obj -> CannotInstantiate
 
 test_scripts/diagnostics/validator/call_errors.gd
@@ -3630,7 +3630,7 @@ test_scripts/diagnostics/validator/call_errors.gd
 29:30 GDNumberExpression 1 -> int
 29:33 GDNumberExpression 2 -> int
 30:1 GDCallExpression print() -> void
-30:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+30:1 GDIdentifierExpression print -> Callable(Array...) -> void
 30:7 GDIdentifierExpression result -> int
 34:0 Method test_gd4001_invalid -> void
 35:1 Variable result -> int
@@ -3638,7 +3638,7 @@ test_scripts/diagnostics/validator/call_errors.gd
 35:15 GDIdentifierExpression _func_two_args -> Callable
 35:30 GDNumberExpression 1 -> int
 36:1 GDCallExpression print() -> void
-36:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+36:1 GDIdentifierExpression print -> Callable(Array...) -> void
 36:7 GDIdentifierExpression result -> int
 40:0 Method test_gd4001_suppressed -> void
 42:1 Variable result -> int
@@ -3648,7 +3648,7 @@ test_scripts/diagnostics/validator/call_errors.gd
 42:33 GDNumberExpression 2 -> int
 42:36 GDNumberExpression 3 -> int
 43:1 GDCallExpression print() -> void
-43:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+43:1 GDIdentifierExpression print -> Callable(Array...) -> void
 43:7 GDIdentifierExpression result -> int
 51:0 Method test_gd4002_valid -> void
 52:1 Variable node -> Node
@@ -3678,7 +3678,7 @@ test_scripts/diagnostics/validator/call_errors.gd
 75:1 Variable callable -> Callable
 75:17 GDMethodExpression func(...) -> Callable
 75:25 GDCallExpression print() -> void
-75:25 GDIdentifierExpression print -> Callable(Object[]...) -> void
+75:25 GDIdentifierExpression print -> Callable(Array...) -> void
 75:31 GDStringExpression "Hello" -> String
 76:1 GDCallExpression callable.call() -> Variant
 76:1 GDMemberOperatorExpression callable.call -> Variant
@@ -3756,7 +3756,7 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 21:10 GDNumberExpression 5 -> int
 22:3 GDBreakExpression break -> Variant
 23:1 GDCallExpression print() -> void
-23:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+23:1 GDIdentifierExpression print -> Callable(Array...) -> void
 23:7 GDStringExpression "Done" -> String
 27:0 Method test_gd5001_invalid -> void
 28:1 GDBreakExpression break -> Variant
@@ -3774,7 +3774,7 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 44:14 GDNumberExpression 0 -> int
 45:3 GDContinueExpression continue -> Variant
 46:2 GDCallExpression print() -> void
-46:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+46:2 GDIdentifierExpression print -> Callable(Array...) -> void
 46:8 GDIdentifierExpression i -> Variant
 50:0 Method test_gd5002_invalid -> void
 51:1 GDContinueExpression continue -> Variant
@@ -3784,7 +3784,7 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 66:1 Variable x -> int
 66:10 GDNumberExpression 42 -> int
 67:1 GDCallExpression print() -> void
-67:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+67:1 GDIdentifierExpression print -> Callable(Array...) -> void
 67:7 GDIdentifierExpression x -> int
 68:1 GDReturnExpression return x -> Variant
 68:8 GDIdentifierExpression x -> int
@@ -3794,7 +3794,7 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 74:1 Variable unreachable -> int
 74:20 GDNumberExpression 100 -> int
 75:1 GDCallExpression print() -> void
-75:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+75:1 GDIdentifierExpression print -> Callable(Array...) -> void
 75:7 GDIdentifierExpression unreachable -> int
 76:1 GDReturnExpression return unreachable -> Variant
 76:8 GDIdentifierExpression unreachable -> int
@@ -3814,7 +3814,7 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 96:1 GDIdentifierExpression mutable_var -> int
 96:15 GDNumberExpression 100 -> int
 97:1 GDCallExpression print() -> void
-97:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+97:1 GDIdentifierExpression print -> Callable(Array...) -> void
 97:7 GDIdentifierExpression mutable_var -> int
 101:0 Method test_gd5010_invalid -> void
 102:1 GDDualOperatorExpression VALID_CONSTAssignment100 -> int
@@ -3832,7 +3832,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
 19:18 GDMemberOperatorExpression Node.new -> Variant
 19:18 GDIdentifierExpression Node -> Node
 20:1 GDCallExpression print() -> void
-20:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+20:1 GDIdentifierExpression print -> Callable(Array...) -> void
 20:7 GDMemberOperatorExpression node.name -> StringName
 20:7 GDIdentifierExpression node -> Node
 24:0 Method test_gd7002_valid_guarded -> void
@@ -3841,19 +3841,19 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
 25:4 GDIdentifierExpression obj -> Variant
 25:11 GDIdentifierExpression Node -> Node
 26:2 GDCallExpression print() -> void
-26:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+26:2 GDIdentifierExpression print -> Callable(Array...) -> void
 26:8 GDMemberOperatorExpression obj.name -> StringName
 26:8 GDIdentifierExpression obj -> Variant
 30:0 Method test_gd7002_invalid -> void
 30:25 Parameter untyped_obj -> Variant
 31:1 GDCallExpression print() -> void
-31:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+31:1 GDIdentifierExpression print -> Callable(Array...) -> void
 31:7 GDMemberOperatorExpression untyped_obj.some_property -> Variant
 31:7 GDIdentifierExpression untyped_obj -> Variant
 35:0 Method test_gd7002_suppressed -> void
 35:28 Parameter untyped_obj -> Variant
 37:1 GDCallExpression print() -> void
-37:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+37:1 GDIdentifierExpression print -> Callable(Array...) -> void
 37:7 GDMemberOperatorExpression untyped_obj.another_property -> Variant
 37:7 GDIdentifierExpression untyped_obj -> Variant
 45:0 Method test_gd7003_valid_typed -> void
@@ -3954,19 +3954,19 @@ test_scripts/diagnostics/validator/scope_errors.gd
 25:1 Variable defined_var -> int
 25:20 GDNumberExpression 42 -> int
 26:1 GDCallExpression print() -> void
-26:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+26:1 GDIdentifierExpression print -> Callable(Array...) -> void
 26:7 GDIdentifierExpression defined_var -> int
 30:0 Method test_gd2001_invalid -> void
 31:1 GDCallExpression print() -> void
-31:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+31:1 GDIdentifierExpression print -> Callable(Array...) -> void
 31:7 GDIdentifierExpression undefined_var_1 -> Variant
 35:0 Method test_gd2001_suppressed -> void
 37:1 GDCallExpression print() -> void
-37:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+37:1 GDIdentifierExpression print -> Callable(Array...) -> void
 37:7 GDIdentifierExpression undefined_var_2 -> Variant
 45:0 Method test_gd2002_valid -> void
 46:1 GDCallExpression print() -> void
-46:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+46:1 GDIdentifierExpression print -> Callable(Array...) -> void
 46:7 GDStringExpression "Hello" -> String
 50:0 Method test_gd2002_invalid -> void
 51:1 GDCallExpression nonexistent_global_function() -> Variant
@@ -3980,7 +3980,7 @@ test_scripts/diagnostics/validator/scope_errors.gd
 67:1 Variable unique_var_b -> int
 67:21 GDNumberExpression 2 -> int
 68:1 GDCallExpression print() -> void
-68:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+68:1 GDIdentifierExpression print -> Callable(Array...) -> void
 68:7 GDDualOperatorExpression unique_var_aAdditionunique_var_b -> int
 68:7 GDIdentifierExpression unique_var_a -> int
 68:22 GDIdentifierExpression unique_var_b -> int
@@ -3990,7 +3990,7 @@ test_scripts/diagnostics/validator/scope_errors.gd
 74:1 Variable duplicate_var -> int
 74:22 GDNumberExpression 2 -> int
 75:1 GDCallExpression print() -> void
-75:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+75:1 GDIdentifierExpression print -> Callable(Array...) -> void
 75:7 GDIdentifierExpression duplicate_var -> int
 79:0 Method test_gd2003_suppressed -> void
 80:1 Variable suppressed_dup -> int
@@ -3998,7 +3998,7 @@ test_scripts/diagnostics/validator/scope_errors.gd
 82:1 Variable suppressed_dup -> int
 82:23 GDNumberExpression 2 -> int
 83:1 GDCallExpression print() -> void
-83:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+83:1 GDIdentifierExpression print -> Callable(Array...) -> void
 83:7 GDIdentifierExpression suppressed_dup -> int
 90:0 Signal defined_signal -> Signal(value: int)
 93:0 Method test_gd2005_valid -> void
@@ -4019,21 +4019,21 @@ test_scripts/diagnostics/validator/scope_errors.gd
 114:12 GDMemberOperatorExpression TestEnum.VALUE_A -> int
 114:12 GDIdentifierExpression TestEnum -> TestEnum
 115:1 GDCallExpression print() -> void
-115:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+115:1 GDIdentifierExpression print -> Callable(Array...) -> void
 115:7 GDIdentifierExpression val -> int
 119:0 Method test_gd2006_invalid -> void
 120:1 Variable val -> Variant
 120:12 GDMemberOperatorExpression TestEnum.NONEXISTENT_VALUE -> Variant
 120:12 GDIdentifierExpression TestEnum -> TestEnum
 121:1 GDCallExpression print() -> void
-121:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+121:1 GDIdentifierExpression print -> Callable(Array...) -> void
 121:7 GDIdentifierExpression val -> int
 125:0 Method test_gd2006_suppressed -> void
 127:1 Variable val -> Variant
 127:12 GDMemberOperatorExpression TestEnum.ANOTHER_FAKE_VALUE -> Variant
 127:12 GDIdentifierExpression TestEnum -> TestEnum
 128:1 GDCallExpression print() -> void
-128:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+128:1 GDIdentifierExpression print -> Callable(Array...) -> void
 128:7 GDIdentifierExpression val -> int
 
 test_scripts/diagnostics/validator/type_annotation_errors.gd
@@ -4067,7 +4067,7 @@ test_scripts/diagnostics/validator/type_annotation_errors.gd
 44:28 Parameter flag -> bool
 45:4 GDIdentifierExpression flag -> bool
 46:2 GDCallExpression print() -> void
-46:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+46:2 GDIdentifierExpression print -> Callable(Array...) -> void
 46:8 GDStringExpression "hello" -> String
 54:0 Variable redundant_int -> int
 54:25 GDNumberExpression 100 -> int
@@ -4135,7 +4135,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 26:1 Variable y -> String
 26:17 GDStringExpression "hello" -> String
 27:1 GDCallExpression print() -> void
-27:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+27:1 GDIdentifierExpression print -> Callable(Array...) -> void
 27:7 GDIdentifierExpression x -> int
 27:10 GDIdentifierExpression y -> String
 31:0 Method test_gd3001_float_to_int -> void
@@ -4162,7 +4162,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 55:18 GDMemberOperatorExpression Node.new -> Variant
 55:18 GDIdentifierExpression Node -> Node
 56:1 GDCallExpression print() -> void
-56:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+56:1 GDIdentifierExpression print -> Callable(Array...) -> void
 56:7 GDIdentifierExpression node -> Node
 60:0 Method test_gd3004_downcast -> void
 61:1 Variable sprite -> Sprite2D
@@ -4170,7 +4170,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 61:24 GDMemberOperatorExpression Node.new -> Variant
 61:24 GDIdentifierExpression Node -> Node
 62:1 GDCallExpression print() -> void
-62:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+62:1 GDIdentifierExpression print -> Callable(Array...) -> void
 62:7 GDIdentifierExpression sprite -> Sprite2D
 66:0 Method test_gd3004_suppressed -> void
 68:1 Variable label -> Label
@@ -4178,34 +4178,34 @@ test_scripts/diagnostics/validator/type_errors.gd
 68:20 GDMemberOperatorExpression Node.new -> Variant
 68:20 GDIdentifierExpression Node -> Node
 69:1 GDCallExpression print() -> void
-69:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+69:1 GDIdentifierExpression print -> Callable(Array...) -> void
 69:7 GDIdentifierExpression label -> Label
 77:0 Method test_gd3006_valid -> void
 78:1 Variable node -> Node
 79:1 Variable sprite -> Sprite2D
 80:1 GDCallExpression print() -> void
-80:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+80:1 GDIdentifierExpression print -> Callable(Array...) -> void
 80:7 GDIdentifierExpression node -> Node
 80:13 GDIdentifierExpression sprite -> Sprite2D
 84:0 Method test_gd3006_invalid -> void
 85:1 Variable x -> CompletelyUnknownType
 86:1 GDCallExpression print() -> void
-86:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+86:1 GDIdentifierExpression print -> Callable(Array...) -> void
 86:7 GDIdentifierExpression x -> CompletelyUnknownType
 90:0 Method test_gd3006_suppressed -> void
 92:1 Variable y -> AnotherFakeType
 93:1 GDCallExpression print() -> void
-93:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+93:1 GDIdentifierExpression print -> Callable(Array...) -> void
 93:7 GDIdentifierExpression y -> AnotherFakeType
 97:0 Method test_gd3006_nested_enum_valid -> void
 98:1 Variable mode -> BaseMaterial3D.ShadingMode
 99:1 GDCallExpression print() -> void
-99:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+99:1 GDIdentifierExpression print -> Callable(Array...) -> void
 99:7 GDIdentifierExpression mode -> BaseMaterial3D.ShadingMode
 103:0 Method test_gd3006_nested_enum_invalid -> void
 104:1 Variable x -> FakeParent.FakeChild
 105:1 GDCallExpression print() -> void
-105:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+105:1 GDIdentifierExpression print -> Callable(Array...) -> void
 105:7 GDIdentifierExpression x -> FakeParent.FakeChild
 113:0 Method test_gd3009_valid -> void
 114:1 Variable node -> Node
@@ -4213,7 +4213,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 114:18 GDMemberOperatorExpression Node.new -> Variant
 114:18 GDIdentifierExpression Node -> Node
 115:1 GDCallExpression print() -> void
-115:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+115:1 GDIdentifierExpression print -> Callable(Array...) -> void
 115:7 GDMemberOperatorExpression node.name -> StringName
 115:7 GDIdentifierExpression node -> Node
 119:0 Method test_gd3009_invalid -> void
@@ -4222,7 +4222,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 120:18 GDMemberOperatorExpression Node.new -> Variant
 120:18 GDIdentifierExpression Node -> Node
 121:1 GDCallExpression print() -> void
-121:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+121:1 GDIdentifierExpression print -> Callable(Array...) -> void
 121:7 GDMemberOperatorExpression node.nonexistent_property_xyz -> Variant
 121:7 GDIdentifierExpression node -> Node
 125:0 Method test_gd3009_suppressed -> void
@@ -4231,13 +4231,13 @@ test_scripts/diagnostics/validator/type_errors.gd
 126:18 GDMemberOperatorExpression Node.new -> Variant
 126:18 GDIdentifierExpression Node -> Node
 128:1 GDCallExpression print() -> void
-128:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+128:1 GDIdentifierExpression print -> Callable(Array...) -> void
 128:7 GDMemberOperatorExpression node.another_fake_property -> Variant
 128:7 GDIdentifierExpression node -> Node
 136:0 Method _take_int -> void
 136:15 Parameter x -> int
 137:1 GDCallExpression print() -> void
-137:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+137:1 GDIdentifierExpression print -> Callable(Array...) -> void
 137:7 GDIdentifierExpression x -> int
 141:0 Method test_gd3010_valid -> void
 142:1 GDCallExpression _take_int() -> void
@@ -4262,7 +4262,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 163:11 GDIdentifierExpression arr -> Array
 163:15 GDNumberExpression 0 -> int
 164:1 GDCallExpression print() -> void
-164:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+164:1 GDIdentifierExpression print -> Callable(Array...) -> void
 164:7 GDIdentifierExpression val -> Variant
 166:1 Variable dict -> Dictionary[String, int]
 166:37 GDDictionaryInitializerExpression {...} -> Dictionary
@@ -4273,7 +4273,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 167:12 GDIdentifierExpression dict -> Dictionary[String, int]
 167:17 GDStringExpression "key" -> String
 168:1 GDCallExpression print() -> void
-168:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+168:1 GDIdentifierExpression print -> Callable(Array...) -> void
 168:7 GDIdentifierExpression val2 -> int
 172:0 Method test_gd3013_invalid -> void
 173:1 Variable arr -> Array
@@ -4286,7 +4286,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 174:11 GDIdentifierExpression arr -> Array
 174:15 GDStringExpression "bad_key" -> String
 175:1 GDCallExpression print() -> void
-175:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+175:1 GDIdentifierExpression print -> Callable(Array...) -> void
 175:7 GDIdentifierExpression val -> Variant
 179:0 Method test_gd3013_suppressed -> void
 180:1 Variable arr -> Array
@@ -4299,7 +4299,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 182:11 GDIdentifierExpression arr -> Array
 182:15 GDStringExpression "suppressed" -> String
 183:1 GDCallExpression print() -> void
-183:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+183:1 GDIdentifierExpression print -> Callable(Array...) -> void
 183:7 GDIdentifierExpression val -> Variant
 191:0 Method test_gd3014_valid -> void
 192:1 Variable arr -> Array
@@ -4312,7 +4312,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 193:11 GDIdentifierExpression arr -> Array
 193:15 GDNumberExpression 0 -> int
 194:1 GDCallExpression print() -> void
-194:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+194:1 GDIdentifierExpression print -> Callable(Array...) -> void
 194:7 GDIdentifierExpression val -> Variant
 198:0 Method test_gd3014_invalid -> void
 199:1 Variable num -> int
@@ -4322,7 +4322,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 200:11 GDIdentifierExpression num -> int
 200:15 GDNumberExpression 0 -> int
 201:1 GDCallExpression print() -> void
-201:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+201:1 GDIdentifierExpression print -> Callable(Array...) -> void
 201:7 GDIdentifierExpression val -> Variant
 205:0 Method test_gd3014_suppressed -> void
 206:1 Variable num -> int
@@ -4332,7 +4332,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 208:11 GDIdentifierExpression num -> int
 208:15 GDNumberExpression 0 -> int
 209:1 GDCallExpression print() -> void
-209:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+209:1 GDIdentifierExpression print -> Callable(Array...) -> void
 209:7 GDIdentifierExpression val -> Variant
 217:0 Method test_gd3017_valid -> void
 218:1 Variable arr -> Array[int]
@@ -4340,20 +4340,20 @@ test_scripts/diagnostics/validator/type_errors.gd
 219:1 Variable dict -> Dictionary[String, Node]
 219:38 GDDictionaryInitializerExpression {...} -> Dictionary
 220:1 GDCallExpression print() -> void
-220:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+220:1 GDIdentifierExpression print -> Callable(Array...) -> void
 220:7 GDIdentifierExpression arr -> Array[int]
 220:12 GDIdentifierExpression dict -> Dictionary[String, Node]
 224:0 Method test_gd3017_invalid -> void
 225:1 Variable arr -> Array[NonExistentTypeXYZ]
 225:38 GDArrayInitializerExpression [...] -> Array
 226:1 GDCallExpression print() -> void
-226:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+226:1 GDIdentifierExpression print -> Callable(Array...) -> void
 226:7 GDIdentifierExpression arr -> Array[NonExistentTypeXYZ]
 230:0 Method test_gd3017_suppressed -> void
 232:1 Variable arr -> Array[AnotherFakeTypeABC]
 232:38 GDArrayInitializerExpression [...] -> Array
 233:1 GDCallExpression print() -> void
-233:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+233:1 GDIdentifierExpression print -> Callable(Array...) -> void
 233:7 GDIdentifierExpression arr -> Array[AnotherFakeTypeABC]
 241:0 Method test_gd3018_valid -> void
 242:1 Variable dict -> Dictionary[String, int]
@@ -4361,20 +4361,20 @@ test_scripts/diagnostics/validator/type_errors.gd
 243:1 Variable dict2 -> Dictionary[int, String]
 243:38 GDDictionaryInitializerExpression {...} -> Dictionary
 244:1 GDCallExpression print() -> void
-244:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+244:1 GDIdentifierExpression print -> Callable(Array...) -> void
 244:7 GDIdentifierExpression dict -> Dictionary[String, int]
 244:13 GDIdentifierExpression dict2 -> Dictionary[int, String]
 248:0 Method test_gd3018_invalid -> void
 249:1 Variable dict -> Dictionary[Array, int]
 249:36 GDDictionaryInitializerExpression {...} -> Dictionary
 250:1 GDCallExpression print() -> void
-250:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+250:1 GDIdentifierExpression print -> Callable(Array...) -> void
 250:7 GDIdentifierExpression dict -> Dictionary[Array, int]
 254:0 Method test_gd3018_suppressed -> void
 256:1 Variable dict -> Dictionary[Dictionary, int]
 256:41 GDDictionaryInitializerExpression {...} -> Dictionary
 257:1 GDCallExpression print() -> void
-257:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+257:1 GDIdentifierExpression print -> Callable(Array...) -> void
 257:7 GDIdentifierExpression dict -> Dictionary[Dictionary, int]
 
 test_scripts/duck_caller.gd
@@ -4821,7 +4821,7 @@ test_scripts/duck_typing_advanced.gd
 236:18 Parameter value -> Variant
 237:1 GDReturnExpression return str() -> Variant
 237:8 GDCallExpression str() -> String
-237:8 GDIdentifierExpression str -> Callable(Object[]...) -> String
+237:8 GDIdentifierExpression str -> Callable(Array...) -> String
 237:12 GDIdentifierExpression value -> Variant
 242:0 Method _create_player -> Dictionary
 243:1 GDReturnExpression return {...} -> Variant
@@ -5257,7 +5257,7 @@ test_scripts/dynamic_dispatch.gd
 160:26 GDIdentifierExpression value -> Variant
 162:1 GDReturnExpression return str() -> Variant
 162:8 GDCallExpression str() -> String
-162:8 GDIdentifierExpression str -> Callable(Object[]...) -> String
+162:8 GDIdentifierExpression str -> Callable(Array...) -> String
 162:12 GDIdentifierExpression value -> Variant
 165:0 Method deserialize_to_object -> void
 165:27 Parameter obj -> Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
@@ -5791,7 +5791,7 @@ test_scripts/dynamic_dispatch.gd
 371:27 GDIdentifierExpression m -> Variant
 371:31 GDStringExpression " with " -> String
 371:42 GDCallExpression str() -> String
-371:42 GDIdentifierExpression str -> Callable(Object[]...) -> String
+371:42 GDIdentifierExpression str -> Callable(Array...) -> String
 371:46 GDIdentifierExpression args -> Variant
 372:2 Variable result -> Variant
 372:15 GDCallExpression t.callv() -> Variant
@@ -5805,7 +5805,7 @@ test_scripts/dynamic_dispatch.gd
 373:14 GDDualOperatorExpression "Result: "Additionstr() -> String
 373:14 GDStringExpression "Result: " -> String
 373:27 GDCallExpression str() -> String
-373:27 GDIdentifierExpression str -> Callable(Object[]...) -> String
+373:27 GDIdentifierExpression str -> Callable(Array...) -> String
 373:31 GDIdentifierExpression result -> Variant
 374:2 GDReturnExpression return result -> Variant
 374:9 GDIdentifierExpression result -> Variant
@@ -6897,7 +6897,7 @@ test_scripts/ecs_like_system.gd
 397:9 GDDualOperatorExpression "  Tags: %s..."Modstr() -> String
 397:9 GDStringExpression "  Tags: %s..." -> String
 397:26 GDCallExpression str() -> String
-397:26 GDIdentifierExpression str -> Callable(Object[]...) -> String
+397:26 GDIdentifierExpression str -> Callable(Array...) -> String
 397:30 GDMemberOperatorExpression entity.tags -> Variant
 397:30 GDIdentifierExpression entity -> Variant
 398:1 GDDualOperatorExpression infoAddAndAssign"  Active: ..."Modstr() -> String
@@ -6905,7 +6905,7 @@ test_scripts/ecs_like_system.gd
 398:9 GDDualOperatorExpression "  Active: ..."Modstr() -> String
 398:9 GDStringExpression "  Active: ..." -> String
 398:28 GDCallExpression str() -> String
-398:28 GDIdentifierExpression str -> Callable(Object[]...) -> String
+398:28 GDIdentifierExpression str -> Callable(Array...) -> String
 398:32 GDMemberOperatorExpression entity.active -> Variant
 398:32 GDIdentifierExpression entity -> Variant
 399:1 GDDualOperatorExpression infoAddAndAssign"  Componen..." -> String
@@ -6922,7 +6922,7 @@ test_scripts/ecs_like_system.gd
 402:27 GDArrayInitializerExpression [...] -> Array[String]
 402:28 GDIdentifierExpression comp_type -> Variant
 402:39 GDCallExpression str() -> String
-402:39 GDIdentifierExpression str -> Callable(Object[]...) -> String
+402:39 GDIdentifierExpression str -> Callable(Array...) -> String
 402:43 GDCallExpression get_component() -> Variant
 402:43 GDIdentifierExpression get_component -> Callable
 402:57 GDIdentifierExpression entity_id -> Variant
@@ -7201,7 +7201,7 @@ test_scripts/extended_class.gd
 18:1 GDMemberOperatorExpression super._ready -> void
 18:1 GDIdentifierExpression super -> SimpleClass
 19:1 GDCallExpression print() -> void
-19:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+19:1 GDIdentifierExpression print -> Callable(Array...) -> void
 19:7 GDStringExpression "ExtendedCl..." -> String
 22:0 Method take_damage -> void
 22:17 Parameter amount -> int
@@ -7408,7 +7408,7 @@ test_scripts/formatting_issues.gd
 60:26 GDNumberExpression 2 -> int
 60:28 GDNumberExpression 3 -> int
 61:1 GDCallExpression print() -> void
-61:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+61:1 GDIdentifierExpression print -> Callable(Array...) -> void
 61:7 GDStringExpression "Result:" -> String
 61:17 GDIdentifierExpression result -> int
 62:1 Variable values -> Array[int]
@@ -7502,7 +7502,7 @@ test_scripts/formatting_issues.gd
 95:10 GDIdentifierExpression range -> Callable(int) -> Array
 95:16 GDNumberExpression 10 -> int
 96:2 GDCallExpression print() -> void
-96:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+96:2 GDIdentifierExpression print -> Callable(Array...) -> void
 96:8 GDIdentifierExpression i -> Variant
 97:1 Iterator key -> Variant
 97:11 GDDictionaryInitializerExpression {...} -> Dictionary
@@ -7511,7 +7511,7 @@ test_scripts/formatting_issues.gd
 97:18 GDStringExpression "b" -> String
 97:22 GDNumberExpression 2 -> int
 98:2 GDCallExpression print() -> void
-98:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+98:2 GDIdentifierExpression print -> Callable(Array...) -> void
 98:8 GDIdentifierExpression key -> Variant
 99:1 Iterator item -> Variant
 99:12 GDArrayInitializerExpression [...] -> Array[int]
@@ -7519,7 +7519,7 @@ test_scripts/formatting_issues.gd
 99:15 GDNumberExpression 2 -> int
 99:17 GDNumberExpression 3 -> int
 100:2 GDCallExpression print() -> void
-100:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+100:2 GDIdentifierExpression print -> Callable(Array...) -> void
 100:8 GDIdentifierExpression item -> int
 103:0 Method string_formatting -> Array[String]
 104:1 Variable name -> String
@@ -7536,7 +7536,7 @@ test_scripts/formatting_issues.gd
 107:10 GDDualOperatorExpression "Count: "Additionstr() -> String
 107:10 GDStringExpression "Count: " -> String
 107:20 GDCallExpression str() -> String
-107:20 GDIdentifierExpression str -> Callable(Object[]...) -> String
+107:20 GDIdentifierExpression str -> Callable(Array...) -> String
 107:24 GDIdentifierExpression count -> int
 108:1 GDReturnExpression return [...] -> Variant
 108:7 GDArrayInitializerExpression [...] -> Array[String]
@@ -7802,7 +7802,7 @@ test_scripts/game_patterns.gd
 124:28 GDIdentifierExpression var_name -> Variant
 124:39 GDStringExpression "}" -> String
 124:44 GDCallExpression str() -> String
-124:44 GDIdentifierExpression str -> Callable(Object[]...) -> String
+124:44 GDIdentifierExpression str -> Callable(Array...) -> String
 124:48 GDIndexerExpression dialog_variables[] -> Variant
 124:48 GDIdentifierExpression dialog_variables -> Dictionary
 124:65 GDIdentifierExpression var_name -> Variant
@@ -8016,7 +8016,7 @@ test_scripts/game_patterns.gd
 209:16 GDIdentifierExpression quest_data -> Variant
 209:31 GDStringExpression "id" -> String
 209:37 GDCallExpression str() -> String
-209:37 GDIdentifierExpression str -> Callable(Object[]...) -> String
+209:37 GDIdentifierExpression str -> Callable(Array...) -> String
 209:41 GDCallExpression randi() -> int
 209:41 GDIdentifierExpression randi -> Callable() -> int
 210:1 GDDualOperatorExpression active_quests[]Assignmentquest_data -> Variant
@@ -8938,7 +8938,7 @@ test_scripts/game_patterns.gd
 540:25 GDIdentifierExpression value -> Variant
 541:1 GDReturnExpression return str() -> Variant
 541:8 GDCallExpression str() -> String
-541:8 GDIdentifierExpression str -> Callable(Object[]...) -> String
+541:8 GDIdentifierExpression str -> Callable(Array...) -> String
 541:12 GDIdentifierExpression value -> Variant
 544:0 Method _deserialize_array -> Array
 544:24 Parameter arr -> Array
@@ -9606,14 +9606,14 @@ test_scripts/inheritance_test.gd
 175:1 GDIdentifierExpression tree_exiting -> Signal
 175:22 GDMethodExpression func(...) -> Callable
 175:30 GDCallExpression print() -> void
-175:30 GDIdentifierExpression print -> Callable(Object[]...) -> void
+175:30 GDIdentifierExpression print -> Callable(Array...) -> void
 175:36 GDStringExpression "Exiting" -> String
 178:1 GDCallExpression visibility_changed.connect() -> Error
 178:1 GDMemberOperatorExpression visibility_changed.connect -> int
 178:1 GDIdentifierExpression visibility_changed -> Signal
 178:28 GDMethodExpression func(...) -> Callable
 178:36 GDCallExpression print() -> void
-178:36 GDIdentifierExpression print -> Callable(Object[]...) -> void
+178:36 GDIdentifierExpression print -> Callable(Array...) -> void
 178:42 GDStringExpression "Visibility..." -> String
 180:1 GDCallExpression custom_signal.emit() -> void
 180:1 GDMemberOperatorExpression custom_signal.emit -> void
@@ -9980,7 +9980,7 @@ test_scripts/local_variables.gd
 179:28 GDNumberExpression 3.0 -> float
 180:1 Variable step4 -> String
 180:13 GDCallExpression str() -> String
-180:13 GDIdentifierExpression str -> Callable(Object[]...) -> String
+180:13 GDIdentifierExpression str -> Callable(Array...) -> String
 180:17 GDIdentifierExpression step3 -> float
 181:1 Variable step5 -> String
 181:13 GDCallExpression step4.pad_zeros() -> String
@@ -10222,7 +10222,7 @@ test_scripts/method_chains.gd
 109:15 GDIdentifierExpression Array -> Array
 110:2 GDReturnExpression return str() -> Variant
 110:9 GDCallExpression str() -> String
-110:9 GDIdentifierExpression str -> Callable(Object[]...) -> String
+110:9 GDIdentifierExpression str -> Callable(Array...) -> String
 110:13 GDCallExpression input.size() -> int
 110:13 GDMemberOperatorExpression input.size -> int
 110:13 GDIdentifierExpression input -> Variant
@@ -10242,7 +10242,7 @@ test_scripts/path_extends_test.gd
 10:1 GDIdentifierExpression max_health -> int
 10:14 GDNumberExpression 200 -> int
 11:1 GDCallExpression print() -> void
-11:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+11:1 GDIdentifierExpression print -> Callable(Array...) -> void
 11:7 GDStringExpression "Max health..." -> String
 11:47 GDIdentifierExpression max_health -> int
 14:1 GDDualOperatorExpression current_healthAssignmentmax_healthDivision2 -> int
@@ -10251,7 +10251,7 @@ test_scripts/path_extends_test.gd
 14:18 GDIdentifierExpression max_health -> int
 14:31 GDNumberExpression 2 -> int
 15:1 GDCallExpression print() -> void
-15:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+15:1 GDIdentifierExpression print -> Callable(Array...) -> void
 15:7 GDStringExpression "Current he..." -> String
 15:27 GDIdentifierExpression current_health -> int
 18:0 Method test_inherited_method_via_path -> void
@@ -10259,14 +10259,14 @@ test_scripts/path_extends_test.gd
 20:1 GDIdentifierExpression take_damage -> void
 20:13 GDNumberExpression 50 -> int
 21:1 GDCallExpression print() -> void
-21:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+21:1 GDIdentifierExpression print -> Callable(Array...) -> void
 21:7 GDStringExpression "Health aft..." -> String
 21:32 GDIdentifierExpression current_health -> int
 24:1 GDCallExpression heal() -> void
 24:1 GDIdentifierExpression heal -> void
 24:6 GDNumberExpression 25 -> int
 25:1 GDCallExpression print() -> void
-25:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+25:1 GDIdentifierExpression print -> Callable(Array...) -> void
 25:7 GDStringExpression "Health aft..." -> String
 25:30 GDIdentifierExpression current_health -> int
 28:0 Method test_inherited_signal_via_path -> void
@@ -11443,7 +11443,7 @@ test_scripts/refactoring_targets.gd
 101:34 GDIdentifierExpression validated_x -> float
 101:47 GDIdentifierExpression validated_y -> float
 104:1 GDCallExpression print() -> void
-104:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+104:1 GDIdentifierExpression print -> Callable(Array...) -> void
 104:7 GDStringExpression "Enemy spaw..." -> String
 104:29 GDIdentifierExpression validated_position -> Vector2
 107:0 Method calculate_damage -> int
@@ -11598,7 +11598,7 @@ test_scripts/rename_test.gd
 22:1 GDIdentifierExpression counter -> int
 22:12 GDNumberExpression 3 -> int
 23:1 GDCallExpression print() -> void
-23:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+23:1 GDIdentifierExpression print -> Callable(Array...) -> void
 23:7 GDStringExpression "Counter va..." -> String
 23:26 GDIdentifierExpression counter -> int
 24:1 GDDualOperatorExpression counterAssignmentcounterMultiply2 -> int
@@ -11607,7 +11607,7 @@ test_scripts/rename_test.gd
 24:11 GDIdentifierExpression counter -> int
 24:21 GDNumberExpression 2 -> int
 25:1 GDCallExpression print() -> void
-25:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+25:1 GDIdentifierExpression print -> Callable(Array...) -> void
 25:7 GDStringExpression "Doubled co..." -> String
 25:28 GDIdentifierExpression counter -> int
 27:4 GDDualOperatorExpression counterMoreThan10 -> bool
@@ -11621,7 +11621,7 @@ test_scripts/rename_test.gd
 30:10 GDIdentifierExpression range -> Callable(int) -> Array
 30:16 GDIdentifierExpression counter -> int
 31:2 GDCallExpression print() -> void
-31:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+31:2 GDIdentifierExpression print -> Callable(Array...) -> void
 31:8 GDStringExpression "Iteration:..." -> String
 31:23 GDIdentifierExpression i -> Variant
 34:0 Method test_rename_parameter -> String
@@ -11635,7 +11635,7 @@ test_scripts/rename_test.gd
 37:1 GDIdentifierExpression result -> int
 37:11 GDIdentifierExpression value -> int
 38:1 GDCallExpression print() -> void
-38:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+38:1 GDIdentifierExpression print -> Callable(Array...) -> void
 38:7 GDStringExpression "Value is: " -> String
 38:21 GDIdentifierExpression value -> int
 40:4 GDDualOperatorExpression valueMoreThan100 -> bool
@@ -11648,7 +11648,7 @@ test_scripts/rename_test.gd
 41:9 GDIdentifierExpression name -> String
 41:16 GDStringExpression " (high: " -> String
 41:29 GDCallExpression str() -> String
-41:29 GDIdentifierExpression str -> Callable(Object[]...) -> String
+41:29 GDIdentifierExpression str -> Callable(Array...) -> String
 41:33 GDIdentifierExpression value -> int
 41:42 GDStringExpression ")" -> String
 43:2 GDReturnExpression return nameAddition" (low: "Additionstr()Addition")" -> Variant
@@ -11658,7 +11658,7 @@ test_scripts/rename_test.gd
 43:9 GDIdentifierExpression name -> String
 43:16 GDStringExpression " (low: " -> String
 43:28 GDCallExpression str() -> String
-43:28 GDIdentifierExpression str -> Callable(Object[]...) -> String
+43:28 GDIdentifierExpression str -> Callable(Array...) -> String
 43:32 GDIdentifierExpression value -> int
 43:41 GDStringExpression ")" -> String
 46:0 Method test_rename_inherited_member -> void
@@ -11667,18 +11667,18 @@ test_scripts/rename_test.gd
 48:19 GDIdentifierExpression player_speed -> float
 48:34 GDNumberExpression 2 -> int
 49:1 GDCallExpression print() -> void
-49:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+49:1 GDIdentifierExpression print -> Callable(Array...) -> void
 49:7 GDStringExpression "Speed: " -> String
 49:18 GDIdentifierExpression player_speed -> float
 50:1 GDCallExpression print() -> void
-50:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+50:1 GDIdentifierExpression print -> Callable(Array...) -> void
 50:7 GDStringExpression "Temp: " -> String
 50:17 GDIdentifierExpression temp_value -> float
 52:1 GDDualOperatorExpression player_speedAddAndAssign10 -> float
 52:1 GDIdentifierExpression player_speed -> float
 52:17 GDNumberExpression 10 -> int
 53:1 GDCallExpression print() -> void
-53:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+53:1 GDIdentifierExpression print -> Callable(Array...) -> void
 53:7 GDStringExpression "New speed:..." -> String
 53:22 GDIdentifierExpression player_speed -> float
 55:4 GDDualOperatorExpression player_speedMoreThan200 -> bool
@@ -11714,7 +11714,7 @@ test_scripts/rename_test.gd
 72:1 GDIdentifierExpression cached_score -> int
 72:16 GDIdentifierExpression new_score -> int
 73:1 GDCallExpression print() -> void
-73:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+73:1 GDIdentifierExpression print -> Callable(Array...) -> void
 73:7 GDStringExpression "Score chan..." -> String
 73:29 GDIdentifierExpression new_score -> int
 76:0 Method test_rename_class_member -> void
@@ -11726,14 +11726,14 @@ test_scripts/rename_test.gd
 79:1 GDIdentifierExpression result -> float
 79:11 GDIdentifierExpression multiplier -> float
 80:1 GDCallExpression print() -> void
-80:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+80:1 GDIdentifierExpression print -> Callable(Array...) -> void
 80:7 GDStringExpression "Multiplier..." -> String
 80:23 GDIdentifierExpression multiplier -> float
 82:1 GDDualOperatorExpression multiplierAddAndAssign0.5 -> float
 82:1 GDIdentifierExpression multiplier -> float
 82:15 GDNumberExpression 0.5 -> float
 83:1 GDCallExpression print() -> void
-83:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+83:1 GDIdentifierExpression print -> Callable(Array...) -> void
 83:7 GDStringExpression "New multip..." -> String
 83:27 GDIdentifierExpression multiplier -> float
 86:0 Method test_rename_in_expressions -> void
@@ -11770,15 +11770,15 @@ test_scripts/rename_test.gd
 94:35 GDIdentifierExpression x -> int
 94:39 GDIdentifierExpression x -> int
 96:1 GDCallExpression print() -> void
-96:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+96:1 GDIdentifierExpression print -> Callable(Array...) -> void
 96:7 GDStringExpression "Sum: " -> String
 96:16 GDIdentifierExpression sum -> int
 97:1 GDCallExpression print() -> void
-97:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+97:1 GDIdentifierExpression print -> Callable(Array...) -> void
 97:7 GDStringExpression "Product: " -> String
 97:20 GDIdentifierExpression product -> int
 98:1 GDCallExpression print() -> void
-98:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+98:1 GDIdentifierExpression print -> Callable(Array...) -> void
 98:7 GDStringExpression "Complex: " -> String
 98:20 GDIdentifierExpression complex -> int
 100:1 GDDualOperatorExpression xAssignmentsum -> int
@@ -11807,11 +11807,11 @@ test_scripts/rename_test.gd
 110:1 GDIdentifierExpression items -> Array[int]
 110:17 GDNumberExpression 7 -> int
 111:1 GDCallExpression print() -> void
-111:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+111:1 GDIdentifierExpression print -> Callable(Array...) -> void
 111:7 GDStringExpression "Items: " -> String
 111:18 GDIdentifierExpression items -> Array[int]
 112:1 GDCallExpression print() -> void
-112:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+112:1 GDIdentifierExpression print -> Callable(Array...) -> void
 112:7 GDStringExpression "Size: " -> String
 112:17 GDCallExpression items.size() -> int
 112:17 GDMemberOperatorExpression items.size -> int
@@ -11819,7 +11819,7 @@ test_scripts/rename_test.gd
 114:1 Iterator item -> Variant
 114:13 GDIdentifierExpression items -> Array[int]
 115:2 GDCallExpression print() -> void
-115:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+115:2 GDIdentifierExpression print -> Callable(Array...) -> void
 115:8 GDStringExpression "Item: " -> String
 115:18 GDIdentifierExpression item -> int
 117:1 GDCallExpression items.clear() -> void
@@ -11905,7 +11905,7 @@ test_scripts/scene_nodes.gd
 41:33 GDStringExpression "Optional" -> String
 42:4 GDIdentifierExpression optional -> Node
 43:2 GDCallExpression print() -> void
-43:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+43:2 GDIdentifierExpression print -> Callable(Array...) -> void
 43:8 GDStringExpression "Optional n..." -> String
 46:1 Variable sprite_node -> Node
 46:19 GDCallExpression get_node() -> Node
@@ -12532,22 +12532,22 @@ test_scripts/semantic_validation_demo.gd
 155:0 Method take_int -> void
 155:14 Parameter x -> int
 156:1 GDCallExpression print() -> void
-156:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+156:1 GDIdentifierExpression print -> Callable(Array...) -> void
 156:7 GDIdentifierExpression x -> int
 158:0 Method take_string -> void
 158:17 Parameter s -> String
 159:1 GDCallExpression print() -> void
-159:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+159:1 GDIdentifierExpression print -> Callable(Array...) -> void
 159:7 GDIdentifierExpression s -> String
 161:0 Method take_node -> void
 161:15 Parameter n -> Node
 162:1 GDCallExpression print() -> void
-162:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+162:1 GDIdentifierExpression print -> Callable(Array...) -> void
 162:7 GDIdentifierExpression n -> Node
 164:0 Method take_node2d -> void
 164:17 Parameter n -> Node2D
 165:1 GDCallExpression print() -> void
-165:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+165:1 GDIdentifierExpression print -> Callable(Array...) -> void
 165:7 GDIdentifierExpression n -> Node2D
 167:0 Method argument_type_validation_demo -> void
 171:1 GDCallExpression take_int() -> void
@@ -12656,7 +12656,7 @@ test_scripts/semantic_validation_demo.gd
 271:24 GDStringExpression "scores" -> String
 271:34 GDNumberExpression 0 -> int
 272:1 GDCallExpression print() -> void
-272:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+272:1 GDIdentifierExpression print -> Callable(Array...) -> void
 272:7 GDIdentifierExpression first_score -> int
 275:1 Variable _bad -> Array[int]
 275:12 GDIndexerExpression data[] -> Array[int]
@@ -12739,10 +12739,10 @@ test_scripts/semantic_validation_demo.gd
 330:40 GDStringExpression "pi" -> String
 330:46 GDNumberExpression 3.14 -> float
 333:1 GDCallExpression print() -> void
-333:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+333:1 GDIdentifierExpression print -> Callable(Array...) -> void
 333:7 GDIdentifierExpression arr -> Array[int]
 334:1 GDCallExpression print() -> void
-334:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+334:1 GDIdentifierExpression print -> Callable(Array...) -> void
 334:7 GDIdentifierExpression dict -> Dictionary[String, float]
 
 test_scripts/signal_callback_chains.gd
@@ -14029,13 +14029,13 @@ test_scripts/signals_test.gd
 66:23 GDIdentifierExpression _on_generic_event -> Callable
 69:0 Method _on_simple -> void
 70:1 GDCallExpression print() -> void
-70:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+70:1 GDIdentifierExpression print -> Callable(Array...) -> void
 70:7 GDStringExpression "Simple sig..." -> String
 73:0 Method _on_health_changed -> void
 73:24 Parameter old -> int
 73:34 Parameter new -> int
 75:1 GDCallExpression print() -> void
-75:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+75:1 GDIdentifierExpression print -> Callable(Array...) -> void
 75:7 GDStringExpression "Health: " -> String
 75:19 GDIdentifierExpression old -> int
 75:24 GDStringExpression " -> " -> String
@@ -14048,7 +14048,7 @@ test_scripts/signals_test.gd
 80:0 Method _on_position_updated -> void
 80:26 Parameter new_pos -> Vector2
 82:1 GDCallExpression print() -> void
-82:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+82:1 GDIdentifierExpression print -> Callable(Array...) -> void
 82:7 GDStringExpression "Position u..." -> String
 82:32 GDIdentifierExpression new_pos -> Vector2
 85:0 Method _on_data_received -> void
@@ -14058,14 +14058,14 @@ test_scripts/signals_test.gd
 87:12 GDMemberOperatorExpression data.keys -> Array
 87:12 GDIdentifierExpression data -> Dictionary
 88:1 GDCallExpression print() -> void
-88:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+88:1 GDIdentifierExpression print -> Callable(Array...) -> void
 88:7 GDStringExpression "Received d..." -> String
 88:36 GDIdentifierExpression keys -> Array
 91:0 Method _on_generic_event -> void
 91:23 Parameter event_name -> Variant
 91:35 Parameter event_data -> Variant
 93:1 GDCallExpression print() -> void
-93:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+93:1 GDIdentifierExpression print -> Callable(Array...) -> void
 93:7 GDStringExpression "Event: " -> String
 93:18 GDIdentifierExpression event_name -> Variant
 93:30 GDStringExpression " Data: " -> String
@@ -14082,7 +14082,7 @@ test_scripts/signals_test.gd
 102:29 Parameter old -> Variant
 102:34 Parameter new -> Variant
 103:2 GDCallExpression print() -> void
-103:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+103:2 GDIdentifierExpression print -> Callable(Array...) -> void
 103:8 GDStringExpression "Lambda han..." -> String
 103:28 GDIdentifierExpression old -> Variant
 103:33 GDStringExpression " -> " -> String
@@ -14122,7 +14122,7 @@ test_scripts/signals_test.gd
 129:5 GDIdentifierExpression data -> Variant
 129:13 GDIdentifierExpression Dictionary -> Dictionary
 130:3 GDCallExpression print() -> void
-130:3 GDIdentifierExpression print -> Callable(Object[]...) -> void
+130:3 GDIdentifierExpression print -> Callable(Array...) -> void
 130:9 GDStringExpression "Received: " -> String
 130:23 GDIdentifierExpression data -> Variant
 131:2 GDReturnExpression return true -> Variant
@@ -14133,7 +14133,7 @@ test_scripts/signals_test.gd
 138:1 GDAwaitExpression await simple_signal -> void
 138:7 GDIdentifierExpression simple_signal -> Signal
 139:1 GDCallExpression print() -> void
-139:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+139:1 GDIdentifierExpression print -> Callable(Array...) -> void
 139:7 GDStringExpression "Signal rec..." -> String
 142:0 Method await_with_timeout -> void
 143:1 Variable timer -> SceneTreeTimer
@@ -14239,7 +14239,7 @@ test_scripts/signals_test.gd
 202:29 Parameter context -> String
 202:46 Parameter value -> int
 203:1 GDCallExpression print() -> void
-203:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+203:1 GDIdentifierExpression print -> Callable(Array...) -> void
 203:7 GDStringExpression "Context: " -> String
 203:20 GDIdentifierExpression context -> String
 203:29 GDStringExpression " Value: " -> String
@@ -14270,7 +14270,7 @@ test_scripts/simple_class.gd
 19:0 Signal died -> Signal
 22:0 Method _ready -> void
 23:1 GDCallExpression print() -> void
-23:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+23:1 GDIdentifierExpression print -> Callable(Array...) -> void
 23:7 GDStringExpression "SimpleClas..." -> String
 24:1 GDCallExpression _initialize() -> void
 24:1 GDIdentifierExpression _initialize -> Callable
@@ -15225,7 +15225,7 @@ test_scripts/todo_examples.gd
 31:14 GDDualOperatorExpression "Value: "Additionstr() -> String
 31:14 GDStringExpression "Value: " -> String
 31:26 GDCallExpression str() -> String
-31:26 GDIdentifierExpression str -> Callable(Object[]...) -> String
+31:26 GDIdentifierExpression str -> Callable(Array...) -> String
 31:30 GDCallExpression data.size() -> int
 31:30 GDMemberOperatorExpression data.size -> int
 31:30 GDIdentifierExpression data -> Array
@@ -15273,7 +15273,7 @@ test_scripts/todo_examples.gd
 68:0 Method export_to_json -> String
 71:1 GDReturnExpression return str() -> Variant
 71:8 GDCallExpression str() -> String
-71:8 GDIdentifierExpression str -> Callable(Object[]...) -> String
+71:8 GDIdentifierExpression str -> Callable(Array...) -> String
 71:12 GDIdentifierExpression data -> Array
 74:0 Method import_from_json -> void
 74:22 Parameter json_string -> String
@@ -15456,7 +15456,7 @@ test_scripts/type_guards.gd
 97:2 GDDualOperatorExpression resultAssignmentstr() -> float
 97:2 GDIdentifierExpression result -> float
 97:11 GDCallExpression str() -> String
-97:11 GDIdentifierExpression str -> Callable(Object[]...) -> String
+97:11 GDIdentifierExpression str -> Callable(Array...) -> String
 97:15 GDIdentifierExpression value -> Variant
 99:1 GDReturnExpression return result -> Variant
 99:8 GDIdentifierExpression result -> String
@@ -15513,7 +15513,7 @@ test_scripts/type_guards.gd
 125:10 GDDualOperatorExpression "int: "Additionstr() -> String
 125:10 GDStringExpression "int: " -> String
 125:20 GDCallExpression str() -> String
-125:20 GDIdentifierExpression str -> Callable(Object[]...) -> String
+125:20 GDIdentifierExpression str -> Callable(Array...) -> String
 125:24 GDIdentifierExpression x -> int
 126:2 MatchCaseBinding x -> String
 126:13 GDDualOperatorExpression xIsString -> bool
@@ -15678,7 +15678,7 @@ test_scripts/type_guards.gd
 202:14 GDDualOperatorExpression "name_id:"Additionstr() -> String
 202:14 GDStringExpression "name_id:" -> String
 202:27 GDCallExpression str() -> String
-202:27 GDIdentifierExpression str -> Callable(Object[]...) -> String
+202:27 GDIdentifierExpression str -> Callable(Array...) -> String
 202:31 GDIdentifierExpression name -> Variant
 204:1 GDReturnExpression return result -> Variant
 204:8 GDIdentifierExpression result -> String
@@ -15887,7 +15887,7 @@ test_scripts/type_inference.gd
 37:16 GDSingleOperatorExpression Not2inferred_bool -> bool
 37:20 GDIdentifierExpression inferred_bool -> bool
 39:1 GDCallExpression print() -> void
-39:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+39:1 GDIdentifierExpression print -> Callable(Array...) -> void
 39:7 GDIdentifierExpression sum -> int
 39:12 GDIdentifierExpression product -> float
 39:21 GDIdentifierExpression concat -> String
@@ -15918,10 +15918,10 @@ test_scripts/type_inference.gd
 51:14 GDIdentifierExpression step2 -> String
 52:1 Variable step4 -> String
 52:14 GDCallExpression str() -> String
-52:14 GDIdentifierExpression str -> Callable(Object[]...) -> String
+52:14 GDIdentifierExpression str -> Callable(Array...) -> String
 52:18 GDIdentifierExpression step3 -> int
 54:1 GDCallExpression print() -> void
-54:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+54:1 GDIdentifierExpression print -> Callable(Array...) -> void
 54:7 GDIdentifierExpression step1 -> String
 54:14 GDIdentifierExpression step2 -> String
 54:21 GDIdentifierExpression step3 -> int
@@ -15986,7 +15986,7 @@ test_scripts/type_inference.gd
 73:15 GDMemberOperatorExpression items.pop_back -> Variant
 73:15 GDIdentifierExpression items -> Array[int]
 75:1 GDCallExpression print() -> void
-75:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+75:1 GDIdentifierExpression print -> Callable(Array...) -> void
 75:7 GDIdentifierExpression first -> int
 75:14 GDIdentifierExpression front -> int
 75:21 GDIdentifierExpression popped -> int
@@ -16033,7 +16033,7 @@ test_scripts/type_inference.gd
 95:32 GDNumberExpression 100 -> int
 95:41 GDIdentifierExpression number -> int
 97:1 GDCallExpression print() -> void
-97:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+97:1 GDIdentifierExpression print -> Callable(Array...) -> void
 97:7 GDIdentifierExpression result -> String
 97:15 GDIdentifierExpression clamped -> int
 100:0 Method test_match_inference -> String
@@ -16058,17 +16058,17 @@ test_scripts/type_inference.gd
 114:10 GDIdentifierExpression range -> Callable(int) -> Array
 114:16 GDNumberExpression 10 -> int
 115:2 GDCallExpression print() -> void
-115:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+115:2 GDIdentifierExpression print -> Callable(Array...) -> void
 115:8 GDIdentifierExpression i -> Variant
 117:1 Iterator item -> Variant
 117:13 GDIdentifierExpression inferred_array -> Array[int]
 118:2 GDCallExpression print() -> void
-118:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+118:2 GDIdentifierExpression print -> Callable(Array...) -> void
 118:8 GDIdentifierExpression item -> int
 120:1 Iterator key -> Variant
 120:12 GDIdentifierExpression inferred_dict -> Dictionary
 121:2 GDCallExpression print() -> void
-121:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+121:2 GDIdentifierExpression print -> Callable(Array...) -> void
 121:8 GDIdentifierExpression key -> Variant
 124:0 Method test_dictionary_access -> void
 125:1 Variable data -> Dictionary[bool | int | String]
@@ -16089,7 +16089,7 @@ test_scripts/type_inference.gd
 129:17 GDIdentifierExpression data -> Dictionary
 129:26 GDStringExpression "value" -> String
 131:1 GDCallExpression print() -> void
-131:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+131:1 GDIdentifierExpression print -> Callable(Array...) -> void
 131:7 GDIdentifierExpression name_val -> String
 131:17 GDIdentifierExpression value_val -> int
 134:0 Method test_call_inference -> void
@@ -16104,7 +16104,7 @@ test_scripts/type_inference.gd
 138:13 GDMemberOperatorExpression Time.get_ticks_msec -> int
 138:13 GDIdentifierExpression Time -> Time
 140:1 GDCallExpression print() -> void
-140:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+140:1 GDIdentifierExpression print -> Callable(Array...) -> void
 140:7 GDIdentifierExpression pos -> Vector2
 140:12 GDIdentifierExpression tree -> SceneTree
 140:18 GDIdentifierExpression time -> int
@@ -16127,7 +16127,7 @@ test_scripts/type_inference.gd
 149:15 GDMemberOperatorExpression vec.length -> float
 149:15 GDIdentifierExpression vec -> Vector2
 151:1 GDCallExpression print() -> void
-151:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+151:1 GDIdentifierExpression print -> Callable(Array...) -> void
 151:7 GDIdentifierExpression vec -> Vector2
 151:12 GDIdentifierExpression length -> float
 154:0 Method test_packed_array_inference -> void
@@ -16165,7 +16165,7 @@ test_scripts/type_inference.gd
 162:20 GDIdentifierExpression packed_strings -> PackedStringArray
 162:35 GDNumberExpression 0 -> int
 164:1 GDCallExpression print() -> void
-164:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+164:1 GDIdentifierExpression print -> Callable(Array...) -> void
 164:7 GDIdentifierExpression int_elem -> int
 164:17 GDIdentifierExpression float_elem -> float
 164:29 GDIdentifierExpression string_elem -> String
@@ -16232,7 +16232,7 @@ test_scripts/type_inference.gd
 195:15 GDIdentifierExpression string_int_dict -> Dictionary[String, int]
 195:31 GDStringExpression "a" -> String
 197:1 GDCallExpression print() -> void
-197:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+197:1 GDIdentifierExpression print -> Callable(Array...) -> void
 197:7 GDIdentifierExpression value -> int
 197:14 GDIdentifierExpression value2 -> int
 200:0 Method test_nested_array_inference -> void
@@ -16259,7 +16259,7 @@ test_scripts/type_inference.gd
 207:19 GDIdentifierExpression matrix -> Array[Array[int]]
 207:26 GDNumberExpression 0 -> int
 209:1 GDCallExpression print() -> void
-209:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+209:1 GDIdentifierExpression print -> Callable(Array...) -> void
 209:7 GDIdentifierExpression row -> Array[int]
 209:12 GDIdentifierExpression cell -> int
 209:18 GDIdentifierExpression member_row -> Array[int]
@@ -16275,7 +16275,7 @@ test_scripts/type_inference.gd
 216:14 GDIdentifierExpression nodes -> Array[Node2D]
 216:20 GDNumberExpression 0 -> int
 218:1 GDCallExpression print() -> void
-218:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+218:1 GDIdentifierExpression print -> Callable(Array...) -> void
 218:7 GDIdentifierExpression first -> Node2D
 221:0 Method test_untyped_containers -> void
 223:1 Variable untyped_arr -> Array
@@ -16296,7 +16296,7 @@ test_scripts/type_inference.gd
 228:16 GDIdentifierExpression untyped_dict -> Dictionary
 228:29 GDStringExpression "a" -> String
 230:1 GDCallExpression print() -> void
-230:1 GDIdentifierExpression print -> Callable(Object[]...) -> void
+230:1 GDIdentifierExpression print -> Callable(Array...) -> void
 230:7 GDIdentifierExpression elem -> Variant
 230:13 GDIdentifierExpression dict_val -> int
 
@@ -16425,7 +16425,7 @@ test_scripts/union_returns.gd
 67:4 GDIdentifierExpression resource -> Resource
 67:16 GDIdentifierExpression null -> null
 68:2 GDCallExpression push_error() -> void
-68:2 GDIdentifierExpression push_error -> Callable(Object[]...) -> void
+68:2 GDIdentifierExpression push_error -> Callable(Array...) -> void
 68:13 GDDualOperatorExpression "Failed to ..."Additionpath -> String
 68:13 GDStringExpression "Failed to ..." -> String
 68:34 GDIdentifierExpression path -> String
@@ -16525,7 +16525,7 @@ test_scripts/union_returns.gd
 115:10 GDDualOperatorExpression "Found nega..."Additionstr() -> String
 115:10 GDStringExpression "Found nega..." -> String
 115:31 GDCallExpression str() -> String
-115:31 GDIdentifierExpression str -> Callable(Object[]...) -> String
+115:31 GDIdentifierExpression str -> Callable(Array...) -> String
 115:35 GDIdentifierExpression item -> Variant
 116:5 GDDualOperatorExpression itemIsStringAnd2itemEqual"stop" -> bool
 116:5 GDDualOperatorExpression itemIsString -> bool
@@ -17728,7 +17728,7 @@ test_scripts/validation_edge_cases.gd
 45:4 GDIdentifierExpression data -> Variant
 45:12 GDIdentifierExpression null -> null
 46:2 GDCallExpression print() -> void
-46:2 GDIdentifierExpression print -> Callable(Object[]...) -> void
+46:2 GDIdentifierExpression print -> Callable(Array...) -> void
 46:8 GDIdentifierExpression data -> Variant
 49:0 Method test_null_param -> void
 50:1 GDCallExpression process_data() -> Variant

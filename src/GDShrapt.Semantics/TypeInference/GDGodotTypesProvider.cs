@@ -282,9 +282,10 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // GDScript has no generics — prefer non-generic overload when available
             var method = SelectMethod(methods);
             var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
-            var returnType = ConvertCSharpGenericToGDScript(
-                method.GDScriptReturnTypeName,
-                method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant;
+            var returnType = NormalizeCSharpTypeName(
+                ConvertCSharpGenericToGDScript(
+                    method.GDScriptReturnTypeName,
+                    method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant);
             var memberInfo = GDRuntimeMemberInfo.Method(
                 method.GDScriptName,
                 returnType,
@@ -1128,9 +1129,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
     private static string NormalizeCSharpTypeName(string typeName)
     {
-        if (typeName == "GodotObject") return "Object";
-        if (typeName == "Int64") return "int";
-        return typeName;
+        return GDTypeHelper.NormalizeCSharpTypeName(typeName);
     }
 
 }

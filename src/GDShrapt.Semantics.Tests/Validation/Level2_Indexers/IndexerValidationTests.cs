@@ -412,7 +412,74 @@ func test():
 
     #endregion
 
+    #region TypesMap Type Normalization (C# array types)
+
+    [TestMethod]
+    public void TypedDictionary_IntKey_WithPackedInt64Array_NoDiagnostic()
+    {
+        var code = @"
+extends AStar2D
+func test():
+    var dict: Dictionary[int, bool] = {}
+    for id in get_point_ids():
+        dict[id] = true
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+
+        Assert.AreEqual(0, indexerDiagnostics.Count,
+            $"PackedInt64Array element should be 'int', compatible with Dictionary[int, bool]. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void TypedDictionary_IntKey_DirectInt_NoDiagnostic_GodotTypes()
+    {
+        var code = @"
+func test():
+    var dict: Dictionary[int, bool] = {}
+    dict[42] = true
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var indexerDiagnostics = FilterIndexerDiagnostics(diagnostics);
+
+        Assert.AreEqual(0, indexerDiagnostics.Count,
+            $"Direct int key should be compatible with Dictionary[int, bool]. Found: {FormatDiagnostics(indexerDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
+
+    private static IEnumerable<GDDiagnostic> ValidateCodeWithGodotTypes(string code)
+    {
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+
+        if (classDecl == null)
+            return Enumerable.Empty<GDDiagnostic>();
+
+        var reference = new GDScriptReference("test://virtual/test_script.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
+        scriptFile.Analyze(runtimeProvider);
+        var semanticModel = scriptFile.SemanticModel!;
+
+        var options = new GDSemanticValidatorOptions
+        {
+            CheckTypes = true,
+            CheckMemberAccess = true,
+            CheckArgumentTypes = true,
+            CheckIndexers = true
+        };
+        var validator = new GDSemanticValidator(semanticModel, options);
+        var result = validator.Validate(classDecl);
+
+        return result.Diagnostics;
+    }
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
     {

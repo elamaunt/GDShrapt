@@ -314,6 +314,41 @@ func test():
 
     #endregion
 
+    #region For-Loop Over Godot API Methods - C# Type Normalization
+
+    [TestMethod]
+    public void ForLoop_OverGetPointIds_ElementTypeIsInt()
+    {
+        var code = @"
+extends AStar2D
+
+func test():
+    for id in get_point_ids():
+        var x: int = id
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"get_point_ids() returns PackedInt64Array, element type should be int. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ForLoop_OverPackedFloat64Array_ElementTypeIsFloat()
+    {
+        var code = @"
+func test():
+    var arr := PackedFloat64Array()
+    for val in arr:
+        var x: float = val
+";
+        var diagnostics = ValidateCodeWithGodotTypes(code);
+        var typeDiagnostics = FilterTypeDiagnostics(diagnostics);
+        Assert.AreEqual(0, typeDiagnostics.Count,
+            $"PackedFloat64Array element type should be float. Found: {FormatDiagnostics(typeDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
