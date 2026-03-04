@@ -35,7 +35,9 @@ internal enum GDNullabilitySafetyResult
     UnsafeOnready,     // @onready variable in unsafe context
     UnsafeReadyInit,   // _ready()-initialized variable in unsafe context
     UnsafeConditional, // Conditional initialization in _ready()
-    UnsafeNullable     // Regular potentially-null variable
+    UnsafeNullable,    // Regular potentially-null variable
+    ExternalOnready,   // @onready in method with no in-file callers (hint severity)
+    ExternalReadyInit  // _ready()-init in method with no in-file callers (hint severity)
 }
 
 /// <summary>
@@ -60,6 +62,12 @@ public class GDNullableAccessValidator : GDValidationVisitor
     /// is both a standalone access and the caller of a method call.
     /// </summary>
     private readonly HashSet<GDMemberOperatorExpression> _validatedMemberExpressions = new();
+
+    /// <summary>
+    /// Tracks nullable access warnings per (method, variable) pair to suppress cascading duplicates.
+    /// Only the first warning per variable per method is reported; subsequent accesses are suppressed.
+    /// </summary>
+    private readonly HashSet<(string method, string variable, GDDiagnosticCode code)> _reportedNullableAccess = new();
 
     public GDNullableAccessValidator(
         GDValidationContext context,
@@ -91,6 +99,7 @@ public class GDNullableAccessValidator : GDValidationVisitor
     public void Validate(GDNode? node)
     {
         _validatedMemberExpressions.Clear();
+        _reportedNullableAccess.Clear();
         node?.WalkIn(this);
     }
 
@@ -271,6 +280,12 @@ public class GDNullableAccessValidator : GDValidationVisitor
         if (IsMethodSafeForOnready(context.AccessNode))
             return GDNullabilitySafetyResult.Safe;
 
+        // External methods (no in-file callers) — lower severity hint
+        if (IsMethodExternalForOnready(context.AccessNode))
+            return context.IsOnreadyVariable
+                ? GDNullabilitySafetyResult.ExternalOnready
+                : GDNullabilitySafetyResult.ExternalReadyInit;
+
         // Not safe - return appropriate result type
         return context.IsOnreadyVariable
             ? GDNullabilitySafetyResult.UnsafeOnready
@@ -429,9 +444,39 @@ public class GDNullableAccessValidator : GDValidationVisitor
     /// </summary>
     private void ReportNullableDiagnostic(GDNullableAccessContext context, GDNullabilitySafetyResult safetyResult)
     {
+        // Suppress cascading nullable warnings: only report the first access per (method, variable)
+        if (safetyResult == GDNullabilitySafetyResult.UnsafeNullable)
+        {
+            var scopeName = GetContainingScopeName(context.AccessNode) ?? "";
+            if (!_reportedNullableAccess.Add((scopeName, context.VarName, context.Code)))
+                return;
+        }
+
         var memberName = GetAccessedMemberName(context.AccessNode);
         var message = BuildNullableWarningMessage(context.VarName, memberName, safetyResult);
-        ReportDiagnosticWithSeverity(context.Code, message, context.AccessNode, GetEffectiveSeverity());
+
+        // Add caller chain proof for warning/hint diagnostics
+        if (safetyResult != GDNullabilitySafetyResult.UnsafeNullable)
+        {
+            var proofScope = GetContainingScopeName(context.AccessNode);
+            if (!string.IsNullOrEmpty(proofScope))
+            {
+                var proof = BuildCallerChainProof(proofScope, safetyResult);
+                if (!string.IsNullOrEmpty(proof))
+                    message = $"{message}. {proof}";
+            }
+        }
+
+        // External methods get hint severity instead of warning
+        if (safetyResult == GDNullabilitySafetyResult.ExternalOnready ||
+            safetyResult == GDNullabilitySafetyResult.ExternalReadyInit)
+        {
+            ReportHint(context.Code, message, context.AccessNode);
+        }
+        else
+        {
+            ReportDiagnosticWithSeverity(context.Code, message, context.AccessNode, GetEffectiveSeverity());
+        }
     }
 
     /// <summary>
@@ -452,6 +497,12 @@ public class GDNullableAccessValidator : GDValidationVisitor
 
             GDNullabilitySafetyResult.UnsafeNullable =>
                 $"Variable '{varName}' may be null",
+
+            GDNullabilitySafetyResult.ExternalOnready =>
+                $"Variable '{varName}' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard",
+
+            GDNullabilitySafetyResult.ExternalReadyInit =>
+                $"Variable '{varName}' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check",
 
             _ => $"Variable '{varName}' may be null"
         };
@@ -529,6 +580,22 @@ public class GDNullableAccessValidator : GDValidationVisitor
             ? GDDiagnosticSeverity.Error
             : _severity;
     }
+
+    #region Caller Chain Proof
+
+    private string? BuildCallerChainProof(string methodName, GDNullabilitySafetyResult safetyResult)
+    {
+        if (safetyResult == GDNullabilitySafetyResult.Safe ||
+            safetyResult == GDNullabilitySafetyResult.UnsafeNullable)
+            return null;
+
+        var isExternal = safetyResult == GDNullabilitySafetyResult.ExternalOnready ||
+                         safetyResult == GDNullabilitySafetyResult.ExternalReadyInit;
+
+        return _semanticModel.BuildOnreadyCallerChainProof(methodName, isExternal);
+    }
+
+    #endregion
 
     /// <summary>
     /// Checks if the access node is inside a lifecycle method that runs after _ready().
@@ -622,17 +689,40 @@ public class GDNullableAccessValidator : GDValidationVisitor
     /// </summary>
     private bool IsMethodSafeForOnready(GDNode accessNode)
     {
-        var method = GDNullGuardDetector.FindContainingMethod(accessNode);
-        if (method == null)
-            return false;
-
-        var methodName = method.Identifier?.Sequence;
+        var methodName = GetContainingScopeName(accessNode);
         if (string.IsNullOrEmpty(methodName))
             return false;
 
-        // Use the cross-method analysis API
         var safety = _semanticModel.GetMethodOnreadySafety(methodName);
         return safety == GDMethodOnreadySafety.Safe;
+    }
+
+    private bool IsMethodExternalForOnready(GDNode accessNode)
+    {
+        var methodName = GetContainingScopeName(accessNode);
+        if (string.IsNullOrEmpty(methodName))
+            return false;
+
+        var safety = _semanticModel.GetMethodOnreadySafety(methodName);
+        return safety == GDMethodOnreadySafety.External;
+    }
+
+    private static string? GetContainingScopeName(GDNode accessNode)
+    {
+        var (method, setter) = GDNullGuardDetector.FindContainingMethodOrSetter(accessNode);
+
+        if (method != null)
+            return method.Identifier?.Sequence;
+
+        if (setter != null)
+        {
+            var varDecl = setter.Parent as GDVariableDeclaration;
+            var propName = varDecl?.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(propName))
+                return $"@{propName}.set";
+        }
+
+        return null;
     }
 
     private static string? GetRootVariableName(GDExpression? expr)

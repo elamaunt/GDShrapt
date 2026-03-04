@@ -72,13 +72,32 @@ public class GDHoverHandler : IGDHoverHandler
     {
         return symbol.Kind switch
         {
-            GDSymbolKind.Method => BuildMethodHover(symbol),
+            GDSymbolKind.Method => BuildMethodHoverWithContext(symbol, semanticModel, node),
             GDSymbolKind.Signal => BuildSignalHover(symbol),
             GDSymbolKind.Class => BuildClassHover(symbol),
             GDSymbolKind.Enum => BuildEnumHover(symbol),
             GDSymbolKind.EnumValue => BuildEnumValueHover(symbol),
             _ => BuildVariableHover(symbol, semanticModel, node)
         };
+    }
+
+    private string BuildMethodHoverWithContext(Semantics.GDSymbolInfo symbol, GDSemanticModel semanticModel, GDNode node)
+    {
+        var hover = BuildMethodHover(symbol);
+
+        // Check if the call has an injected/inferred return type different from the declared one
+        var callExpr = node?.Parent as GDCallExpression
+                    ?? (node?.Parent?.Parent as GDCallExpression);
+        if (callExpr != null)
+        {
+            var inferredReturn = semanticModel.TypeSystem.GetType(callExpr);
+            if (!inferredReturn.IsVariant && inferredReturn.DisplayName != symbol.ReturnTypeName)
+            {
+                hover += $"\n\ninferred return: `{inferredReturn.DisplayName}`";
+            }
+        }
+
+        return hover;
     }
 
     private string BuildMethodHover(Semantics.GDSymbolInfo symbol)
@@ -186,6 +205,14 @@ public class GDHoverHandler : IGDHoverHandler
         sb.Append("enum ");
         sb.Append(symbol.Name);
         sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(symbol.DeclaringTypeName);
+            sb.Append('*');
+        }
+
         return sb.ToString();
     }
 
@@ -303,6 +330,10 @@ public class GDHoverHandler : IGDHoverHandler
                 annotations.Add(duckInfo);
         }
 
+        // Show parameter annotation
+        if (symbol.Kind == GDSymbolKind.Parameter)
+            annotations.Add("*(parameter)*");
+
         // Show declaring type
         if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
             annotations.Add($"*{symbol.DeclaringTypeName}*");
@@ -358,7 +389,7 @@ public class GDHoverHandler : IGDHoverHandler
             GDSymbolKind.Class => "class",
             GDSymbolKind.Enum => "enum",
             GDSymbolKind.EnumValue => "enum value",
-            GDSymbolKind.Parameter => "param",
+            GDSymbolKind.Parameter => "var",
             GDSymbolKind.Iterator => "var",
             GDSymbolKind.MatchCaseBinding => "var",
             _ => "symbol"

@@ -62,11 +62,24 @@ namespace GDShrapt.Semantics
 
                     if (callers.Count == 0)
                     {
-                        // No external callers → may be called externally → unsafe
-                        safety[methodName] = GDMethodOnreadySafety.Unsafe;
+                        // Setters with no callers are Unsafe — engine can call them before _ready()
+                        // (e.g., @export property initialization)
+                        if (methodName.StartsWith("@") && methodName.EndsWith(".set"))
+                        {
+                            safety[methodName] = GDMethodOnreadySafety.Unsafe;
+                        }
+                        else
+                        {
+                            // No in-file callers → likely called externally (from parent/sibling scripts)
+                            safety[methodName] = GDMethodOnreadySafety.External;
+                        }
                         changed = true;
                     }
-                    else if (callers.All(c => GetSafety(c, safety) == GDMethodOnreadySafety.Safe))
+                    else if (callers.All(c =>
+                    {
+                        var s = GetSafety(c, safety);
+                        return s == GDMethodOnreadySafety.Safe;
+                    }))
                     {
                         // All callers are safe → method is safe
                         safety[methodName] = GDMethodOnreadySafety.Safe;
@@ -78,6 +91,16 @@ namespace GDShrapt.Semantics
                         safety[methodName] = GDMethodOnreadySafety.Unsafe;
                         changed = true;
                     }
+                    else if (callers.All(c =>
+                    {
+                        var s = GetSafety(c, safety);
+                        return s == GDMethodOnreadySafety.Safe || s == GDMethodOnreadySafety.External;
+                    }))
+                    {
+                        // All callers are safe or external → method is external (lower severity)
+                        safety[methodName] = GDMethodOnreadySafety.External;
+                        changed = true;
+                    }
                     // Otherwise, keep Unknown and wait for callers to be determined
                 }
             }
@@ -86,7 +109,7 @@ namespace GDShrapt.Semantics
             {
                 if (safety[methodName] == GDMethodOnreadySafety.Unknown)
                 {
-                    safety[methodName] = GDMethodOnreadySafety.Unsafe;
+                    safety[methodName] = GDMethodOnreadySafety.External;
                 }
             }
 
@@ -118,6 +141,9 @@ namespace GDShrapt.Semantics
                 }
             }
 
+            // Add property assignment → setter edges
+            AddPropertySetterEdges();
+
             // Add signal connections as caller edges:
             // signal.connect(callback) in method X means callback is "called from" X
             if (_signalConnections != null)
@@ -145,6 +171,56 @@ namespace GDShrapt.Semantics
                     {
                         _callerGraph[conn.CallbackMethodName].Add(conn.SourceMethodName);
                     }
+                }
+            }
+        }
+
+        private void AddPropertySetterEdges()
+        {
+            var classDecl = _semanticModel.ScriptFile?.Class;
+            if (classDecl == null)
+                return;
+
+            foreach (var member in classDecl.Members)
+            {
+                if (member is not GDVariableDeclaration varDecl)
+                    continue;
+
+                var propName = varDecl.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(propName))
+                    continue;
+
+                // Handle "set = method_name" delegation
+                var delegatedSetter =
+                    varDecl.FirstAccessorDeclarationNode as GDSetAccessorMethodDeclaration ??
+                    varDecl.SecondAccessorDeclarationNode as GDSetAccessorMethodDeclaration;
+
+                if (delegatedSetter != null)
+                {
+                    var targetMethod = delegatedSetter.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(targetMethod))
+                    {
+                        if (!_callerGraph.ContainsKey(targetMethod))
+                            _callerGraph[targetMethod] = new HashSet<string>();
+
+                        foreach (var summary in _registry.GetAllSummaries())
+                        {
+                            if (summary.AssignedProperties.Contains(propName))
+                                _callerGraph[targetMethod].Add(summary.MethodName);
+                        }
+                    }
+                    continue;
+                }
+
+                // Handle inline setter — registered as "@prop.set"
+                var syntheticName = $"@{propName}.set";
+                if (!_callerGraph.ContainsKey(syntheticName))
+                    continue;
+
+                foreach (var summary in _registry.GetAllSummaries())
+                {
+                    if (summary.AssignedProperties.Contains(propName))
+                        _callerGraph[syntheticName].Add(summary.MethodName);
                 }
             }
         }

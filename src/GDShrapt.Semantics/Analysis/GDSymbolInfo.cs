@@ -189,7 +189,9 @@ public class GDSymbolInfo
         string declaringTypeName,
         GDReferenceConfidence confidence = GDReferenceConfidence.Strict,
         string? confidenceReason = null,
-        bool isStatic = false)
+        bool isStatic = false,
+        IReadOnlyList<GDParameterSymbolInfo>? parameters = null,
+        string? returnTypeName = null)
     {
         Symbol = null;
         Name = name;
@@ -203,6 +205,8 @@ public class GDSymbolInfo
         AccessingScript = null;
         Confidence = confidence;
         ConfidenceReason = confidenceReason;
+        Parameters = parameters;
+        ReturnTypeName = returnTypeName;
     }
 
     /// <summary>
@@ -278,8 +282,24 @@ public class GDSymbolInfo
             GDRuntimeMemberKind.Property => GDSymbolKind.Property,
             GDRuntimeMemberKind.Signal => GDSymbolKind.Signal,
             GDRuntimeMemberKind.Constant => GDSymbolKind.Constant,
+            GDRuntimeMemberKind.Enum => GDSymbolKind.Enum,
+            GDRuntimeMemberKind.EnumValue => GDSymbolKind.EnumValue,
             _ => GDSymbolKind.Variable
         };
+
+        IReadOnlyList<GDParameterSymbolInfo>? parameters = null;
+        if (memberInfo.Parameters != null && memberInfo.Parameters.Count > 0)
+        {
+            parameters = memberInfo.Parameters
+                .Select((p, i) => new GDParameterSymbolInfo(
+                    p.Name,
+                    p.Type,
+                    p.HasDefault,
+                    i))
+                .ToList();
+        }
+
+        string? returnTypeName = kind == GDSymbolKind.Method ? memberInfo.Type : null;
 
         return new GDSymbolInfo(
             memberInfo.Name,
@@ -288,7 +308,9 @@ public class GDSymbolInfo
             declaringTypeName,
             confidence: GDReferenceConfidence.Strict,
             confidenceReason: $"Built-in Godot member from {declaringTypeName}",
-            isStatic: memberInfo.IsStatic);
+            isStatic: memberInfo.IsStatic,
+            parameters: parameters,
+            returnTypeName: returnTypeName);
     }
 
     public override string ToString()

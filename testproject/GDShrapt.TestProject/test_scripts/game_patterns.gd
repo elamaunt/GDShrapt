@@ -211,7 +211,7 @@ func accept_quest(quest_data):
 	quest_progress[quest_id] = {}
 
 	# Initialize objectives
-	var objectives = quest_data.get("objectives", [])  # 214:18-GD7007-OK
+	var objectives = quest_data.get("objectives", [])
 	for i in range(objectives.size()):  # 215:16-GD7007-OK
 		quest_progress[quest_id][i] = 0
 
@@ -239,7 +239,7 @@ func _check_quest_completion(quest_id):
 	var all_complete = true
 
 	for i in range(objectives.size()):  # 241:16-GD7007-OK
-		var required = objectives[i].get("count", 1)  # 242:17-GD7007-OK, 242:17-GD7006-OK
+		var required = objectives[i].get("count", 1)  # 242:17-GD7006-OK
 		var current = quest_progress[quest_id].get(i, 0)
 		if current < required:  # 244:5-GD3020-OK, 244:5-GD3020-OK
 			all_complete = false
@@ -297,7 +297,7 @@ func can_use_ability(ability_id, user):
 			return false
 
 	# Check custom conditions
-	var conditions = ability.get("conditions", [])  # 300:18-GD7007-OK
+	var conditions = ability.get("conditions", [])
 	for condition in conditions:
 		if condition is Callable:
 			if not condition.call(user):
@@ -319,10 +319,10 @@ func use_ability(ability_id, user, targets = []):
 		set_item_property(user, resource, current - cost[resource])
 
 	# Set cooldown
-	cooldowns[ability_id] = ability.get("cooldown", 0.0)  # 322:25-GD7007-OK
+	cooldowns[ability_id] = ability.get("cooldown", 0.0)
 
 	# Execute ability
-	var effect_func = ability.get("effect")  # 325:19-GD7007-OK
+	var effect_func = ability.get("effect")
 	var result = null
 
 	if effect_func is Callable:
@@ -331,13 +331,13 @@ func use_ability(ability_id, user, targets = []):
 		result = _apply_effect_template(effect_func, user, targets)
 
 	# Create lasting effect if needed
-	if ability.has("duration") and ability["duration"] > 0:  # 334:4-GD7007-OK, 334:32-GD7006-OK
+	if ability.has("duration") and ability["duration"] > 0:  # 334:32-GD7006-OK
 		active_effects.append({
 			"ability_id": ability_id,
 			"user": user,
 			"targets": targets,
 			"remaining": ability["duration"],
-			"tick_effect": ability.get("tick_effect")  # 339:16-GD7006-OK, 340:18-GD7007-OK
+			"tick_effect": ability.get("tick_effect")
 		})
 
 	return result
@@ -385,11 +385,11 @@ func update_abilities(delta):
 		effect["remaining"] -= delta
 
 		# Tick effect
-		if effect["tick_effect"] is Callable:  # 388:5-GD7006-OK
-			effect["tick_effect"].call(effect["user"], effect["targets"], delta)  # 389:3-GD7007-OK, 389:3-GD7006-OK, 389:30-GD7006-OK, 389:46-GD7006-OK, 389:0-GDL101-OK
+		if effect["tick_effect"] is Callable:
+			effect["tick_effect"].call(effect["user"], effect["targets"], delta)  # 389:3-GD7007-OK
 
 		if effect["remaining"] <= 0:
-			to_remove.append(i)  # 391:5-GD7006-OK
+			to_remove.append(i)
 
 	# Remove expired effects (reverse order)
 	for i in range(to_remove.size() - 1, -1, -1):
@@ -412,7 +412,7 @@ func can_craft(recipe_id):
 	var recipe = recipes[recipe_id]  # 413:19-GD7007-OK
 	var ingredients = recipe.get("ingredients", [])  # 416:20-GD7007-OK
 
-	for ingredient in ingredients:  # 417:23-GD7007-OK
+	for ingredient in ingredients:
 		var item_filter = ingredient.get("filter")
 		var required_count = ingredient.get("count", 1)
 
@@ -459,7 +459,7 @@ func craft(recipe_id):
 	var ingredients = recipe.get("ingredients", [])  # 463:20-GD7007-OK
 
 	# Consume ingredients
-	for ingredient in ingredients:  # 464:17-GD7007-OK
+	for ingredient in ingredients:
 		var item_filter = ingredient.get("filter")
 		var required = ingredient.get("count", 1)  # 466:8-GD3020-OK
 
@@ -478,7 +478,7 @@ func craft(recipe_id):
 				required = 0
 
 	# Create result
-	var result = recipe.get("result")  # 481:14-GD7007-OK
+	var result = recipe.get("result")
 	if result is Callable:
 		result = result.call()
 	elif result is Dictionary:
@@ -505,12 +505,12 @@ func save_game_state():
 
 func load_game_state(data):
 	inventory = _deserialize_array(data.get("inventory", []))  # 507:32-GD7007-OK
-	equipped = _deserialize_dict(data.get("equipped", {}))  # 508:30-GD7007-OK
-	dialog_variables = data.get("dialog_variables", {})  # 509:20-GD7007-OK
-	active_quests = _deserialize_dict(data.get("active_quests", {}))  # 510:35-GD7007-OK
-	completed_quests = data.get("completed_quests", [])  # 511:20-GD7007-OK
-	quest_progress = data.get("quest_progress", {})  # 512:18-GD7007-OK
-	cooldowns = data.get("cooldowns", {})  # 513:13-GD7007-OK
+	equipped = _deserialize_dict(data.get("equipped", {}))
+	dialog_variables = data.get("dialog_variables", {})
+	active_quests = _deserialize_dict(data.get("active_quests", {}))
+	completed_quests = data.get("completed_quests", [])
+	quest_progress = data.get("quest_progress", {})
+	cooldowns = data.get("cooldowns", {})
 
 
 func _serialize_array(arr):  # 516:22-GD7020-OK

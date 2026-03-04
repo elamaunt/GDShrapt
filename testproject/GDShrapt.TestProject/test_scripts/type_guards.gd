@@ -218,12 +218,12 @@ func structural_type_guard(obj):  # 216:27-GD7020-OK
 	if "position" in obj and "rotation" in obj:
 		# obj has position and rotation - likely Node2D-like
 		var pos = obj.position  # 220:12-GD7005-OK
-		var rot = obj.rotation  # 221:12-GD7005-OK
+		var rot = obj.rotation
 		return [pos, rot]
 
 	if "velocity" in obj:
 		# obj has velocity - likely physics body
-		return obj.velocity  # 226:9-GD7005-OK
+		return obj.velocity
 
 	return null
 

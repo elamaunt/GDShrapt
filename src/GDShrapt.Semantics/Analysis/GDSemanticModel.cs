@@ -2240,6 +2240,140 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     internal GDCrossMethodFlowState? GetCrossMethodFlowState()
         => _crossMethodFlowService.GetCrossMethodFlowState();
 
+    /// <summary>
+    /// Builds a caller chain proof string for an @onready diagnostic.
+    /// Returns null if no proof is needed (safe methods).
+    /// Format: "Accessed in file.gd:10:0 method_name <- file.gd:5:0 caller (reason)"
+    /// </summary>
+    public string? BuildOnreadyCallerChainProof(string methodName, bool isExternal)
+    {
+        var state = GetCrossMethodFlowState();
+        if (state == null)
+            return null;
+
+        // Setter with no callers
+        if (methodName.StartsWith("@") && methodName.EndsWith(".set"))
+        {
+            var callers = state.GetCallers(methodName).ToList();
+            if (callers.Count == 0)
+            {
+                var location = FormatMethodLocation(methodName);
+                return $"Accessed in {location} (setter, no callers)";
+            }
+        }
+
+        // Build chain via BFS
+        var chain = BuildUnsafeChain(methodName, state);
+        if (chain == null || chain.Count == 0)
+        {
+            if (isExternal)
+                return $"Accessed in {FormatMethodLocation(methodName)} (no in-file callers)";
+            return null;
+        }
+
+        return FormatCallerChain(chain, state);
+    }
+
+    private static List<string>? BuildUnsafeChain(string startMethod, GDCrossMethodFlowState state)
+    {
+        var visited = new HashSet<string> { startMethod };
+        var queue = new Queue<List<string>>();
+        queue.Enqueue(new List<string> { startMethod });
+
+        while (queue.Count > 0)
+        {
+            var path = queue.Dequeue();
+            var current = path[path.Count - 1];
+
+            var callers = state.GetCallers(current)
+                .Where(c => c != current)
+                .ToList();
+
+            if (callers.Count == 0)
+                return path;
+
+            foreach (var caller in callers)
+            {
+                if (!visited.Add(caller))
+                    continue;
+
+                var newPath = new List<string>(path) { caller };
+
+                if (newPath.Count > 5)
+                    return newPath;
+
+                if (state.MethodSafetyCache.TryGetValue(caller, out var safety) &&
+                    safety == GDMethodOnreadySafety.Unsafe)
+                    return newPath;
+
+                queue.Enqueue(newPath);
+            }
+        }
+
+        return null;
+    }
+
+    private string FormatCallerChain(List<string> chain, GDCrossMethodFlowState state)
+    {
+        var sb = new System.Text.StringBuilder("Accessed in ");
+
+        for (int i = 0; i < chain.Count; i++)
+        {
+            if (i > 0) sb.Append(" <- ");
+            sb.Append(FormatMethodLocation(chain[i]));
+        }
+
+        var root = chain[chain.Count - 1];
+        var rootCallers = state.GetCallers(root).Where(c => c != root).ToList();
+
+        if (rootCallers.Count == 0)
+        {
+            if (root.StartsWith("@") && root.EndsWith(".set"))
+                sb.Append(" (setter, no callers)");
+            else
+                sb.Append(" (no in-file callers)");
+        }
+
+        return sb.ToString();
+    }
+
+    private string FormatMethodLocation(string methodName)
+    {
+        var displayName = FormatMethodDisplayName(methodName);
+        var pos = GetMethodPosition(methodName);
+        var fullPath = ScriptFile?.FullPath;
+        var fileName = fullPath != null ? System.IO.Path.GetFileName(fullPath) : "";
+
+        return pos != null && !string.IsNullOrEmpty(fileName)
+            ? $"{fileName}:{pos} {displayName}"
+            : displayName;
+    }
+
+    private static string FormatMethodDisplayName(string methodName)
+    {
+        if (methodName.StartsWith("@") && methodName.EndsWith(".set"))
+        {
+            var propName = methodName.Substring(1, methodName.Length - 5);
+            return $"{propName}.set";
+        }
+        return methodName;
+    }
+
+    private string? GetMethodPosition(string methodName)
+    {
+        string symbolName = methodName;
+        if (methodName.StartsWith("@") && methodName.EndsWith(".set"))
+            symbolName = methodName.Substring(1, methodName.Length - 5);
+
+        var symbol = FindSymbol(symbolName);
+        if (symbol?.DeclarationNode != null)
+        {
+            var node = symbol.DeclarationNode;
+            return $"{node.StartLine + 1}:{node.StartColumn}";
+        }
+        return null;
+    }
+
     #endregion
 
 }

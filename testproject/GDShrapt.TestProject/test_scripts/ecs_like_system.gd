@@ -195,33 +195,33 @@ class MovementSystem:
 		var movers = world.query_entities(["Transform", "Velocity"])
 
 		for eid in movers:
-			var transform = world.get_component(eid, "Transform")  # 198:19-GD7007-OK
-			var velocity = world.get_component(eid, "Velocity")  # 199:18-GD7007-OK
+			var transform = world.get_component(eid, "Transform")
+			var velocity = world.get_component(eid, "Velocity")
 
 			transform["position"] += velocity["linear"] * delta  # 201:3-GD7006-OK, 201:28-GD7006-OK
-			transform["rotation"] += velocity["angular"] * delta  # 202:3-GD7006-OK, 202:28-GD7006-OK
+			transform["rotation"] += velocity["angular"] * delta
 
 
 class HealthSystem:
 	signal entity_died(entity_id)
 
 	func update(delta, world):  # 208:13-GDL202-OK, 208:20-GD7020-OK
-		var with_health = world.query_entities(["Health"])  # 209:20-GD7007-OK
+		var with_health = world.query_entities(["Health"])
 
 		for eid in with_health:
-			var health = world.get_component(eid, "Health")  # 212:16-GD7007-OK
+			var health = world.get_component(eid, "Health")
 
 			if health["current"] <= 0:  # 214:6-GD7006-OK
 				entity_died.emit(eid)
 
 
 class AISystem:
-	func update(delta, world):  # 220:20-GD7007-OK, 219:20-GD7020-OK
+	func update(delta, world):  # 219:20-GD7020-OK
 		var ai_entities = world.query_entities(["AI", "Transform"])
 
 		for eid in ai_entities:
-			var ai = world.get_component(eid, "AI")  # 223:12-GD7007-OK
-			var transform = world.get_component(eid, "Transform")  # 224:19-GD7007-OK
+			var ai = world.get_component(eid, "AI")
+			var transform = world.get_component(eid, "Transform")
 
 			if ai["behavior"]:  # 226:6-GD7006-OK
 				var context = {
@@ -230,8 +230,8 @@ class AISystem:
 					"world": world,
 					"delta": delta
 				}
-				var new_state = ai["behavior"].call(ai["state"], context)  # 233:20-GD7007-OK, 233:20-GD7006-OK, 233:40-GD7006-OK
-				if new_state:  # 235:5-GD7006-OK
+				var new_state = ai["behavior"].call(ai["state"], context)  # 233:20-GD7007-OK
+				if new_state:
 					ai["state"] = new_state
 
 
@@ -257,8 +257,8 @@ func create_from_archetype(archetype_name, overrides = {}):
 
 		if overrides.has(comp_type):  # 258:5-GD7007-OK
 			component = overrides[comp_type]  # 259:15-GD7006-OK
-		elif comp_def.has("factory") and comp_def["factory"] is Callable:  # 260:7-GD7007-OK, 260:35-GD7006-OK
-			component = comp_def["factory"].call()  # 261:15-GD7007-OK, 261:15-GD7006-OK
+		elif comp_def.has("factory") and comp_def["factory"] is Callable:  # 260:7-GD7007-OK
+			component = comp_def["factory"].call()
 		elif comp_def.has("default"):
 			component = comp_def["default"].duplicate() if comp_def["default"] is Dictionary or comp_def["default"] is Array else comp_def["default"]  # 263:0-GDL101-OK
 		else:
@@ -317,7 +317,7 @@ func update_spatial_index():
 		spatial_grid[cell].append(eid)
 
 
-func _get_grid_cell(position):  # 322:6-GD7005-OK, 323:6-GD7005-OK, 320:20-GD7020-OK
+func _get_grid_cell(position):  # 322:6-GD7005-OK, 320:20-GD7020-OK
 	return Vector2i(
 		int(position.x / grid_cell_size),
 		int(position.y / grid_cell_size)
@@ -354,8 +354,8 @@ func serialize_world():
 		var entity = entities[eid]  # 356:11-GD7005-OK
 		data["entities"][eid] = {
 			"name": entity.name,
-			"tags": entity.tags,  # 357:11-GD7005-OK
-			"active": entity.active  # 358:13-GD7005-OK
+			"tags": entity.tags,
+			"active": entity.active
 		}
 
 	for comp_type in components:
@@ -371,19 +371,19 @@ func deserialize_world(data):  # 368:0-GDL513-OK
 
 	next_entity_id = data.get("next_id", 1)  # 372:18-GD7007-OK
 
-	for eid_str in data.get("entities", {}):  # 374:16-GD7007-OK
+	for eid_str in data.get("entities", {}):
 		var eid = int(eid_str)
 		var edata = data["entities"][eid_str]  # 376:14-GD7006-OK, 376:14-GD7006-OK
 		var entity = Entity.new(eid, edata.get("name", ""))  # 377:31-GD7007-OK
-		entity.tags = edata.get("tags", [])  # 378:16-GD7007-OK
-		entity.active = edata.get("active", true)  # 379:18-GD7007-OK
+		entity.tags = edata.get("tags", [])
+		entity.active = edata.get("active", true)
 		entities[eid] = entity
 
-	for comp_type in data.get("components", {}):  # 382:18-GD7007-OK
+	for comp_type in data.get("components", {}):
 		components[comp_type] = {}
-		for eid_str in data["components"][comp_type]:  # 384:17-GD7006-OK, 384:17-GD7006-OK
+		for eid_str in data["components"][comp_type]:
 			var eid = int(eid_str)
-			components[comp_type][eid] = data["components"][comp_type][eid_str]  # 386:32-GD7006-OK
+			components[comp_type][eid] = data["components"][comp_type][eid_str]
 
 
 # === Debug utilities ===

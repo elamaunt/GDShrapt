@@ -81,6 +81,11 @@ internal class GoToDefinitionCommand : Command
                 GoToExternalMember(scriptEditor, result.SymbolName);
                 break;
 
+            case GDDefinitionType.BuiltInMember:
+                Logger.Info($"GoToDefinition: Built-in member '{result.SymbolName}' of '{result.TypeName}', delegating to Godot");
+                scriptEditor.RequestGodotLookup();
+                break;
+
             case GDDefinitionType.BuiltInType:
                 // Delegate to Godot for built-in types
                 Logger.Info($"GoToDefinition: Built-in type '{result.TypeName}', delegating to Godot");

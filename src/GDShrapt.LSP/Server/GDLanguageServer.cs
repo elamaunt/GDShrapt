@@ -261,6 +261,8 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     // Run analysis in background
                     _project.AnalyzeAll();
+                    _project.ResolveTresClassNames();
+                    GDProjectInitializer.InjectSceneSignalConnections(_project);
                 }
                 catch (Exception ex)
                 {

@@ -81,7 +81,7 @@ func _draw():
     }
 
     [TestMethod]
-    public void MethodWithNoCallers_IsUnsafe()
+    public void MethodWithNoCallers_IsExternal()
     {
         var code = @"
 extends Node
@@ -91,7 +91,7 @@ func orphan_method():
 ";
         var model = CreateSemanticModel(code);
         var safety = model.GetMethodOnreadySafety("orphan_method");
-        safety.Should().Be(GDMethodOnreadySafety.Unsafe);
+        safety.Should().Be(GDMethodOnreadySafety.External);
     }
 
     [TestMethod]
@@ -132,12 +132,12 @@ func helper():
     }
 
     [TestMethod]
-    public void MethodCalledFromUnsafeMethod_IsUnsafe()
+    public void MethodCalledFromExternalMethod_IsExternal()
     {
         var code = @"
 extends Node
 
-func unsafe_method():
+func external_method():
     shared()
 
 func shared():
@@ -145,11 +145,11 @@ func shared():
 ";
         var model = CreateSemanticModel(code);
         var safety = model.GetMethodOnreadySafety("shared");
-        safety.Should().Be(GDMethodOnreadySafety.Unsafe);
+        safety.Should().Be(GDMethodOnreadySafety.External);
     }
 
     [TestMethod]
-    public void MethodCalledFromMixedMethods_IsUnsafe()
+    public void MethodCalledFromMixedSafeAndExternalMethods_IsExternal()
     {
         var code = @"
 extends Node
@@ -157,7 +157,7 @@ extends Node
 func _process(delta):
     shared()
 
-func unsafe_method():
+func external_method():
     shared()
 
 func shared():
@@ -165,7 +165,7 @@ func shared():
 ";
         var model = CreateSemanticModel(code);
         var safety = model.GetMethodOnreadySafety("shared");
-        safety.Should().Be(GDMethodOnreadySafety.Unsafe);
+        safety.Should().Be(GDMethodOnreadySafety.External);
     }
 
     [TestMethod]
@@ -467,6 +467,136 @@ func unsafe_method():
 ";
         var model = CreateSemanticModel(code);
         model.IsVariableSafeAtMethod("label", "unsafe_method").Should().BeFalse();
+    }
+
+    #endregion
+
+    #region Property Setter Safety Tests
+
+    [TestMethod]
+    public void SetterWithNoCallers_IsUnsafe()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+";
+        var model = CreateSemanticModel(code);
+        var safety = model.GetMethodOnreadySafety("@text.set");
+        safety.Should().Be(GDMethodOnreadySafety.Unsafe);
+    }
+
+    [TestMethod]
+    public void SetterCalledOnlyFromReady_IsSafe()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+
+func _ready():
+    text = ""hello""
+";
+        var model = CreateSemanticModel(code);
+        var safety = model.GetMethodOnreadySafety("@text.set");
+        safety.Should().Be(GDMethodOnreadySafety.Safe);
+    }
+
+    [TestMethod]
+    public void SetterCalledFromProcessAndExternal_IsExternal()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+
+func _process(delta):
+    text = ""hello""
+
+func some_method():
+    text = ""world""
+";
+        var model = CreateSemanticModel(code);
+        var safety = model.GetMethodOnreadySafety("@text.set");
+        safety.Should().Be(GDMethodOnreadySafety.External);
+    }
+
+    [TestMethod]
+    public void SetterDelegated_TargetMethodInCallerGraph()
+    {
+        var code = @"
+extends Node
+
+var speed: float:
+    set = _set_speed
+
+func _set_speed(value):
+    pass
+
+func _process(delta):
+    speed = 10.0
+";
+        var model = CreateSemanticModel(code);
+        var safety = model.GetMethodOnreadySafety("_set_speed");
+        safety.Should().Be(GDMethodOnreadySafety.Safe);
+    }
+
+    [TestMethod]
+    public void SetterCalledMethods_InCallerGraph()
+    {
+        var code = @"
+extends Node
+
+var text: String:
+    set(value):
+        _update_display(value)
+
+func _update_display(val):
+    pass
+
+func _ready():
+    text = ""init""
+";
+        var model = CreateSemanticModel(code);
+        var state = model.GetCrossMethodFlowState();
+        state.Should().NotBeNull();
+        state!.CallerGraph.Should().ContainKey("_update_display");
+        state.CallerGraph["_update_display"].Should().Contain("@text.set");
+    }
+
+    [TestMethod]
+    public void SetterAssignedProperties_TrackedInSummary()
+    {
+        var code = @"
+extends Node
+
+var text: String:
+    set(value):
+        pass
+
+func _ready():
+    text = ""hello""
+
+func some_method():
+    pass
+";
+        var model = CreateSemanticModel(code);
+        var summary = model.GetMethodFlowSummary("_ready");
+        summary.Should().NotBeNull();
+        summary!.AssignedProperties.Should().Contain("text");
+
+        var noAssign = model.GetMethodFlowSummary("some_method");
+        noAssign.Should().NotBeNull();
+        noAssign!.AssignedProperties.Should().NotContain("text");
     }
 
     #endregion

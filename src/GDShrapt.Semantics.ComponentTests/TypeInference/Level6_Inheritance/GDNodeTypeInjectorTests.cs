@@ -914,6 +914,67 @@ func test():
     }
 
     [TestMethod]
+    public void InjectType_PreloadRelativePath_ResolvesToAbsoluteAndReturnsType()
+    {
+        var sceneContent = @"
+[gd_scene format=3]
+[node name=""Enemy"" type=""CharacterBody2D""]
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "src", "entities", "enemy.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://src/entities/enemy.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var call = _reader.ParseExpression("preload(\"enemy.tscn\").instantiate()") as GDCallExpression;
+        Assert.IsNotNull(call);
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://src/entities/spawner.gd" };
+        var type = injector.InjectType(call, context);
+
+        Assert.AreEqual("CharacterBody2D", type);
+    }
+
+    [TestMethod]
+    public void InjectType_ConstWithRelativePreload_ResolvesType()
+    {
+        var sceneContent = @"
+[gd_scene load_steps=2 format=3]
+[ext_resource type=""Script"" path=""res://src/ui/icon.gd"" id=""1""]
+[node name=""Icon"" type=""TextureRect""]
+script = ExtResource(""1"")
+";
+        var mockFs = new MockFileSystem();
+        var projectPath = Path.Combine("C:", "project");
+        mockFs.AddFile(Path.Combine(projectPath, "src", "ui", "icon.tscn"), sceneContent);
+
+        var sceneProvider = new GDSceneTypesProvider(projectPath, mockFs);
+        sceneProvider.LoadScene("res://src/ui/icon.tscn");
+
+        var injector = new GDNodeTypeInjector(sceneProvider);
+
+        var code = @"
+const ICON_SCENE = preload(""icon.tscn"")
+
+func test():
+    var instance = ICON_SCENE.instantiate()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        Assert.IsNotNull(classDecl);
+
+        var instantiateCall = FindCallExpression(classDecl, "instantiate");
+        Assert.IsNotNull(instantiateCall, "Should find instantiate() call in AST");
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://src/ui/bar.gd" };
+        var type = injector.InjectType(instantiateCall, context);
+
+        Assert.AreEqual("Icon", type);
+    }
+
+    [TestMethod]
     public void InjectType_GetChildOnSceneInstance_ReturnsChildType()
     {
         var sceneContent = @"

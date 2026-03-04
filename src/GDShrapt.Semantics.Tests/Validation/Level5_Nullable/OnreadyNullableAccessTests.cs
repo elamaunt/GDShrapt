@@ -1181,6 +1181,249 @@ func _on_button_pressed():
 
     #endregion
 
+    #region Property Setter Tests
+
+    [TestMethod]
+    public void OnreadyInSetter_NoCallers_Warning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0,
+            "Setter with no callers should warn about @onready access");
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Code == GDDiagnosticCode.PotentiallyNullAccess),
+            $"Should report GD7005 for _label.text in setter. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSetter_CalledFromReady_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+
+func _ready():
+    text = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Setter called only from _ready should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSetter_CalledFromProcess_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+
+func _process(delta):
+    text = ""updating""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Setter called only from _process should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSetter_CalledFromExternalMethod_Hint()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+
+func some_public_method():
+    text = ""external""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Severity == GDDiagnosticSeverity.Hint),
+            $"External setter access should produce hint, not warning. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSetter_WithIsNodeReadyGuard_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        if is_node_ready():
+            _label.text = value
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Setter with is_node_ready guard should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInDelegatedSetter_CalledFromReady_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set = _set_text
+
+func _set_text(value):
+    _label.text = value
+
+func _ready():
+    text = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Delegated setter called from _ready should be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void SetterCallsMethod_OnreadyInCalledMethod_Warning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _update(value)
+
+func _update(val):
+    _label.text = val
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0,
+            $"Method called from unsafe setter should produce warning for @onready access. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void GetterAccessingOnready_NoCallerGraph_Warning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    get:
+        return _label.text
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0,
+            $"Getter accessing @onready should produce diagnostic. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
+    #region Caller Chain Proof Tests
+
+    [TestMethod]
+    public void OnreadyWarning_ContainsCallerChainProof_Setter()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _label.text = value
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0, "Should warn about @onready access in setter");
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Message.Contains("setter, no callers")),
+            $"Warning should contain proof 'setter, no callers'. Found: {FormatDiagnostics(nullDiagnostics)}");
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Message.Contains("Accessed in")),
+            $"Warning should contain 'Accessed in'. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyHint_ContainsCallerChainProof_External()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+func some_method():
+    _label.text = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0, "Should produce hint for external method");
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Message.Contains("no in-file callers")),
+            $"Hint should contain proof 'no in-file callers'. Found: {FormatDiagnostics(nullDiagnostics)}");
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Message.Contains("some_method")),
+            $"Hint should contain method name 'some_method'. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyWarning_ContainsCallerChainProof_DeepChain()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+var text: String:
+    set(value):
+        _update(value)
+
+func _update(val):
+    _label.text = val
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0, "Should warn about @onready in method called from setter");
+        Assert.IsTrue(nullDiagnostics.Any(d => d.Message.Contains("<-")),
+            $"Warning should contain caller chain with '<-'. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadySafe_NoCallerChainProof()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+func _ready():
+    update_label()
+
+func update_label():
+    _label.text = ""safe""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Safe method should not produce any diagnostic. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static (IEnumerable<GDDiagnostic> diagnostics, GDMethodOnreadySafety safety) ValidateCodeWithSceneConnection(string code, string callbackMethod)

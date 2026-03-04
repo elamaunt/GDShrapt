@@ -609,4 +609,18 @@ public static class GDNullGuardDetector
         }
         return null;
     }
+
+    public static (GDMethodDeclaration? method, GDSetAccessorBodyDeclaration? setter) FindContainingMethodOrSetter(GDNode? node)
+    {
+        var current = node;
+        while (current != null)
+        {
+            if (current is GDMethodDeclaration method)
+                return (method, null);
+            if (current is GDSetAccessorBodyDeclaration setter)
+                return (null, setter);
+            current = current.Parent as GDNode;
+        }
+        return (null, null);
+    }
 }

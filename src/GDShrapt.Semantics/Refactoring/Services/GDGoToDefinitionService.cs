@@ -29,6 +29,9 @@ public enum GDDefinitionType
     /// <summary>An external member from another type.</summary>
     ExternalMember,
 
+    /// <summary>A member of a built-in Godot type (e.g., Signal.connect, Array.duplicate).</summary>
+    BuiltInMember,
+
     /// <summary>A built-in Godot type (no definition to navigate to).</summary>
     BuiltInType,
 
@@ -148,6 +151,24 @@ public class GDGoToDefinitionResult : GDRefactoringResult
             requiresGodotLookup: true);
     }
 
+    /// <summary>Creates a result for a built-in type member (e.g., Signal.connect, Array.duplicate).</summary>
+    public static GDGoToDefinitionResult BuiltInMember(string typeName, string memberName)
+    {
+        return new GDGoToDefinitionResult(
+            success: true,
+            errorMessage: null,
+            definitionType: GDDefinitionType.BuiltInMember,
+            filePath: null,
+            line: 0,
+            column: 0,
+            endColumn: 0,
+            symbolName: memberName,
+            typeName: typeName,
+            declarationNode: null,
+            declarationIdentifier: null,
+            requiresGodotLookup: true);
+    }
+
     /// <summary>Creates a result that requires Godot runtime lookup.</summary>
     public static GDGoToDefinitionResult RequiresGodot(GDDefinitionType type, string? symbolName = null)
     {
@@ -240,6 +261,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             GDNodePathExpression nodePathExpr => ResolveNodePath(context, nodePathExpr.Path?.ToString() ?? ""),
             GDGetNodeExpression getNodeExpr => ResolveNodePath(context, getNodeExpr.Path?.ToString() ?? ""),
             GDMemberOperatorExpression memberExpr when token is GDIdentifier id => ResolveMember(context, id, memberExpr),
+            GDMethodExpression lambdaExpr when token is GDIdentifier id => ResolveLambdaDeclaration(context, id, lambdaExpr),
             GDTypeNode typeNode => ResolveType(context, typeNode.BuildName()),
             _ => GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, token.ToString())
         };
@@ -589,21 +611,55 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
 
     /// <summary>
     /// Resolves a member access expression.
+    /// Uses the semantic model to determine the caller type and resolve the member.
     /// </summary>
     private GDGoToDefinitionResult ResolveMember(
         GDRefactoringContext context,
         GDIdentifier identifier,
         GDMemberOperatorExpression expr)
     {
+        var memberName = identifier.Sequence;
+
         if (expr.CallerExpression == null)
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+
+        var semanticModel = context.GetSemanticModel();
+        if (semanticModel != null)
         {
-            // Base class member - need Godot lookup
-            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, identifier.Sequence);
+            var callerType = semanticModel.GetExpressionType(expr.CallerExpression);
+            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
+            {
+                // Check if the member resolves on a built-in type
+                var symbolInfo = semanticModel.ResolveMember(callerType, memberName);
+                if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
+                    && symbolInfo.DeclaringTypeName != "Unknown")
+                {
+                    return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
+                }
+            }
         }
 
-        // Member resolution requires type analysis which needs project context
-        // Return result indicating Plugin should perform type-aware search
-        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, identifier.Sequence);
+        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+    }
+
+    /// <summary>
+    /// Resolves a lambda expression declaration — the identifier IS the declaration itself.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveLambdaDeclaration(
+        GDRefactoringContext context,
+        GDIdentifier identifier,
+        GDMethodExpression lambdaExpr)
+    {
+        var filePath = context.Script?.Reference?.FullPath;
+        return GDGoToDefinitionResult.Found(
+            GDDefinitionType.ClassMember,
+            filePath,
+            identifier.StartLine,
+            identifier.StartColumn,
+            identifier.EndColumn,
+            identifier.Sequence,
+            lambdaExpr,
+            identifier);
     }
 
     /// <summary>

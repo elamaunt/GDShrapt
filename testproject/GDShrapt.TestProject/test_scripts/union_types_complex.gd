@@ -227,7 +227,7 @@ func handle_result(result):
 		"success":
 			return result["value"]      # 228:10-GD7006-OK
 		"error":
-			return "Error: " + result["message"]  # 230:22-GD7006-OK
+			return "Error: " + result["message"]
 		"loading":
 			return null                  # null
 		_:
@@ -361,9 +361,9 @@ func _process_typed_data(data, type_str):
 		"number":
 			return data.get("value", 0) # 362:10-GD7007-OK
 		"text":
-			return data.get("content", "") # 364:10-GD7007-OK
+			return data.get("content", "")
 		"list":
-			return data.get("items", []) # 366:10-GD7007-OK
+			return data.get("items", [])
 		_:
 			return data
 

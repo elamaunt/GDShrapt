@@ -88,6 +88,16 @@ public class GDRuntimeTypeInfo
     public bool IsStringLike { get; set; }
 
     /// <summary>
+    /// True if this is an enum type.
+    /// </summary>
+    public bool IsEnum { get; set; }
+
+    /// <summary>
+    /// For enum types: ordered list of enum values (name, int value).
+    /// </summary>
+    public IReadOnlyList<KeyValuePair<string, long>>? EnumValues { get; set; }
+
+    /// <summary>
     /// The float variant of an integer vector (e.g., "Vector2" for "Vector2i").
     /// Null if not applicable.
     /// </summary>

@@ -65,6 +65,11 @@ public class GDRuntimeMemberInfo
     public string? MergeTypeStrategy { get; set; }
 
     /// <summary>
+    /// For constants: the string representation of the constant value.
+    /// </summary>
+    public string? ConstantValue { get; set; }
+
+    /// <summary>
     /// Creates a new member info.
     /// </summary>
     public GDRuntimeMemberInfo(string name, GDRuntimeMemberKind kind, string? type = null)
@@ -111,9 +116,12 @@ public class GDRuntimeMemberInfo
     /// <summary>
     /// Creates a constant member info.
     /// </summary>
-    public static GDRuntimeMemberInfo Constant(string name, string? type)
+    public static GDRuntimeMemberInfo Constant(string name, string? type, string? value = null)
     {
-        return new GDRuntimeMemberInfo(name, GDRuntimeMemberKind.Constant, type);
+        return new GDRuntimeMemberInfo(name, GDRuntimeMemberKind.Constant, type)
+        {
+            ConstantValue = value
+        };
     }
 
     public override string ToString() => $"{Kind}: {Name}";

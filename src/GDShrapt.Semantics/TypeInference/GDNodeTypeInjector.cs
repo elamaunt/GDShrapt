@@ -300,7 +300,12 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
 
         // Direct: preload("res://scene.tscn").instantiate()
         if (memberExpr.CallerExpression is GDCallExpression preloadCall)
-            return ExtractScenePathFromPreloadCall(preloadCall);
+        {
+            var path = ExtractScenePathFromPreloadCall(preloadCall);
+            if (path != null && !path.StartsWith("res://"))
+                path = ResolvePreloadRelativePath(path, scriptPath);
+            return path;
+        }
 
         // Variable: scene_var.instantiate()
         if (memberExpr.CallerExpression is GDIdentifierExpression identExpr)
@@ -338,7 +343,12 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         // Check code-level initializer (preload)
         var initExpr = FindVariableInitializerInHierarchy(classDecl, varName);
         if (initExpr is GDCallExpression preloadCall)
-            return ExtractScenePathFromPreloadCall(preloadCall);
+        {
+            var path = ExtractScenePathFromPreloadCall(preloadCall);
+            if (path != null && !path.StartsWith("res://"))
+                path = ResolvePreloadRelativePath(path, scriptPath);
+            return path;
+        }
 
         // Check .tscn resource references for @export PackedScene variables
         if (_sceneProvider != null && !string.IsNullOrEmpty(scriptPath))
@@ -349,6 +359,19 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         }
 
         return null;
+    }
+
+    private static string? ResolvePreloadRelativePath(string relativePath, string? scriptPath)
+    {
+        if (string.IsNullOrEmpty(scriptPath) || !scriptPath.StartsWith("res://"))
+            return null;
+
+        var lastSlash = scriptPath.LastIndexOf('/');
+        if (lastSlash < 0)
+            return null;
+
+        var scriptDir = scriptPath.Substring(0, lastSlash + 1);
+        return scriptDir + relativePath;
     }
 
     private string? FindExportedScenePathFromTscn(string scriptPath, string varName)

@@ -1,40 +1,40 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-03 13:17:45
+Generated: 2026-03-04 04:34:10
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 847
+Total diagnostics: 730
 Scripts analyzed:  54
 
 By Severity:
   Error     :    30
-  Hint      :    23
+  Hint      :    93
   Info      :    36
-  Warning   :   758
+  Warning   :   571
 
 By Source:
-  Linter              :   302
-  SemanticValidator   :   511
+  Linter              :   300
+  SemanticValidator   :   396
   Validator           :    34
 
 By Code (Top 30):
-  GD7007    :  251  (Variable 'timer_node' is @onready - _ready() may not have...)
+  GD7007    :  185  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  155  (Local variable 'unused_var' is declared but never used)
-  GD7006    :   82  (Variable 'data' may be null when accessing '[...]')
+  GD7006    :   39  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
   GD3023    :   32  (Function 'create_game_object' returns inconsistent types:...)
   GDL203    :   28  (Function '_process_idle' only contains 'pass')
-  GD7005    :   27  (Variable 'child_sprite' is @onready - _ready() may not ha...)
   GD7003    :   26  (Calling method 'visit' on untyped variable 'visitor' with...)
+  GD7005    :   21  (Variable 'child_sprite' is @onready - _ready() may not ha...)
   GDL513    :   19  (Expected 2 empty line(s) before function, found 1)
   GDL001    :   13  (Class name 'DiagnosticsTest_BestPractices' should use Pas...)
   GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
   GDL222    :   11  ('CyclicInference' has 22 public methods (max 20))
-  GDL101    :   10  (Line 212 exceeds 120 characters (length: 146))
   GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
+  GDL101    :    8  (Line 212 exceeds 120 characters (length: 146))
   GDL202    :    8  (Parameter 'delta' is declared but never used)
   GD3009    :    7  (Enum value 'NONEXISTENT_VALUE' not found in enum 'TestEnum')
   GDL211    :    7  (Local variable 'class_level_var' shadows a class-level va...)
@@ -68,88 +68,84 @@ DIAGNOSTICS BY FILE
 
 --- test_scripts/completion_test.gd (9 diagnostics) ---
 
-    80:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'texture'
-    81:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'flip_h'
-    82:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'centered'
-    83:1   [GD7005] Warning - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'offset'
-    97:1   [GD7007] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'start'
-    98:1   [GD7007] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'stop'
-    99:1   [GD7005] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'wait_time'
-   100:1   [GD7005] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'one_shot'
-   101:17  [GD7005] Warning - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'time_left'
+    80:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'texture'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
+    81:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'flip_h'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
+    82:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'centered'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
+    83:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'offset'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
+    97:1   [GD7007] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'start'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
+    98:1   [GD7007] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'stop'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
+    99:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'wait_time'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
+   100:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'one_shot'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
+   101:17  [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'time_left'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
 
---- test_scripts/cross_file_inference.gd (70 diagnostics) ---
+--- test_scripts/cross_file_inference.gd (66 diagnostics) ---
 
-    37:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
+    37:14  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'. Accessed in cross_file_inference.gd:35:0 process_entity <- cross_file_inference.gd:81:0 _on_spawn_event (no in-file callers)
     37:43  [GD7007] Warning - Variable 'entity_data' may be null when accessing 'get'
-    41:18  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'
-    42:2   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
-    45:15  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'
-    46:2   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
+    41:18  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'. Accessed in cross_file_inference.gd:35:0 process_entity <- cross_file_inference.gd:81:0 _on_spawn_event (no in-file callers)
+    42:2   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:35:0 process_entity <- cross_file_inference.gd:81:0 _on_spawn_event (no in-file callers)
+    45:15  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'. Accessed in cross_file_inference.gd:35:0 process_entity <- cross_file_inference.gd:81:0 _on_spawn_event (no in-file callers)
+    46:2   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:35:0 process_entity <- cross_file_inference.gd:81:0 _on_spawn_event (no in-file callers)
     51:36  [GDL202] Info - Parameter 'amount' is declared but never used
-    53:14  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_attack'
-    60:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
-    61:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_stage_1'
-    62:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'even_check'
+    53:14  [GD7007] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_attack'. Accessed in cross_file_inference.gd:51:0 apply_damage <- cross_file_inference.gd:77:0 _on_damage_event (no in-file callers)
+    60:13  [GD7007] Hint - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'. Accessed in cross_file_inference.gd:58:0 run_cyclic_computation (no in-file callers)
+    61:13  [GD7007] Hint - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_stage_1'. Accessed in cross_file_inference.gd:58:0 run_cyclic_computation (no in-file callers)
+    62:13  [GD7007] Hint - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'even_check'. Accessed in cross_file_inference.gd:58:0 run_cyclic_computation (no in-file callers)
     66:27  [GDL202] Info - Parameter 'target' is declared but never used
-    68:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_event'
-    69:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_event'
-    72:10  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
+    68:1   [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_event'. Accessed in cross_file_inference.gd:66:0 setup_signal_handlers (no in-file callers)
+    69:1   [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_event'. Accessed in cross_file_inference.gd:66:0 setup_signal_handlers (no in-file callers)
+    72:10  [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'. Accessed in cross_file_inference.gd:66:0 setup_signal_handlers (no in-file callers)
     78:21  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-    78:37  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-    78:53  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-    93:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'
-    95:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_moveable'
-    97:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_updatable'
-   106:10  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_entity'
-   108:10  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_config'
-   110:10  [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_property'
-   112:10  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_entity_by_name'
-   147:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
-   148:1   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
-   151:17  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_data'
-   157:14  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'accumulate_left'
-   164:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'
-   171:1   [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'set_property'
-   202:27  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_attack'
-   207:2   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'
+    93:3   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'. Accessed in cross_file_inference.gd:89:0 register_handlers (no in-file callers)
+    95:3   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_moveable'. Accessed in cross_file_inference.gd:89:0 register_handlers (no in-file callers)
+    97:3   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_updatable'. Accessed in cross_file_inference.gd:89:0 register_handlers (no in-file callers)
+   106:10  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_entity'. Accessed in cross_file_inference.gd:102:0 get_result_from_anywhere (no in-file callers)
+   108:10  [GD7007] Hint - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_config'. Accessed in cross_file_inference.gd:102:0 get_result_from_anywhere (no in-file callers)
+   110:10  [GD7007] Hint - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_property'. Accessed in cross_file_inference.gd:102:0 get_result_from_anywhere (no in-file callers)
+   112:10  [GD7007] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_entity_by_name'. Accessed in cross_file_inference.gd:102:0 get_result_from_anywhere (no in-file callers)
+   147:14  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'. Accessed in cross_file_inference.gd:143:0 complex_chain_operation (no in-file callers)
+   148:1   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:143:0 complex_chain_operation (no in-file callers)
+   151:17  [GD7007] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_data'. Accessed in cross_file_inference.gd:143:0 complex_chain_operation (no in-file callers)
+   157:14  [GD7007] Hint - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'accumulate_left'. Accessed in cross_file_inference.gd:143:0 complex_chain_operation (no in-file callers)
+   164:1   [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'. Accessed in cross_file_inference.gd:143:0 complex_chain_operation (no in-file callers)
+   171:1   [GD7007] Hint - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'set_property'. Accessed in cross_file_inference.gd:143:0 complex_chain_operation (no in-file callers)
+   202:27  [GD7007] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_attack'. Accessed in cross_file_inference.gd:201:0 _create_damage_handler <- cross_file_inference.gd:185:0 register_cross_file_handler (no in-file callers)
+   207:2   [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'. Accessed in cross_file_inference.gd:205:0 _create_signal_handler <- cross_file_inference.gd:185:0 register_cross_file_handler (no in-file callers)
    207:28  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   207:42  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    212:0   [GDL101] Warning - Line 212 exceeds 120 characters (length: 146)
-   212:27  [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'call_if_exists'
+   212:27  [GD7007] Hint - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'call_if_exists'. Accessed in cross_file_inference.gd:211:0 _create_dynamic_handler <- cross_file_inference.gd:185:0 register_cross_file_handler (no in-file callers)
    218:16  [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
-   226:1   [GD7005] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'operation_result'
-   230:8   [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
-   234:8   [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
+   226:1   [GD7005] Hint - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'operation_result'. Accessed in cross_file_inference.gd:225:0 _on_effect_result (no in-file callers)
+   230:8   [GD7007] Hint - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'. Accessed in cross_file_inference.gd:229:0 _process_cyclic (no in-file callers)
+   234:8   [GD7007] Hint - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'. Accessed in cross_file_inference.gd:233:0 _handle_union (no in-file callers)
    237:0   [GD3023] Warning - Function 'create_game_object' returns inconsistent types: Entity, AsyncOperation, Dictionary, null
-   241:16  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
-   242:3   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
-   243:4   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'
+   241:16  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   242:3   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   243:4   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
    243:46  [GD7007] Warning - Variable 'params' may be null when accessing 'get'
-   244:3   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'
-   245:4   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'
-   245:43  [GD7007] Warning - Variable 'params' may be null when accessing 'get'
-   246:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'
-   247:3   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_moveable'
-   251:12  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
-   275:14  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_component'
-   278:2   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'
-   288:1   [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'destroy_entity'
-   289:1   [GD7005] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'current_target'
-   293:15  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_component'
-   301:1   [GD7005] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_hit_callback'
-   302:1   [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_callback'
-   303:1   [GD7007] Warning - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'set_damage_calculator'
+   244:3   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   245:4   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   246:3   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   247:3   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_moveable'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   251:12  [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
+   275:14  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_component'. Accessed in cross_file_inference.gd:274:0 _on_hit_callback (no in-file callers)
+   278:2   [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'emit_event'. Accessed in cross_file_inference.gd:274:0 _on_hit_callback (no in-file callers)
+   288:1   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'destroy_entity'. Accessed in cross_file_inference.gd:287:0 _on_entity_died (no in-file callers)
+   289:1   [GD7005] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'current_target'. Accessed in cross_file_inference.gd:287:0 _on_entity_died (no in-file callers)
+   293:15  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'get_component'. Accessed in cross_file_inference.gd:292:0 _calculate_damage (no in-file callers)
+   301:1   [GD7005] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'on_hit_callback'. Accessed in cross_file_inference.gd:299:0 setup_bidirectional (no in-file callers)
+   302:1   [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_callback'. Accessed in cross_file_inference.gd:299:0 setup_bidirectional (no in-file callers)
+   303:1   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'set_damage_calculator'. Accessed in cross_file_inference.gd:299:0 setup_bidirectional (no in-file callers)
    310:4   [GD3020] Warning - Variable 'depth' may be null; comparison with '<=' would cause runtime error
-   313:13  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_data'
-   314:13  [GD7007] Warning - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'
-   315:13  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
-   316:13  [GD7007] Warning - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'serialize_object'
-   332:35  [GD7007] Warning - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'
+   313:13  [GD7007] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'transform_data'. Accessed in cross_file_inference.gd:308:0 stress_test_inference (no in-file callers)
+   314:13  [GD7007] Hint - Variable 'cyclic_processor' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_a'. Accessed in cross_file_inference.gd:308:0 stress_test_inference (no in-file callers)
+   315:13  [GD7007] Hint - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'. Accessed in cross_file_inference.gd:308:0 stress_test_inference (no in-file callers)
+   316:13  [GD7007] Hint - Variable 'dynamic_caller' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'serialize_object'. Accessed in cross_file_inference.gd:308:0 stress_test_inference (no in-file callers)
+   332:35  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'. Accessed in cross_file_inference.gd:321:0 parallel_inference_test (no in-file callers)
    333:33  [GD4002] Warning - Method 'process_by_type' not found on type 'DuckTypingAdvanced'
-   333:33  [GD7007] Warning - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'
-   334:34  [GD7007] Warning - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'try_operation'
-   335:35  [GD7007] Warning - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'
+   333:33  [GD7007] Hint - Variable 'duck_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'process_by_type'. Accessed in cross_file_inference.gd:321:0 parallel_inference_test (no in-file callers)
+   334:34  [GD7007] Hint - Variable 'union_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'try_operation'. Accessed in cross_file_inference.gd:321:0 parallel_inference_test (no in-file callers)
+   335:35  [GD7007] Hint - Variable 'signal_handler' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_operation'. Accessed in cross_file_inference.gd:321:0 parallel_inference_test (no in-file callers)
 
 --- test_scripts/cycles_test.gd (3 diagnostics) ---
 
@@ -157,30 +153,25 @@ DIAGNOSTICS BY FILE
    124:0   [GD3023] Warning - Function '_reducer' returns inconsistent types: int, String
    140:14  [GD3002] Warning - Potential type mismatch in arithmetic operation: Array + Array[int]
 
---- test_scripts/cyclic_inference.gd (33 diagnostics) ---
+--- test_scripts/cyclic_inference.gd (26 diagnostics) ---
 
      2:11  [GDL222] Warning - 'CyclicInference' has 22 public methods (max 20)
     49:4   [GD3020] Warning - Variable 'value' may be null; comparison with '>' would cause runtime error
     84:12  [GD7007] Warning - Variable 'context' may be null when accessing 'get'
    123:4   [GD7007] Warning - Variable 'list' may be null when accessing 'is_empty'
    125:12  [GD7006] Warning - Variable 'list' may be null when accessing '[...]'
-   126:12  [GD7007] Warning - Variable 'list' may be null when accessing 'slice'
    127:15  [GD7007] Warning - Variable 'func_ref' may be null when accessing 'call'
    133:4   [GD7007] Warning - Variable 'list' may be null when accessing 'is_empty'
    135:12  [GD7006] Warning - Variable 'list' may be null when accessing '[...]'
-   136:12  [GD7007] Warning - Variable 'list' may be null when accessing 'slice'
    137:8   [GD7007] Warning - Variable 'func_ref' may be null when accessing 'call'
    159:8   [GD3002] Warning - Potential type mismatch in arithmetic operation: Callable(int) -> void * int
    182:14  [GD7003] Warning - Calling method 'visit' on untyped variable 'visitor' without type guard
    182:14  [GD7007] Warning - Variable 'visitor' may be null when accessing 'visit'
    187:12  [GD7003] Warning - Calling method 'combine' on untyped variable 'visitor' without type guard
-   187:12  [GD7007] Warning - Variable 'visitor' may be null when accessing 'combine'
    194:16  [GD7007] Warning - Variable 'transformer' may be null when accessing 'transform'
    216:15  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
-   217:1   [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
    226:0   [GD3023] Warning - Function '_advance_generator' returns inconsistent types: float, String
    228:15  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
-   229:12  [GD7006] Warning - Variable 'state' may be null when accessing '[...]'
    252:7   [GD3020] Warning - Variable 'new_pos' may be null; comparison with '<' would cause runtime error
    252:17  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
    253:11  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
@@ -190,8 +181,6 @@ DIAGNOSTICS BY FILE
    299:4   [GD3020] Warning - Variable 'pos' may be null; comparison with '>=' would cause runtime error
    299:11  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
    302:13  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
-   308:21  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
-   308:38  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
 
 --- test_scripts/diagnostics_issues.gd (6 diagnostics) ---
 
@@ -399,7 +388,7 @@ DIAGNOSTICS BY FILE
    225:16  [GD3017] Warning - Unknown type 'NonExistentTypeXYZ' used in Array type parameter
    249:22  [GD3018] Warning - Type 'Array' is not hashable and cannot be used as Dictionary key
 
---- test_scripts/duck_typing_advanced.gd (14 diagnostics) ---
+--- test_scripts/duck_typing_advanced.gd (13 diagnostics) ---
 
     25:14  [GD7003] Warning - Calling method 'get_damage' on untyped variable 'source' without type guard
     25:14  [GD7007] Warning - Variable 'source' may be null when accessing 'get_damage'
@@ -407,7 +396,6 @@ DIAGNOSTICS BY FILE
     36:10  [GD7007] Warning - Variable 'effect' may be null when accessing 'apply'
     85:20  [GD7007] Warning - Variable 'position' may be null when accessing 'distance_squared_to'
     85:49  [GD3009] Warning - Property 'global_position' not found on type 'Node'
-    88:10  [GD7007] Warning - Variable 'position' may be null when accessing 'distance_squared_to'
     88:39  [GD3009] Warning - Property 'global_position' not found on type 'Node'
    110:0   [GD3023] Warning - Function '_create_component' returns inconsistent types: Dictionary, Array, Vector2, PackedInt32Array, String, null
    191:9   [GD7007] Warning - Variable 'transformer' may be null when accessing 'call'
@@ -416,27 +404,19 @@ DIAGNOSTICS BY FILE
    248:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    251:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/dynamic_dispatch.gd (59 diagnostics) ---
+--- test_scripts/dynamic_dispatch.gd (33 diagnostics) ---
 
      2:11  [GDL222] Warning - 'DynamicDispatch' has 27 public methods (max 20)
     21:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
-    22:9   [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
-    23:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
-    24:9   [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
     30:5   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
-    31:10  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
     38:15  [GD7007] Warning - Variable 'obj' may be null when accessing 'get_method_list'
-    41:19  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
     66:3   [GD7007] Warning - Variable 'target' may be null when accessing 'set'
     66:20  [GD7007] Warning - Variable 'source' may be null when accessing 'get'
     73:30  [GD7007] Warning - Variable 'obj' may be null when accessing 'get'
     80:3   [GD7007] Warning - Variable 'obj' may be null when accessing 'set'
     94:16  [GD7007] Warning - Variable 'message' may be null when accessing 'get'
-    95:16  [GD7007] Warning - Variable 'message' may be null when accessing 'get'
    103:4   [GD7007] Warning - Variable 'target' may be null when accessing 'has_method'
-   104:9   [GD7007] Warning - Variable 'target' may be null when accessing 'call'
    126:13  [GD7007] Warning - Variable 'obj' may be null when accessing 'get_property_list'
-   132:15  [GD7007] Warning - Variable 'obj' may be null when accessing 'get'
    138:0   [GD3023] Warning - Function '_serialize_value' returns inconsistent types: null, Dictionary, Array, String
    138:5   [GDL223] Warning - '_serialize_value' has 9 return statements (max 6)
    168:34  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
@@ -444,100 +424,54 @@ DIAGNOSTICS BY FILE
    172:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: null, Array, Dictionary
    193:0   [GD3023] Warning - Function '_deserialize_typed' returns inconsistent types: Vector2, Vector3, Color
    194:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   197:18  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   197:29  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   199:18  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   199:29  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   199:40  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   201:0   [GDL101] Warning - Line 201 exceeds 120 characters (length: 132)
-   201:16  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   201:27  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   201:38  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   201:49  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    231:3   [GD7007] Warning - Variable 'instance' may be null when accessing 'set'
    231:21  [GD7006] Warning - Variable 'init_params' may be null when accessing '[...]'
    256:8   [GD7003] Warning - Calling method 'get_file' on untyped expression without type guard
    256:8   [GD7003] Warning - Calling method 'get_path' on untyped expression without type guard
    256:8   [GD7007] Warning - Variable 'obj' may be null when accessing 'get_script'
    283:7   [GD7007] Warning - Variable '_target' may be null when accessing 'has_method'
-   284:5   [GD7007] Warning - Variable '_target' may be null when accessing 'callv'
-   287:5   [GD7007] Warning - Variable '_target' may be null when accessing 'set'
    307:18  [GD7007] Warning - Variable 'event' may be null when accessing 'get'
    313:27  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
    319:18  [GD7007] Warning - Variable 'event' may be null when accessing 'get'
    344:5   [GD7007] Warning - Variable '_target' may be null when accessing 'has_method'
-   345:10  [GD7007] Warning - Variable '_target' may be null when accessing 'callv'
    361:15  [GD7007] Warning - Variable 'target' may be null when accessing 'get_method_list'
    371:2   [GD7007] Warning - Variable 'logger' may be null when accessing 'call'
-   373:2   [GD7007] Warning - Variable 'logger' may be null when accessing 'call'
    403:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'
    405:4   [GD7007] Warning - Variable 'advice' may be null when accessing 'call'
-   411:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'
    412:32  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
-   418:11  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
-   422:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'
-   424:4   [GD7007] Warning - Variable 'advice' may be null when accessing 'call'
 
---- test_scripts/ecs_like_system.gd (58 diagnostics) ---
+--- test_scripts/ecs_like_system.gd (30 diagnostics) ---
 
      2:11  [GDL222] Warning - 'ECSLikeSystem' has 31 public methods (max 20)
    137:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
    155:2   [GD7007] Warning - Variable 'system' may be null when accessing 'update'
    177:4   [GD3020] Warning - Variable 'maximum' may be null; comparison with '<' would cause runtime error
    195:15  [GD7007] Warning - Variable 'world' may be null when accessing 'query_entities'
-   198:19  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
-   199:18  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
    201:3   [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
    201:28  [GD7006] Warning - Variable 'velocity' may be null when accessing '[...]'
-   202:3   [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
-   202:28  [GD7006] Warning - Variable 'velocity' may be null when accessing '[...]'
    208:13  [GDL202] Info - Parameter 'delta' is declared but never used
-   209:20  [GD7007] Warning - Variable 'world' may be null when accessing 'query_entities'
-   212:16  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
    214:6   [GD7006] Warning - Variable 'health' may be null when accessing '[...]'
-   220:20  [GD7007] Warning - Variable 'world' may be null when accessing 'query_entities'
-   223:12  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
-   224:19  [GD7007] Warning - Variable 'world' may be null when accessing 'get_component'
    226:6   [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
    233:20  [GD7007] Warning - Variable 'ai' may be null when accessing 'call'
-   233:20  [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
-   233:40  [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
-   235:5   [GD7006] Warning - Variable 'ai' may be null when accessing '[...]'
    247:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    255:18  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
    258:5   [GD7007] Warning - Variable 'overrides' may be null when accessing 'has'
    259:15  [GD7006] Warning - Variable 'overrides' may be null when accessing '[...]'
    260:7   [GD7007] Warning - Variable 'comp_def' may be null when accessing 'has'
-   260:35  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
-   261:15  [GD7007] Warning - Variable 'comp_def' may be null when accessing 'call'
-   261:15  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
    263:0   [GDL101] Warning - Line 263 exceeds 120 characters (length: 159)
    290:2   [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
    296:5   [GD7006] Warning - Variable 'event' may be null when accessing '[...]'
    313:28  [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
    322:6   [GD7005] Warning - Variable 'position' may be null when accessing 'x'
-   323:6   [GD7005] Warning - Variable 'position' may be null when accessing 'y'
    327:5   [GDL225] Warning - 'query_nearby' has nesting depth of 5 (max 4)
    338:8   [GD3020] Warning - Variable 'radius' may be null; comparison with '<=' would cause runtime error
    338:8   [GD7007] Warning - Variable 'transform' may be null when accessing 'distance_to'
    338:8   [GD7006] Warning - Variable 'transform' may be null when accessing '[...]'
    356:11  [GD7005] Warning - Variable 'entity' may be null when accessing 'name'
-   357:11  [GD7005] Warning - Variable 'entity' may be null when accessing 'tags'
-   358:13  [GD7005] Warning - Variable 'entity' may be null when accessing 'active'
    368:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    372:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   374:16  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   376:14  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    376:14  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    377:31  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
-   378:16  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
-   379:18  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
-   382:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   384:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   384:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   386:32  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   386:32  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   386:32  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
 
 --- test_scripts/enemy_entity.gd (1 diagnostics) ---
 
@@ -558,7 +492,7 @@ DIAGNOSTICS BY FILE
     68:0   [GDL101] Warning - Line 68 exceeds 120 characters (length: 155)
     82:0   [GD3024] Warning - Not all code paths return a value in 'match_statement_formatting' (declared -> String)
 
---- test_scripts/game_patterns.gd (75 diagnostics) ---
+--- test_scripts/game_patterns.gd (52 diagnostics) ---
 
      2:11  [GDL222] Warning - 'GamePatterns' has 27 public methods (max 20)
     21:4   [GD3020] Warning - Variable 'index' may be null; comparison with '<' would cause runtime error
@@ -583,11 +517,9 @@ DIAGNOSTICS BY FILE
    179:24  [GD3020] Warning - Variable 'choice_index' may be null; comparison with '>=' would cause runtime error
    194:15  [GD7007] Warning - Variable 'choice' may be null when accessing 'get'
    209:16  [GD7007] Warning - Variable 'quest_data' may be null when accessing 'get'
-   214:18  [GD7007] Warning - Variable 'quest_data' may be null when accessing 'get'
    215:16  [GD7007] Warning - Variable 'objectives' may be null when accessing 'size'
    238:18  [GD7007] Warning - Variable 'quest' may be null when accessing 'get'
    241:16  [GD7007] Warning - Variable 'objectives' may be null when accessing 'size'
-   242:17  [GD7007] Warning - Variable 'objectives' may be null when accessing 'get'
    242:17  [GD7006] Warning - Variable 'objectives' may be null when accessing '[...]'
    244:5   [GD3020] Warning - Variable 'current' may be null; comparison with '<' would cause runtime error
    244:5   [GD3020] Warning - Variable 'required' may be null; comparison with '<' would cause runtime error
@@ -595,54 +527,32 @@ DIAGNOSTICS BY FILE
    293:12  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
    296:5   [GD3020] Warning - Variable 'current' may be null; comparison with '<' would cause runtime error
    296:15  [GD7006] Warning - Variable 'cost' may be null when accessing '[...]'
-   300:18  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
    316:12  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
    319:46  [GD7006] Warning - Variable 'cost' may be null when accessing '[...]'
-   322:25  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
-   325:19  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
-   334:4   [GD7007] Warning - Variable 'ability' may be null when accessing 'has'
    334:32  [GD7006] Warning - Variable 'ability' may be null when accessing '[...]'
-   339:16  [GD7006] Warning - Variable 'ability' may be null when accessing '[...]'
-   340:18  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
    361:49  [GD7006] Warning - Variable 'scaling' may be null when accessing '[...]'
    385:2   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
-   388:5   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
-   389:0   [GDL101] Warning - Line 389 exceeds 120 characters (length: 160)
    389:3   [GD7007] Warning - Variable 'effect' may be null when accessing 'call'
-   389:3   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
-   389:30  [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
-   389:46  [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
-   391:5   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
    413:19  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
    416:20  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
-   417:23  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
    425:5   [GD3020] Warning - Variable 'required_count' may be null; comparison with '<' would cause runtime error
    459:19  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
    463:20  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
-   464:17  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
    466:8   [GD3020] Warning - Variable 'required' may be null; comparison with '>' would cause runtime error
    473:6   [GD3020] Warning - Variable 'count' may be null; comparison with '<=' would cause runtime error
    473:6   [GD3020] Warning - Variable 'required' may be null; comparison with '<=' would cause runtime error
-   481:14  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
    507:32  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   508:30  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   509:20  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   510:35  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   511:20  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   512:18  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   513:13  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
    526:33  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
    530:0   [GD3023] Warning - Function '_serialize_value' returns inconsistent types: Dictionary, Array, String
    554:35  [GD7006] Warning - Variable 'dict' may be null when accessing '[...]'
    558:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: Vector2, Vector3, Dictionary, Array
 
---- test_scripts/getters_setters.gd (5 diagnostics) ---
+--- test_scripts/getters_setters.gd (4 diagnostics) ---
 
      2:11  [GDL227] Warning - 'GettersSetters' has 22 member variables (max 20)
     79:5   [GD7010] Hint - Redundant type check: 'value' is already declared as 'Dictionary'
    105:5   [GDL203] Info - Function '_on_health_changed' only contains 'pass'
    194:1   [GD7005] Warning - Variable 'inner' may be null when accessing 'value'
-   195:9   [GD7005] Warning - Variable 'inner' may be null when accessing 'doubled'
 
 --- test_scripts/global.gd (3 diagnostics) ---
 
@@ -687,14 +597,12 @@ DIAGNOSTICS BY FILE
     23:45  [GD3020] Warning - Variable 'x' may be null; comparison with '>' would cause runtime error
    108:9   [GD7003] Warning - Calling method 'to_upper' on untyped expression without type guard
 
---- test_scripts/polymorphic_interfaces.gd (45 diagnostics) ---
+--- test_scripts/polymorphic_interfaces.gd (36 diagnostics) ---
 
      2:11  [GDL222] Warning - 'PolymorphicInterfaces' has 40 public methods (max 20)
     40:15  [GD7003] Warning - Calling method 'get_health' on untyped variable 'e' without type guard
     40:15  [GD7007] Warning - Variable 'e' may be null when accessing 'get_health'
-    41:2   [GD7007] Warning - Variable 'e' may be null when accessing 'take_damage'
     42:14  [GD7003] Warning - Calling method 'get_health' on untyped variable 'e' without type guard
-    42:14  [GD7007] Warning - Variable 'e' may be null when accessing 'get_health'
     49:2   [GD7003] Warning - Calling method 'move_to' on untyped variable 'e' without type guard
     49:2   [GD7007] Warning - Variable 'e' may be null when accessing 'move_to'
     54:2   [GD7007] Warning - Variable 'e' may be null when accessing 'update'
@@ -715,21 +623,14 @@ DIAGNOSTICS BY FILE
    261:9   [GD7003] Warning - Calling method 'adapt' on untyped variable 'adapter' without type guard
    261:9   [GD7007] Warning - Variable 'adapter' may be null when accessing 'adapt'
    266:9   [GD7003] Warning - Calling method 'adapt' on untyped variable 'adapter' without type guard
-   266:9   [GD7007] Warning - Variable 'adapter' may be null when accessing 'adapt'
    271:5   [GDL223] Warning - '_get_type_name' has 8 return statements (max 6)
    297:1   [GD7007] Warning - Variable 'iterator' may be null when accessing 'reset'
    298:7   [GD7003] Warning - Calling method 'has_next' on untyped variable 'iterator' without type guard
-   298:7   [GD7007] Warning - Variable 'iterator' may be null when accessing 'has_next'
-   299:17  [GD7007] Warning - Variable 'iterator' may be null when accessing 'next'
    305:1   [GD7007] Warning - Variable 'iterator' may be null when accessing 'reset'
    306:7   [GD7003] Warning - Calling method 'has_next' on untyped variable 'iterator' without type guard
-   306:7   [GD7007] Warning - Variable 'iterator' may be null when accessing 'has_next'
-   307:13  [GD7007] Warning - Variable 'iterator' may be null when accessing 'next'
    308:17  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
    315:1   [GD7007] Warning - Variable 'iterator' may be null when accessing 'reset'
    316:7   [GD7003] Warning - Calling method 'has_next' on untyped variable 'iterator' without type guard
-   316:7   [GD7007] Warning - Variable 'iterator' may be null when accessing 'has_next'
-   317:13  [GD7007] Warning - Variable 'iterator' may be null when accessing 'next'
    318:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
    338:8   [GD7007] Warning - Variable 'factory' may be null when accessing 'create'
    364:8   [GD7003] Warning - Calling method 'receive' on untyped variable 'recipient' without type guard
@@ -744,17 +645,17 @@ DIAGNOSTICS BY FILE
 --- test_scripts/scene_nodes.gd (5 diagnostics) ---
 
      2:11  [GDL222] Warning - 'SceneNodes' has 22 public methods (max 20)
-    57:8   [GD7005] Warning - Variable 'player' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'global_position'
-    62:1   [GD7005] Warning - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'max_value'
-    63:1   [GD7005] Warning - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'value'
+    57:8   [GD7005] Hint - Variable 'player' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'global_position'. Accessed in scene_nodes.gd:55:0 get_player_position (no in-file callers)
+    62:1   [GD7005] Hint - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'max_value'. Accessed in scene_nodes.gd:60:0 update_health_bar (no in-file callers)
+    63:1   [GD7005] Hint - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'value'. Accessed in scene_nodes.gd:60:0 update_health_bar (no in-file callers)
    203:5   [GDL201] Warning - Local variable 'node_path' is declared but never used
 
 --- test_scripts/scene_references.gd (5 diagnostics) ---
 
     34:2   [GD4006] Warning - Signal 'health_changed' not found on type 'CharacterBody2D'
-    50:1   [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'add_child'
-    56:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
-    63:14  [GD7007] Warning - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'
+    50:1   [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'add_child'. Accessed in scene_references.gd:45:0 spawn_enemy (no in-file callers)
+    56:14  [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'. Accessed in scene_references.gd:54:0 get_enemies (no in-file callers)
+    63:14  [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'. Accessed in scene_references.gd:62:0 clear_enemies (no in-file callers)
     71:0   [GD3023] Warning - Function 'find_child_of_type' returns inconsistent types: Array[Node], Node, null
 
 --- test_scripts/semantic_validation_demo.gd (44 diagnostics) ---
@@ -804,17 +705,15 @@ DIAGNOSTICS BY FILE
    256:1   [GD7019] Warning - Assignment widens 'Node2D' to 'Node'
    275:12  [GD3013] Warning - Dictionary expects key of type 'String', got 'int'
 
---- test_scripts/signal_callback_chains.gd (54 diagnostics) ---
+--- test_scripts/signal_callback_chains.gd (41 diagnostics) ---
 
      2:11  [GDL222] Warning - 'SignalCallbackChains' has 25 public methods (max 20)
      2:11  [GDL232] Warning - 'SignalCallbackChains' has 8 inner classes (max 5)
     46:8   [GD7007] Warning - Variable 'callback' may be null when accessing 'callv'
     55:12  [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
    130:28  [GD7007] Warning - Variable 'operation' may be null when accessing 'resolve'
-   131:27  [GD7007] Warning - Variable 'operation' may be null when accessing 'reject'
    133:1   [GD7007] Warning - Variable 'task_func' may be null when accessing 'call'
    167:16  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
-   175:16  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
    195:4   [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
    201:8   [GD7003] Warning - Calling method 'process' on untyped variable 'stage' without type guard
    201:8   [GD7007] Warning - Variable 'stage' may be null when accessing 'process'
@@ -823,19 +722,11 @@ DIAGNOSTICS BY FILE
    233:1   [GD7007] Warning - Variable 'middleware' may be null when accessing 'handle'
    252:2   [GD7006] Warning - Variable 'subscription' may be null when accessing '[...]'
    257:6   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
-   257:24  [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
    258:4   [GD7007] Warning - Variable 'sub' may be null when accessing 'call'
-   258:4   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
    262:6   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
-   262:24  [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
    263:4   [GD7007] Warning - Variable 'sub' may be null when accessing 'call'
-   263:4   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
-   264:3   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
    268:6   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
-   268:24  [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
    269:4   [GD7007] Warning - Variable 'sub' may be null when accessing 'call'
-   269:4   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
-   270:3   [GD7006] Warning - Variable 'sub' may be null when accessing '[...]'
    275:33  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
    284:6   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
    343:1   [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
@@ -848,9 +739,6 @@ DIAGNOSTICS BY FILE
    378:17  [GD7006] Warning - Variable 'operations' may be null when accessing '[...]'
    380:1   [GD7007] Warning - Variable 'operation' may be null when accessing 'call'
    418:20  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
-   419:13  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
-   423:16  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
-   426:2   [GD7007] Warning - Variable 'operations' may be null when accessing 'call'
    426:2   [GD7006] Warning - Variable 'operations' may be null when accessing '[...]'
    431:4   [GD7007] Warning - Variable 'url' may be null when accessing 'begins_with'
    447:1   [GD7003] Warning - Calling method 'resolve' on untyped variable 'ctx' without type guard
@@ -968,7 +856,7 @@ DIAGNOSTICS BY FILE
     74:5   [GDL203] Info - Function 'import_from_json' only contains 'pass'
     74:22  [GDL202] Info - Parameter 'json_string' is declared but never used
 
---- test_scripts/type_guards.gd (11 diagnostics) ---
+--- test_scripts/type_guards.gd (9 diagnostics) ---
 
      8:0   [GD3023] Warning - Function 'process_value' returns inconsistent types: null, int, Array
     74:0   [GD3023] Warning - Function 'early_return_guard' returns inconsistent types: String, Array
@@ -977,8 +865,6 @@ DIAGNOSTICS BY FILE
    172:0   [GD3023] Warning - Function 'negated_guard' returns inconsistent types: String, Array
    186:6   [GDL201] Warning - Local variable 'value' is declared but never used
    220:12  [GD7005] Warning - Variable 'obj' may be null when accessing 'position'
-   221:12  [GD7005] Warning - Variable 'obj' may be null when accessing 'rotation'
-   226:9   [GD7005] Warning - Variable 'obj' may be null when accessing 'velocity'
    253:8   [GD7007] Warning - Variable 'value' may be null when accessing 'keys'
    268:6   [GD7011] Hint - Redundant type check: 'outer' is already narrowed to 'Dictionary'
 
@@ -1001,7 +887,7 @@ DIAGNOSTICS BY FILE
    220:0   [GD3023] Warning - Function 'factory_method' returns inconsistent types: Node, Node2D, Control, null
    233:0   [GD3023] Warning - Function 'type_from_data' returns inconsistent types: Vector2, Color, Rect2, Dictionary
 
---- test_scripts/union_types_complex.gd (25 diagnostics) ---
+--- test_scripts/union_types_complex.gd (22 diagnostics) ---
 
      2:11  [GDL222] Warning - 'UnionTypesComplex' has 28 public methods (max 20)
     24:0   [GD3023] Warning - Function 'try_operation' returns inconsistent types: String, int
@@ -1016,7 +902,6 @@ DIAGNOSTICS BY FILE
    147:0   [GD3023] Warning - Function '_process_mixed_item' returns inconsistent types: int, String, Array
    226:7   [GD7007] Warning - Variable 'result' may be null when accessing 'get'
    228:10  [GD7006] Warning - Variable 'result' may be null when accessing '[...]'
-   230:22  [GD7006] Warning - Variable 'result' may be null when accessing '[...]'
    244:20  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
    258:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
    259:18  [GD7007] Warning - Variable 'transform' may be null when accessing 'call'
@@ -1024,8 +909,6 @@ DIAGNOSTICS BY FILE
    300:0   [GD3023] Warning - Function '_compute_result' returns inconsistent types: String, int
    333:9   [GD7007] Warning - Variable 'value' may be null when accessing 'length'
    362:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   364:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
-   366:10  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
    387:6   [GDL201] Warning - Local variable 'item' is declared but never used
    389:6   [GDL201] Warning - Local variable 'count' is declared but never used
 

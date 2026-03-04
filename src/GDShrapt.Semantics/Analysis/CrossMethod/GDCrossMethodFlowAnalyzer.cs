@@ -87,6 +87,18 @@ namespace GDShrapt.Semantics
                     var summary = summaryBuilder.Build(method);
                     _registry.Register(summary, _semanticModel.ScriptFile?.FullPath);
                 }
+                else if (member is GDVariableDeclaration varDecl)
+                {
+                    // Inline setter body: set(value): ...
+                    var setter = varDecl.FirstAccessorDeclarationNode as GDSetAccessorBodyDeclaration
+                              ?? varDecl.SecondAccessorDeclarationNode as GDSetAccessorBodyDeclaration;
+
+                    if (setter != null)
+                    {
+                        var summary = summaryBuilder.BuildForSetter(varDecl, setter);
+                        _registry.Register(summary, _semanticModel.ScriptFile?.FullPath);
+                    }
+                }
             }
         }
 

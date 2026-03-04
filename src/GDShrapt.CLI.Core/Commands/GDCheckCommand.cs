@@ -59,6 +59,7 @@ public class GDCheckCommand : IGDCommand
             }
 
             using var project = GDProjectLoader.LoadProject(projectRoot);
+            GDProjectInitializer.InjectSceneSignalConnections(project);
 
             var errorCount = 0;
             var warningCount = 0;
@@ -76,7 +77,7 @@ public class GDCheckCommand : IGDCommand
 
                 fileCount++;
 
-                var result = diagnosticsService.Diagnose(script);
+                var result = GDDiagnosticsHandler.DiagnoseWithSemantics(script, diagnosticsService, config: config);
 
                 errorCount += result.ErrorCount;
                 warningCount += result.WarningCount;

@@ -123,7 +123,7 @@ func accumulate_left(list, func_ref, initial):  # 121:21-GD7020-OK
 	if list.is_empty(): # 123:4-GD7007-OK
 		return initial
 	var head = list[0] # 125:12-GD7006-OK
-	var tail = list.slice(1) # 126:12-GD7007-OK
+	var tail = list.slice(1)
 	var new_acc = func_ref.call(initial, head) # 127:15-GD7007-OK
 	return accumulate_left(tail, func_ref, new_acc)
 
@@ -133,7 +133,7 @@ func accumulate_right(list, func_ref, initial):  # 131:22-GD7020-OK
 	if list.is_empty(): # 133:4-GD7007-OK
 		return initial
 	var head = list[0] # 135:12-GD7006-OK
-	var tail = list.slice(1) # 136:12-GD7007-OK
+	var tail = list.slice(1)
 	return func_ref.call(head, accumulate_right(tail, func_ref, initial)) # 137:8-GD7007-OK
 
 
@@ -184,7 +184,7 @@ func visit_node(node, visitor):
 	if node.has("children"):
 		for child in node["children"]:
 			var child_result = visit_node(child, visitor)
-			result = visitor.combine(result, child_result) # 187:12-GD7003-OK, 187:12-GD7007-OK
+			result = visitor.combine(result, child_result) # 187:12-GD7003-OK
 
 	return result
 
@@ -214,7 +214,7 @@ func generator_next(gen_id):
 
 	var state = generator_state[gen_id]
 	var current = state["current"] # 216:15-GD7006-OK
-	state["current"] = _advance_generator(state) # 217:1-GD7006-OK
+	state["current"] = _advance_generator(state)
 
 	return current
 
@@ -226,7 +226,7 @@ func _init_generator(gen_id):
 func _advance_generator(state):  # 226:0-GD3023-OK
 	# Return type same as state["current"] but inference must track it
 	var current = state["current"] # 228:15-GD7006-OK
-	var step = state["step"] # 229:12-GD7006-OK
+	var step = state["step"]
 
 	if current is int:
 		return current + step
@@ -305,7 +305,7 @@ func parse_factor(tokens, pos):
 		var inner = parse_expr(tokens, pos + 1)  # CYCLE: calls parse_expr
 		if inner == null:
 			return null
-		if inner["pos"] >= tokens.size() or tokens[inner["pos"]] != ")": # 308:21-GD7007-OK, 308:38-GD7006-OK
+		if inner["pos"] >= tokens.size() or tokens[inner["pos"]] != ")":
 			return null
 		return {"value": inner["value"], "pos": inner["pos"] + 1}
 

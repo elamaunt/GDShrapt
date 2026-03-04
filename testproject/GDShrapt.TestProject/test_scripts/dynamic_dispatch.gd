@@ -19,16 +19,16 @@ func call_if_exists(obj, method_name, args = []):  # 13:20-GD7020-OK
 
 func call_with_fallback(obj, method_name, fallback_method, args = []):  # 20:24-GD7020-OK
 	if obj.has_method(method_name): # 21:4-GD7007-OK
-		return obj.callv(method_name, args) # 22:9-GD7007-OK
-	if obj.has_method(fallback_method): # 23:4-GD7007-OK
-		return obj.callv(fallback_method, args) # 24:9-GD7007-OK
+		return obj.callv(method_name, args)
+	if obj.has_method(fallback_method):
+		return obj.callv(fallback_method, args)
 	return null
 
 
 func call_first_available(obj, method_names, args = []):  # 28:26-GD7020-OK, 28:31-GD7020-OK
 	for method in method_names:
 		if obj.has_method(method): # 30:5-GD7007-OK
-			return obj.callv(method, args) # 31:10-GD7007-OK
+			return obj.callv(method, args)
 	return null
 
 
@@ -38,7 +38,7 @@ func call_all_matching(obj, prefix, args = []):  # 35:23-GD7020-OK
 	for method in obj.get_method_list(): # 38:15-GD7007-OK
 		var name = method["name"]
 		if name.begins_with(prefix):
-			results[name] = obj.callv(name, args) # 41:19-GD7007-OK
+			results[name] = obj.callv(name, args)
 	return results
 
 
@@ -92,7 +92,7 @@ func register_handler(message_type, handler):
 func send_message(target, message):
 	# message is Dictionary with "type" and "data"
 	var msg_type = message.get("type", "") # 94:16-GD7007-OK
-	var msg_data = message.get("data") # 95:16-GD7007-OK
+	var msg_data = message.get("data")
 
 	# Try target's handle_message method
 	if target.has_method("handle_message"):
@@ -101,7 +101,7 @@ func send_message(target, message):
 	# Try specific handler method
 	var handler_method = "on_" + msg_type
 	if target.has_method(handler_method): # 103:4-GD7007-OK
-		return target.call(handler_method, msg_data) # 104:9-GD7007-OK
+		return target.call(handler_method, msg_data)
 
 	# Try registered handler
 	if message_handlers.has(msg_type):
@@ -129,7 +129,7 @@ func serialize_object(obj):  # 122:22-GD7020-OK
 
 		# Only serialize exported and stored properties
 		if usage & PROPERTY_USAGE_STORAGE:
-			var value = obj.get(name) # 132:15-GD7007-OK
+			var value = obj.get(name)
 			data[name] = _serialize_value(value)
 
 	return data
@@ -145,7 +145,7 @@ func _serialize_value(value): # 138:5-GDL223-OK, 138:0-GD3023-OK
 	if value is Vector3:
 		return {"_type": "Vector3", "x": value.x, "y": value.y, "z": value.z}
 	if value is Color:
-		return {"_type": "Color", "r": value.r, "g": value.g, "b": value.b, "a": value.a}  # 201:0-GDL101-OK
+		return {"_type": "Color", "r": value.r, "g": value.g, "b": value.b, "a": value.a}
 	if value is Array:
 		var arr = []
 		for item in value:
@@ -194,11 +194,11 @@ func _deserialize_typed(data):  # 193:0-GD3023-OK, 193:24-GD7020-OK
 	var type_name = data["_type"] # 194:17-GD7006-OK
 	match type_name:
 		"Vector2":
-			return Vector2(data["x"], data["y"]) # 197:18-GD7006-OK, 197:29-GD7006-OK
+			return Vector2(data["x"], data["y"])
 		"Vector3":
-			return Vector3(data["x"], data["y"], data["z"]) # 199:18-GD7006-OK, 199:29-GD7006-OK, 199:40-GD7006-OK
+			return Vector3(data["x"], data["y"], data["z"])
 		"Color":
-			return Color(data["r"], data["g"], data["b"], data["a"]) # 201:16-GD7006-OK, 201:27-GD7006-OK, 201:38-GD7006-OK, 201:49-GD7006-OK
+			return Color(data["r"], data["g"], data["b"], data["a"])
 	return data
 
 
@@ -281,10 +281,10 @@ class DynamicBuilder:
 		for call_info in _pending_calls:
 			if call_info.has("method"):
 				if _target.has_method(call_info["method"]): # 283:7-GD7007-OK
-					_target.callv(call_info["method"], call_info["args"]) # 284:5-GD7007-OK
+					_target.callv(call_info["method"], call_info["args"])
 			elif call_info.has("property"):
 				if call_info["property"] in _target:
-					_target.set(call_info["property"], call_info["value"]) # 287:5-GD7007-OK
+					_target.set(call_info["property"], call_info["value"])
 		return _target
 
 
@@ -342,7 +342,7 @@ class DynamicProxy:
 			return _intercepts[method_name].call(_target, method_name, args)
 
 		if _target.has_method(method_name): # 344:5-GD7007-OK
-			return _target.callv(method_name, args) # 345:10-GD7007-OK
+			return _target.callv(method_name, args)
 
 		return null
 
@@ -368,7 +368,7 @@ func create_logging_proxy(target, logger):  # 357:26-GD7020-OK
 
 func _create_logging_interceptor(logger):
 	return func(t, m, args):
-		logger.call("Calling " + m + " with " + str(args)) # 371:2-GD7007-OK  # 373:2-GD7007-OK
+		logger.call("Calling " + m + " with " + str(args)) # 371:2-GD7007-OK
 		var result = t.callv(m, args)
 		logger.call("Result: " + str(result))
 		return result
@@ -408,19 +408,19 @@ func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK
 	var result
 	var has_around = false
 	for pattern in around_advice:
-		if method_name.match(pattern):  # 411:5-GD7007-OK
+		if method_name.match(pattern):
 			var proceed = func(): return obj.callv(method_name, args)  # 412:32-GD7007-OK
 			result = around_advice[pattern].call(obj, method_name, args, proceed)
 			has_around = true
 			break
 
 	if not has_around:
-		result = obj.callv(method_name, args)  # 418:11-GD7007-OK
+		result = obj.callv(method_name, args)
 
 	# Apply after advice
 	for pattern in after_advice:
-		if method_name.match(pattern):  # 422:5-GD7007-OK
+		if method_name.match(pattern):
 			for advice in after_advice[pattern]:
-				advice.call(obj, method_name, args, result)  # 424:4-GD7007-OK
+				advice.call(obj, method_name, args, result)
 
 	return result

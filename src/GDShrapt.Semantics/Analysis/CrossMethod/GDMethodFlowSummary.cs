@@ -44,6 +44,11 @@ namespace GDShrapt.Semantics
         /// Methods called by this method (for call graph building).
         /// </summary>
         public HashSet<string> CalledMethods { get; } = new();
+
+        /// <summary>
+        /// Properties assigned by this method (for setter call graph building).
+        /// </summary>
+        public HashSet<string> AssignedProperties { get; } = new();
     }
 
     /// <summary>
@@ -107,6 +112,12 @@ namespace GDShrapt.Semantics
         /// Method is safe - it's a lifecycle method or all callers are safe.
         /// </summary>
         Safe,
+
+        /// <summary>
+        /// Method has no in-file callers — likely called externally (from parent/sibling scripts).
+        /// Lower severity than Unsafe since most external calls happen after _ready().
+        /// </summary>
+        External,
 
         /// <summary>
         /// Method is unsafe - may be called before _ready().

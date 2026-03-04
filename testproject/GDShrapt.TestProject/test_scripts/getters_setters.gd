@@ -192,7 +192,7 @@ var inner: Inner:
 func test_nested_property():
 	# Accessing property of property
 	inner.value = 10  # 194:1-GD7005-OK
-	var d = inner.doubled  # 195:9-GD7005-OK
+	var d = inner.doubled
 	return d
 
 

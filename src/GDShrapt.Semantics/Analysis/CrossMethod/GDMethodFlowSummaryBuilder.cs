@@ -58,8 +58,47 @@ namespace GDShrapt.Semantics
                 summary.CalledMethods.Add(calledMethod);
             }
 
+            // Collect assigned properties (for setter call graph)
+            var propertyNames = GetPropertyNames();
+            if (propertyNames.Count > 0)
+            {
+                var propCollector = new PropertyAssignmentCollector(propertyNames);
+                method.WalkIn(propCollector);
+                foreach (var prop in propCollector.AssignedProperties)
+                {
+                    summary.AssignedProperties.Add(prop);
+                }
+            }
+
             // Build exit guarantees from flow state
             BuildExitGuarantees(summary, method, classVariables);
+
+            return summary;
+        }
+
+        /// <summary>
+        /// Builds a flow summary for a property setter body.
+        /// </summary>
+        public GDMethodFlowSummary BuildForSetter(GDVariableDeclaration varDecl, GDSetAccessorBodyDeclaration setter)
+        {
+            var propName = varDecl.Identifier?.Sequence ?? "";
+            var methodName = $"@{propName}.set";
+            var methodKey = $"{_className}.{methodName}";
+
+            var summary = new GDMethodFlowSummary
+            {
+                MethodKey = methodKey,
+                MethodName = methodName,
+                OnreadySafety = GDMethodOnreadySafety.Unknown
+            };
+
+            // Collect called methods from setter body
+            var callCollector = new MethodCallCollector();
+            setter.WalkIn(callCollector);
+            foreach (var calledMethod in callCollector.CalledMethods)
+            {
+                summary.CalledMethods.Add(calledMethod);
+            }
 
             return summary;
         }
@@ -145,6 +184,27 @@ namespace GDShrapt.Semantics
             }
         }
 
+        private HashSet<string> GetPropertyNames()
+        {
+            var result = new HashSet<string>();
+            var classDecl = _semanticModel.ScriptFile?.Class;
+            if (classDecl == null)
+                return result;
+
+            foreach (var member in classDecl.Members)
+            {
+                if (member is GDVariableDeclaration varDecl &&
+                    (varDecl.FirstAccessorDeclarationNode != null || varDecl.SecondAccessorDeclarationNode != null))
+                {
+                    var name = varDecl.Identifier?.Sequence;
+                    if (!string.IsNullOrEmpty(name))
+                        result.Add(name);
+                }
+            }
+
+            return result;
+        }
+
         /// <summary>
         /// Helper visitor to collect method calls within a method.
         /// </summary>
@@ -175,6 +235,60 @@ namespace GDShrapt.Semantics
                             CalledMethods.Add(name);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Helper visitor to collect property assignments within a method.
+        /// </summary>
+        private class PropertyAssignmentCollector : GDVisitor
+        {
+            private readonly HashSet<string> _propertyNames;
+            public HashSet<string> AssignedProperties { get; } = new();
+
+            public PropertyAssignmentCollector(HashSet<string> propertyNames)
+            {
+                _propertyNames = propertyNames;
+            }
+
+            public override void Visit(GDDualOperatorExpression dualOp)
+            {
+                var opType = dualOp.Operator?.OperatorType;
+                if (opType == null || !IsAssignmentOperator(opType.Value))
+                    return;
+
+                var targetName = GetTargetVariable(dualOp.LeftExpression);
+                if (!string.IsNullOrEmpty(targetName) && _propertyNames.Contains(targetName))
+                    AssignedProperties.Add(targetName);
+            }
+
+            private static string? GetTargetVariable(GDExpression? expr)
+            {
+                if (expr is GDIdentifierExpression ident)
+                    return ident.Identifier?.Sequence;
+
+                if (expr is GDMemberOperatorExpression member &&
+                    member.CallerExpression is GDIdentifierExpression selfIdent &&
+                    selfIdent.Identifier?.Sequence == "self")
+                {
+                    return member.Identifier?.Sequence;
+                }
+
+                return null;
+            }
+
+            private static bool IsAssignmentOperator(GDDualOperatorType opType)
+            {
+                return opType switch
+                {
+                    GDDualOperatorType.Assignment => true,
+                    GDDualOperatorType.AddAndAssign => true,
+                    GDDualOperatorType.SubtractAndAssign => true,
+                    GDDualOperatorType.MultiplyAndAssign => true,
+                    GDDualOperatorType.DivideAndAssign => true,
+                    GDDualOperatorType.ModAndAssign => true,
+                    _ => false
+                };
             }
         }
     }

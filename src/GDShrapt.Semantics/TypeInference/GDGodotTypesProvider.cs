@@ -64,6 +64,23 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 }
 
                 _typeCache.TryAdd(gdScriptName, typeData);
+
+                // Register C# enum type names as aliases (e.g., "LayoutDirectionEnum" → same data as "LayoutDirection")
+                // Property types reference the C# name while the cache key is the GDScript name
+                if (typeData.IsEnum)
+                {
+                    foreach (var csharpFullName in kvp.Value.Keys)
+                    {
+                        var plusIdx = csharpFullName.LastIndexOf('+');
+                        var csharpSimpleName = plusIdx >= 0 ? csharpFullName.Substring(plusIdx + 1) : null;
+
+                        if (csharpSimpleName != null && csharpSimpleName != gdScriptName)
+                        {
+                            _typeCache.TryAdd(csharpSimpleName, typeData);
+                            _knownTypes.TryAdd(csharpSimpleName, 0);
+                        }
+                    }
+                }
             }
         }
 
@@ -95,10 +112,46 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
         var members = GetMembersInfo(typeData);
 
-        return new GDRuntimeTypeInfo(typeData.GDScriptName, typeData.GDScriptBaseTypeName, true)
+        var info = new GDRuntimeTypeInfo(typeData.GDScriptName, typeData.GDScriptBaseTypeName, true)
         {
-            Members = members
+            Members = members,
+            IsEnum = typeData.IsEnum
         };
+
+        if (typeData.IsEnum)
+        {
+            if (typeData.Constants != null && typeData.Constants.Count > 0)
+            {
+                info.EnumValues = typeData.Constants
+                    .Select(c => new KeyValuePair<string, long>(
+                        c.Value.GDScriptName ?? c.Key,
+                        c.Value.IntValue ?? 0))
+                    .ToList();
+            }
+            else if (_assemblyData?.GlobalData?.Enums != null)
+            {
+                var gdName = typeData.GDScriptName ?? typeName;
+                if (_assemblyData.GlobalData.Enums.TryGetValue(gdName, out var enumInfos) && enumInfos.Count > 0)
+                {
+                    var enumInfo = enumInfos[0];
+                    if (enumInfo.IntValues != null)
+                    {
+                        info.EnumValues = enumInfo.IntValues
+                            .Select(kvp => new KeyValuePair<string, long>(kvp.Key, kvp.Value))
+                            .ToList();
+                    }
+                    else if (enumInfo.Values != null)
+                    {
+                        int idx = 0;
+                        info.EnumValues = enumInfo.Values
+                            .Select(kvp => new KeyValuePair<string, long>(kvp.Key, idx++))
+                            .ToList();
+                    }
+                }
+            }
+        }
+
+        return info;
     }
 
     private List<GDRuntimeMemberInfo> GetMembersInfo(GDTypeData typeData)
@@ -111,14 +164,20 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             {
                 if (methodKvp.Value.Count > 0)
                 {
-                    var method = methodKvp.Value[0];
+                    var method = SelectMethod(methodKvp.Value);
                     var (minArgs, maxArgs, isVarArgs) = CalculateArgConstraints(method.Parameters);
-                    members.Add(GDRuntimeMemberInfo.Method(
+                    var returnType = NormalizeCSharpTypeName(
+                        ConvertCSharpGenericToGDScript(
+                            method.GDScriptReturnTypeName,
+                            method.CSharpReturnTypeFullName) ?? GDWellKnownTypes.Variant);
+                    var memberInfo = GDRuntimeMemberInfo.Method(
                         method.GDScriptName,
-                        NormalizeCSharpTypeName(method.GDScriptReturnTypeName ?? GDWellKnownTypes.Variant),
+                        returnType,
                         minArgs,
                         maxArgs,
-                        isVarArgs));
+                        isVarArgs);
+                    memberInfo.Parameters = CreateParameterList(method.Parameters);
+                    members.Add(memberInfo);
                 }
             }
         }
@@ -148,7 +207,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             {
                 members.Add(GDRuntimeMemberInfo.Constant(
                     constKvp.Value.GDScriptName ?? constKvp.Key,
-                    constKvp.Value.CSharpValueTypeName ?? GDWellKnownTypes.Variant));
+                    constKvp.Value.CSharpValueTypeName ?? GDWellKnownTypes.Variant,
+                    constKvp.Value.IntValue?.ToString() ?? constKvp.Value.Value));
             }
         }
 
@@ -231,7 +291,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         // Check enums
         if (typeData.Enums?.TryGetValue(memberName, out var enumInfo) == true)
         {
-            return GDRuntimeMemberInfo.Constant(enumInfo.CSharpEnumName ?? memberName, "int");
+            return new GDRuntimeMemberInfo(enumInfo.CSharpEnumName ?? memberName, GDRuntimeMemberKind.Enum, memberName);
         }
 
         // Try base type

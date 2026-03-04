@@ -38,8 +38,8 @@ func damage_all(amount):
 	var results = []
 	for e in damageable_entities:
 		var before = e.get_health()  # 40:15-GD7003-OK, 40:15-GD7007-OK
-		e.take_damage(amount)  # 41:2-GD7007-OK
-		var after = e.get_health()  # 42:14-GD7003-OK, 42:14-GD7007-OK
+		e.take_damage(amount)
+		var after = e.get_health()  # 42:14-GD7003-OK
 		results.append({"entity": e, "damage": before - after})
 	return results
 
@@ -263,7 +263,7 @@ func adapt_value(value, target_type):
 	# Try generic adapter
 	if adapters.has("generic_to_" + target_type):
 		var adapter = adapters["generic_to_" + target_type]
-		return adapter.adapt(value)  # 266:9-GD7003-OK, 266:9-GD7007-OK
+		return adapter.adapt(value)  # 266:9-GD7003-OK
 
 	return value  # No adaptation
 
@@ -295,16 +295,16 @@ func iterate_all(iterator):
 	# iterator must implement has_next() and next()
 	var results = []
 	iterator.reset()  # 297:1-GD7007-OK
-	while iterator.has_next():  # 298:7-GD7003-OK, 298:7-GD7007-OK
-		results.append(iterator.next())  # 299:17-GD7007-OK
+	while iterator.has_next():  # 298:7-GD7003-OK
+		results.append(iterator.next())
 	return results
 
 
 func iterate_with_transform(iterator, transform):
 	var results = []
 	iterator.reset()  # 305:1-GD7007-OK
-	while iterator.has_next():  # 306:7-GD7003-OK, 306:7-GD7007-OK
-		var item = iterator.next()  # 307:13-GD7007-OK
+	while iterator.has_next():  # 306:7-GD7003-OK
+		var item = iterator.next()
 		results.append(transform.call(item))  # 308:17-GD7007-OK
 	return results
 
@@ -313,8 +313,8 @@ func iterate_until(iterator, predicate):
 	# Stop when predicate returns true
 	var results = []
 	iterator.reset()  # 315:1-GD7007-OK
-	while iterator.has_next():  # 316:7-GD7003-OK, 316:7-GD7007-OK
-		var item = iterator.next()  # 317:13-GD7007-OK
+	while iterator.has_next():  # 316:7-GD7003-OK
+		var item = iterator.next()
 		if predicate.call(item):  # 318:5-GD7007-OK
 			break
 		results.append(item)

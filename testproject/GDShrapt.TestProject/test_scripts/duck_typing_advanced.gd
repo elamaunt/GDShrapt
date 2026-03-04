@@ -85,7 +85,7 @@ func find_nearest(position, type_filter):
 	var nearest_dist = position.distance_squared_to(nearest.global_position) # 85:20-GD7007-OK, 85:49-GD3009-OK
 
 	for c in candidates:
-		var d = position.distance_squared_to(c.global_position) # 88:10-GD7007-OK, 88:39-GD3009-OK
+		var d = position.distance_squared_to(c.global_position) # 88:39-GD3009-OK
 		if d < nearest_dist:
 			nearest = c
 			nearest_dist = d
@@ -124,7 +124,7 @@ func _create_component(type_name):  # 110:0-GD3023-OK
 			return null
 
 
-# === Signal-based polymorphism === #
+# === Signal-based polymorphism ===
 
 signal data_received(data)
 signal state_changed(old_state, new_state)

@@ -75,7 +75,7 @@ func setup_signal_handlers(target): # 66:27-GDL202-OK
 
 
 func _on_damage_event(data):  # 77:22-GD7020-OK
-	return apply_damage(data["source"], data["target"], data["amount"]) # 78:21-GD7006-OK, 78:37-GD7006-OK, 78:53-GD7006-OK
+	return apply_damage(data["source"], data["target"], data["amount"]) # 78:21-GD7006-OK
 
 
 func _on_spawn_event(data):
@@ -204,7 +204,7 @@ func _create_damage_handler():
 
 func _create_signal_handler():
 	return func(data):
-		signal_handler.emit_event(data["type"], data["payload"]) # 207:2-GD7007-OK, 207:28-GD7006-OK, 207:42-GD7006-OK
+		signal_handler.emit_event(data["type"], data["payload"]) # 207:2-GD7007-OK, 207:28-GD7006-OK
 		return true
 
 
@@ -242,7 +242,7 @@ func create_game_object(object_type, params = {}):  # 237:0-GD3023-OK
 			entity_manager.add_component(entity.id, "Transform", # 242:3-GD7007-OK
 				entity_manager.create_transform_component(params.get("position", Vector2.ZERO))) # 243:4-GD7007-OK, 243:46-GD7007-OK
 			entity_manager.add_component(entity.id, "Health", # 244:3-GD7007-OK
-				entity_manager.create_health_component(params.get("health", 100))) # 245:4-GD7007-OK, 245:43-GD7007-OK
+				entity_manager.create_health_component(params.get("health", 100))) # 245:4-GD7007-OK
 			poly_manager.register_damageable(entity) # 246:3-GD7007-OK
 			poly_manager.register_moveable(entity) # 247:3-GD7007-OK
 			return entity

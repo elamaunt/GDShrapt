@@ -200,6 +200,15 @@ internal class GDFlowAnalyzer : GDVisitor
             ? ResolveSemanticType(varDecl.Initializer)
             : null;
 
+        // When both declared and init types exist, pick the most specific
+        if (declSemType != null && initSemType != null && !initSemType.IsVariant)
+        {
+            var declName = declSemType.DisplayName;
+            var initName = initSemType.DisplayName;
+            if (declName != initName && IsSubclassOf(declName, initName))
+                initSemType = declSemType;
+        }
+
         _currentState.DeclareVariable(name, declSemType, initSemType);
         RecordState(varDecl);
     }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using GDShrapt.Abstractions;
-using GDShrapt.Builder;
-using GDShrapt.Formatter;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
@@ -82,6 +80,9 @@ public class GDGoToDefHandler : IGDGoToDefHandler
 
         if (result.DefinitionType == GDDefinitionType.ExternalMember && result.SymbolName != null)
             return FindDefinitionByName(result.SymbolName, filePath);
+
+        if (result.DefinitionType == GDDefinitionType.BuiltInMember && result.TypeName != null && result.SymbolName != null)
+            return FindDefinitionInBuiltInType(result.TypeName, result.SymbolName);
 
         if (result.DefinitionType == GDDefinitionType.BuiltInType && result.SymbolName != null)
             return GenerateBuiltInTypeDefinition(result.SymbolName);
@@ -192,55 +193,83 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (typeInfo == null)
             return null;
 
-        var membersList = new List<GDClassMember>();
+        if (typeInfo.IsEnum)
+            return GenerateBuiltInEnumDefinition(typeName, typeInfo);
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"# Built-in Godot type: {typeInfo.Name}");
 
         if (typeInfo.BaseType != null)
-            membersList.Add(GD.Attribute.Extends(typeInfo.BaseType));
+            sb.AppendLine($"extends {typeInfo.BaseType}");
 
-        membersList.Add(GD.Attribute.ClassName(typeInfo.Name));
+        sb.AppendLine($"class_name {typeInfo.Name}");
 
         if (typeInfo.Members != null && typeInfo.Members.Count > 0)
         {
-            foreach (var m in typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Constant))
-                membersList.Add(GD.Declaration.Const(m.Name, m.Type ?? "Variant", GD.Expression.Number(0)));
-
-            foreach (var m in typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Signal))
+            var constants = typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Constant).ToList();
+            if (constants.Count > 0)
             {
-                if (m.Parameters != null && m.Parameters.Count > 0)
-                    membersList.Add(GD.Declaration.Signal(GD.Syntax.Identifier(m.Name), GD.List.Parameters(BuildParameterDeclarations(m.Parameters))));
-                else
-                    membersList.Add(GD.Declaration.Signal(m.Name));
+                sb.AppendLine();
+                foreach (var m in constants)
+                {
+                    var constValue = m.ConstantValue ?? "0";
+                    var constType = MapCSharpTypeToGDScript(m.Type) ?? "Variant";
+                    sb.AppendLine($"const {m.Name}: {constType} = {constValue}");
+                }
             }
 
-            foreach (var m in typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Property))
-                membersList.Add(GD.Declaration.Variable(m.Name, m.Type ?? "Variant"));
+            var signals = typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Signal).ToList();
+            if (signals.Count > 0)
+            {
+                sb.AppendLine();
+                foreach (var m in signals)
+                {
+                    if (m.Parameters != null && m.Parameters.Count > 0)
+                    {
+                        var parms = string.Join(", ", m.Parameters.Select(p =>
+                        {
+                            var pt = NormalizeTypeName(p.Type);
+                            return pt != null ? $"{p.Name}: {pt}" : p.Name;
+                        }));
+                        sb.AppendLine($"signal {m.Name}({parms})");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"signal {m.Name}");
+                    }
+                }
+            }
 
-            foreach (var m in typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Method))
-                membersList.Add(BuildMethodDeclaration(m));
+            var properties = typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Property).ToList();
+            if (properties.Count > 0)
+            {
+                sb.AppendLine();
+                foreach (var m in properties)
+                    sb.AppendLine($"var {m.Name}: {NormalizeTypeName(m.Type) ?? "Variant"}");
+            }
+
+            var methods = typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Method).ToList();
+            if (methods.Count > 0)
+            {
+                sb.AppendLine();
+                foreach (var m in methods)
+                    sb.AppendLine(BuildMethodString(m));
+            }
         }
         else
         {
-            membersList.Add(new GDPassDeclaration());
+            sb.AppendLine("pass");
         }
 
-        var classDecl = GD.Declaration.Class(membersList.ToArray());
-
-        classDecl.UpdateIntendation();
-
-        var formatter = new GDFormatter(GDFormatterOptions.Default);
-        formatter.Format(classDecl);
-
-        var code = $"# Built-in Godot type: {typeInfo.Name}\n" + classDecl.ToString();
+        var code = sb.ToString();
 
         var dir = Path.Combine(Path.GetTempPath(), "gdshrapt", "builtin_types");
         Directory.CreateDirectory(dir);
         var filePath = Path.Combine(dir, $"{typeName}.gd");
         File.WriteAllText(filePath, code);
 
-        var classNameIdentifier = classDecl.ClassName?.Identifier;
-        var classNameLine = classNameIdentifier != null
-            ? classNameIdentifier.StartLine + 2  // +1 for comment line, +1 for 0→1 based
-            : 1;
+        // class_name is on line 3 if extends present, line 2 otherwise
+        var classNameLine = typeInfo.BaseType != null ? 3 : 2;
 
         return new GDDefinitionLocation
         {
@@ -252,52 +281,131 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         };
     }
 
-    private static GDParameterDeclaration[] BuildParameterDeclarations(IReadOnlyList<GDRuntimeParameterInfo> parameters)
+    private GDDefinitionLocation? GenerateBuiltInEnumDefinition(string typeName, GDRuntimeTypeInfo typeInfo)
     {
-        return parameters.Select(p =>
-        {
-            if (!string.IsNullOrEmpty(p.Type))
-                return GD.Declaration.Parameter(p.Name, GD.Type.Single(p.Type));
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"# Built-in Godot type: {typeInfo.Name}");
+        sb.AppendLine($"enum {typeInfo.Name} {{");
 
-            return GD.Declaration.Parameter(p.Name);
-        }).ToArray();
+        if (typeInfo.EnumValues != null && typeInfo.EnumValues.Count > 0)
+        {
+            foreach (var kvp in typeInfo.EnumValues)
+            {
+                sb.AppendLine($"\t{kvp.Key} = {kvp.Value},");
+            }
+        }
+        else if (typeInfo.Members != null)
+        {
+            int idx = 0;
+            foreach (var m in typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Constant))
+            {
+                sb.AppendLine($"\t{m.Name} = {idx++},");
+            }
+        }
+
+        sb.AppendLine("}");
+
+        var code = sb.ToString();
+
+        var dir = Path.Combine(Path.GetTempPath(), "gdshrapt", "builtin_types");
+        Directory.CreateDirectory(dir);
+        var filePath = Path.Combine(dir, $"{typeName}.gd");
+        File.WriteAllText(filePath, code);
+
+        return new GDDefinitionLocation
+        {
+            FilePath = filePath,
+            Line = 2,
+            Column = 0,
+            SymbolName = typeName,
+            Kind = GDSymbolKind.Enum
+        };
     }
 
-    private static GDMethodDeclaration BuildMethodDeclaration(GDRuntimeMemberInfo m)
+    private static string? MapCSharpTypeToGDScript(string? typeName)
     {
-        var parameters = m.Parameters != null && m.Parameters.Count > 0
-            ? GD.List.Parameters(BuildParameterDeclarations(m.Parameters))
-            : null;
+        if (string.IsNullOrEmpty(typeName))
+            return null;
 
-        var hasReturnType = !string.IsNullOrEmpty(m.Type);
+        switch (typeName)
+        {
+            case "Int32":
+            case "Int64":
+            case "UInt32":
+            case "UInt64":
+            case "Byte":
+            case "SByte":
+            case "Int16":
+            case "UInt16":
+                return "int";
+            case "Single":
+            case "Double":
+                return "float";
+            case "Boolean":
+                return "bool";
+            case "String":
+                return "String";
+            default:
+                return typeName;
+        }
+    }
 
-        GDMethodDeclaration method;
+    private static string BuildMethodString(GDRuntimeMemberInfo m)
+    {
+        var prefix = m.IsStatic ? "static " : "";
 
-        if (parameters != null && hasReturnType)
+        var parms = "";
+        if (m.Parameters != null && m.Parameters.Count > 0)
         {
-            method = GD.Declaration.AbstractMethod(m.Name, parameters, GD.Type.Single(m.Type!));
-        }
-        else if (parameters != null)
-        {
-            method = GD.Declaration.Method(GD.Syntax.Identifier(m.Name), parameters,
-                GD.Expression.Pass());
-        }
-        else if (hasReturnType)
-        {
-            method = GD.Declaration.AbstractMethod(m.Name, GD.Type.Single(m.Type!));
-        }
-        else
-        {
-            method = GD.Declaration.AbstractMethod(m.Name);
+            parms = string.Join(", ", m.Parameters.Select(p =>
+                p.Type != null ? $"{p.Name}: {NormalizeTypeName(p.Type)}" : p.Name));
         }
 
-        if (m.IsStatic)
+        var returnType = NormalizeTypeName(m.Type);
+        if (returnType != null)
+            return $"{prefix}func {m.Name}({parms}) -> {returnType}: pass";
+
+        return $"{prefix}func {m.Name}({parms}): pass";
+    }
+
+    private static string? NormalizeTypeName(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName) || typeName == "Variant" || typeName == "void")
+            return null;
+
+        // Single uppercase letter is a type variable (T, K, V) → show as Node (Godot convention)
+        if (typeName.Length == 1 && char.IsUpper(typeName[0]))
+            return "Node";
+
+        if (typeName.StartsWith("enum::") || typeName.StartsWith("bitfield::"))
+            return "int";
+
+        if (typeName.StartsWith("typedarray::"))
+            return "Array";
+
+        var bracketIdx = typeName.IndexOf('[');
+        if (bracketIdx > 0)
+            typeName = typeName.Substring(0, bracketIdx);
+
+        if (typeName.Length == 0 || !IsValidTypeIdentifier(typeName))
+            return "Variant";
+
+        return typeName;
+    }
+
+    private static bool IsValidTypeIdentifier(string value)
+    {
+        if (char.IsDigit(value[0]))
+            return false;
+
+        for (int i = 0; i < value.Length; i++)
         {
-            method.StaticKeyword = new GDStaticKeyword();
-            method[1] = GD.Syntax.Space();
+            var c = value[i];
+            if (!char.IsLetterOrDigit(c) && c != '_' && c != '.')
+                return false;
         }
 
-        return method;
+        return true;
     }
 
     private bool IsBuiltInTypeFile(string filePath)
@@ -377,6 +485,56 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         var containingType = Path.GetFileNameWithoutExtension(filePath);
         return GDDefinitionLocation.WithInfo(
             $"'{result.SymbolName ?? "symbol"}' is an internal type of '{containingType}' (enum or bitfield)");
+    }
+
+    private GDDefinitionLocation? FindDefinitionInBuiltInType(string typeName, string memberName)
+    {
+        if (_runtimeProvider == null)
+            return null;
+
+        var location = GenerateBuiltInTypeDefinition(typeName);
+        if (location == null || string.IsNullOrEmpty(location.FilePath))
+            return null;
+
+        string content;
+        try
+        {
+            content = File.ReadAllText(location.FilePath);
+        }
+        catch
+        {
+            return location;
+        }
+
+        var reference = new GDScriptReference(location.FilePath);
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(content);
+
+        if (scriptFile.Class == null)
+            return location;
+
+        foreach (var member in scriptFile.Class.Members.OfType<GDIdentifiableClassMember>())
+        {
+            if (member.Identifier?.Sequence == memberName)
+            {
+                return new GDDefinitionLocation
+                {
+                    FilePath = location.FilePath,
+                    Line = member.Identifier.StartLine + 1,
+                    Column = member.Identifier.StartColumn,
+                    SymbolName = memberName,
+                    Kind = member switch
+                    {
+                        GDMethodDeclaration => GDSymbolKind.Method,
+                        GDSignalDeclaration => GDSymbolKind.Signal,
+                        GDVariableDeclaration => GDSymbolKind.Variable,
+                        _ => null
+                    }
+                };
+            }
+        }
+
+        return location;
     }
 
     private static GDSymbolKind? MapDefinitionTypeToKind(GDDefinitionType type)

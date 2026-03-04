@@ -128,7 +128,7 @@ func start_async_task(task_func):
 
 func _run_task(task_func, operation):
 	var resolve = func(value): operation.resolve(value) # 130:28-GD7007-OK
-	var reject = func(error): operation.reject(error) # 131:27-GD7007-OK
+	var reject = func(error): operation.reject(error)
 
 	task_func.call(resolve, reject) # 133:1-GD7007-OK
 
@@ -172,7 +172,7 @@ func emit_event(event_name, data = null):
 		var handlers = once_handlers[event_name].duplicate()
 		once_handlers[event_name].clear()
 		for handler in handlers:
-			var result = handler.call(data) # 175:16-GD7007-OK
+			var result = handler.call(data)
 			results.append(result)
 
 	return results
@@ -254,20 +254,20 @@ class Observable:
 
 	func emit_next(value):
 		for sub in _subscribers:
-			if sub["active"] and sub["on_next"]: # 257:6-GD7006-OK 257:24-GD7006-OK
-				sub["on_next"].call(value) # 258:4-GD7007-OK 258:4-GD7006-OK
+			if sub["active"] and sub["on_next"]: # 257:6-GD7006-OK
+				sub["on_next"].call(value) # 258:4-GD7007-OK
 
 	func emit_error(error):
 		for sub in _subscribers:
-			if sub["active"] and sub["on_error"]: # 262:6-GD7006-OK 262:24-GD7006-OK
-				sub["on_error"].call(error) # 263:4-GD7007-OK 263:4-GD7006-OK
-			sub["active"] = false # 264:3-GD7006-OK
+			if sub["active"] and sub["on_error"]: # 262:6-GD7006-OK
+				sub["on_error"].call(error) # 263:4-GD7007-OK
+			sub["active"] = false
 
 	func emit_complete():
 		for sub in _subscribers:
-			if sub["active"] and sub["on_complete"]: # 268:6-GD7006-OK 268:24-GD7006-OK
-				sub["on_complete"].call() # 269:4-GD7007-OK 269:4-GD7006-OK
-			sub["active"] = false # 270:3-GD7006-OK
+			if sub["active"] and sub["on_complete"]: # 268:6-GD7006-OK
+				sub["on_complete"].call() # 269:4-GD7007-OK
+			sub["active"] = false
 
 	func map(transform):
 		var mapped = Observable.new()
@@ -295,7 +295,7 @@ func create_observable():
 	return Observable.new()
 
 
-# === Debounce/Throttle === #
+# === Debounce/Throttle ===
 
 var debounce_timers = {}  # Dict[String, Timer]
 var throttle_locks = {}   # Dict[String, bool]
@@ -353,7 +353,7 @@ func throttle(key, delay, callback):
 	return true
 
 
-# === Continuation passing === #
+# === Continuation passing ===
 
 func async_fetch(url, on_success, on_failure):
 	# Simulates async HTTP request
@@ -416,14 +416,14 @@ func async_parallel(operations, on_all_complete, on_any_error):  # 414:20-GD7020
 	var ctx = ParallelContext.new()
 	ctx.results = []
 	ctx.results.resize(operations.size()) # 418:20-GD7007-OK
-	ctx.total = operations.size() # 419:13-GD7007-OK
+	ctx.total = operations.size()
 	ctx.on_complete = on_all_complete
 	ctx.on_error = on_any_error
 
-	for i in range(operations.size()): # 423:16-GD7007-OK
+	for i in range(operations.size()):
 		var success_handler = _create_parallel_success_handler(ctx, i)
 		var error_handler = _create_parallel_error_handler(ctx)
-		operations[i].call(success_handler, error_handler) # 426:2-GD7007-OK 426:2-GD7006-OK
+		operations[i].call(success_handler, error_handler) #  426:2-GD7006-OK
 
 
 func _simulate_fetch(url):
