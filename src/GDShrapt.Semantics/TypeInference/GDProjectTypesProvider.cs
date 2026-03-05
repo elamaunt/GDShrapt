@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.TypesMap;
 using System;
@@ -157,6 +158,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 var qualifiedName = $"{parentTypeName}.{enumName}";
 
                 var enumTypeInfo = BuildEnumTypeInfo(enumDecl);
+
+                // Register by short name for unqualified access (e.g., AIState.IDLE)
+                _typeCache[enumName] = enumTypeInfo;
+
+                // Also register by qualified name (Parent.EnumName) for proper resolution
                 _typeCache[qualifiedName] = enumTypeInfo;
             }
         }
@@ -172,6 +178,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 var qualifiedName = $"{parentTypeName}.{enumName}";
 
                 var enumTypeInfo = BuildEnumTypeInfo(enumDecl);
+
+                // Register by short name for unqualified access
+                _typeCache[enumName] = enumTypeInfo;
+
+                // Also register by qualified name
                 _typeCache[qualifiedName] = enumTypeInfo;
             }
         }
@@ -489,14 +500,23 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             var (minArgs, maxArgs) = CalculateArgConstraints(method.Parameters);
             // Use lazy inference for return type
             var returnType = GetMethodReturnType(method);
-            members.Add(GDRuntimeMemberInfo.Method(
+            var memberInfo = GDRuntimeMemberInfo.Method(
                 method.Name,
                 returnType,
                 minArgs,
                 maxArgs,
                 isVarArgs: false,
                 isStatic: method.IsStatic,
-                isAbstract: method.IsAbstract));
+                isAbstract: method.IsAbstract);
+
+            if (method.Parameters.Count > 0)
+            {
+                memberInfo.Parameters = method.Parameters
+                    .Select(p => new GDRuntimeParameterInfo(p.Name, p.TypeName, p.HasDefaultValue))
+                    .ToList();
+            }
+
+            members.Add(memberInfo);
         }
 
         foreach (var prop in typeInfo.Properties.Values)
@@ -509,7 +529,14 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
         foreach (var signal in typeInfo.Signals.Values)
         {
-            members.Add(GDRuntimeMemberInfo.Signal(signal.Name));
+            var signalInfo = GDRuntimeMemberInfo.Signal(signal.Name);
+            if (signal.Parameters.Count > 0)
+            {
+                signalInfo.Parameters = signal.Parameters
+                    .Select(p => new GDRuntimeParameterInfo(p.Name, p.TypeName, p.HasDefaultValue))
+                    .ToList();
+            }
+            members.Add(signalInfo);
         }
 
         foreach (var enumInfo in typeInfo.Enums.Values)
@@ -571,15 +598,25 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 isVarArgs: false,
                 isStatic: method.IsStatic,
                 isAbstract: method.IsAbstract);
+
+            if (method.Parameters.Count > 0)
+            {
+                memberInfo.Parameters = method.Parameters
+                    .Select(p => new GDRuntimeParameterInfo(p.Name, p.TypeName, p.HasDefaultValue))
+                    .ToList();
+            }
+
             return (memberInfo, typeName);
         }
 
-        // Check properties
+        // Check properties — for enum types (BaseTypeName == "int"), values are stored as properties
         if (projectType.Properties.TryGetValue(memberName, out var property))
         {
             var propertyType = GetPropertyType(property);
             GDRuntimeMemberInfo memberInfo;
-            if (property.IsConstant)
+            if (property.IsConstant && projectType.BaseTypeName == "int")
+                memberInfo = new GDRuntimeMemberInfo(property.Name, GDRuntimeMemberKind.EnumValue, propertyType);
+            else if (property.IsConstant)
                 memberInfo = GDRuntimeMemberInfo.Constant(property.Name, propertyType);
             else
                 memberInfo = GDRuntimeMemberInfo.Property(property.Name, propertyType, property.IsStatic);
@@ -588,7 +625,14 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check signals
         if (projectType.Signals.TryGetValue(memberName, out var signal))
         {
-            return (GDRuntimeMemberInfo.Signal(signal.Name), typeName);
+            var signalInfo = GDRuntimeMemberInfo.Signal(signal.Name);
+            if (signal.Parameters.Count > 0)
+            {
+                signalInfo.Parameters = signal.Parameters
+                    .Select(p => new GDRuntimeParameterInfo(p.Name, p.TypeName, p.HasDefaultValue))
+                    .ToList();
+            }
+            return (signalInfo, typeName);
         }
 
         // Check enums - use qualified name so FindMember can locate enum values in _typeCache
@@ -601,7 +645,17 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check base type - propagate the declaring type from base
         if (!string.IsNullOrEmpty(projectType.BaseTypeName))
         {
-            return GetMemberWithDeclaringTypeInternal(projectType.BaseTypeName, memberName, visited);
+            var baseResult = GetMemberWithDeclaringTypeInternal(projectType.BaseTypeName, memberName, visited);
+            if (baseResult.Member != null)
+                return baseResult;
+
+            // Base type not in project cache — delegate to composite provider (Godot built-in types)
+            if (_compositeProvider != null)
+            {
+                var godotMember = _compositeProvider.GetMember(projectType.BaseTypeName, memberName);
+                if (godotMember != null)
+                    return (godotMember, projectType.BaseTypeName);
+            }
         }
 
         return (null, null);
@@ -803,7 +857,17 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         // Check base type
         if (!string.IsNullOrEmpty(projectType.BaseTypeName))
         {
-            return GetMemberTypeInternal(projectType.BaseTypeName, memberName, visited);
+            var baseResult = GetMemberTypeInternal(projectType.BaseTypeName, memberName, visited);
+            if (baseResult != null)
+                return baseResult;
+
+            // Base type not in project cache — delegate to composite provider (Godot built-in types)
+            if (_compositeProvider != null)
+            {
+                var godotMember = _compositeProvider.GetMember(projectType.BaseTypeName, memberName);
+                if (godotMember != null)
+                    return godotMember.Type;
+            }
         }
 
         return null;

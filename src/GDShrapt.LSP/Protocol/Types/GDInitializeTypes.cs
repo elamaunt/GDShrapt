@@ -258,10 +258,35 @@ public class GDServerCapabilities
     public GDInlayHintOptions? InlayHintProvider { get; set; }
 
     /// <summary>
+    /// The server provides code lens support.
+    /// </summary>
+    [JsonPropertyName("codeLensProvider")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GDCodeLensOptions? CodeLensProvider { get; set; }
+
+    /// <summary>
     /// The server provides semantic tokens support.
     /// </summary>
     [JsonPropertyName("semanticTokensProvider")]
     public GDSemanticTokensOptions? SemanticTokensProvider { get; set; }
+
+    /// <summary>
+    /// The server provides call hierarchy support.
+    /// </summary>
+    [JsonPropertyName("callHierarchyProvider")]
+    public bool? CallHierarchyProvider { get; set; }
+
+    /// <summary>
+    /// The server provides type definition support.
+    /// </summary>
+    [JsonPropertyName("typeDefinitionProvider")]
+    public bool? TypeDefinitionProvider { get; set; }
+
+    /// <summary>
+    /// The server provides implementation support.
+    /// </summary>
+    [JsonPropertyName("implementationProvider")]
+    public bool? ImplementationProvider { get; set; }
 
     /// <summary>
     /// The server provides workspace symbol support.

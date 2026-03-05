@@ -34,6 +34,9 @@ public class GDRefactoringServices
     // Lazy-initialized services (project-aware)
     private GDRenameService? _rename;
     private GDFindReferencesService? _findReferences;
+    private GDCallHierarchyService? _callHierarchy;
+    private GDTypeDefinitionService? _typeDefinition;
+    private GDImplementationService? _implementation;
 
     // Lazy-initialized services (stateless)
     private GDGoToDefinitionService? _goToDefinition;
@@ -72,6 +75,21 @@ public class GDRefactoringServices
     /// Includes confidence levels for dynamic/duck-typed references.
     /// </summary>
     public GDFindReferencesService FindReferences => _findReferences ??= new GDFindReferencesService(_project, _projectModel);
+
+    /// <summary>
+    /// Call hierarchy navigation — find callers and callees of methods.
+    /// </summary>
+    public GDCallHierarchyService CallHierarchy => _callHierarchy ??= new GDCallHierarchyService(_project, _projectModel);
+
+    /// <summary>
+    /// Go to type definition — navigate to the type of a symbol.
+    /// </summary>
+    public GDTypeDefinitionService TypeDefinition => _typeDefinition ??= new GDTypeDefinitionService(_project, _projectModel);
+
+    /// <summary>
+    /// Find implementations — locate overrides and subclasses.
+    /// </summary>
+    public GDImplementationService Implementation => _implementation ??= new GDImplementationService(_project, _projectModel);
 
     #endregion
 

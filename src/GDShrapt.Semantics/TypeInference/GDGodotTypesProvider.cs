@@ -832,7 +832,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             return null;
 
         return parameters.Select(p => new GDRuntimeParameterInfo(
-            p.CSharpName ?? "arg",
+            GDNamingUtilities.ToSnakeCase(p.CSharpName ?? "arg"),
             p.GDScriptTypeName ?? GDWellKnownTypes.Variant,
             p.HasDefaultValue,
             p.IsParams,

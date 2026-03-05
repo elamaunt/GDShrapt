@@ -5323,8 +5323,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   114:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -5337,8 +5337,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   120:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -5351,8 +5351,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   127:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -13128,6 +13128,92 @@ test_scripts/method_chains.gd
     inferred: Array
     effective: Array
     confidence: Certain
+    nullable: no
+
+
+test_scripts/navigation_test.gd
+  6:0 Constant SCENE
+    declared: (none)
+    inferred: PackedScene
+    effective: PackedScene
+    confidence: High
+    nullable: no
+
+  7:0 Constant SCENE_RELATIVE
+    declared: (none)
+    inferred: PackedScene
+    effective: PackedScene
+    confidence: High
+    nullable: no
+
+  9:0 Variable scene_path
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: Certain
+    nullable: no
+
+  11:0 Variable enemies
+    declared: (none)
+    inferred: Array[Node2D]
+    effective: Array[Node2D]
+    confidence: Certain
+    nullable: no
+
+  13:0 Method _ready
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  14:1 Variable clamped
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: High
+    nullable: no
+
+  15:1 Variable instance
+    declared: (none)
+    inferred: SimpleClass
+    effective: SimpleClass
+    confidence: High
+    nullable: no
+
+  20:0 Method test_builtin_functions
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  21:1 Variable a
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: High
+    nullable: no
+
+  22:1 Variable b
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: High
+    nullable: no
+
+  23:1 Variable c
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: High
+    nullable: no
+
+  24:1 Variable d
+    declared: (none)
+    inferred: String
+    effective: String
+    confidence: High
     nullable: no
 
 
@@ -22860,4 +22946,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 3243 entries in 54 files
+# Summary: 3255 entries in 55 files

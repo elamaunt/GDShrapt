@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,10 +13,12 @@ namespace GDShrapt.LSP;
 public class GDLspCompletionHandler
 {
     private readonly IGDCompletionHandler _handler;
+    private readonly GDDocumentManager? _documentManager;
 
-    public GDLspCompletionHandler(IGDCompletionHandler handler)
+    public GDLspCompletionHandler(IGDCompletionHandler handler, GDDocumentManager? documentManager = null)
     {
         _handler = handler;
+        _documentManager = documentManager;
     }
 
     public Task<GDLspCompletionList?> HandleAsync(GDCompletionParams @params, CancellationToken cancellationToken)
@@ -35,16 +38,51 @@ public class GDLspCompletionHandler
 
         if (triggerKind == GDLspCompletionTriggerKind.TriggerCharacter && triggerChar == ".")
         {
-            // Member access completion - need to determine the type from context
-            // For now, use general completion which handles member access internally
+            // Extract expression before dot from document content
+            var expression = ExtractExpressionBeforeDot(@params.TextDocument.Uri, @params.Position.Line, @params.Position.Character);
+
             var request = new GDCompletionRequest
             {
                 FilePath = filePath,
                 Line = line,
                 Column = column,
-                CompletionType = GDCompletionType.MemberAccess
+                CompletionType = GDCompletionType.MemberAccess,
+                MemberAccessExpression = expression
             };
             items = _handler.GetCompletions(request);
+        }
+        else if (triggerKind == GDLspCompletionTriggerKind.TriggerCharacter && triggerChar == "$")
+        {
+            var request = new GDCompletionRequest
+            {
+                FilePath = filePath,
+                Line = line,
+                Column = column,
+                CompletionType = GDCompletionType.NodePath,
+                NodePathPrefix = "$"
+            };
+            items = _handler.GetCompletions(request);
+        }
+        else if (triggerKind == GDLspCompletionTriggerKind.TriggerCharacter && triggerChar == "/")
+        {
+            // Check if we're in a $NodePath/ context
+            var nodePathPrefix = ExtractNodePathBeforeSlash(@params.TextDocument.Uri, @params.Position.Line, @params.Position.Character);
+            if (nodePathPrefix != null)
+            {
+                var request = new GDCompletionRequest
+                {
+                    FilePath = filePath,
+                    Line = line,
+                    Column = column,
+                    CompletionType = GDCompletionType.NodePath,
+                    NodePathPrefix = nodePathPrefix
+                };
+                items = _handler.GetCompletions(request);
+            }
+            else
+            {
+                items = [];
+            }
         }
         else
         {
@@ -85,17 +123,147 @@ public class GDLspCompletionHandler
         return Task.FromResult<GDLspCompletionList?>(result);
     }
 
+    private string? ExtractExpressionBeforeDot(string uri, int line, int character)
+    {
+        if (_documentManager == null)
+            return null;
+
+        var doc = _documentManager.GetDocument(uri);
+        if (doc == null)
+            return null;
+
+        var lines = doc.Content.Split('\n');
+        if (line < 0 || line >= lines.Length)
+            return null;
+
+        var lineText = lines[line];
+        // character points to the dot position
+        var dotPos = character;
+        if (dotPos <= 0 || dotPos > lineText.Length)
+            return null;
+
+        // Walk backwards from dot to find the expression
+        var end = dotPos - 1;
+        // Skip trailing whitespace
+        while (end >= 0 && lineText[end] == ' ')
+            end--;
+
+        if (end < 0)
+            return null;
+
+        // Handle closing brackets/parens
+        int depth = 0;
+        var pos = end;
+        while (pos >= 0)
+        {
+            var ch = lineText[pos];
+            if (ch == ')' || ch == ']')
+            {
+                depth++;
+                pos--;
+            }
+            else if (ch == '(' || ch == '[')
+            {
+                depth--;
+                if (depth < 0)
+                    break;
+                pos--;
+            }
+            else if (depth > 0)
+            {
+                pos--;
+            }
+            else if (char.IsLetterOrDigit(ch) || ch == '_')
+            {
+                pos--;
+            }
+            else if (ch == '.')
+            {
+                // Chained access: keep going
+                pos--;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        pos++;
+        if (pos > end)
+            return null;
+
+        var expr = lineText.Substring(pos, end - pos + 1).Trim();
+        return string.IsNullOrEmpty(expr) ? null : expr;
+    }
+
+    private string? ExtractNodePathBeforeSlash(string uri, int line, int character)
+    {
+        if (_documentManager == null)
+            return null;
+
+        var doc = _documentManager.GetDocument(uri);
+        if (doc == null)
+            return null;
+
+        var lines = doc.Content.Split('\n');
+        if (line < 0 || line >= lines.Length)
+            return null;
+
+        var lineText = lines[line];
+        var slashPos = character;
+        if (slashPos <= 0 || slashPos > lineText.Length)
+            return null;
+
+        // Walk backwards from / to find $ prefix
+        var pos = slashPos - 1;
+        while (pos >= 0)
+        {
+            var ch = lineText[pos];
+            if (ch == '$')
+                return lineText.Substring(pos + 1, slashPos - pos - 1);
+            if (char.IsLetterOrDigit(ch) || ch == '_' || ch == '/')
+                pos--;
+            else
+                break;
+        }
+
+        return null;
+    }
+
     private static GDLspCompletionItem ConvertToLspItem(GDCompletionItem item)
     {
-        return new GDLspCompletionItem
+        var lspItem = new GDLspCompletionItem
         {
             Label = item.Label,
             Kind = ConvertItemKind(item.Kind),
             Detail = item.Detail,
             InsertText = item.InsertText,
             // Convert SortPriority (int) to SortText (string) - lower priority = higher in list
-            SortText = item.SortPriority.ToString("D5")
+            SortText = $"{(item.Preselect ? "0" : "1")}_{item.SortPriority:D3}_{item.Label}"
         };
+
+        if (item.IsSnippet)
+            lspItem.InsertTextFormat = GDLspInsertTextFormat.Snippet;
+
+        if (item.Preselect)
+            lspItem.Preselect = true;
+
+        // Commit characters based on kind
+        if (item.Kind == GDCompletionItemKind.Method)
+            lspItem.CommitCharacters = ["("];
+        else if (item.Kind == GDCompletionItemKind.Variable || item.Kind == GDCompletionItemKind.Property)
+            lspItem.CommitCharacters = ["."];
+
+        // Label details for method signatures
+        if (!string.IsNullOrEmpty(item.Documentation) && item.Kind == GDCompletionItemKind.Method)
+        {
+            lspItem.LabelDetails = new GDLspCompletionItemLabelDetails
+            {
+                Detail = $"({item.Documentation})"
+            };
+        }
+
+        return lspItem;
     }
 
     private static GDLspCompletionItemKind ConvertItemKind(GDCompletionItemKind kind)

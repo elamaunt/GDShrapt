@@ -13,6 +13,7 @@ public class GDDocumentManager
     private readonly ConcurrentDictionary<string, GDOpenDocument> _documents = new();
     private readonly GDScriptProject _project;
     private GDProjectSemanticModel? _projectModel;
+    private volatile bool _initialAnalysisComplete;
 
     public GDDocumentManager(GDScriptProject project)
     {
@@ -22,6 +23,11 @@ public class GDDocumentManager
     public void SetProjectModel(GDProjectSemanticModel? projectModel)
     {
         _projectModel = projectModel;
+    }
+
+    public void SetInitialAnalysisComplete()
+    {
+        _initialAnalysisComplete = true;
     }
 
     /// <summary>
@@ -74,10 +80,14 @@ public class GDDocumentManager
         if (_projectModel != null)
         {
             _projectModel.InvalidateFile(filePath);
-            // Eagerly rebuild so the model is ready for next request
-            _projectModel.GetSemanticModel(script);
+
+            // Only eagerly rebuild after initial analysis is complete.
+            // During startup, AnalyzeAll() handles analysis — eager rebuild here
+            // would race with it and produce stale semantic models.
+            if (_initialAnalysisComplete)
+                _projectModel.GetSemanticModel(script);
         }
-        else
+        else if (_initialAnalysisComplete)
         {
             // Fallback: rebuild per-file model directly
             try

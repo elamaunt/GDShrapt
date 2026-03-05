@@ -14,6 +14,9 @@ namespace GDShrapt.CLI.Core;
 public class GDCompletionHandler : IGDCompletionHandler
 {
     protected readonly GDScriptProject _project;
+    protected readonly IGDRuntimeProvider? _runtimeProvider;
+    protected readonly GDProjectSemanticModel? _projectModel;
+    protected readonly GDSceneTypesProvider? _sceneTypesProvider;
 
     // GDScript keywords
     private static readonly string[] Keywords =
@@ -65,9 +68,12 @@ public class GDCompletionHandler : IGDCompletionHandler
         ("physics_process", "func _physics_process(delta):\n\t", "_physics_process function")
     };
 
-    public GDCompletionHandler(GDScriptProject project)
+    public GDCompletionHandler(GDScriptProject project, IGDRuntimeProvider? runtimeProvider = null, GDProjectSemanticModel? projectModel = null, GDSceneTypesProvider? sceneTypesProvider = null)
     {
         _project = project;
+        _runtimeProvider = runtimeProvider;
+        _projectModel = projectModel;
+        _sceneTypesProvider = sceneTypesProvider;
     }
 
     /// <inheritdoc />
@@ -78,12 +84,19 @@ public class GDCompletionHandler : IGDCompletionHandler
         switch (request.CompletionType)
         {
             case GDCompletionType.MemberAccess:
-                if (!string.IsNullOrEmpty(request.MemberAccessType))
-                    items.AddRange(GetMemberCompletions(request.MemberAccessType));
+                var memberType = request.MemberAccessType;
+                if (string.IsNullOrEmpty(memberType) && !string.IsNullOrEmpty(request.MemberAccessExpression))
+                    memberType = ResolveExpressionType(request.FilePath, request.MemberAccessExpression);
+                if (!string.IsNullOrEmpty(memberType))
+                    items.AddRange(GetMemberCompletions(memberType));
                 break;
 
             case GDCompletionType.TypeAnnotation:
                 items.AddRange(GetTypeCompletions());
+                break;
+
+            case GDCompletionType.NodePath:
+                items.AddRange(GetNodePathCompletions(request.FilePath, request.NodePathPrefix));
                 break;
 
             case GDCompletionType.Symbol:
@@ -107,9 +120,172 @@ public class GDCompletionHandler : IGDCompletionHandler
     /// <inheritdoc />
     public virtual IReadOnlyList<GDCompletionItem> GetMemberCompletions(string typeName)
     {
-        // TODO: Use GDTypeResolver when available in CLI.Core
-        // For now, return empty - Plugin will use its own type resolver
-        return [];
+        if (_runtimeProvider == null || string.IsNullOrEmpty(typeName))
+            return [];
+
+        var items = new List<GDCompletionItem>();
+        var visited = new HashSet<string>();
+        CollectMembersRecursive(typeName, items, visited);
+        return items;
+    }
+
+    private void CollectMembersRecursive(string typeName, List<GDCompletionItem> items, HashSet<string> visited)
+    {
+        if (!visited.Add(typeName))
+            return;
+
+        var typeInfo = _runtimeProvider!.GetTypeInfo(typeName);
+        if (typeInfo == null)
+            return;
+
+        var source = typeInfo.IsNative ? GDCompletionSource.GodotApi : GDCompletionSource.Project;
+
+        if (typeInfo.Members != null)
+        {
+            foreach (var member in typeInfo.Members)
+            {
+                var item = member.Kind switch
+                {
+                    GDRuntimeMemberKind.Method => GDCompletionItem.Method(
+                        member.Name,
+                        member.Type ?? "Variant",
+                        BuildParameterSignature(member),
+                        source),
+                    GDRuntimeMemberKind.Property => GDCompletionItem.Property(
+                        member.Name,
+                        member.Type,
+                        source),
+                    GDRuntimeMemberKind.Signal => GDCompletionItem.Signal(
+                        member.Name,
+                        source),
+                    GDRuntimeMemberKind.Constant => GDCompletionItem.Constant(
+                        member.Name,
+                        member.Type,
+                        source),
+                    _ => (GDCompletionItem?)null
+                };
+
+                if (item != null)
+                    items.Add(item);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(typeInfo.BaseType))
+            CollectMembersRecursive(typeInfo.BaseType, items, visited);
+    }
+
+    private static string? BuildParameterSignature(GDRuntimeMemberInfo member)
+    {
+        if (member.Parameters == null || member.Parameters.Count == 0)
+            return null;
+
+        var parts = new List<string>();
+        foreach (var p in member.Parameters)
+        {
+            var part = !string.IsNullOrEmpty(p.Type)
+                ? $"{p.Name}: {p.Type}"
+                : p.Name;
+            parts.Add(part);
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    private string? ResolveExpressionType(string filePath, string expression)
+    {
+        if (_projectModel == null || string.IsNullOrEmpty(expression))
+            return null;
+
+        // Handle "self" keyword
+        if (expression == "self")
+        {
+            var script = _project.GetScript(filePath);
+            return script?.TypeName ?? script?.SemanticModel?.BaseTypeName;
+        }
+
+        // Try to resolve via semantic model
+        var file = _project.GetScript(filePath);
+        var semanticModel = file?.SemanticModel;
+        if (semanticModel == null)
+            return null;
+
+        // Check if it's a simple identifier (local variable, parameter, etc.)
+        var symbol = semanticModel.FindSymbol(expression);
+        if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
+            return symbol.TypeName;
+
+        // Check if it's a known type name (static member access like Vector2.ZERO)
+        if (_runtimeProvider?.IsKnownType(expression) == true)
+            return expression;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets node path completions for $ expressions.
+    /// </summary>
+    public virtual IReadOnlyList<GDCompletionItem> GetNodePathCompletions(string filePath, string? partialPath)
+    {
+        if (_sceneTypesProvider == null)
+            return [];
+
+        // Find scenes that use this script
+        var scenes = _sceneTypesProvider.GetScenesForScript(filePath);
+        var sceneList = scenes.ToList();
+        if (sceneList.Count == 0)
+            return [];
+
+        var items = new List<GDCompletionItem>();
+        var added = new HashSet<string>();
+
+        foreach (var (scenePath, _) in sceneList)
+        {
+            if (string.IsNullOrEmpty(partialPath) || partialPath == "$")
+            {
+                // Show all top-level node paths
+                var children = _sceneTypesProvider.GetDirectChildren(scenePath, ".");
+                foreach (var child in children)
+                {
+                    if (added.Add(child.Name))
+                    {
+                        var nodeType = child.ScriptTypeName ?? child.NodeType;
+                        items.Add(new GDCompletionItem
+                        {
+                            Label = child.Name,
+                            Kind = GDCompletionItemKind.Variable,
+                            Detail = nodeType,
+                            InsertText = child.Name,
+                            SortPriority = 1,
+                            Source = GDCompletionSource.Project
+                        });
+                    }
+                }
+            }
+            else
+            {
+                // Partial path like "Player/" — show children of that node
+                var parentPath = partialPath.TrimEnd('/');
+                var children = _sceneTypesProvider.GetDirectChildren(scenePath, parentPath);
+                foreach (var child in children)
+                {
+                    if (added.Add(child.Name))
+                    {
+                        var nodeType = child.ScriptTypeName ?? child.NodeType;
+                        items.Add(new GDCompletionItem
+                        {
+                            Label = child.Name,
+                            Kind = GDCompletionItemKind.Variable,
+                            Detail = nodeType,
+                            InsertText = child.Name,
+                            SortPriority = 1,
+                            Source = GDCompletionSource.Project
+                        });
+                    }
+                }
+            }
+        }
+
+        return items;
     }
 
     /// <inheritdoc />
@@ -139,6 +315,106 @@ public class GDCompletionHandler : IGDCompletionHandler
     public virtual IReadOnlyList<GDCompletionItem> GetKeywordCompletions()
     {
         return Keywords.Select(k => GDCompletionItem.Keyword(k)).ToList();
+    }
+
+    /// <summary>
+    /// Gets override method completions for the current script's base type.
+    /// </summary>
+    public virtual IReadOnlyList<GDCompletionItem> GetOverrideMethodCompletions(string filePath)
+    {
+        if (_runtimeProvider == null)
+            return [];
+
+        var file = _project.GetScript(filePath);
+        var semanticModel = file?.SemanticModel;
+        if (semanticModel == null)
+            return [];
+
+        var baseType = semanticModel.BaseTypeName;
+        if (string.IsNullOrEmpty(baseType))
+            return [];
+
+        // Collect existing method names in current script
+        var existingMethods = new HashSet<string>();
+        foreach (var symbol in semanticModel.Symbols)
+        {
+            if (symbol.Kind == GDSymbolKind.Method)
+                existingMethods.Add(symbol.Name);
+        }
+
+        var items = new List<GDCompletionItem>();
+        var visited = new HashSet<string>();
+        CollectVirtualMethodsRecursive(baseType, items, visited, existingMethods);
+        return items;
+    }
+
+    private void CollectVirtualMethodsRecursive(string typeName, List<GDCompletionItem> items, HashSet<string> visited, HashSet<string> existingMethods)
+    {
+        if (!visited.Add(typeName))
+            return;
+
+        var typeInfo = _runtimeProvider!.GetTypeInfo(typeName);
+        if (typeInfo == null)
+            return;
+
+        if (typeInfo.Members != null)
+        {
+            foreach (var member in typeInfo.Members)
+            {
+                if (member.Kind != GDRuntimeMemberKind.Method)
+                    continue;
+
+                // Virtual methods in Godot are prefixed with _ or marked abstract
+                var isVirtual = member.Name.StartsWith("_") || member.IsAbstract;
+                if (!isVirtual)
+                    continue;
+
+                // Skip if already declared in current script
+                if (existingMethods.Contains(member.Name))
+                    continue;
+
+                // Build snippet: func _method_name(params) -> ReturnType:\n\t${0:pass}
+                var paramSnippet = BuildOverrideParams(member);
+                var returnPart = !string.IsNullOrEmpty(member.Type) && member.Type != "void" && member.Type != "Variant"
+                    ? $" -> {member.Type}"
+                    : "";
+                var insertText = $"func {member.Name}({paramSnippet}){returnPart}:\n\t${{0:pass}}";
+
+                items.Add(new GDCompletionItem
+                {
+                    Label = member.Name,
+                    Kind = GDCompletionItemKind.Method,
+                    Detail = $"override from {typeName}",
+                    InsertText = insertText,
+                    Documentation = BuildParameterSignature(member),
+                    SortPriority = 3,
+                    IsSnippet = true,
+                    Source = GDCompletionSource.GodotApi
+                });
+
+                existingMethods.Add(member.Name); // Avoid duplicates from inheritance chain
+            }
+        }
+
+        if (!string.IsNullOrEmpty(typeInfo.BaseType))
+            CollectVirtualMethodsRecursive(typeInfo.BaseType, items, visited, existingMethods);
+    }
+
+    private static string BuildOverrideParams(GDRuntimeMemberInfo member)
+    {
+        if (member.Parameters == null || member.Parameters.Count == 0)
+            return "";
+
+        var parts = new List<string>();
+        for (int i = 0; i < member.Parameters.Count; i++)
+        {
+            var p = member.Parameters[i];
+            var paramStr = !string.IsNullOrEmpty(p.Type)
+                ? $"{p.Name}: {p.Type}"
+                : p.Name;
+            parts.Add(paramStr);
+        }
+        return string.Join(", ", parts);
     }
 
     private IEnumerable<GDCompletionItem> GetSymbolCompletions(GDCompletionRequest request)
@@ -188,6 +464,12 @@ public class GDCompletionHandler : IGDCompletionHandler
         foreach (var (name, insertText, description) in Snippets)
         {
             yield return GDCompletionItem.Snippet(name, insertText, description);
+        }
+
+        // Override method suggestions
+        foreach (var item in GetOverrideMethodCompletions(request.FilePath))
+        {
+            yield return item;
         }
     }
 

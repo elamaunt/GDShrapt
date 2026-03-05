@@ -157,6 +157,100 @@ public class GDHoverHandlerTests
     }
 
     [TestMethod]
+    public async Task HandleAsync_HoverOnInheritedBuiltInProperty_ShowsCorrectType()
+    {
+        // Arrange
+        var (_, handler) = SetupProjectAndHandler();
+
+        // simple_class.gd line 28 (1-based): position.x += speed * delta
+        // "x" at column 11 (1-based), LSP 0-based: line=27, char=10
+        var @params = CreateParams("simple_class.gd", 27, 10);
+
+        // Act
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        // Assert - should show float type from Vector2.x, not SimpleClass
+        result.Should().NotBeNull();
+        result!.Contents.Should().NotBeNull();
+
+        var content = result.Contents.Value;
+        content.Should().Contain("float");
+        content.Should().NotContain("SimpleClass");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnEnumValue_ShowsEnumValueInfo()
+    {
+        // Arrange
+        var (_, handler) = SetupProjectAndHandler();
+
+        // ai_controller.gd line 18 (1-based): var current_state: AIState = AIState.IDLE
+        // "IDLE" at column 39 (1-based), LSP 0-based: line=17, char=38
+        var @params = CreateParams("ai_controller.gd", 17, 38);
+
+        // Act
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        // Assert - should show enum value hover, not Unknown
+        result.Should().NotBeNull();
+        result!.Contents.Should().NotBeNull();
+
+        var content = result.Contents.Value;
+        content.Should().Contain("IDLE");
+        content.Should().NotContain("Unknown");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnBuiltInProperty_ShowsSnakeCaseName()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        // navigation_test.gd line 16 (1-based): texture = null
+        // "texture" at column 2 (1-based), LSP 0-based: line=15, char=1
+        var @params = CreateParams("navigation_test.gd", 15, 1);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        var content = result!.Contents.Value;
+        content.Should().Contain("texture");
+        content.Should().NotContain("var Texture");
+        content.Should().Contain("Texture2D");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnBuiltInFunction_ShowsFunctionSignature()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        // navigation_test.gd line 14 (1-based): var clamped = clampf(1.5, 0.0, 1.0)
+        // "clampf" at column 16 (1-based), LSP 0-based: line=13, char=15
+        var @params = CreateParams("navigation_test.gd", 13, 15);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        var content = result!.Contents.Value;
+        content.Should().Contain("clampf");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnPrint_ShowsFunctionSignature()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        // navigation_test.gd line 17 (1-based): print(clamped)
+        // "print" at column 2 (1-based), LSP 0-based: line=16, char=1
+        var @params = CreateParams("navigation_test.gd", 16, 1);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        var content = result!.Contents.Value;
+        content.Should().Contain("print");
+    }
+
+    [TestMethod]
     public async Task HandleAsync_InvalidFile_ReturnsNull()
     {
         // Arrange

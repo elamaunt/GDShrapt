@@ -65,6 +65,13 @@ public class GDLspInlayHint
     [JsonPropertyName("tooltip")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Tooltip { get; set; }
+
+    /// <summary>
+    /// Optional text edits applied when the user accepts (double-clicks) the hint.
+    /// </summary>
+    [JsonPropertyName("textEdits")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public GDLspTextEdit[]? TextEdits { get; set; }
 }
 
 /// <summary>

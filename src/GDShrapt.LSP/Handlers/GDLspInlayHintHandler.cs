@@ -54,8 +54,31 @@ public class GDLspInlayHintHandler
             Kind = ConvertHintKind(hint.Kind),
             PaddingLeft = hint.PaddingLeft,
             PaddingRight = hint.PaddingRight,
-            Tooltip = hint.Tooltip
+            Tooltip = hint.Tooltip,
+            TextEdits = ConvertTextEdits(hint.TextEdits)
         };
+    }
+
+    private static GDLspTextEdit[]? ConvertTextEdits(IReadOnlyList<GDInlayHintTextEdit>? edits)
+    {
+        if (edits == null || edits.Count == 0)
+            return null;
+
+        var result = new GDLspTextEdit[edits.Count];
+        for (var i = 0; i < edits.Count; i++)
+        {
+            var e = edits[i];
+            result[i] = new GDLspTextEdit
+            {
+                Range = new GDLspRange
+                {
+                    Start = new GDLspPosition { Line = e.Line - 1, Character = e.StartColumn - 1 },
+                    End = new GDLspPosition { Line = e.Line - 1, Character = e.EndColumn - 1 }
+                },
+                NewText = e.NewText
+            };
+        }
+        return result;
     }
 
     private static int ConvertHintKind(CLI.Core.GDInlayHintKind kind)

@@ -58,6 +58,37 @@ public class GDInlayHint
     /// Whether to add padding on the right side.
     /// </summary>
     public bool PaddingRight { get; init; }
+
+    /// <summary>
+    /// Optional text edits to apply when the user accepts (double-clicks) the hint.
+    /// </summary>
+    public IReadOnlyList<GDInlayHintTextEdit>? TextEdits { get; init; }
+}
+
+/// <summary>
+/// Represents a text edit for an inlay hint acceptance action.
+/// </summary>
+public class GDInlayHintTextEdit
+{
+    /// <summary>
+    /// Line number (1-based).
+    /// </summary>
+    public int Line { get; init; }
+
+    /// <summary>
+    /// Start column (1-based).
+    /// </summary>
+    public int StartColumn { get; init; }
+
+    /// <summary>
+    /// End column (1-based).
+    /// </summary>
+    public int EndColumn { get; init; }
+
+    /// <summary>
+    /// The text to insert.
+    /// </summary>
+    public required string NewText { get; init; }
 }
 
 /// <summary>

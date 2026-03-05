@@ -272,7 +272,11 @@ public class GDNullableAccessValidator : GDValidationVisitor
         if (IsInLifecycleMethodAfterReady(context.AccessNode))
             return GDNullabilitySafetyResult.Safe;
 
-        // Check if protected by is_node_ready() guard
+        // Check if protected by is_inside_tree() + await ready guard clause
+        if (IsProtectedByInsideTreeAwaitReady(context.AccessNode))
+            return GDNullabilitySafetyResult.Safe;
+
+        // Check if protected by is_node_ready() or is_inside_tree() guard
         if (IsInIsNodeReadyGuard(context.AccessNode))
             return GDNullabilitySafetyResult.Safe;
 
@@ -650,21 +654,23 @@ public class GDNullableAccessValidator : GDValidationVisitor
         if (condition == null)
             return false;
 
-        // Direct is_node_ready() or self.is_node_ready() call
+        // Direct is_node_ready() / is_inside_tree() or self.is_node_ready() / self.is_inside_tree() call
         if (condition is GDCallExpression callExpr)
         {
-            // is_node_ready()
-            if (callExpr.CallerExpression is GDIdentifierExpression funcIdent &&
-                funcIdent.Identifier?.Sequence == "is_node_ready")
+            // is_node_ready() or is_inside_tree()
+            if (callExpr.CallerExpression is GDIdentifierExpression funcIdent)
             {
-                return true;
+                var name = funcIdent.Identifier?.Sequence;
+                if (name == "is_node_ready" || name == "is_inside_tree")
+                    return true;
             }
 
-            // self.is_node_ready()
-            if (callExpr.CallerExpression is GDMemberOperatorExpression memberExpr &&
-                memberExpr.Identifier?.Sequence == "is_node_ready")
+            // self.is_node_ready() or self.is_inside_tree()
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberExpr)
             {
-                return true;
+                var name = memberExpr.Identifier?.Sequence;
+                if (name == "is_node_ready" || name == "is_inside_tree")
+                    return true;
             }
         }
 
@@ -680,6 +686,118 @@ public class GDNullableAccessValidator : GDValidationVisitor
             }
         }
 
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if the access node comes after a guard clause:
+    ///   if not is_inside_tree(): await ready
+    /// After this pattern, @onready vars are guaranteed initialized.
+    /// </summary>
+    private static bool IsProtectedByInsideTreeAwaitReady(GDNode accessNode)
+    {
+        var (method, setter) = GDNullGuardDetector.FindContainingMethodOrSetter(accessNode);
+
+        GDStatementsList? statements = null;
+        if (method != null)
+            statements = method.Statements;
+        else if (setter != null)
+            statements = setter.Statements;
+
+        if (statements == null)
+            return false;
+
+        return CheckStatementsForInsideTreeAwaitReadyGuard(statements, accessNode);
+    }
+
+    private static bool CheckStatementsForInsideTreeAwaitReadyGuard(
+        GDStatementsList statements, GDNode accessNode)
+    {
+        var stmtList = statements.ToList();
+
+        var accessIndex = -1;
+        for (int i = 0; i < stmtList.Count; i++)
+        {
+            if (GDNullGuardDetector.IsDescendantOf(accessNode, stmtList[i]))
+            {
+                accessIndex = i;
+                break;
+            }
+        }
+
+        if (accessIndex < 0)
+            return false;
+
+        for (int i = 0; i < accessIndex; i++)
+        {
+            if (stmtList[i] is GDIfStatement ifStmt && IsInsideTreeAwaitReadyGuard(ifStmt))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsInsideTreeAwaitReadyGuard(GDIfStatement ifStmt)
+    {
+        var ifBranch = ifStmt.IfBranch;
+        if (ifBranch?.Condition == null)
+            return false;
+
+        if (!IsNegatedIsInsideTreeCall(ifBranch.Condition))
+            return false;
+
+        var bodyStatements = ifBranch.Statements;
+        if (bodyStatements == null || !bodyStatements.Any())
+            return false;
+
+        return bodyStatements.Any(ContainsAwaitReady);
+    }
+
+    private static bool IsNegatedIsInsideTreeCall(GDExpression condition)
+    {
+        if (condition is GDSingleOperatorExpression singleOp &&
+            (singleOp.OperatorType == GDSingleOperatorType.Not || singleOp.OperatorType == GDSingleOperatorType.Not2))
+        {
+            return IsInsideTreeCall(singleOp.TargetExpression);
+        }
+
+        return false;
+    }
+
+    private static bool IsInsideTreeCall(GDExpression? expr)
+    {
+        if (expr is GDCallExpression call)
+        {
+            if (call.CallerExpression is GDIdentifierExpression ident &&
+                ident.Identifier?.Sequence == "is_inside_tree")
+                return true;
+
+            if (call.CallerExpression is GDMemberOperatorExpression member &&
+                member.Identifier?.Sequence == "is_inside_tree")
+                return true;
+        }
+        return false;
+    }
+
+    private static bool ContainsAwaitReady(GDStatement stmt)
+    {
+        return ContainsAwaitReadyNode(stmt);
+    }
+
+    private static bool ContainsAwaitReadyNode(GDNode node)
+    {
+        if (node is GDAwaitExpression awaitExpr &&
+            awaitExpr.Expression is GDIdentifierExpression ident &&
+            ident.Identifier?.Sequence == "ready")
+            return true;
+
+        foreach (var child in node.AllNodes)
+        {
+            if (child is GDAwaitExpression innerAwait &&
+                innerAwait.Expression is GDIdentifierExpression innerIdent &&
+                innerIdent.Identifier?.Sequence == "ready")
+                return true;
+        }
         return false;
     }
 

@@ -96,7 +96,17 @@ public class GDLanguageServer : IGDLanguageServer
         _transport.OnRequest<GDCodeActionParams, GDLspCodeAction[]?>("textDocument/codeAction", HandleCodeActionAsync);
         _transport.OnRequest<GDSignatureHelpParams, GDLspSignatureHelp?>("textDocument/signatureHelp", HandleSignatureHelpAsync);
         _transport.OnRequest<GDInlayHintParams, GDLspInlayHint[]?>("textDocument/inlayHint", HandleInlayHintAsync);
+        _transport.OnRequest<GDCodeLensParams, GDLspCodeLens[]?>("textDocument/codeLens", HandleCodeLensAsync);
         _transport.OnRequest<GDSemanticTokensParams, GDSemanticTokens?>("textDocument/semanticTokens/full", HandleSemanticTokensFullAsync);
+
+        // Call hierarchy
+        _transport.OnRequest<GDCallHierarchyPrepareParams, GDLspCallHierarchyItem[]?>("textDocument/prepareCallHierarchy", HandlePrepareCallHierarchyAsync);
+        _transport.OnRequest<GDCallHierarchyIncomingCallsParams, GDLspCallHierarchyIncomingCall[]?>("callHierarchy/incomingCalls", HandleIncomingCallsAsync);
+        _transport.OnRequest<GDCallHierarchyOutgoingCallsParams, GDLspCallHierarchyOutgoingCall[]?>("callHierarchy/outgoingCalls", HandleOutgoingCallsAsync);
+
+        // Type definition and implementation
+        _transport.OnRequest<GDDefinitionParams, GDLspLocationLink[]?>("textDocument/typeDefinition", HandleTypeDefinitionAsync);
+        _transport.OnRequest<GDDefinitionParams, GDLspLocation[]?>("textDocument/implementation", HandleImplementationAsync);
     }
 
     #region Lifecycle Handlers
@@ -197,7 +207,7 @@ public class GDLanguageServer : IGDLanguageServer
                 DocumentFormattingProvider = true,
                 CompletionProvider = new GDCompletionOptions
                 {
-                    TriggerCharacters = [".", ":", "("],
+                    TriggerCharacters = [".", ":", "(", "$", "/"],
                     ResolveProvider = false
                 },
                 CodeActionProvider = true,
@@ -210,6 +220,10 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     ResolveProvider = false
                 },
+                CodeLensProvider = new GDCodeLensOptions
+                {
+                    ResolveProvider = false
+                },
                 SemanticTokensProvider = new GDSemanticTokensOptions
                 {
                     Legend = new GDSemanticTokensLegend
@@ -219,6 +233,9 @@ public class GDLanguageServer : IGDLanguageServer
                     },
                     Full = true
                 },
+                CallHierarchyProvider = true,
+                TypeDefinitionProvider = true,
+                ImplementationProvider = true,
                 WorkspaceSymbolProvider = true,
                 ExecuteCommandProvider = new GDExecuteCommandOptions
                 {
@@ -261,6 +278,7 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     // Run analysis in background
                     _project.AnalyzeAll();
+                    _project.BuildCallSiteRegistry();
                     _project.ResolveTresClassNames();
                     GDProjectInitializer.InjectSceneSignalConnections(_project);
                 }
@@ -270,6 +288,9 @@ public class GDLanguageServer : IGDLanguageServer
                 }
                 finally
                 {
+                    // Mark analysis complete so document manager can eagerly rebuild models on edits
+                    _documentManager?.SetInitialAnalysisComplete();
+
                     // Signal that analysis is complete (even if it failed partially)
                     // This unblocks any pending diagnostic publish requests
                     _analysisComplete?.TrySetResult(true);
@@ -278,6 +299,17 @@ public class GDLanguageServer : IGDLanguageServer
                 if (_diagnosticPublisher != null && _documentManager != null)
                 {
                     await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
+                }
+
+                // Refresh CodeLens after analysis completes so reference counts are accurate
+                try
+                {
+                    if (_transport != null)
+                        await _transport.SendRequestAsync<object?, object?>("workspace/codeLens/refresh", null, CancellationToken.None).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Client may not support codeLens/refresh — ignore
                 }
             });
         }
@@ -603,7 +635,7 @@ public class GDLanguageServer : IGDLanguageServer
         if (coreHandler == null)
             return Task.FromResult<GDLspCompletionList?>(null);
 
-        var handler = new GDLspCompletionHandler(coreHandler);
+        var handler = new GDLspCompletionHandler(coreHandler, _documentManager);
         return handler.HandleAsync(@params, ct);
     }
 
@@ -734,6 +766,26 @@ public class GDLanguageServer : IGDLanguageServer
         return handler.HandleAsync(@params, ct);
     }
 
+    private Task<GDLspCodeLens[]?> HandleCodeLensAsync(GDCodeLensParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/codeLens", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
+        // Return null before analysis completes — CodeLens will refresh after analysis via workspace/codeLens/refresh
+        if (_analysisComplete != null && !_analysisComplete.Task.IsCompleted)
+            return Task.FromResult<GDLspCodeLens[]?>(null);
+
+        if (_registry == null)
+            return Task.FromResult<GDLspCodeLens[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDCodeLensHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspCodeLens[]?>(null);
+
+        var handler = new GDLspCodeLensHandler(coreHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
     private async Task<GDSemanticTokens?> HandleSemanticTokensFullAsync(GDSemanticTokensParams @params, CancellationToken ct)
     {
         if (_traceLevel >= GDLspTraceLevel.Messages)
@@ -752,6 +804,95 @@ public class GDLanguageServer : IGDLanguageServer
                 $"tokens={result.Data.Length / 5}, data.length={result.Data.Length}");
 
         return result;
+    }
+
+    private async Task<GDLspLocationLink[]?> HandleTypeDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/typeDefinition", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
+        if (_registry == null)
+            return null;
+
+        var coreHandler = _registry.GetService<IGDTypeDefinitionHandler>();
+        if (coreHandler == null)
+            return null;
+
+        var handler = new GDTypeDefinitionLspHandler(coreHandler);
+        var (links, infoMessage) = await handler.HandleAsync(@params, ct);
+
+        if (infoMessage != null)
+            _ = _transport?.SendNotificationAsync("window/showMessage", new GDShowMessageParams
+            {
+                Type = GDLspMessageType.Info,
+                Message = infoMessage
+            });
+
+        return links;
+    }
+
+    private Task<GDLspLocation[]?> HandleImplementationAsync(GDDefinitionParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/implementation", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
+        if (_registry == null)
+            return Task.FromResult<GDLspLocation[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDImplementationHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspLocation[]?>(null);
+
+        var handler = new GDImplementationLspHandler(coreHandler);
+        return handler.HandleAsync(@params, ct);
+    }
+
+    private Task<GDLspCallHierarchyItem[]?> HandlePrepareCallHierarchyAsync(GDCallHierarchyPrepareParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("textDocument/prepareCallHierarchy", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+
+        if (_registry == null)
+            return Task.FromResult<GDLspCallHierarchyItem[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDCallHierarchyHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspCallHierarchyItem[]?>(null);
+
+        var handler = new GDLspCallHierarchyHandler(coreHandler);
+        return handler.HandlePrepareAsync(@params, ct);
+    }
+
+    private Task<GDLspCallHierarchyIncomingCall[]?> HandleIncomingCallsAsync(GDCallHierarchyIncomingCallsParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("callHierarchy/incomingCalls");
+
+        if (_registry == null)
+            return Task.FromResult<GDLspCallHierarchyIncomingCall[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDCallHierarchyHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspCallHierarchyIncomingCall[]?>(null);
+
+        var handler = new GDLspCallHierarchyHandler(coreHandler);
+        return handler.HandleIncomingCallsAsync(@params, ct);
+    }
+
+    private Task<GDLspCallHierarchyOutgoingCall[]?> HandleOutgoingCallsAsync(GDCallHierarchyOutgoingCallsParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("callHierarchy/outgoingCalls");
+
+        if (_registry == null)
+            return Task.FromResult<GDLspCallHierarchyOutgoingCall[]?>(null);
+
+        var coreHandler = _registry.GetService<IGDCallHierarchyHandler>();
+        if (coreHandler == null)
+            return Task.FromResult<GDLspCallHierarchyOutgoingCall[]?>(null);
+
+        var handler = new GDLspCallHierarchyHandler(coreHandler);
+        return handler.HandleOutgoingCallsAsync(@params, ct);
     }
 
     #endregion
@@ -854,7 +995,8 @@ internal static class GDProjectLoader
         {
             EnableSceneTypesProvider = true,
             EnableFileWatcher = true,
-            EnableSceneChangeReanalysis = true
+            EnableSceneChangeReanalysis = true,
+            EnableCallSiteRegistry = true
         });
 
         project.LoadScripts();

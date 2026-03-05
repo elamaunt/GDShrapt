@@ -35,6 +35,9 @@ public enum GDDefinitionType
     /// <summary>A built-in Godot type (no definition to navigate to).</summary>
     BuiltInType,
 
+    /// <summary>A built-in global function (e.g., clampf, print, lerp).</summary>
+    BuiltInFunction,
+
     /// <summary>A node path that needs scene context.</summary>
     NodePath,
 
@@ -169,6 +172,24 @@ public class GDGoToDefinitionResult : GDRefactoringResult
             requiresGodotLookup: true);
     }
 
+    /// <summary>Creates a result for a built-in global function (e.g., clampf, print, lerp).</summary>
+    public static GDGoToDefinitionResult BuiltInFunction(string functionName)
+    {
+        return new GDGoToDefinitionResult(
+            success: true,
+            errorMessage: null,
+            definitionType: GDDefinitionType.BuiltInFunction,
+            filePath: null,
+            line: 0,
+            column: 0,
+            endColumn: 0,
+            symbolName: functionName,
+            typeName: "@GDScript",
+            declarationNode: null,
+            declarationIdentifier: null,
+            requiresGodotLookup: true);
+    }
+
     /// <summary>Creates a result that requires Godot runtime lookup.</summary>
     public static GDGoToDefinitionResult RequiresGodot(GDDefinitionType type, string? symbolName = null)
     {
@@ -262,8 +283,12 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             GDGetNodeExpression getNodeExpr => ResolveNodePath(context, getNodeExpr.Path?.ToString() ?? ""),
             GDMemberOperatorExpression memberExpr when token is GDIdentifier id => ResolveMember(context, id, memberExpr),
             GDMethodExpression lambdaExpr when token is GDIdentifier id => ResolveLambdaDeclaration(context, id, lambdaExpr),
+            GDStringTypeNode stringTypeNode => ResolveStringTypePath(stringTypeNode),
             GDTypeNode typeNode => ResolveType(context, typeNode.BuildName()),
-            _ => GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, token.ToString())
+            GDStringExpression strExpr => ResolveStringInContext(context, token, strExpr),
+            GDStringNode strNode => ResolveStringInContext(context, token, strNode),
+            _ => TryResolveStringParent(context, token, parent)
+                ?? GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, token.ToString())
         };
     }
 
@@ -337,7 +362,30 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             }
         }
 
-        // 4. Try to resolve as a type (class_name, global)
+        // 4. Try to resolve as a built-in member of self type (inherited properties like texture, position)
+        if (semanticModel != null)
+        {
+            var selfType = context.Script?.Class?.Extends?.Type?.BuildName();
+            if (!string.IsNullOrEmpty(selfType))
+            {
+                var memberSymbol = semanticModel.ResolveMember(selfType, symbolName);
+                if (memberSymbol != null && !string.IsNullOrEmpty(memberSymbol.DeclaringTypeName)
+                    && memberSymbol.DeclaringTypeName != "Unknown")
+                {
+                    return GDGoToDefinitionResult.BuiltInMember(memberSymbol.DeclaringTypeName, symbolName);
+                }
+            }
+        }
+
+        // 5. Try to resolve as a built-in global function
+        if (semanticModel?.RuntimeProvider != null)
+        {
+            var funcInfo = semanticModel.RuntimeProvider.GetGlobalFunction(symbolName);
+            if (funcInfo != null)
+                return GDGoToDefinitionResult.BuiltInFunction(symbolName);
+        }
+
+        // 6. Try to resolve as a type (class_name, global)
         return ResolveType(context, symbolName);
     }
 
@@ -555,9 +603,15 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (string.IsNullOrEmpty(typeName))
             return GDGoToDefinitionResult.Failed("Type name is empty");
 
+        // Extract base type for generics: Array[Battler] -> Array
+        var baseTypeName = typeName;
+        var bracketIdx = typeName.IndexOf('[');
+        if (bracketIdx > 0)
+            baseTypeName = typeName.Substring(0, bracketIdx);
+
         // Check if it's a built-in Godot type
-        if (IsBuiltInType(typeName))
-            return GDGoToDefinitionResult.BuiltIn(typeName);
+        if (IsBuiltInType(baseTypeName))
+            return GDGoToDefinitionResult.BuiltIn(baseTypeName);
 
         // External type resolution requires project context
         // Return a result indicating the Plugin should search project files
@@ -583,6 +637,76 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         }
 
         return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, token.ToString());
+    }
+
+    /// <summary>
+    /// Walks up from a token to find a GDStringExpression parent (handles GDStringPartsList, etc.).
+    /// </summary>
+    private GDGoToDefinitionResult? TryResolveStringParent(GDRefactoringContext context, GDSyntaxToken token, GDNode parent)
+    {
+        var current = parent;
+        while (current != null)
+        {
+            if (current is GDStringExpression strExpr)
+                return ResolveStringInContext(context, token, strExpr);
+            if (current is GDStringTypeNode stringTypeNode)
+                return ResolveStringTypePath(stringTypeNode);
+            current = current.Parent;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves a string token in context, checking if it's inside a preload/load call.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveStringInContext(GDRefactoringContext context, GDSyntaxToken token, GDNode stringContainer)
+    {
+        var current = stringContainer.Parent;
+        while (current != null)
+        {
+            if (current is GDCallExpression call)
+            {
+                var callerText = call.CallerExpression?.ToString();
+                if (callerText == "preload" || callerText == "load")
+                {
+                    var path = ExtractStringValue(stringContainer);
+                    if (!string.IsNullOrEmpty(path))
+                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ResourcePath, path);
+                }
+                break;
+            }
+            current = current.Parent;
+        }
+        var stringValue = ExtractStringValue(stringContainer);
+        if (!string.IsNullOrEmpty(stringValue) && stringValue.StartsWith("res://"))
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ResourcePath, stringValue);
+
+        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, token.ToString());
+    }
+
+    private GDGoToDefinitionResult ResolveStringTypePath(GDStringTypeNode node)
+    {
+        var path = node.Path?.Sequence;
+        if (!string.IsNullOrEmpty(path))
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ResourcePath, path);
+        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.Unknown, node.ToString());
+    }
+
+    /// <summary>
+    /// Extracts the string value from a string expression or string node.
+    /// </summary>
+    private static string? ExtractStringValue(GDNode node)
+    {
+        if (node is GDStringExpression strExpr)
+        {
+            var text = strExpr.ToString();
+            if (text.Length >= 2 && (text.StartsWith("\"") || text.StartsWith("'")))
+                return text.Substring(1, text.Length - 2);
+            return text;
+        }
+        if (node is GDStringNode strNode)
+            return strNode.Sequence;
+        return null;
     }
 
     /// <summary>
@@ -629,11 +753,19 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             var callerType = semanticModel.GetExpressionType(expr.CallerExpression);
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
             {
-                // Check if the member resolves on a built-in type
                 var symbolInfo = semanticModel.ResolveMember(callerType, memberName);
                 if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
                     && symbolInfo.DeclaringTypeName != "Unknown")
                 {
+                    // Check if the declaring type is a project type (user-defined)
+                    if (context.Project?.GetScriptByTypeName(symbolInfo.DeclaringTypeName) != null)
+                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+
+                    // Also check project enum types (not class_name, but still project-defined)
+                    if (semanticModel.RuntimeProvider is GDCompositeRuntimeProvider composite
+                        && composite.ProjectTypesProvider?.IsKnownType(symbolInfo.DeclaringTypeName) == true)
+                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+
                     return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
                 }
             }

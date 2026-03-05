@@ -8,7 +8,7 @@ namespace GDShrapt.CLI.Core;
 
 /// <summary>
 /// Handler for inlay hint operations.
-/// Provides type hints for variables without explicit type annotations.
+/// Provides type hints for variables, parameters, and signals without explicit type annotations.
 /// All type information is accessed through GDSemanticModel as the single API entry point.
 /// </summary>
 public class GDInlayHintHandler : IGDInlayHintHandler
@@ -35,11 +35,17 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
         var hints = new List<GDInlayHint>();
 
-        // Collect hints for class-level variables
+        // Collect hints for class-level variables and properties
         CollectVariableHints(script, semanticModel, startLine, endLine, hints);
 
         // Collect hints for local variables in methods
         CollectLocalVariableHints(script, semanticModel, startLine, endLine, hints);
+
+        // Collect hints for method parameters without type annotations
+        CollectParameterTypeHints(script, semanticModel, startLine, endLine, hints);
+
+        // Collect hints for signal parameters without type annotations
+        CollectSignalParameterTypeHints(script, semanticModel, startLine, endLine, hints);
 
         // Limit hints count
         if (hints.Count > MaxHintsPerRequest)
@@ -61,8 +67,9 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         int endLine,
         List<GDInlayHint> hints)
     {
-        // Get all class-level variables through SemanticModel.Symbols
-        foreach (var variable in semanticModel.Symbols.Where(s => s.Kind == GDSymbolKind.Variable))
+        // Get all class-level variables and properties through SemanticModel.Symbols
+        foreach (var variable in semanticModel.Symbols.Where(s =>
+            s.Kind == GDSymbolKind.Variable || s.Kind == GDSymbolKind.Property))
         {
             if (hints.Count >= MaxHintsPerRequest)
                 break;
@@ -106,15 +113,17 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             if (position == null)
                 continue;
 
+            var label = $": {typeName}";
             hints.Add(new GDInlayHint
             {
                 Line = position.Value.Line,
                 Column = position.Value.Column,
-                Label = $": {typeName}",
+                Label = label,
                 Kind = GDInlayHintKind.Type,
                 PaddingLeft = false,
                 PaddingRight = true,
-                Tooltip = $"Inferred type: {typeName}"
+                Tooltip = $"Inferred type: {typeName}",
+                TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
             });
         }
     }
@@ -165,15 +174,17 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                 if (position == null)
                     continue;
 
+                var label = $": {typeName}";
                 hints.Add(new GDInlayHint
                 {
                     Line = position.Value.Line,
                     Column = position.Value.Column,
-                    Label = $": {typeName}",
+                    Label = label,
                     Kind = GDInlayHintKind.Type,
                     PaddingLeft = false,
                     PaddingRight = true,
-                    Tooltip = $"Inferred type: {typeName}"
+                    Tooltip = $"Inferred type: {typeName}",
+                    TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
                 });
             }
 
@@ -192,20 +203,284 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     var position = GetHintPositionAfterIdentifier(forStmt.Variable);
                     if (position != null)
                     {
+                        var label = $": {typeName}";
                         hints.Add(new GDInlayHint
                         {
                             Line = position.Value.Line,
                             Column = position.Value.Column,
-                            Label = $": {typeName}",
+                            Label = label,
                             Kind = GDInlayHintKind.Type,
                             PaddingLeft = false,
                             PaddingRight = true,
-                            Tooltip = $"Iterator type: {typeName}"
+                            Tooltip = $"Iterator type: {typeName}",
+                            TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
                         });
                     }
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Collects inlay hints for method parameters without explicit type annotations.
+    /// Uses SemanticModel.InferParameterTypes() to infer types from usage.
+    /// </summary>
+    protected virtual void CollectParameterTypeHints(
+        GDScriptFile script,
+        GDSemanticModel semanticModel,
+        int startLine,
+        int endLine,
+        List<GDInlayHint> hints)
+    {
+        if (script.Class == null)
+            return;
+
+        foreach (var node in script.Class.AllNodes)
+        {
+            if (hints.Count >= MaxHintsPerRequest)
+                break;
+
+            if (node is not GDMethodDeclaration methodDecl)
+                continue;
+
+            var parameters = methodDecl.Parameters;
+            if (parameters == null || !parameters.Any())
+                continue;
+
+            // Check if any parameter in this method is in range and lacks type
+            var hasUntypedInRange = false;
+            foreach (var param in parameters)
+            {
+                if (param.Type != null || param.Identifier == null)
+                    continue;
+                var paramLine1 = param.Identifier.StartLine + 1;
+                if (paramLine1 >= startLine && paramLine1 <= endLine)
+                {
+                    hasUntypedInRange = true;
+                    break;
+                }
+            }
+            if (!hasUntypedInRange)
+                continue;
+
+            var inferredTypes = semanticModel.InferParameterTypes(methodDecl);
+
+            foreach (var param in parameters)
+            {
+                if (hints.Count >= MaxHintsPerRequest)
+                    break;
+
+                if (param.Type != null || param.Identifier == null)
+                    continue;
+
+                var paramLine1 = param.Identifier.StartLine + 1;
+                if (paramLine1 < startLine || paramLine1 > endLine)
+                    continue;
+
+                var paramName = param.Identifier.Sequence;
+                if (string.IsNullOrEmpty(paramName))
+                    continue;
+
+                if (!inferredTypes.TryGetValue(paramName, out var inferred))
+                    continue;
+
+                if (inferred.IsUnknown)
+                    continue;
+
+                var typeName = inferred.TypeName.DisplayName;
+                if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+                    continue;
+
+                var position = GetHintPositionAfterIdentifier(param.Identifier);
+                if (position == null)
+                    continue;
+
+                var label = $": {typeName}";
+                hints.Add(new GDInlayHint
+                {
+                    Line = position.Value.Line,
+                    Column = position.Value.Column,
+                    Label = label,
+                    Kind = GDInlayHintKind.Type,
+                    PaddingLeft = false,
+                    PaddingRight = true,
+                    Tooltip = $"Inferred type: {typeName} ({inferred.Reason ?? "from usage"})",
+                    TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
+                });
+            }
+        }
+    }
+
+    /// <summary>
+    /// Collects inlay hints for signal parameters without explicit type annotations.
+    /// Infers types from emit call arguments.
+    /// </summary>
+    protected virtual void CollectSignalParameterTypeHints(
+        GDScriptFile script,
+        GDSemanticModel semanticModel,
+        int startLine,
+        int endLine,
+        List<GDInlayHint> hints)
+    {
+        if (script.Class == null)
+            return;
+
+        foreach (var node in script.Class.AllNodes)
+        {
+            if (hints.Count >= MaxHintsPerRequest)
+                break;
+
+            if (node is not GDSignalDeclaration signalDecl)
+                continue;
+
+            var parameters = signalDecl.Parameters;
+            if (parameters == null || !parameters.Any())
+                continue;
+
+            // Check if any parameter in range lacks type
+            var hasUntypedInRange = false;
+            foreach (var param in parameters)
+            {
+                if (param.Type != null || param.Identifier == null)
+                    continue;
+                var paramLine1 = param.Identifier.StartLine + 1;
+                if (paramLine1 >= startLine && paramLine1 <= endLine)
+                {
+                    hasUntypedInRange = true;
+                    break;
+                }
+            }
+            if (!hasUntypedInRange)
+                continue;
+
+            // Try to infer signal parameter types from emit usages
+            var signalName = signalDecl.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(signalName))
+                continue;
+
+            var signalSymbol = semanticModel.FindSymbol(signalName);
+            if (signalSymbol == null)
+                continue;
+
+            // Collect argument types from emit references
+            var refs = semanticModel.GetReferencesTo(signalSymbol);
+            var paramTypes = InferSignalParameterTypesFromEmits(refs, parameters, semanticModel);
+
+            var paramIndex = 0;
+            foreach (var param in parameters)
+            {
+                if (hints.Count >= MaxHintsPerRequest)
+                    break;
+
+                if (param.Type != null || param.Identifier == null)
+                {
+                    paramIndex++;
+                    continue;
+                }
+
+                var paramLine1 = param.Identifier.StartLine + 1;
+                if (paramLine1 < startLine || paramLine1 > endLine)
+                {
+                    paramIndex++;
+                    continue;
+                }
+
+                if (paramIndex < paramTypes.Count && paramTypes[paramIndex] != null)
+                {
+                    var typeName = paramTypes[paramIndex];
+                    if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
+                    {
+                        var position = GetHintPositionAfterIdentifier(param.Identifier);
+                        if (position != null)
+                        {
+                            var label = $": {typeName}";
+                            hints.Add(new GDInlayHint
+                            {
+                                Line = position.Value.Line,
+                                Column = position.Value.Column,
+                                Label = label,
+                                Kind = GDInlayHintKind.Type,
+                                PaddingLeft = false,
+                                PaddingRight = true,
+                                Tooltip = $"Inferred from emit usage: {typeName}",
+                                TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
+                            });
+                        }
+                    }
+                }
+
+                paramIndex++;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Infers signal parameter types from emit() call argument types.
+    /// </summary>
+    private static List<string?> InferSignalParameterTypesFromEmits(
+        IReadOnlyList<GDReference> refs,
+        IEnumerable<GDParameterDeclaration> parameters,
+        GDSemanticModel semanticModel)
+    {
+        var paramCount = parameters.Count();
+        var paramTypes = new List<string?>(new string?[paramCount]);
+
+        foreach (var reference in refs)
+        {
+            if (reference.ReferenceNode == null)
+                continue;
+
+            // Find emit() calls: signal.emit(arg1, arg2, ...)
+            var callExpr = reference.ReferenceNode.Parent as GDCallExpression
+                        ?? reference.ReferenceNode.Parent?.Parent as GDCallExpression;
+            if (callExpr == null)
+                continue;
+
+            // Check if this is a .emit() call
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
+            {
+                var memberName = memberOp.Identifier?.Sequence;
+                if (memberName != "emit")
+                    continue;
+            }
+            else
+                continue;
+
+            var args = callExpr.Parameters;
+            if (args == null)
+                continue;
+
+            var argIndex = 0;
+            foreach (var arg in args)
+            {
+                if (argIndex >= paramCount)
+                    break;
+
+                if (paramTypes[argIndex] == null)
+                {
+                    var argType = semanticModel.TypeSystem.GetType(arg);
+                    if (!argType.IsVariant)
+                        paramTypes[argIndex] = argType.DisplayName;
+                }
+                argIndex++;
+            }
+        }
+
+        return paramTypes;
+    }
+
+    /// <summary>
+    /// Creates a single zero-width insert text edit at the given position.
+    /// </summary>
+    protected static GDInlayHintTextEdit[] CreateInsertEdit(int line, int column, string text)
+    {
+        return [new GDInlayHintTextEdit
+        {
+            Line = line,
+            StartColumn = column,
+            EndColumn = column,
+            NewText = text
+        }];
     }
 
     /// <summary>

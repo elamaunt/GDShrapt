@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
@@ -31,6 +32,9 @@ public class GDGoToDefHandler : IGDGoToDefHandler
     /// <inheritdoc />
     public virtual GDDefinitionLocation? FindDefinition(string filePath, int line, int column)
     {
+        if (IsTscnFile(filePath))
+            return FindDefinitionInTscn(filePath, line, column);
+
         var script = _project.GetScript(filePath);
         if (script?.Class == null)
         {
@@ -75,6 +79,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (result.DefinitionType == GDDefinitionType.ExternalType && result.SymbolName != null)
         {
             return ResolveExternalType(result.SymbolName)
+                ?? FindDefinitionByName(result.SymbolName, filePath)
                 ?? GenerateBuiltInTypeDefinition(result.SymbolName);
         }
 
@@ -82,17 +87,28 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return FindDefinitionByName(result.SymbolName, filePath);
 
         if (result.DefinitionType == GDDefinitionType.BuiltInMember && result.TypeName != null && result.SymbolName != null)
+        {
+            var projectLocation = FindMemberInProjectType(result.TypeName, result.SymbolName);
+            if (projectLocation != null)
+                return projectLocation;
+
             return FindDefinitionInBuiltInType(result.TypeName, result.SymbolName);
+        }
 
         if (result.DefinitionType == GDDefinitionType.BuiltInType && result.SymbolName != null)
             return GenerateBuiltInTypeDefinition(result.SymbolName);
+
+        if (result.DefinitionType == GDDefinitionType.BuiltInFunction && result.SymbolName != null)
+            return GenerateBuiltInFunctionDefinition(result.SymbolName);
+
+        if (result.DefinitionType == GDDefinitionType.ResourcePath && result.SymbolName != null)
+            return ResolveResourceFilePath(result.SymbolName, filePath);
 
         if (result.RequiresGodotLookup && result.SymbolName != null)
         {
             var message = result.DefinitionType switch
             {
                 GDDefinitionType.NodePath => $"'{result.SymbolName}' is a node path (requires Godot runtime)",
-                GDDefinitionType.ResourcePath => $"'{result.SymbolName}' is a resource path",
                 _ => $"'{result.SymbolName}' cannot be resolved statically"
             };
             return GDDefinitionLocation.WithInfo(message);
@@ -167,6 +183,66 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         return null;
     }
 
+    private GDDefinitionLocation? FindMemberInProjectType(string typeName, string memberName)
+    {
+        // Try class_name lookup first
+        var script = _project.GetScriptByTypeName(typeName);
+        if (script?.Class != null)
+        {
+            foreach (var member in script.Class.Members.OfType<GDIdentifiableClassMember>())
+            {
+                if (member.Identifier?.Sequence == memberName)
+                {
+                    return new GDDefinitionLocation
+                    {
+                        FilePath = script.Reference.FullPath,
+                        Line = member.Identifier.StartLine + 1,
+                        Column = member.Identifier.StartColumn,
+                        SymbolName = memberName,
+                        Kind = member switch
+                        {
+                            GDEnumDeclaration => GDSymbolKind.Enum,
+                            GDMethodDeclaration => GDSymbolKind.Method,
+                            GDSignalDeclaration => GDSymbolKind.Signal,
+                            GDVariableDeclaration v when v.ConstKeyword != null => GDSymbolKind.Constant,
+                            GDVariableDeclaration => GDSymbolKind.Variable,
+                            _ => null
+                        }
+                    };
+                }
+            }
+        }
+
+        // Fallback: search for enum value in enum declarations across project scripts
+        foreach (var s in _project.ScriptFiles)
+        {
+            if (s?.Class == null) continue;
+            foreach (var enumDecl in s.Class.Members.OfType<GDEnumDeclaration>())
+            {
+                if (enumDecl.Identifier?.Sequence == typeName)
+                {
+                    foreach (var enumValue in enumDecl.Values?.OfType<GDEnumValueDeclaration>()
+                             ?? Enumerable.Empty<GDEnumValueDeclaration>())
+                    {
+                        if (enumValue.Identifier?.Sequence == memberName)
+                        {
+                            return new GDDefinitionLocation
+                            {
+                                FilePath = s.Reference.FullPath,
+                                Line = enumValue.Identifier.StartLine + 1,
+                                Column = enumValue.Identifier.StartColumn,
+                                SymbolName = memberName,
+                                Kind = GDSymbolKind.EnumValue
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     private GDDefinitionLocation? ResolveExternalType(string typeName)
     {
         var typeScript = _project.GetScriptByTypeName(typeName);
@@ -212,7 +288,9 @@ public class GDGoToDefHandler : IGDGoToDefHandler
                 sb.AppendLine();
                 foreach (var m in constants)
                 {
-                    var constValue = m.ConstantValue ?? "0";
+                    var constValue = m.ConstantValue;
+                    if (string.IsNullOrEmpty(constValue) || constValue == m.Name)
+                        constValue = $"{typeInfo.Name}.{m.Name}";
                     var constType = MapCSharpTypeToGDScript(m.Type) ?? "Variant";
                     sb.AppendLine($"const {m.Name}: {constType} = {constValue}");
                 }
@@ -275,7 +353,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         {
             FilePath = filePath,
             Line = classNameLine,
-            Column = 0,
+            Column = "class_name ".Length,
             SymbolName = typeName,
             Kind = GDSymbolKind.Class
         };
@@ -316,7 +394,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         {
             FilePath = filePath,
             Line = 2,
-            Column = 0,
+            Column = "enum ".Length,
             SymbolName = typeName,
             Kind = GDSymbolKind.Enum
         };
@@ -358,14 +436,29 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (m.Parameters != null && m.Parameters.Count > 0)
         {
             parms = string.Join(", ", m.Parameters.Select(p =>
-                p.Type != null ? $"{p.Name}: {NormalizeTypeName(p.Type)}" : p.Name));
+            {
+                if (p.Type == null) return p.Name;
+                var normalized = NormalizeTypeName(p.Type) ?? "Variant";
+                return $"{p.Name}: {normalized}";
+            }));
         }
 
-        var returnType = NormalizeTypeName(m.Type);
+        var returnType = NormalizeReturnTypeName(m.Type);
         if (returnType != null)
             return $"{prefix}func {m.Name}({parms}) -> {returnType}: pass";
 
         return $"{prefix}func {m.Name}({parms}): pass";
+    }
+
+    private static string? NormalizeReturnTypeName(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName) || typeName == "void")
+            return null;
+
+        if (typeName == "Variant")
+            return "Variant";
+
+        return NormalizeTypeName(typeName);
     }
 
     private static string? NormalizeTypeName(string? typeName)
@@ -406,6 +499,83 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         }
 
         return true;
+    }
+
+    private GDDefinitionLocation? GenerateBuiltInFunctionDefinition(string functionName)
+    {
+        if (_runtimeProvider == null)
+            return null;
+
+        var funcInfo = _runtimeProvider.GetGlobalFunction(functionName);
+        if (funcInfo == null)
+            return GDDefinitionLocation.WithInfo($"'{functionName}' is a built-in function (definition not available)");
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("# Built-in GDScript global functions");
+        sb.AppendLine("class_name @GDScript");
+        sb.AppendLine();
+
+        // Build function signature
+        var parms = "";
+        if (funcInfo.Parameters != null && funcInfo.Parameters.Count > 0)
+        {
+            parms = string.Join(", ", funcInfo.Parameters.Select(p =>
+                p.Type != null ? $"{p.Name}: {NormalizeTypeName(p.Type)}" : p.Name));
+        }
+
+        var returnType = NormalizeTypeName(funcInfo.ReturnType);
+        if (returnType != null)
+            sb.AppendLine($"func {funcInfo.Name}({parms}) -> {returnType}: pass");
+        else
+            sb.AppendLine($"func {funcInfo.Name}({parms}): pass");
+
+        var code = sb.ToString();
+
+        var dir = Path.Combine(Path.GetTempPath(), "gdshrapt", "builtin_types");
+        Directory.CreateDirectory(dir);
+        var filePath = Path.Combine(dir, "@GDScript.gd");
+        File.WriteAllText(filePath, code);
+
+        return new GDDefinitionLocation
+        {
+            FilePath = filePath,
+            Line = 4,
+            Column = "func ".Length,
+            SymbolName = functionName,
+            Kind = GDSymbolKind.Method
+        };
+    }
+
+    private GDDefinitionLocation? ResolveResourceFilePath(string path, string currentFilePath)
+    {
+        string resolvedPath;
+        if (path.StartsWith("res://"))
+        {
+            var relativePath = path.Substring("res://".Length);
+            var projectPath = _project.ProjectPath;
+            if (string.IsNullOrEmpty(projectPath))
+                return GDDefinitionLocation.WithInfo($"Cannot resolve '{path}' — project path unknown");
+            resolvedPath = Path.GetFullPath(Path.Combine(projectPath, relativePath));
+        }
+        else
+        {
+            var currentDir = Path.GetDirectoryName(currentFilePath) ?? "";
+            resolvedPath = Path.GetFullPath(Path.Combine(currentDir, path));
+        }
+
+        if (File.Exists(resolvedPath))
+        {
+            return new GDDefinitionLocation
+            {
+                FilePath = resolvedPath,
+                Line = 1,
+                Column = 0,
+                SymbolName = Path.GetFileName(resolvedPath),
+                Kind = null
+            };
+        }
+
+        return GDDefinitionLocation.WithInfo($"File not found: {path}");
     }
 
     private bool IsBuiltInTypeFile(string filePath)
@@ -492,26 +662,45 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (_runtimeProvider == null)
             return null;
 
-        var location = GenerateBuiltInTypeDefinition(typeName);
-        if (location == null || string.IsNullOrEmpty(location.FilePath))
-            return null;
+        // Walk inheritance chain to find the declaring type
+        var currentType = typeName;
+        while (currentType != null)
+        {
+            var location = GenerateBuiltInTypeDefinition(currentType);
+            if (location == null || string.IsNullOrEmpty(location.FilePath))
+                break;
 
+            var memberLocation = FindMemberInGeneratedFile(location.FilePath, memberName);
+            if (memberLocation != null)
+                return memberLocation;
+
+            // Member not found on this type — try parent
+            var typeInfo = _runtimeProvider.GetTypeInfo(currentType);
+            currentType = typeInfo?.BaseType;
+        }
+
+        // Fallback: generate definition for the original type
+        return GenerateBuiltInTypeDefinition(typeName);
+    }
+
+    private static GDDefinitionLocation? FindMemberInGeneratedFile(string filePath, string memberName)
+    {
         string content;
         try
         {
-            content = File.ReadAllText(location.FilePath);
+            content = File.ReadAllText(filePath);
         }
         catch
         {
-            return location;
+            return null;
         }
 
-        var reference = new GDScriptReference(location.FilePath);
+        var reference = new GDScriptReference(filePath);
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(content);
 
         if (scriptFile.Class == null)
-            return location;
+            return null;
 
         foreach (var member in scriptFile.Class.Members.OfType<GDIdentifiableClassMember>())
         {
@@ -519,7 +708,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             {
                 return new GDDefinitionLocation
                 {
-                    FilePath = location.FilePath,
+                    FilePath = filePath,
                     Line = member.Identifier.StartLine + 1,
                     Column = member.Identifier.StartColumn,
                     SymbolName = memberName,
@@ -534,7 +723,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             }
         }
 
-        return location;
+        return null;
     }
 
     private static GDSymbolKind? MapDefinitionTypeToKind(GDDefinitionType type)
@@ -549,5 +738,46 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             GDDefinitionType.ExternalType => GDSymbolKind.Class,
             _ => null
         };
+    }
+
+    private static bool IsTscnFile(string filePath)
+    {
+        return filePath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)
+            || filePath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static readonly Regex TscnResPathRegex = new(@"""(res://[^""]+)""", RegexOptions.Compiled);
+
+    private GDDefinitionLocation? FindDefinitionInTscn(string filePath, int line, int column)
+    {
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(filePath);
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (line < 1 || line > lines.Length)
+            return null;
+
+        var lineText = lines[line - 1];
+        var col0 = column - 1;
+
+        foreach (Match match in TscnResPathRegex.Matches(lineText))
+        {
+            var pathStart = match.Index + 1;
+            var pathEnd = match.Index + match.Length - 1;
+
+            if (col0 >= pathStart && col0 < pathEnd)
+            {
+                var resPath = match.Groups[1].Value;
+                return ResolveResourceFilePath(resPath, filePath);
+            }
+        }
+
+        return null;
     }
 }

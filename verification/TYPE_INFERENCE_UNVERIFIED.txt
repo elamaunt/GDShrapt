@@ -1,3 +1,65 @@
 # TYPE_INFERENCE_UNVERIFIED.txt
 # Copy entries to TYPE_INFERENCE_VERIFIED.txt and add # OK
 
+test_scripts/navigation_test.gd
+6:0 Constant SCENE -> PackedScene
+6:14 GDCallExpression preload() -> PackedScene
+6:14 GDIdentifierExpression preload -> Callable(String) -> Resource
+6:22 GDStringExpression "res://test..." -> String
+7:0 Constant SCENE_RELATIVE -> PackedScene
+7:23 GDCallExpression preload() -> PackedScene
+7:23 GDIdentifierExpression preload -> Callable(String) -> Resource
+7:31 GDStringExpression "../test_sc..." -> String
+8:6 GDStringExpression "res://icon..." -> String
+9:0 Variable scene_path -> String
+9:25 GDStringExpression "res://test..." -> String
+11:0 Variable enemies -> Array[Node2D]
+11:29 GDArrayInitializerExpression [...] -> Array
+13:0 Method _ready -> void
+14:1 Variable clamped -> float
+14:15 GDCallExpression clampf() -> float
+14:15 GDIdentifierExpression clampf -> Callable(float, float, float) -> float
+14:22 GDNumberExpression 1.5 -> float
+14:27 GDNumberExpression 0.0 -> float
+14:32 GDNumberExpression 1.0 -> float
+15:1 Variable instance -> SimpleClass
+15:16 GDCallExpression SCENE.instantiate() -> SimpleClass
+15:16 GDMemberOperatorExpression SCENE.instantiate -> Node
+15:16 GDIdentifierExpression SCENE -> PackedScene
+16:1 GDDualOperatorExpression textureAssignmentnull -> Texture2D
+16:1 GDIdentifierExpression texture -> Texture2D
+16:11 GDIdentifierExpression null -> null
+17:1 GDCallExpression print() -> void
+17:1 GDIdentifierExpression print -> Callable(Array...) -> void
+17:7 GDIdentifierExpression clamped -> float
+18:1 GDCallExpression print() -> void
+18:1 GDIdentifierExpression print -> Callable(Array...) -> void
+18:7 GDIdentifierExpression instance -> SimpleClass
+20:0 Method test_builtin_functions -> void
+21:1 Variable a -> float
+21:9 GDCallExpression clampf() -> float
+21:9 GDIdentifierExpression clampf -> Callable(float, float, float) -> float
+21:16 GDNumberExpression 1.0 -> float
+21:21 GDNumberExpression 0.0 -> float
+21:26 GDNumberExpression 2.0 -> float
+22:1 Variable b -> float
+22:9 GDCallExpression absf() -> float
+22:9 GDIdentifierExpression absf -> Callable(float) -> float
+22:14 GDNumberExpression -5.0 -> float
+23:1 Variable c -> float
+23:9 GDCallExpression lerp() -> float
+23:9 GDIdentifierExpression lerp -> Callable<T: Color | float | int | Vector2 | Vector3 | Vector4>(T, T, float) -> T
+23:14 GDNumberExpression 0.0 -> float
+23:19 GDNumberExpression 1.0 -> float
+23:24 GDNumberExpression 0.5 -> float
+24:1 Variable d -> String
+24:9 GDCallExpression str() -> String
+24:9 GDIdentifierExpression str -> Callable(Array...) -> String
+24:13 GDNumberExpression 42 -> int
+25:1 GDCallExpression print() -> void
+25:1 GDIdentifierExpression print -> Callable(Array...) -> void
+25:7 GDIdentifierExpression a -> float
+25:10 GDIdentifierExpression b -> float
+25:13 GDIdentifierExpression c -> float
+25:16 GDIdentifierExpression d -> String
+

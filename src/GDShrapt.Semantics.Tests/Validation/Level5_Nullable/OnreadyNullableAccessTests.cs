@@ -1341,6 +1341,106 @@ var text: String:
 
     #endregion
 
+    #region is_inside_tree() + await ready Guard - Should NOT Report
+
+    [TestMethod]
+    public void OnreadyInSetter_WithIsInsideTreeAwaitReady_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _icon = $Icon
+
+var action:
+    set(value):
+        action = value
+        if not is_inside_tree():
+            await ready
+        _icon.texture = null
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"'if not is_inside_tree(): await ready' guard should make @onready access safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInMethod_WithIsInsideTreeAwaitReady_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+func setup():
+    if not is_inside_tree():
+        await ready
+    _label.text = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"'if not is_inside_tree(): await ready' in method should make @onready access safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInMethod_IsInsideTreeDirectGuard_NoWarning()
+    {
+        var code = @"
+extends Node
+@onready var _label = $Label
+
+func test():
+    if is_inside_tree():
+        _label.text = ""hello""
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"'if is_inside_tree():' direct guard should make @onready access safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void OnreadyInSetter_IsInsideTreeNoAwait_StillWarning()
+    {
+        var code = @"
+extends Node
+@onready var _icon = $Icon
+
+var action:
+    set(value):
+        if is_inside_tree():
+            pass
+        _icon.texture = null
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.IsTrue(nullDiagnostics.Count > 0,
+            "is_inside_tree() without await ready and access outside guard body should still warn");
+    }
+
+    [TestMethod]
+    public void OnreadyAfterAwaitReadyInSetter_MultipleAccess_AllSafe()
+    {
+        var code = @"
+extends Node
+@onready var _a = $A
+@onready var _b = $B
+
+var x:
+    set(value):
+        x = value
+        if not is_inside_tree():
+            await ready
+        _a.visible = true
+        _b.visible = false
+";
+        var diagnostics = ValidateCode(code);
+        var nullDiagnostics = FilterNullableDiagnostics(diagnostics);
+        Assert.AreEqual(0, nullDiagnostics.Count,
+            $"Multiple @onready accesses after 'if not is_inside_tree(): await ready' should all be safe. Found: {FormatDiagnostics(nullDiagnostics)}");
+    }
+
+    #endregion
+
     #region Caller Chain Proof Tests
 
     [TestMethod]

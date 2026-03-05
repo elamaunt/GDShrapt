@@ -365,7 +365,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                     return scopeSymbol;
 
                 // Fallback: check if this is a type name (Godot built-in or user class_name)
-                return TryResolveTypeName(name);
+                var typeSymbol = TryResolveTypeName(name);
+                if (typeSymbol != null)
+                    return typeSymbol;
+
+                // Fallback: check if this is a global function (clampf, print, lerp, etc.)
+                return TryResolveGlobalFunction(name);
             }
         }
 
@@ -413,6 +418,36 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
 
         return null;
+    }
+
+    private GDSymbolInfo? TryResolveGlobalFunction(string name)
+    {
+        if (_runtimeProvider == null)
+            return null;
+
+        var funcInfo = _runtimeProvider.GetGlobalFunction(name);
+        if (funcInfo == null)
+            return null;
+
+        IReadOnlyList<GDParameterSymbolInfo>? parameters = null;
+        if (funcInfo.Parameters != null && funcInfo.Parameters.Count > 0)
+        {
+            parameters = funcInfo.Parameters
+                .Select((p, i) => new GDParameterSymbolInfo(
+                    p.Name,
+                    p.Type,
+                    p.HasDefault,
+                    i))
+                .ToList();
+        }
+
+        return new GDSymbolInfo(
+            name,
+            GDSymbolKind.Method,
+            funcInfo.ReturnType,
+            "@GDScript",
+            parameters: parameters,
+            returnTypeName: funcInfo.ReturnType);
     }
 
     private GDSymbolInfo BuildLambdaSymbolInfo(GDMethodExpression lambdaExpr)

@@ -78,6 +78,11 @@ public class GDCompletionRequest
     /// For member access, the inferred type of the expression.
     /// </summary>
     public string? MemberAccessType { get; init; }
+
+    /// <summary>
+    /// For node path completion, the partial path already typed (e.g., "Player/" for $Player/).
+    /// </summary>
+    public string? NodePathPrefix { get; init; }
 }
 
 /// <summary>
@@ -98,7 +103,12 @@ public enum GDCompletionType
     /// <summary>
     /// Type annotation completion (after colon).
     /// </summary>
-    TypeAnnotation
+    TypeAnnotation,
+
+    /// <summary>
+    /// Node path completion (after $ or in get_node()).
+    /// </summary>
+    NodePath
 }
 
 /// <summary>
@@ -135,6 +145,16 @@ public class GDCompletionItem
     /// Sort priority (lower = higher priority).
     /// </summary>
     public int SortPriority { get; init; }
+
+    /// <summary>
+    /// Whether this item uses snippet syntax (tab stops).
+    /// </summary>
+    public bool IsSnippet { get; init; }
+
+    /// <summary>
+    /// Whether this item should be preselected.
+    /// </summary>
+    public bool Preselect { get; init; }
 
     /// <summary>
     /// Source of the completion item.

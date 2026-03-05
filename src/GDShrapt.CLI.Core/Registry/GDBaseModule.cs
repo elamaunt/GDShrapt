@@ -20,7 +20,7 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<GDProjectSemanticModel>(projectModel);
 
         // Code intelligence (registered first — used by other handlers)
-        registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project));
+        registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project, projectModel.RuntimeProvider, projectModel, project.SceneTypesProvider));
         var goToDefHandler = new GDGoToDefHandler(project, projectModel.RuntimeProvider);
         registry.Register<IGDGoToDefHandler>(goToDefHandler);
         registry.Register<IGDSymbolsHandler>(new GDSymbolsHandler(project));
@@ -28,6 +28,9 @@ public sealed class GDBaseModule : IGDModule
         // Rename and refactoring
         registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel, goToDefHandler));
         registry.Register<IGDFindRefsHandler>(new GDFindRefsHandler(project, projectModel));
+        registry.Register<IGDCallHierarchyHandler>(new GDCallHierarchyHandler(project, projectModel));
+        registry.Register<IGDTypeDefinitionHandler>(new GDTypeDefinitionHandler(project, projectModel, goToDefHandler));
+        registry.Register<IGDImplementationHandler>(new GDImplementationHandler(project, projectModel));
 
         // Project-wide index queries
         registry.Register<IGDListHandler>(new GDListHandler(project, projectModel));
@@ -41,6 +44,9 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDCodeActionHandler>(new GDCodeActionHandler(project));
         registry.Register<IGDSignatureHelpHandler>(new GDSignatureHelpHandler(project));
         registry.Register<IGDInlayHintHandler>(new GDInlayHintHandler(project));
+
+        // CodeLens (reference counts)
+        registry.Register<IGDCodeLensHandler>(new GDCodeLensHandler(project, projectModel));
 
         // TypeFlow visualization
         registry.Register<IGDTypeFlowHandler>(new GDTypeFlowHandler(project));

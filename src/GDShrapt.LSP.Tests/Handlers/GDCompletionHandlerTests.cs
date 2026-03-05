@@ -190,4 +190,74 @@ public class GDCompletionHandlerTests
         // Assert - should return list with at least keywords even for invalid file
         result.Should().NotBeNull();
     }
+
+    [TestMethod]
+    public void GetOverrideMethodCompletions_Node2DScript_ReturnsVirtualMethods()
+    {
+        // Arrange
+        var context = new GDDefaultProjectContext(TestProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions());
+        project.LoadScripts();
+        project.AnalyzeAll();
+
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+
+        var handler = registry.GetService<IGDCompletionHandler>()!;
+
+        // base_entity.gd extends Node2D — should suggest _ready, _process, etc.
+        var request = new GDCompletionRequest
+        {
+            FilePath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd"),
+            Line = 1,
+            Column = 1,
+            CompletionType = GDCompletionType.Symbol
+        };
+
+        // Act
+        var items = handler.GetCompletions(request);
+
+        // Assert — should include virtual method overrides from Node2D
+        var overrides = items.Where(i => i.Detail != null && i.Detail.Contains("override")).ToList();
+        overrides.Should().NotBeEmpty("Node2D has virtual methods like _ready, _process");
+
+        // _ready is already declared in base_entity.gd, so check _process instead
+        var processItem = overrides.FirstOrDefault(i => i.Label == "_process");
+        processItem.Should().NotBeNull("_process is a Node virtual method not declared in base_entity.gd");
+        processItem!.IsSnippet.Should().BeTrue();
+        processItem.InsertText.Should().Contain("func _process");
+        processItem.InsertText.Should().Contain("${0:pass}");
+    }
+
+    [TestMethod]
+    public void GetOverrideMethodCompletions_ExcludesAlreadyDeclaredMethods()
+    {
+        // Arrange
+        var context = new GDDefaultProjectContext(TestProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions());
+        project.LoadScripts();
+        project.AnalyzeAll();
+
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+
+        var handler = registry.GetService<IGDCompletionHandler>()!;
+
+        // scene_references.gd declares _ready — it should NOT appear in overrides
+        var request = new GDCompletionRequest
+        {
+            FilePath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "scene_references.gd"),
+            Line = 1,
+            Column = 1,
+            CompletionType = GDCompletionType.Symbol
+        };
+
+        // Act
+        var items = handler.GetCompletions(request);
+
+        // Assert — _ready should NOT be in override suggestions since it's already declared
+        var overrideReady = items.FirstOrDefault(i =>
+            i.Label == "_ready" && i.Detail != null && i.Detail.Contains("override"));
+        overrideReady.Should().BeNull("_ready is already declared in scene_references.gd");
+    }
 }
