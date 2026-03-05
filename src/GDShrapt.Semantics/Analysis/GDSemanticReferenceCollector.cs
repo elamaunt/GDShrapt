@@ -220,7 +220,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
     private void DeclareClassMember(GDSymbol symbol, GDValidationContext context, string declaringTypeName)
     {
         context.Declare(symbol);
-        _model!.RegisterSymbol(GDSymbolInfo.ClassMember(symbol, declaringTypeName, _scriptFile));
+        var symbolInfo = GDSymbolInfo.ClassMember(symbol, declaringTypeName, _scriptFile);
+        symbolInfo.Documentation = GDDocCommentExtractor.Extract(symbol.Declaration);
+        _model!.RegisterSymbol(symbolInfo);
     }
 
     private void RegisterClassVariable(GDVariableDeclaration varDecl, GDValidationContext context, string declaringTypeName)

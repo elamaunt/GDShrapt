@@ -39,12 +39,22 @@ public class GDHoverHandler : IGDHoverHandler
             return null;
 
         var content = BuildHoverContent(symbol, semanticModel, node);
-        var docComment = ExtractDocComment(symbol.DeclarationNode);
 
-        if (!string.IsNullOrEmpty(docComment))
+        // Use pre-cached documentation (built-in docs or cross-file ## comments)
+        var documentation = symbol.Documentation;
+
+        // Fallback: extract from AST for same-file symbols not yet cached
+        if (string.IsNullOrEmpty(documentation))
+            documentation = ExtractDocComment(symbol.DeclarationNode);
+
+        if (!string.IsNullOrEmpty(documentation))
         {
+            // Convert BBCode to Markdown for built-in types (no DeclarationNode = built-in)
+            if (symbol.DeclarationNode == null)
+                documentation = GDBBCodeToMarkdownConverter.Convert(documentation);
+
             content += "\n\n---\n\n";
-            content += docComment;
+            content += documentation;
         }
 
         // Use identifier token for hover range (just the name, not the entire declaration)
@@ -56,7 +66,7 @@ public class GDHoverHandler : IGDHoverHandler
             Kind = symbol.Kind,
             SymbolName = symbol.Name,
             TypeName = symbol.TypeName ?? symbol.TypeNode?.ToString(),
-            Documentation = docComment,
+            Documentation = documentation,
             StartLine = posToken != null ? posToken.StartLine + 1 : null,
             StartColumn = posToken?.StartColumn,
             EndLine = posToken != null ? posToken.StartLine + 1 : null,

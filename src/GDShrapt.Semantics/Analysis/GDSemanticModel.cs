@@ -407,14 +407,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (typeInfo != null)
         {
             var baseType = _runtimeProvider.GetBaseType(name);
-            return new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+            var symbolInfo = new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+            symbolInfo.Documentation = typeInfo.BriefDescription ?? typeInfo.Description;
+            return symbolInfo;
         }
 
         var globalClass = _runtimeProvider.GetGlobalClass(name);
         if (globalClass != null)
         {
             var baseType = _runtimeProvider.GetBaseType(name);
-            return new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+            var symbolInfo = new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+            symbolInfo.Documentation = globalClass.BriefDescription ?? globalClass.Description;
+            return symbolInfo;
         }
 
         return null;
@@ -441,13 +445,15 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 .ToList();
         }
 
-        return new GDSymbolInfo(
+        var symbolInfo = new GDSymbolInfo(
             name,
             GDSymbolKind.Method,
             funcInfo.ReturnType,
             "@GDScript",
             parameters: parameters,
             returnTypeName: funcInfo.ReturnType);
+        symbolInfo.Documentation = funcInfo.Description;
+        return symbolInfo;
     }
 
     private GDSymbolInfo BuildLambdaSymbolInfo(GDMethodExpression lambdaExpr)

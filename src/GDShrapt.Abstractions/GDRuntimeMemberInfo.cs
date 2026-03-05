@@ -70,6 +70,13 @@ public class GDRuntimeMemberInfo
     public string? ConstantValue { get; set; }
 
     /// <summary>
+    /// Documentation text for this member.
+    /// For built-in Godot types, populated from extension_api.json.
+    /// For user-defined symbols, populated from ## doc comments.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
     /// Creates a new member info.
     /// </summary>
     public GDRuntimeMemberInfo(string name, GDRuntimeMemberKind kind, string? type = null)

@@ -150,6 +150,13 @@ public class GDSymbolInfo
     public bool IsPublic => !Name.StartsWith("_");
 
     /// <summary>
+    /// Documentation text for this symbol.
+    /// For built-in types: from extension_api.json (BBCode).
+    /// For user-defined symbols: from ## doc comments.
+    /// </summary>
+    public string? Documentation { get; set; }
+
+    /// <summary>
     /// Creates a symbol info from a GDSymbol with additional semantic context.
     /// </summary>
     public GDSymbolInfo(
@@ -301,7 +308,7 @@ public class GDSymbolInfo
 
         string? returnTypeName = kind == GDSymbolKind.Method ? memberInfo.Type : null;
 
-        return new GDSymbolInfo(
+        var symbol = new GDSymbolInfo(
             memberInfo.Name,
             kind,
             memberInfo.Type,
@@ -311,6 +318,8 @@ public class GDSymbolInfo
             isStatic: memberInfo.IsStatic,
             parameters: parameters,
             returnTypeName: returnTypeName);
+        symbol.Documentation = memberInfo.Description;
+        return symbol;
     }
 
     public override string ToString()

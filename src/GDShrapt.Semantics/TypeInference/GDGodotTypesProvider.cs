@@ -115,7 +115,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         var info = new GDRuntimeTypeInfo(typeData.GDScriptName, typeData.GDScriptBaseTypeName, true)
         {
             Members = members,
-            IsEnum = typeData.IsEnum
+            IsEnum = typeData.IsEnum,
+            BriefDescription = typeData.BriefDescription,
+            Description = typeData.Description
         };
 
         if (typeData.IsEnum)
@@ -177,6 +179,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                         maxArgs,
                         isVarArgs);
                     memberInfo.Parameters = CreateParameterList(method.Parameters);
+                    memberInfo.Description = method.Description;
                     members.Add(memberInfo);
                 }
             }
@@ -186,10 +189,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             foreach (var propKvp in typeData.PropertyDatas)
             {
-                members.Add(GDRuntimeMemberInfo.Property(
+                var propInfo = GDRuntimeMemberInfo.Property(
                     propKvp.Value.GDScriptName,
                     NormalizeCSharpTypeName(propKvp.Value.GDScriptTypeName ?? GDWellKnownTypes.Variant),
-                    propKvp.Value.IsStatic));
+                    propKvp.Value.IsStatic);
+                propInfo.Description = propKvp.Value.Description;
+                members.Add(propInfo);
             }
         }
 
@@ -197,7 +202,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             foreach (var signalKvp in typeData.SignalDatas)
             {
-                members.Add(GDRuntimeMemberInfo.Signal(signalKvp.Value.GDScriptName));
+                var signalInfo = GDRuntimeMemberInfo.Signal(signalKvp.Value.GDScriptName);
+                signalInfo.Description = signalKvp.Value.Description;
+                members.Add(signalInfo);
             }
         }
 
@@ -205,10 +212,12 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             foreach (var constKvp in typeData.Constants)
             {
-                members.Add(GDRuntimeMemberInfo.Constant(
+                var constInfo = GDRuntimeMemberInfo.Constant(
                     constKvp.Value.GDScriptName ?? constKvp.Key,
                     constKvp.Value.CSharpValueTypeName ?? GDWellKnownTypes.Variant,
-                    constKvp.Value.IntValue?.ToString() ?? constKvp.Value.Value));
+                    constKvp.Value.IntValue?.ToString() ?? constKvp.Value.Value);
+                constInfo.Description = constKvp.Value.Description;
+                members.Add(constInfo);
             }
         }
 
@@ -262,16 +271,19 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // Assign type inference metadata
             memberInfo.ReturnTypeRole = method.ReturnTypeRole;
             memberInfo.MergeTypeStrategy = method.MergeTypeStrategy;
+            memberInfo.Description = method.Description;
             return memberInfo;
         }
 
         // Check properties
         if (typeData.PropertyDatas?.TryGetValue(memberName, out var property) == true)
         {
-            return GDRuntimeMemberInfo.Property(
+            var propInfo = GDRuntimeMemberInfo.Property(
                 property.GDScriptName,
                 NormalizeCSharpTypeName(property.GDScriptTypeName ?? GDWellKnownTypes.Variant),
                 property.IsStatic);
+            propInfo.Description = property.Description;
+            return propInfo;
         }
 
         // Check signals
@@ -279,19 +291,24 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             var memberInfo = GDRuntimeMemberInfo.Signal(signal.GDScriptName);
             memberInfo.Parameters = CreateParameterList(signal.Parameters);
+            memberInfo.Description = signal.Description;
             return memberInfo;
         }
 
         // Check constants
         if (typeData.Constants?.TryGetValue(memberName, out var constant) == true)
         {
-            return GDRuntimeMemberInfo.Constant(constant.GDScriptName ?? memberName, constant.CSharpValueTypeName ?? GDWellKnownTypes.Variant);
+            var constInfo = GDRuntimeMemberInfo.Constant(constant.GDScriptName ?? memberName, constant.CSharpValueTypeName ?? GDWellKnownTypes.Variant);
+            constInfo.Description = constant.Description;
+            return constInfo;
         }
 
         // Check enums
         if (typeData.Enums?.TryGetValue(memberName, out var enumInfo) == true)
         {
-            return new GDRuntimeMemberInfo(enumInfo.CSharpEnumName ?? memberName, GDRuntimeMemberKind.Enum, memberName);
+            var enumMember = new GDRuntimeMemberInfo(enumInfo.CSharpEnumName ?? memberName, GDRuntimeMemberKind.Enum, memberName);
+            enumMember.Description = enumInfo.Description;
+            return enumMember;
         }
 
         // Try base type
@@ -356,24 +373,29 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             // Assign type inference metadata
             memberInfo.ReturnTypeRole = method.ReturnTypeRole;
             memberInfo.MergeTypeStrategy = method.MergeTypeStrategy;
+            memberInfo.Description = method.Description;
             return memberInfo;
         }
 
         // Check properties
         if (typeData.PropertyDatas?.TryGetValue(memberName, out var property) == true)
         {
-            return GDRuntimeMemberInfo.Property(
+            var propInfo = GDRuntimeMemberInfo.Property(
                 property.GDScriptName,
                 NormalizeCSharpTypeName(property.GDScriptTypeName ?? GDWellKnownTypes.Variant),
                 property.IsStatic);
+            propInfo.Description = property.Description;
+            return propInfo;
         }
 
         // Check constants
         if (typeData.Constants?.TryGetValue(memberName, out var constant) == true)
         {
-            return GDRuntimeMemberInfo.Constant(
+            var constInfo = GDRuntimeMemberInfo.Constant(
                 constant.GDScriptName ?? memberName,
                 constant.CSharpValueTypeName ?? GDWellKnownTypes.Variant);
+            constInfo.Description = constant.Description;
+            return constInfo;
         }
 
         return null;
@@ -539,8 +561,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 funcInfo = GDRuntimeFunctionInfo.Range(name, minArgs, maxArgs, returnType, method.ReturnTypeRole);
             }
 
-            // Assign parameters
+            // Assign parameters and documentation
             funcInfo.Parameters = parameters;
+            funcInfo.Description = method.Description;
 
             // Fill Overloads when multiple overloads exist
             if (methods.Count > 1)

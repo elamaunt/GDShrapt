@@ -43,6 +43,20 @@ public class GDRuntimeTypeInfo
     public IReadOnlyList<GDRuntimeMemberInfo>? Members { get; set; }
 
     // ========================================
+    // Documentation
+    // ========================================
+
+    /// <summary>
+    /// Brief one-line description of this type from Godot documentation.
+    /// </summary>
+    public string? BriefDescription { get; set; }
+
+    /// <summary>
+    /// Full description of this type from Godot documentation.
+    /// </summary>
+    public string? Description { get; set; }
+
+    // ========================================
     // Type Traits
     // ========================================
 

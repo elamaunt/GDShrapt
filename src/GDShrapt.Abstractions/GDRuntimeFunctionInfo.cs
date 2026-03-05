@@ -53,6 +53,11 @@ public class GDRuntimeFunctionInfo
     public IReadOnlyList<GDRuntimeFunctionOverload>? Overloads { get; set; }
 
     /// <summary>
+    /// Documentation text for this function from Godot documentation.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
     /// Creates a new function info.
     /// </summary>
     public GDRuntimeFunctionInfo(string name, string? returnType = null)
