@@ -2412,6 +2412,19 @@ test_scripts/method_chains.gd
       signals: (none)
 
 
+test_scripts/neutral_ui_caller.gd
+  16:19 Parameter panel in update_single
+    inferred-type: UIPanelA | UIPanelB
+    confidence: Medium
+    reason: union from type checks
+    duck-typed: yes
+    union: yes
+    duck-constraints:
+      methods: refresh_ui(-1)
+      properties: refresh_ui
+      signals: (none)
+
+
 test_scripts/player_entity.gd
   30:17 Parameter amount in take_damage
     inferred-type: int
@@ -4252,4 +4265,4 @@ test_scripts/validation_edge_cases.gd
     confidence: Unknown
 
 
-# Summary: 706 parameters in 42 files (248 duck-typed)
+# Summary: 707 parameters in 43 files (249 duck-typed)

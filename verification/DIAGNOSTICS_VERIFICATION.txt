@@ -1,48 +1,14 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-05 12:23:32
+Generated: 2026-03-07 01:26:22
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           882
-Verified (OK):   880
-Unverified:      2
+Total:           886
+Verified (OK):   886
+Unverified:      0
 False Positives: 0
 Skipped:         0
-Orphaned Markers:5
-
-================================================================================
-UNVERIFIED DIAGNOSTICS
-================================================================================
-
---- test_scripts/navigation_test.gd (2 diagnostics) ---
-  9:16 [GD7022] Type annotation 'String' is redundant (obvious from literal)
-    Add: # 9:16-GD7022-OK
-  20:0 [GDL513] Expected 2 empty line(s) before function, found 1
-    Add: # 20:0-GDL513-OK
-
-================================================================================
-ORPHANED MARKERS (MARKERS WITHOUT DIAGNOSTICS)
-================================================================================
-
-These markers exist in GDScript files but no corresponding diagnostic was produced.
-This may indicate:
-  - A bug was fixed and the diagnostic is no longer emitted
-  - Code was changed and the marker is outdated
-  - The marker coordinates are incorrect
-
---- ai_controller.gd (3 orphaned) ---
-  # 71:15-GD3010-OK <- No diagnostic at this location
-    Action: Remove marker or investigate why diagnostic disappeared
-  # 110:15-GD3010-OK <- No diagnostic at this location
-    Action: Remove marker or investigate why diagnostic disappeared
-  # 112:15-GD3010-OK <- No diagnostic at this location
-    Action: Remove marker or investigate why diagnostic disappeared
-
---- scope_errors.gd (2 orphaned) ---
-  # 120:12-GD3009-OK <- No diagnostic at this location
-    Action: Remove marker or investigate why diagnostic disappeared
-  # 127:12-GD3009-OK <- No diagnostic at this location
-    Action: Remove marker or investigate why diagnostic disappeared
+Orphaned Markers:0
 

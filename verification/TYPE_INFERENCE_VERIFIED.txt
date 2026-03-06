@@ -17769,3 +17769,103 @@ test_scripts/reflection_test.gd
 37:6 GDDualOperatorExpression "st"Addition"art" -> String # OK
 37:6 GDStringExpression "st" -> String # OK
 37:13 GDStringExpression "art" -> String # OK
+
+test_scripts/navigation_test.gd
+6:0 Constant SCENE -> PackedScene # OK
+6:14 GDCallExpression preload() -> PackedScene # OK
+6:14 GDIdentifierExpression preload -> Callable(String) -> Resource # OK
+6:22 GDStringExpression "res://test..." -> String # OK
+7:0 Constant SCENE_RELATIVE -> PackedScene # OK
+7:23 GDCallExpression preload() -> PackedScene # OK
+7:23 GDIdentifierExpression preload -> Callable(String) -> Resource # OK
+7:31 GDStringExpression "../test_sc..." -> String # OK
+8:6 GDStringExpression "res://icon..." -> String # OK
+9:0 Variable scene_path -> String # OK
+9:25 GDStringExpression "res://test..." -> String # OK
+11:0 Variable enemies -> Array[Node2D] # OK
+11:29 GDArrayInitializerExpression [...] -> Array # OK
+13:0 Method _ready -> void # OK
+14:1 Variable clamped -> float # OK
+14:15 GDCallExpression clampf() -> float # OK
+14:15 GDIdentifierExpression clampf -> Callable(float, float, float) -> float # OK
+14:22 GDNumberExpression 1.5 -> float # OK
+14:27 GDNumberExpression 0.0 -> float # OK
+14:32 GDNumberExpression 1.0 -> float # OK
+15:1 Variable instance -> SimpleClass # OK
+15:16 GDCallExpression SCENE.instantiate() -> SimpleClass # OK
+15:16 GDMemberOperatorExpression SCENE.instantiate -> Node # OK
+15:16 GDIdentifierExpression SCENE -> PackedScene # OK
+16:1 GDDualOperatorExpression textureAssignmentnull -> Texture2D # OK
+16:1 GDIdentifierExpression texture -> Texture2D # OK
+16:11 GDIdentifierExpression null -> null # OK
+17:1 GDCallExpression print() -> void # OK
+17:1 GDIdentifierExpression print -> Callable(Array...) -> void # OK
+17:7 GDIdentifierExpression clamped -> float # OK
+18:1 GDCallExpression print() -> void # OK
+18:1 GDIdentifierExpression print -> Callable(Array...) -> void # OK
+18:7 GDIdentifierExpression instance -> SimpleClass # OK
+20:0 Method test_builtin_functions -> void # OK
+21:1 Variable a -> float # OK
+21:9 GDCallExpression clampf() -> float # OK
+21:9 GDIdentifierExpression clampf -> Callable(float, float, float) -> float # OK
+21:16 GDNumberExpression 1.0 -> float # OK
+21:21 GDNumberExpression 0.0 -> float # OK
+21:26 GDNumberExpression 2.0 -> float # OK
+22:1 Variable b -> float # OK
+22:9 GDCallExpression absf() -> float # OK
+22:9 GDIdentifierExpression absf -> Callable(float) -> float # OK
+22:14 GDNumberExpression -5.0 -> float # OK
+23:1 Variable c -> float # OK
+23:9 GDCallExpression lerp() -> float # OK
+23:9 GDIdentifierExpression lerp -> Callable<T: Color | float | int | Vector2 | Vector3 | Vector4>(T, T, float) -> T # OK
+23:14 GDNumberExpression 0.0 -> float # OK
+23:19 GDNumberExpression 1.0 -> float # OK
+23:24 GDNumberExpression 0.5 -> float # OK
+24:1 Variable d -> String # OK
+24:9 GDCallExpression str() -> String # OK
+24:9 GDIdentifierExpression str -> Callable(Array...) -> String # OK
+24:13 GDNumberExpression 42 -> int # OK
+25:1 GDCallExpression print() -> void # OK
+25:1 GDIdentifierExpression print -> Callable(Array...) -> void # OK
+25:7 GDIdentifierExpression a -> float # OK
+25:10 GDIdentifierExpression b -> float # OK
+25:13 GDIdentifierExpression c -> float # OK
+25:16 GDIdentifierExpression d -> String # OK
+
+test_scripts/neutral_ui_caller.gd
+8:0 Variable panels -> Array # OK
+8:13 GDArrayInitializerExpression [...] -> Array # OK
+11:0 Method update_all_panels -> void # OK
+12:1 Iterator panel -> Variant # OK
+12:14 GDIdentifierExpression panels -> Array # OK
+13:2 GDCallExpression panel.refresh_ui() -> void # OK
+13:2 GDMemberOperatorExpression panel.refresh_ui -> Variant # OK
+13:2 GDIdentifierExpression panel -> Variant # OK
+16:0 Method update_single -> void # OK
+16:19 Parameter panel -> UIPanelA | UIPanelB # OK
+17:1 GDCallExpression panel.refresh_ui() -> void # OK
+17:1 GDMemberOperatorExpression panel.refresh_ui -> Variant # OK
+17:1 GDIdentifierExpression panel -> Variant # OK
+
+test_scripts/ui_panel_a.gd
+4:0 Variable _data -> int # OK
+4:17 GDNumberExpression 0 -> int # OK
+7:0 Method refresh_ui -> void # OK
+8:1 GDDualOperatorExpression _dataAddAndAssign1 -> int # OK
+8:1 GDIdentifierExpression _data -> int # OK
+8:10 GDNumberExpression 1 -> int # OK
+11:0 Method do_work -> void # OK
+12:1 GDCallExpression refresh_ui() -> void # OK
+12:1 GDIdentifierExpression refresh_ui -> Callable # OK
+
+test_scripts/ui_panel_b.gd
+4:0 Variable _counter -> int # OK
+4:20 GDNumberExpression 0 -> int # OK
+7:0 Method refresh_ui -> void # OK
+8:1 GDDualOperatorExpression _counterAddAndAssign1 -> int # OK
+8:1 GDIdentifierExpression _counter -> int # OK
+8:13 GDNumberExpression 1 -> int # OK
+11:0 Method update_display -> void # OK
+12:1 GDCallExpression refresh_ui() -> void # OK
+12:1 GDIdentifierExpression refresh_ui -> Callable # OK
+

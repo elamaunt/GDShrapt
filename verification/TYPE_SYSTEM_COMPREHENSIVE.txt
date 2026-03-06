@@ -6771,8 +6771,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 114:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     TestEnum
+    effective:    TestEnum
     confidence:   High
     nullable:     no
 
@@ -6787,8 +6787,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 120:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     TestEnum
+    effective:    TestEnum
     confidence:   High
     nullable:     no
 
@@ -6803,8 +6803,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 127:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     TestEnum
+    effective:    TestEnum
     confidence:   High
     nullable:     no
 
@@ -17248,6 +17248,58 @@ test_scripts/navigation_test.gd
     effective:    String
     confidence:   High
     nullable:     no
+
+
+test_scripts/neutral_ui_caller.gd
+================================================================================
+
+--- 8:0 Variable panels ---
+  Type Info:
+    declared:     (none)
+    inferred:     Array
+    effective:    Array
+    confidence:   High
+    nullable:     no
+
+--- 11:0 Method update_all_panels ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 12:1 Iterator panel ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Certain
+    nullable:     no
+
+--- 16:0 Method update_single ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 16:19 Parameter panel ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     UIPanelA | UIPanelB
+    confidence:   Medium
+    reason:       union from type checks
+    duck-typed:   yes
+  Duck Constraints:
+    methods:      refresh_ui(-1)
+    properties:   refresh_ui
 
 
 test_scripts/path_extends_test.gd
@@ -27907,6 +27959,62 @@ test_scripts/type_inference.gd
     nullable:     no
 
 
+test_scripts/ui_panel_a.gd
+================================================================================
+
+--- 4:0 Variable _data ---
+  Type Info:
+    declared:     (none)
+    inferred:     int
+    effective:    int
+    confidence:   Certain
+    nullable:     no
+
+--- 7:0 Method refresh_ui ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 11:0 Method do_work ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+
+test_scripts/ui_panel_b.gd
+================================================================================
+
+--- 4:0 Variable _counter ---
+  Type Info:
+    declared:     (none)
+    inferred:     int
+    effective:    int
+    confidence:   Certain
+    nullable:     no
+
+--- 7:0 Method refresh_ui ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 11:0 Method update_display ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+
 test_scripts/union_returns.gd
 ================================================================================
 
@@ -30041,4 +30149,4 @@ test_scripts/validation_edge_cases.gd
     nullable:     no
 
 
-# Summary: 55 files analyzed
+# Summary: 58 files analyzed

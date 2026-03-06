@@ -68,7 +68,7 @@ func _process_patrol(delta: float) -> void:
 func _process_chase(delta: float) -> void:
 	# BUG: Chase behavior causes jittering at close range
 	if not is_instance_valid(target_entity):
-		change_state(AIState.IDLE)  # 71:15-GD3010-OK
+		change_state(AIState.IDLE)
 		return
 
 	position = position.move_toward(target_entity.position, move_speed * delta)
@@ -107,9 +107,9 @@ func set_target(entity: Node2D) -> void:
 	# FIXME: Doesn't validate if entity is a valid target
 	target_entity = entity
 	if entity != null:
-		change_state(AIState.CHASE)  # 110:15-GD3010-OK
+		change_state(AIState.CHASE)
 	else:
-		change_state(AIState.IDLE)  # 112:15-GD3010-OK
+		change_state(AIState.IDLE)
 
 
 func is_target_in_range(range_distance: float) -> bool:

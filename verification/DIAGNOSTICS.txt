@@ -1,27 +1,27 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-05 12:22:29
+Generated: 2026-03-07 01:24:43
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 726
-Scripts analyzed:  55
+Total diagnostics: 728
+Scripts analyzed:  58
 
 By Severity:
   Error     :    30
   Hint      :    94
   Info      :    36
-  Warning   :   566
+  Warning   :   568
 
 By Source:
   Linter              :   301
-  SemanticValidator   :   391
+  SemanticValidator   :   393
   Validator           :    34
 
 By Code (Top 30):
-  GD7007    :  185  (Variable 'timer_node' is @onready - _ready() may not have...)
+  GD7007    :  187  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  155  (Local variable 'unused_var' is declared but never used)
   GD7006    :   39  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
@@ -595,6 +595,11 @@ DIAGNOSTICS BY FILE
 --- test_scripts/navigation_test.gd (1 diagnostics) ---
 
     20:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+
+--- test_scripts/neutral_ui_caller.gd (2 diagnostics) ---
+
+    13:2   [GD7007] Warning - Variable 'panel' may be null when accessing 'refresh_ui'
+    17:1   [GD7007] Warning - Variable 'panel' may be null when accessing 'refresh_ui'
 
 --- test_scripts/polymorphic_interfaces.gd (36 diagnostics) ---
 

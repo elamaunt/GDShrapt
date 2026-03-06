@@ -23664,3 +23664,173 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
+
+test_scripts/navigation_test.gd
+  6:0 Constant SCENE # OK
+    declared: (none) # OK
+    inferred: PackedScene # OK
+    effective: PackedScene # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  7:0 Constant SCENE_RELATIVE # OK
+    declared: (none) # OK
+    inferred: PackedScene # OK
+    effective: PackedScene # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  9:0 Variable scene_path # OK
+    declared: (none) # OK
+    inferred: String # OK
+    effective: String # OK
+    confidence: Certain # OK
+    nullable: no # OK
+
+  11:0 Variable enemies # OK
+    declared: (none) # OK
+    inferred: Array[Node2D] # OK
+    effective: Array[Node2D] # OK
+    confidence: Certain # OK
+    nullable: no # OK
+
+  13:0 Method _ready # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+  14:1 Variable clamped # OK
+    declared: (none) # OK
+    inferred: float # OK
+    effective: float # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  15:1 Variable instance # OK
+    declared: (none) # OK
+    inferred: SimpleClass # OK
+    effective: SimpleClass # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  20:0 Method test_builtin_functions # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+  21:1 Variable a # OK
+    declared: (none) # OK
+    inferred: float # OK
+    effective: float # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  22:1 Variable b # OK
+    declared: (none) # OK
+    inferred: float # OK
+    effective: float # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  23:1 Variable c # OK
+    declared: (none) # OK
+    inferred: float # OK
+    effective: float # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  24:1 Variable d # OK
+    declared: (none) # OK
+    inferred: String # OK
+    effective: String # OK
+    confidence: High # OK
+    nullable: no # OK
+
+
+test_scripts/neutral_ui_caller.gd
+  8:0 Variable panels # OK
+    declared: (none) # OK
+    inferred: Array # OK
+    effective: Array # OK
+    confidence: High # OK
+    nullable: no # OK
+
+  11:0 Method update_all_panels # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+  12:1 Iterator panel # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Certain # OK
+    nullable: no # OK
+
+  16:0 Method update_single # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+  16:19 Parameter panel # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Certain # OK
+    nullable: no # OK
+
+
+test_scripts/ui_panel_a.gd
+  4:0 Variable _data # OK
+    declared: (none) # OK
+    inferred: int # OK
+    effective: int # OK
+    confidence: Certain # OK
+    nullable: no # OK
+
+  7:0 Method refresh_ui # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+  11:0 Method do_work # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+
+test_scripts/ui_panel_b.gd
+  4:0 Variable _counter # OK
+    declared: (none) # OK
+    inferred: int # OK
+    effective: int # OK
+    confidence: Certain # OK
+    nullable: no # OK
+
+  7:0 Method refresh_ui # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+  11:0 Method update_display # OK
+    declared: (none) # OK
+    inferred: Variant # OK
+    effective: Variant # OK
+    confidence: Unknown # OK
+    nullable: no # OK
+
+

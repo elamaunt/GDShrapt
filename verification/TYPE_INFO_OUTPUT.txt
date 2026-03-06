@@ -5323,8 +5323,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   114:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -5337,8 +5337,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   120:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -5351,8 +5351,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   127:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -13214,6 +13214,43 @@ test_scripts/navigation_test.gd
     inferred: String
     effective: String
     confidence: High
+    nullable: no
+
+
+test_scripts/neutral_ui_caller.gd
+  8:0 Variable panels
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: High
+    nullable: no
+
+  11:0 Method update_all_panels
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  12:1 Iterator panel
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  16:0 Method update_single
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  16:19 Parameter panel
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
     nullable: no
 
 
@@ -21512,6 +21549,52 @@ test_scripts/type_inference.gd
     nullable: no
 
 
+test_scripts/ui_panel_a.gd
+  4:0 Variable _data
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  7:0 Method refresh_ui
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  11:0 Method do_work
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/ui_panel_b.gd
+  4:0 Variable _counter
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  7:0 Method refresh_ui
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  11:0 Method update_display
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
 test_scripts/union_returns.gd
   8:0 Method get_or_error
     declared: (none)
@@ -22946,4 +23029,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 3255 entries in 55 files
+# Summary: 3266 entries in 58 files

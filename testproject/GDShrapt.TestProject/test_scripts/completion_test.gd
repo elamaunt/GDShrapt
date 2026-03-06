@@ -104,9 +104,9 @@ func test_timer_completion() -> void:
 
 func test_enum_completion() -> void:
 	# After typing 'TestEnum.' - should show enum values
-	my_enum = TestEnum.VALUE_ONE
-	my_enum = TestEnum.VALUE_TWO
-	my_enum = TestEnum.VALUE_THREE
+	my_enum = TestEnum.VALUE_ONE  # 107:1-GD7019-SKIP
+	my_enum = TestEnum.VALUE_TWO  # 108:1-GD7019-SKIP
+	my_enum = TestEnum.VALUE_THREE  # 109:1-GD7019-SKIP
 
 	# After typing 'Key.' - should show global Key enum
 	var space_key: Key = KEY_SPACE

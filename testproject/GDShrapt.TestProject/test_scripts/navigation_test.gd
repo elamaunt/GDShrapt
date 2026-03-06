@@ -6,7 +6,7 @@ class_name NavigationTest
 const SCENE = preload("res://test_scenes/player.tscn")
 const SCENE_RELATIVE = preload("../test_scenes/main.tscn")
 @icon("res://icon.png")
-var scene_path: String = "res://test_scenes/main.tscn"
+var scene_path: String = "res://test_scenes/main.tscn"  # 9:16-GD7022-OK
 
 var enemies: Array[Node2D] = []
 
@@ -17,7 +17,7 @@ func _ready() -> void:
 	print(clamped)
 	print(instance)
 
-func test_builtin_functions() -> void:
+func test_builtin_functions() -> void:  # 20:0-GDL513-OK
 	var a = clampf(1.0, 0.0, 2.0)
 	var b = absf(-5.0)
 	var c = lerp(0.0, 1.0, 0.5)

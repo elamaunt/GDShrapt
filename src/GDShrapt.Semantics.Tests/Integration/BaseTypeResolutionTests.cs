@@ -110,8 +110,8 @@ public class BaseTypeResolutionTests
         // Assert
         Assert.IsNotNull(member,
             "Node2D should have position property");
-        // Godot API uses PascalCase for property names
-        Assert.AreEqual("Position", member.Name);
+        // GDScript uses snake_case for property names
+        Assert.AreEqual("position", member.Name);
     }
 
     [TestMethod]

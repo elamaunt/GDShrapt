@@ -4245,3 +4245,14 @@ test_scripts/validation_edge_cases.gd
 
 
 # Summary: 697 parameters in 40 files (248 duck-typed)
+
+test_scripts/neutral_ui_caller.gd
+  16:19 Parameter panel in update_single # OK
+    inferred-type: UIPanelA | UIPanelB # OK
+    confidence: Medium # OK
+    reason: union from type checks # OK
+    duck-typed: yes # OK
+    methods: refresh_ui(-1) # OK
+    properties: refresh_ui # OK
+
+

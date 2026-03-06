@@ -117,12 +117,12 @@ func test_gd2006_valid() -> void:
 
 ## INVALID - SHOULD trigger GD2006 (reported as GD3009)
 func test_gd2006_invalid() -> void:
-	var val := TestEnum.NONEXISTENT_VALUE  # 120:12-GD3009-OK
+	var val := TestEnum.NONEXISTENT_VALUE
 	print(val)
 
 
 ## SUPPRESSED - GD2006 suppressed with gd:ignore
 func test_gd2006_suppressed() -> void:
 	# gd:ignore = GD2006
-	var val := TestEnum.ANOTHER_FAKE_VALUE  # 127:12-GD3009-OK (Note: Reported as GD3009)
+	var val := TestEnum.ANOTHER_FAKE_VALUE
 	print(val)
