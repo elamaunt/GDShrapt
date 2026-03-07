@@ -67,7 +67,7 @@ internal class GDReturnInfo
         IsImplicit = false;
         ExpressionText = returnExpr.Expression?.ToString();
 
-        var token = returnExpr.AllTokens.FirstOrDefault();
+        var token = returnExpr.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }
@@ -137,8 +137,8 @@ internal class GDReturnTypeCollector
         {
             _scopeStack = new GDScopeStack();
             _scopeStack.Push(GDScopeType.Global);
-            _scopeStack.Push(GDScopeType.Class, classDecl as GDNode);
-            _scopeStack.Push(GDScopeType.Method, method);
+            _scopeStack.Push(GDScopeType.Class, (classDecl as GDNode).ToHandle());
+            _scopeStack.Push(GDScopeType.Method, method.ToHandle());
 
             // Add parameters to scope
             if (method.Parameters != null)
@@ -148,7 +148,7 @@ internal class GDReturnTypeCollector
                     if (param.Identifier != null)
                     {
                         var typeName = param.Type?.BuildName() ?? "Variant";
-                        var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param, typeName: typeName);
+                        var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param.ToHandle(), typeName: typeName);
                         _scopeStack.TryDeclare(symbol);
                     }
                 }
@@ -253,7 +253,7 @@ internal class GDReturnTypeCollector
 
         typeName ??= "Variant";
 
-        var symbol = GDSymbol.Variable(varName, varDecl, typeName: typeName);
+        var symbol = GDSymbol.Variable(varName, varDecl.ToHandle(), typeName: typeName);
         _scopeStack.TryDeclare(symbol);
     }
 
@@ -380,7 +380,7 @@ internal class GDReturnTypeCollector
 
     private int GetMethodEndLine()
     {
-        var lastToken = _method.AllTokens.LastOrDefault();
+        var lastToken = _method.LastLeafToken;
         return lastToken?.EndLine ?? 0;
     }
 

@@ -239,7 +239,7 @@ internal class GDCallableFlowCollector : GDVisitor
             }
         }
 
-        var firstToken = callExpr.AllTokens.FirstOrDefault();
+        var firstToken = callExpr.FirstLeafToken;
         var line = firstToken?.StartLine ?? 0;
         var column = firstToken?.StartColumn ?? 0;
 

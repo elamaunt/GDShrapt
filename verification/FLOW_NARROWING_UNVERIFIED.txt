@@ -1,3 +1,139 @@
 # FLOW_NARROWING_UNVERIFIED.txt
 # Copy entries to FLOW_NARROWING_VERIFIED.txt and add # OK
 
+test_scripts/cyclic_inference.gd
+  _advance_generator()
+    231:4 current -> int (base: int)
+    232:9 current -> int (base: int)
+    233:4 current -> float (base: float)
+    234:9 current -> float (base: float)
+    235:4 current -> String (base: String)
+    236:9 current -> String (base: String)
+
+  parse_expr()
+    261:5 op -> String (base: String)
+
+  parse_term()
+    288:5 op -> String (base: String)
+
+  parse_factor()
+    304:4 token -> String (base: String)
+
+test_scripts/game_patterns.gd
+  _check_choice_condition()
+    145:4 condition -> null (base: null)
+    148:4 condition -> String (base: String)
+    149:30 condition -> String (base: String)
+    150:4 condition -> Callable (base: Callable)
+    152:4 condition -> Dictionary (base: Dictionary)
+
+  can_use_ability()
+    302:5 condition -> Callable (base: Callable)
+    303:10 condition -> Callable (base: Callable)
+
+  use_ability()
+    328:4 effect_func -> Callable (base: Callable)
+    329:11 effect_func -> Callable (base: Callable)
+    330:6 effect_func -> Dictionary (base: Dictionary)
+    331:34 effect_func -> Dictionary (base: Dictionary)
+
+  _apply_effect_template()
+    354:6 dmg -> int (base: int)
+    355:30 dmg -> int (base: int)
+    356:8 dmg -> Dictionary (base: Dictionary)
+    357:15 dmg -> Dictionary (base: Dictionary)
+    358:18 dmg -> Dictionary (base: Dictionary)
+
+  craft()
+    482:4 result -> Callable (base: Callable)
+    483:2 result -> Callable (base: Callable)
+    483:11 result -> Callable (base: Callable)
+    484:6 result -> Dictionary (base: Dictionary)
+    485:2 result -> Dictionary (base: Dictionary)
+    485:11 result -> Dictionary (base: Dictionary)
+
+test_scripts/getters_setters.gd
+  test_property_chain()
+    154:4 node -> Node2D (base: Node2D)
+    156:12 node -> Node2D (base: Node2D)
+    157:13 node -> Node2D (base: Node2D)
+
+test_scripts/local_variables.gd
+  variable_with_default()
+    131:4 local -> null (base: null)
+    132:2 local -> null (base: null)
+
+  type_narrowing_local()
+    154:4 result -> Dictionary (base: Dictionary)
+    156:13 result -> Dictionary (base: Dictionary)
+    159:4 result -> Array (base: Array)
+    161:13 result -> Array (base: Array)
+
+test_scripts/method_chains.gd
+  optional_chain_pattern()
+    51:4 level1 -> null (base: null)
+    55:4 level2 -> null (base: null)
+
+  node_chain()
+    92:4 parent -> null (base: null)
+    96:4 grandparent -> null (base: null)
+    99:4 grandparent -> Node2D (base: Node2D)
+    100:9 grandparent -> Node2D (base: Node2D)
+
+test_scripts/scene_nodes.gd
+  _ready()
+    47:4 sprite_node -> Sprite2D (base: Sprite2D)
+    48:2 sprite_node -> Sprite2D (base: Sprite2D)
+
+  get_parent_of_type()
+    111:5 current -> Control (base: Control)
+    112:10 current -> Control (base: Control)
+
+  access_sibling()
+    185:4 parent -> null (base: null)
+
+test_scripts/semantic_validation_demo.gd
+  member_access_validation_demo()
+    209:4 value -> Node2D (base: Node2D)
+    210:11 value -> Node2D (base: Node2D)
+
+test_scripts/todo_examples.gd
+  validate_data()
+    63:5 item -> null (base: null)
+
+test_scripts/type_guards.gd
+  nested_type_guards()
+    36:6 type_val -> String (base: String)
+    38:11 type_val -> String (base: String)
+
+  multiple_guards_same_var()
+    199:6 name -> String (base: String)
+    200:24 name -> String (base: String)
+    201:8 name -> int (base: int)
+    202:31 name -> int (base: int)
+
+test_scripts/union_returns.gd
+  load_resource()
+    67:4 resource -> null (base: null)
+
+  callback_return()
+    134:4 result -> null (base: null)
+
+test_scripts/union_types_complex.gd
+  safe_get_nested()
+    190:5 current -> null (base: null)
+    192:5 current -> Dictionary (base: Dictionary)
+    193:3 current -> Dictionary (base: Dictionary)
+    193:13 current -> Dictionary (base: Dictionary)
+
+  map_with_fallback()
+    245:5 transformed -> null (base: null)
+
+  type_flow_test_method()
+    379:4 local -> null (base: null)
+    383:4 local -> Dictionary (base: Dictionary)
+    385:14 local -> Dictionary (base: Dictionary)
+    387:13 local -> Dictionary (base: Dictionary)
+    389:14 local -> Dictionary (base: Dictionary)
+    403:4 local -> String (base: String)
+

@@ -15,15 +15,18 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
     private readonly GDFlowAnalysisRegistry _flowRegistry;
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly Func<GDNode, GDFlowAnalyzer?> _getOrCreateAnalyzer;
+    private readonly Func<GDNodeHandle, GDNode?>? _resolveNode;
 
     public GDDataFlowQueryService(
         GDFlowAnalysisRegistry flowRegistry,
         IGDRuntimeProvider? runtimeProvider,
-        Func<GDNode, GDFlowAnalyzer?> getOrCreateAnalyzer)
+        Func<GDNode, GDFlowAnalyzer?> getOrCreateAnalyzer,
+        Func<GDNodeHandle, GDNode?>? resolveNode = null)
     {
         _flowRegistry = flowRegistry ?? throw new ArgumentNullException(nameof(flowRegistry));
         _runtimeProvider = runtimeProvider;
         _getOrCreateAnalyzer = getOrCreateAnalyzer ?? throw new ArgumentNullException(nameof(getOrCreateAnalyzer));
+        _resolveNode = resolveNode;
     }
 
     public GDDataFlowInfo? GetDataFlowAt(GDSymbolInfo symbol, int line, int column)
@@ -119,6 +122,17 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
     // Internal helpers
     // ========================================
 
+    private GDNode? ResolveDeclarationNode(GDSymbolInfo? symbol)
+    {
+        if (symbol == null)
+            return null;
+
+        if (symbol.Symbol != null && _resolveNode != null)
+            return _resolveNode(symbol.Symbol.DeclarationNode);
+
+        return symbol.DeclarationNode;
+    }
+
     private GDFlowVariableType? FindFlowVariableType(GDSymbolInfo symbol, int line, int column)
     {
         if (symbol.Kind != GDSymbolKind.Variable
@@ -129,7 +143,8 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
             return null;
         }
 
-        var scopeNode = symbol.DeclaringScopeNode ?? symbol.DeclarationNode?.GetContainingMethodScope();
+        var resolvedDeclNode = ResolveDeclarationNode(symbol);
+        var scopeNode = symbol.DeclaringScopeNode ?? resolvedDeclNode?.GetContainingMethodScope();
         if (scopeNode == null)
             return null;
 
@@ -154,7 +169,7 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
             return null;
         }
 
-        var declarationNode = symbol.DeclarationNode;
+        var declarationNode = ResolveDeclarationNode(symbol);
         if (declarationNode == null)
             return null;
 
@@ -302,7 +317,7 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
 
         foreach (var node in scope.AllNodes)
         {
-            var firstToken = node.AllTokens.FirstOrDefault();
+            var firstToken = node.FirstLeafToken;
             if (firstToken == null)
                 continue;
 

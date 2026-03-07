@@ -91,11 +91,9 @@ internal class GDDuckTypeResolver
     /// <summary>
     /// Checks if a type supports a specific operator with given operand types.
     /// </summary>
-    private bool TypeSupportsOperator(string typeName, GDDualOperatorType op, IReadOnlyList<GDSemanticType> operandTypes)
+    private bool TypeSupportsOperator(string typeName, string operatorName, IReadOnlyList<GDSemanticType> operandTypes)
     {
-        // Convert operator to string name for runtime provider
-        var operatorName = ConvertOperatorToString(op);
-        if (operatorName == null)
+        if (string.IsNullOrEmpty(operatorName))
             return true; // Unknown operator, assume compatible
 
         // Get types that support this operator from runtime provider

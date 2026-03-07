@@ -593,15 +593,15 @@ public class GDRenameService
                         {
                             var gdRef = new GDReference
                             {
-                                ReferenceNode = refNode,
-                                IdentifierToken = identToken,
+                                ReferenceNode = refNode.ToHandle(),
+                                IdentifierToken = identToken.ToHandle(),
                                 Confidence = sref.Confidence,
                                 ConfidenceReason = sref.ConfidenceReason,
                                 CallerTypeName = sref.CallerTypeName
                             };
                             provenance = BuildDuckTypeProvenance(file, gdRef, oldName,
                                 declaringTypeName ?? "", typesWithMethod);
-                            provenanceVarName = ExtractVariableName(gdRef);
+                            provenanceVarName = ExtractVariableName(gdRef, GetSemanticModelForFile(file));
                         }
                     }
 
@@ -633,15 +633,15 @@ public class GDRenameService
                 {
                     var gdRef = new GDReference
                     {
-                        ReferenceNode = sref.Node,
-                        IdentifierToken = identToken,
+                        ReferenceNode = sref.Node.ToHandle(),
+                        IdentifierToken = identToken.ToHandle(),
                         Confidence = sref.Confidence,
                         ConfidenceReason = sref.ConfidenceReason,
                         CallerTypeName = sref.CallerTypeName
                     };
                     editProvenance = BuildDuckTypeProvenance(
                         sref.Script, gdRef, oldName, declaringTypeName ?? "", typesWithMethod);
-                    editProvenanceVar = ExtractVariableName(gdRef);
+                    editProvenanceVar = ExtractVariableName(gdRef, GetSemanticModelForFile(sref.Script));
                 }
 
                 targetEdits.Add(new GDTextEdit(
@@ -819,8 +819,8 @@ public class GDRenameService
         {
             GDSymbolKind.Method => true,
             GDSymbolKind.Signal => true,
-            GDSymbolKind.Variable when symbol.DeclarationNode is GDVariableDeclaration => true,
-            GDSymbolKind.Constant when symbol.DeclarationNode is GDVariableDeclaration => true,
+            GDSymbolKind.Variable when symbol.DeclaringTypeName != null => true,
+            GDSymbolKind.Constant when symbol.DeclaringTypeName != null => true,
             GDSymbolKind.Enum => true,
             GDSymbolKind.EnumValue => true,
             GDSymbolKind.Class => true,
@@ -907,15 +907,17 @@ public class GDRenameService
         var refs = semanticModel.GetReferencesTo(symbol);
         foreach (var reference in refs)
         {
-            if (reference.ReferenceNode == null)
+            if (reference.ReferenceNode.IsEmpty)
                 continue;
 
-            // Skip if it's the declaration (already added)
-            if (reference.ReferenceNode == symbol.DeclarationNode)
+            // Skip if it's the declaration (already added) - compare by position
+            if (symbol.DeclarationNode != null
+                && reference.ReferenceNode.StartLine == symbol.DeclarationNode.StartLine
+                && reference.ReferenceNode.StartColumn == symbol.DeclarationNode.StartColumn)
                 continue;
 
             var identToken = reference.IdentifierToken;
-            if (identToken == null)
+            if (identToken.IsEmpty)
                 continue;
 
             edits.Add(new GDTextEdit(filePath,
@@ -991,7 +993,7 @@ public class GDRenameService
                     reference.ConfidenceReason)
                 {
                     DetailedProvenance = provenance,
-                    ProvenanceVariableName = ExtractVariableName(reference),
+                    ProvenanceVariableName = ExtractVariableName(reference, GetSemanticModelForFile(file)),
                     IsContractString = isContractString
                 });
             }
@@ -1227,6 +1229,18 @@ public class GDRenameService
     }
 
 
+    private GDSemanticModel? GetSemanticModelForFile(GDScriptFile file)
+    {
+        return _projectModel?.GetSemanticModel(file) ?? file.SemanticModel;
+    }
+
+    private static GDNode? ResolveHandle(GDNodeHandle handle, GDSemanticModel? semanticModel)
+    {
+        if (handle.IsEmpty || semanticModel == null)
+            return null;
+        return semanticModel.GetNodeAtPosition(handle.StartLine, handle.StartColumn);
+    }
+
     private IReadOnlyList<GDTypeProvenanceEntry>? BuildDuckTypeProvenance(
         GDScriptFile file,
         GDReference reference,
@@ -1235,10 +1249,12 @@ public class GDRenameService
         IReadOnlyList<string>? typesWithMethod)
     {
         var result = new List<GDTypeProvenanceEntry>();
+        var semanticModel = GetSemanticModelForFile(file);
 
         // Step 1: Extract variable name and find enclosing method
-        var varName = ExtractVariableName(reference);
-        var method = FindEnclosingMethod(reference.ReferenceNode);
+        var varName = ExtractVariableName(reference, semanticModel);
+        var refNode = ResolveHandle(reference.ReferenceNode, semanticModel);
+        GDMethodDeclaration? method = FindEnclosingMethod(refNode);
 
         if (varName == null || method == null)
             return null;
@@ -1349,21 +1365,16 @@ public class GDRenameService
             // Not a parameter — check flow-sensitive type (local variable or class member)
             try
             {
-                var model = _projectModel?.GetSemanticModel(file) ?? file.SemanticModel;
-                if (model != null)
+                if (semanticModel != null && refNode != null)
                 {
-                    var flowType = model.GetFlowVariableType(varName, reference.ReferenceNode);
-                    if (flowType?.DeclaredType != null)
+                    var flowType = semanticModel.GetFlowVariableType(varName, refNode);
+                    if (flowType != null)
                     {
-                        var typeName = flowType.DeclaredType.DisplayName;
-                        if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
-                            result.Add(new GDTypeProvenanceEntry(typeName, "type annotation"));
-                    }
-                    else if (flowType?.CurrentType != null)
-                    {
-                        var effectiveType = flowType.CurrentType.EffectiveType?.DisplayName;
-                        if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant")
-                            result.Add(new GDTypeProvenanceEntry(effectiveType, "flow-inferred type"));
+                        var flowTypeName = flowType.EffectiveType?.DisplayName;
+                        if (!string.IsNullOrEmpty(flowTypeName) && flowTypeName != "Variant")
+                        {
+                            result.Add(new GDTypeProvenanceEntry(flowTypeName, $"flow type of '{varName}'"));
+                        }
                     }
                 }
 
@@ -1374,11 +1385,9 @@ public class GDRenameService
                     var containerProfile = _projectModel.GetMergedContainerProfile(enclosingTypeName, varName);
                     string? containerVarName = varName;
 
-                    // If not found, check if varName is a for-loop iteration variable
-                    // and trace back to the source container
                     if (containerProfile == null)
                     {
-                        var forStmt = FindEnclosingForStatement(reference.ReferenceNode, varName);
+                        var forStmt = FindEnclosingForStatement(refNode, varName);
                         if (forStmt?.Collection is GDIdentifierExpression collectionIdent)
                         {
                             containerVarName = collectionIdent.Identifier?.Sequence;
@@ -1419,25 +1428,43 @@ public class GDRenameService
         return result.Count > 0 ? result : null;
     }
 
-    private static string? ExtractVariableName(GDReference reference)
+    private static string? ExtractVariableName(GDReference reference, GDSemanticModel? semanticModel = null)
     {
-        // Handle has_method string literal: obj.has_method("take_damage") → "obj"
-        if (reference.ReferenceNode is GDStringNode or GDStringExpression)
+        // Try to resolve the handle and walk the AST
+        if (semanticModel != null && !reference.ReferenceNode.IsEmpty)
         {
-            var parent = reference.ReferenceNode.Parent;
-            while (parent != null && parent is not GDCallExpression)
-                parent = parent.Parent;
-            if (parent is GDCallExpression call
-                && call.CallerExpression is GDMemberOperatorExpression hasMethodMemberOp)
+            var node = semanticModel.GetNodeAtPosition(
+                reference.ReferenceNode.StartLine, reference.ReferenceNode.StartColumn);
+
+            if (node != null)
             {
-                var callerExpr = hasMethodMemberOp.CallerExpression;
-                while (callerExpr is GDMemberOperatorExpression nested)
-                    callerExpr = nested.CallerExpression;
-                return (callerExpr as GDIdentifierExpression)?.Identifier?.Sequence;
+                // Walk up to find member access: varName.method() -> varName
+                if (node is GDMemberOperatorExpression memberOp)
+                {
+                    if (memberOp.CallerExpression is GDIdentifierExpression callerIdExpr)
+                        return callerIdExpr.Identifier?.Sequence;
+                }
+                else if (node is GDIdentifierExpression idExpr)
+                {
+                    // Check if parent is member access
+                    if (idExpr.Parent is GDMemberOperatorExpression parentMemberOp &&
+                        parentMemberOp.CallerExpression == idExpr)
+                        return idExpr.Identifier?.Sequence;
+                    return idExpr.Identifier?.Sequence;
+                }
+                else if (node is GDCallExpression callExpr)
+                {
+                    // has_method("name") pattern: the caller is the variable
+                    if (callExpr.CallerExpression is GDMemberOperatorExpression callerMemberOp &&
+                        callerMemberOp.CallerExpression is GDIdentifierExpression callerIdent)
+                        return callerIdent.Identifier?.Sequence;
+                    if (callExpr.CallerExpression is GDIdentifierExpression callerId)
+                        return callerId.Identifier?.Sequence;
+                }
             }
         }
 
-        // Extract from ConfidenceReason: "Duck-typed access on 'varName'"
+        // Fallback: extract from ConfidenceReason: "Duck-typed access on 'varName'"
         var reason = reference.ConfidenceReason;
         if (reason != null)
         {
@@ -1448,15 +1475,6 @@ public class GDRenameService
                 if (endIdx > startIdx)
                     return reason.Substring(startIdx + 1, endIdx - startIdx - 1);
             }
-        }
-
-        // Fallback: walk the AST from ReferenceNode to find the caller identifier
-        if (reference.ReferenceNode is GDMemberOperatorExpression memberOp)
-        {
-            var caller = memberOp.CallerExpression;
-            while (caller is GDMemberOperatorExpression nested)
-                caller = nested.CallerExpression;
-            return (caller as GDIdentifierExpression)?.Identifier?.Sequence;
         }
 
         return null;
@@ -1493,11 +1511,13 @@ public class GDRenameService
         if (_projectModel == null)
             return;
 
+        var semanticModel = GetSemanticModelForFile(file);
+
         // Use container profile's ValueUsages to find append sites,
         // then trace each appended value back to its source
         foreach (var usage in containerProfile.ValueUsages)
         {
-            if (usage.Node == null)
+            if (usage.Node.IsEmpty)
                 continue;
 
             // Only handle append-like operations
@@ -1510,10 +1530,23 @@ public class GDRenameService
             if (usage.InferredType != null && !usage.InferredType.IsVariant)
                 continue;
 
-            // Find the call expression and extract the appended argument
-            var callNode = usage.Node is GDCallExpression callExpr
-                ? callExpr
-                : FindParentOfType<GDCallExpression>(usage.Node);
+            // Resolve the handle to find the call expression
+            var usageNode = ResolveHandle(usage.Node, semanticModel);
+            GDCallExpression? callNode = usageNode as GDCallExpression;
+            if (callNode == null)
+            {
+                // Walk up to find enclosing call expression
+                var current = usageNode;
+                while (current != null)
+                {
+                    if (current is GDCallExpression ce)
+                    {
+                        callNode = ce;
+                        break;
+                    }
+                    current = current.Parent;
+                }
+            }
             if (callNode == null)
                 continue;
 
@@ -1529,8 +1562,7 @@ public class GDRenameService
             if (string.IsNullOrEmpty(appendedVarName))
                 continue;
 
-            // Find the enclosing method of the append call
-            var method = FindEnclosingMethod(usage.Node);
+            GDMethodDeclaration? method = FindEnclosingMethod(usageNode);
             if (method == null)
                 continue;
 
@@ -1560,7 +1592,7 @@ public class GDRenameService
                         var paramType = signalParams[paramIdx];
                         if (!string.IsNullOrEmpty(paramType) && paramType != "Variant")
                         {
-                            var usageLine = (usage.Node.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                            var usageLine = usage.Node.StartLine + 1;
                             var appendCallSite = new GDCallSiteProvenanceEntry(
                                 file.FullPath ?? "", usageLine,
                                 $"{containerVarName}.append({appendedVarName}) " +

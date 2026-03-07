@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -13,17 +11,17 @@ public sealed class GDResolvedValue
     public object Value { get; }
 
     /// <summary>
-    /// AST node where the value physically resides (for edits/renames).
-    /// Null if value is computed (concatenation, arithmetic).
+    /// Handle to the AST node where the value physically resides (for edits/renames).
+    /// Empty if value is computed (concatenation, arithmetic).
     /// </summary>
-    public GDExpression? SourceNode { get; }
+    public GDNodeHandle SourceNode { get; }
 
     /// <summary>
     /// Confidence of this resolution.
     /// </summary>
     public GDReferenceConfidence Confidence { get; }
 
-    public GDResolvedValue(object value, GDExpression? sourceNode,
+    public GDResolvedValue(object value, GDNodeHandle sourceNode = default,
         GDReferenceConfidence confidence = GDReferenceConfidence.Strict)
     {
         Value = value;

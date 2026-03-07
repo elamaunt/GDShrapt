@@ -63,7 +63,7 @@ public class GDTypeUsage
         Node = node;
         Kind = kind;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }
@@ -87,6 +87,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private readonly GDMemberResolver _memberResolver;
     private readonly GDContainerTypeService _containerTypeService;
     private readonly GDUnionTypeService _unionTypeService;
+    private GDPositionFinder? _positionFinder;
+    private GDPositionFinder? PositionFinder => _positionFinder ??=
+        _scriptFile.Class != null ? new GDPositionFinder(_scriptFile.Class) : null;
     private readonly GDDuckTypeService _duckTypeService;
     private readonly GDExpressionTypeService _expressionTypeService;
     private readonly GDConfidenceService _confidenceService;
@@ -169,7 +172,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Provides rich data flow information: per-type origins, values, object state, escape points, conflicts.
     /// </summary>
     public IGDDataFlowQuery DataFlow => _dataFlowQuery ??= new GDDataFlowQueryService(
-        _flowRegistry, _runtimeProvider, GetOrCreateFlowAnalyzer);
+        _flowRegistry, _runtimeProvider, GetOrCreateFlowAnalyzer, ResolveNode);
 
     /// <summary>
     /// Creates a semantic model for a script file.
@@ -282,10 +285,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     public GDSymbolInfo? GetSymbolAtPosition(int line, int column)
     {
-        if (_scriptFile.Class == null)
+        var finder = PositionFinder;
+        if (finder == null)
             return null;
 
-        var finder = new GDPositionFinder(_scriptFile.Class);
         var identifier = finder.FindIdentifierAtPosition(line, column);
 
         if (identifier == null)
@@ -314,11 +317,22 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <returns>The parent node of the token at the position, or null.</returns>
     public GDNode? GetNodeAtPosition(int line, int column)
     {
-        if (_scriptFile.Class == null)
+        var finder = PositionFinder;
+        if (finder == null)
             return null;
 
-        var finder = new GDPositionFinder(_scriptFile.Class);
         return finder.FindNodeAtPosition(line, column);
+    }
+
+    /// <summary>
+    /// Resolves a GDNodeHandle back to the original GDNode via position lookup.
+    /// </summary>
+    internal GDNode? ResolveNode(GDNodeHandle handle)
+    {
+        if (handle.IsEmpty)
+            return null;
+
+        return GetNodeAtPosition(handle.StartLine, handle.StartColumn);
     }
 
     /// <summary>
@@ -329,10 +343,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <returns>The identifier at the position, or null if the token is not an identifier.</returns>
     public GDIdentifier? GetIdentifierAtPosition(int line, int column)
     {
-        if (_scriptFile.Class == null)
+        var finder = PositionFinder;
+        if (finder == null)
             return null;
 
-        var finder = new GDPositionFinder(_scriptFile.Class);
         return finder.FindIdentifierAtPosition(line, column);
     }
 
@@ -344,10 +358,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <returns>The token at the position, or null.</returns>
     public GDSyntaxToken? GetTokenAtPosition(int line, int column)
     {
-        if (_scriptFile.Class == null)
+        var finder = PositionFinder;
+        if (finder == null)
             return null;
 
-        var finder = new GDPositionFinder(_scriptFile.Class);
         return finder.FindTokenAtPosition(line, column);
     }
 
@@ -468,7 +482,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private GDSymbolInfo BuildLambdaSymbolInfo(GDMethodExpression lambdaExpr)
     {
         var name = lambdaExpr.Identifier?.Sequence ?? "(anonymous)";
-        var symbol = GDSymbol.Method(name, lambdaExpr);
+        var symbol = GDSymbol.Method(name, lambdaExpr.ToHandle());
         symbol.ReturnTypeName = lambdaExpr.ReturnType?.BuildName();
         symbol.Parameters = lambdaExpr.Parameters?
             .Select((p, i) => new GDParameterSymbolInfo(
@@ -478,7 +492,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 i))
             .ToList();
 
-        return GDSymbolInfo.Local(symbol, _scriptFile);
+        return GDSymbolInfo.Local(symbol, _scriptFile, resolveNode: ResolveNode);
     }
 
     /// <summary>
@@ -577,7 +591,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     private static int GetNodeStartLine(GDNode? node)
-        => node?.AllTokens.FirstOrDefault()?.StartLine ?? -1;
+        => node?.FirstLeafToken?.StartLine ?? -1;
 
     private static int GetSymbolStartLine(GDSymbolInfo symbol)
         => symbol.PositionToken?.StartLine ?? -1;
@@ -966,7 +980,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return false;
 
         var symbol = FindSymbol(variableName);
-        if (symbol?.DeclarationNode is not GDVariableDeclaration varDecl)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDVariableDeclaration varDecl)
             return false;
 
         foreach (var attr in varDecl.AttributesDeclaredBefore)
@@ -988,7 +1002,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return false;
 
         var symbol = FindSymbol(memberName);
-        if (symbol?.DeclarationNode is not GDClassMember classMember)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDClassMember classMember)
             return false;
 
         foreach (var attr in classMember.AttributesDeclaredBefore)
@@ -1010,7 +1024,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return false;
 
         var symbol = FindSymbol(memberName);
-        if (symbol?.DeclarationNode is not GDClassMember classMember)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDClassMember classMember)
             return false;
 
         foreach (var attr in classMember.AttributesDeclaredBefore)
@@ -1032,7 +1046,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return false;
 
         var symbol = FindSymbol(memberName);
-        if (symbol?.DeclarationNode is not GDClassMember classMember)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDClassMember classMember)
             return false;
 
         foreach (var attr in classMember.AttributesDeclaredBefore)
@@ -1113,7 +1127,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return false;
 
         var symbol = FindSymbol(symbolName);
-        if (symbol?.DeclarationNode is GDClassMember member)
+        if (symbol?.Symbol != null && ResolveNode(symbol.Symbol.DeclarationNode) is GDClassMember member)
             return HasWarningIgnore(member, warningName);
 
         return false;
@@ -1144,28 +1158,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     private static bool IsSignalEmitReference(GDReference reference)
     {
         var node = reference.ReferenceNode;
-        if (node == null)
+        if (node.IsEmpty)
             return false;
 
-        var parent = node.Parent;
-        if (parent is GDMemberOperatorExpression memberOp &&
-            memberOp.Identifier?.Sequence == "emit")
-        {
-            if (memberOp.Parent is GDCallExpression)
-                return true;
-        }
-
-        if (node is GDStringExpression || node is GDStringNameExpression)
-        {
-            var callExpr = FindParentCallExpression(node);
-            if (callExpr != null)
-            {
-                var callee = GetCalleeMethodName(callExpr);
-                if (callee == "emit_signal")
-                    return true;
-            }
-        }
-
+        // GDNodeHandle is opaque - cannot navigate to parent AST nodes
+        // Conservatively return false when we can't verify signal emit context
         return false;
     }
 
@@ -1199,7 +1196,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return Array.Empty<GDUnreachableCodeInfo>();
 
         var symbol = FindSymbol(methodName);
-        if (symbol?.DeclarationNode is not GDMethodDeclaration method)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDMethodDeclaration method)
             return Array.Empty<GDUnreachableCodeInfo>();
 
         var statements = method.Statements;
@@ -1216,8 +1213,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 if (IsDanglingMemberChainContinuation(stmt))
                     continue;
 
-                var firstToken = stmt.AllTokens.FirstOrDefault();
-                var lastToken = stmt.AllTokens.LastOrDefault();
+                var firstToken = stmt.FirstLeafToken;
+                var lastToken = stmt.LastLeafToken;
                 if (firstToken != null)
                 {
                     results.Add(new GDUnreachableCodeInfo(
@@ -1411,7 +1408,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             symbolName,
             symbol?.TypeName,
             unionType,
-            refs);
+            refs,
+            this);
     }
 
     #endregion
@@ -1442,7 +1440,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     public IReadOnlyDictionary<string, GDInferredParameterType> InferParameterTypes(string methodName)
     {
         var symbol = FindSymbol(methodName);
-        if (symbol?.DeclarationNode is not GDMethodDeclaration methodDecl)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDMethodDeclaration methodDecl)
             return new Dictionary<string, GDInferredParameterType>();
         return InferParameterTypes(methodDecl);
     }
@@ -1461,7 +1459,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     public GDMethodReturnAnalysis? AnalyzeMethodReturns(string methodName)
     {
         var symbol = FindSymbol(methodName);
-        if (symbol?.DeclarationNode is not GDMethodDeclaration methodDecl)
+        if (symbol?.Symbol == null || ResolveNode(symbol.Symbol.DeclarationNode) is not GDMethodDeclaration methodDecl)
             return null;
         return AnalyzeMethodReturns(methodDecl);
     }
@@ -1613,7 +1611,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return null;
 
         var methodSymbol = FindSymbol(methodName);
-        if (methodSymbol?.DeclarationNode is not GDMethodDeclaration method)
+        if (methodSymbol?.Symbol == null || ResolveNode(methodSymbol.Symbol.DeclarationNode) is not GDMethodDeclaration method)
             return null;
 
         var param = method.Parameters?.FirstOrDefault(p => p.Identifier?.Sequence == paramName);
@@ -1851,7 +1849,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     public GDNode? GetDeclaration(string symbolName)
     {
         var symbol = FindSymbol(symbolName);
-        return symbol?.DeclarationNode;
+        return symbol?.Symbol != null ? ResolveNode(symbol.Symbol.DeclarationNode) : null;
     }
 
     #endregion
@@ -2416,10 +2414,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             symbolName = methodName.Substring(1, methodName.Length - 5);
 
         var symbol = FindSymbol(symbolName);
-        if (symbol?.DeclarationNode != null)
+        if (symbol?.Symbol != null && !symbol.Symbol.DeclarationNode.IsEmpty)
         {
-            var node = symbol.DeclarationNode;
-            return $"{node.StartLine + 1}:{node.StartColumn}";
+            var handle = symbol.Symbol.DeclarationNode;
+            return $"{handle.StartLine + 1}:{handle.StartColumn}";
         }
         return null;
     }

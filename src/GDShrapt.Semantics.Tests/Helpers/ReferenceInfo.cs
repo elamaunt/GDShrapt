@@ -1,4 +1,4 @@
-using GDShrapt.Reader;
+using GDShrapt.Abstractions;
 
 namespace GDShrapt.Semantics.Tests;
 
@@ -35,7 +35,7 @@ public class ReferenceInfo
     /// <summary>
     /// The AST node of the reference.
     /// </summary>
-    public GDNode? Node { get; set; }
+    public GDNodeHandle Node { get; set; }
 
     /// <summary>
     /// The containing scope (method name, class name, etc.).

@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,74 +76,31 @@ public class GDCrossFileReferenceFinder
         var references = semanticModel.GetReferencesTo(memberName);
         foreach (var gdRef in references)
         {
-            if (gdRef.ReferenceNode == null)
+            var refNode = gdRef.ReferenceNode;
+            if (refNode.IsEmpty)
                 continue;
 
-            // Determine if this reference is part of a member access pattern
-            var parentMemberAccess = gdRef.ReferenceNode.Parent as GDMemberOperatorExpression;
-            var isMemberAccessTarget = gdRef.ReferenceNode is GDMemberOperatorExpression;
+            // GDNodeHandle is opaque - cannot navigate AST (Parent, type checks).
+            // Use the reference's confidence directly.
+            var confidence = gdRef.Confidence;
 
-            // Case 1: The reference IS a member access expression (obj.member)
-            // Case 2: The reference's parent is a member access and this is NOT the caller
-            //         (i.e., this is the RHS identifier of obj.member)
-            var memberAccess = gdRef.ReferenceNode as GDMemberOperatorExpression;
-            bool isCallerOfMemberAccess = false;
+            if (confidence == GDReferenceConfidence.NameMatch)
+                continue;
 
-            if (memberAccess == null && parentMemberAccess != null)
+            if (isInherited)
             {
-                // Check if ref node is the CallerExpression (e.g., health_changed in health_changed.emit)
-                // vs the accessed member (e.g., member in obj.member)
-                if (ReferenceEquals(parentMemberAccess.CallerExpression, gdRef.ReferenceNode))
-                {
-                    isCallerOfMemberAccess = true;
-                    // Don't set memberAccess — this is not an obj.member pattern for cross-file
-                }
-                else
-                {
-                    memberAccess = parentMemberAccess;
-                }
-            }
-
-            if (memberAccess != null && !isCallerOfMemberAccess)
-            {
-                var confidence = gdRef.Confidence;
-
-                if (confidence == GDReferenceConfidence.NameMatch)
-                    continue;
-
-                if (confidence == GDReferenceConfidence.Strict)
-                {
-                    var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
-                    if (!string.IsNullOrEmpty(callerType)
-                        && callerType != GDWellKnownTypes.Self
-                        && !IsTypeCompatible(callerType, declaringTypeName))
-                        continue;
-                }
-
                 yield return new GDCrossFileReference(
                     script,
-                    gdRef.ReferenceNode,
-                    confidence,
-                    gdRef.ConfidenceReason ?? GetConfidenceReason(memberAccess, confidence, semanticModel, declaringTypeName));
-            }
-            else if (isInherited)
-            {
-                // Direct identifier usage in a derived class:
-                // - `current_health += 10` (no member access parent)
-                // - `health_changed.emit()` (caller of a member access, i.e., signal/var used with dot)
-                yield return new GDCrossFileReference(
-                    script,
-                    gdRef.ReferenceNode,
+                    refNode,
                     GDReferenceConfidence.Strict,
                     $"Inherited member '{memberName}' used directly in derived class");
             }
-            else if (gdRef.ReferenceNode is GDStringExpression or GDStringNameExpression)
+            else
             {
-                // Contract string: has_method("member"), call("member"), emit_signal("member"), etc.
                 yield return new GDCrossFileReference(
                     script,
-                    gdRef.ReferenceNode,
-                    gdRef.Confidence,
+                    refNode,
+                    confidence,
                     gdRef.ConfidenceReason);
             }
         }
@@ -536,6 +494,20 @@ public class GDCrossFileReference
         Node = node;
         Line = line;
         Column = column;
+        Confidence = confidence;
+        Reason = reason;
+    }
+
+    public GDCrossFileReference(
+        GDScriptFile script,
+        GDNodeHandle nodeHandle,
+        GDReferenceConfidence confidence,
+        string? reason = null)
+    {
+        Script = script;
+        Node = null!;
+        Line = nodeHandle.StartLine;
+        Column = nodeHandle.StartColumn;
         Confidence = confidence;
         Reason = reason;
     }

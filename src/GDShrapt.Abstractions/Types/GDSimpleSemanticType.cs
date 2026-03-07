@@ -1,5 +1,4 @@
 using System.Linq;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -13,21 +12,15 @@ public class GDSimpleSemanticType : GDSemanticType
     /// </summary>
     public string TypeName { get; }
 
-    /// <summary>
-    /// Gets the optional AST node representing this type.
-    /// </summary>
-    public GDTypeNode? AstNode { get; }
-
     public override string DisplayName => TypeName;
 
     public override bool IsArray => TypeName == "Array" || GDGenericTypeHelper.IsGenericArrayType(TypeName);
 
     public override bool IsDictionary => TypeName == "Dictionary" || GDGenericTypeHelper.IsGenericDictionaryType(TypeName);
 
-    public GDSimpleSemanticType(string typeName, GDTypeNode? astNode = null)
+    public GDSimpleSemanticType(string typeName)
     {
         TypeName = typeName ?? "Variant";
-        AstNode = astNode;
     }
 
     public override bool IsAssignableTo(GDSemanticType other, IGDRuntimeProvider? provider)
@@ -67,17 +60,6 @@ public class GDSimpleSemanticType : GDSemanticType
         }
 
         return false;
-    }
-
-    public override GDTypeNode? ToTypeNode()
-    {
-        if (AstNode != null)
-            return AstNode;
-
-        if (TypeName.Contains('|'))
-            return null;
-
-        return null;
     }
 
     public override bool Equals(object? obj)

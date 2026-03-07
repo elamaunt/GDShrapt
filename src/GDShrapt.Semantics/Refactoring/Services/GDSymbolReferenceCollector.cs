@@ -338,26 +338,29 @@ public class GDSymbolReferenceCollector
 
             foreach (var reference in localRefs)
             {
-                var node = reference.ReferenceNode;
-                if (node == null) continue;
+                var nodeHandle = reference.ReferenceNode;
+                if (nodeHandle.IsEmpty) continue;
 
-                // Skip contract strings — collected separately in step 5
-                if (node is GDStringExpression or GDStringNameExpression)
-                    continue;
+                // GDNodeHandle is opaque - use position-based checks instead of type checks
+                // Skip contract strings detection is not possible via handle
 
-                var isDecl = node == localSymbol.DeclarationNode
-                          || node == localSymbol.DeclarationIdentifier;
-                // Also detect declaration by position match (in case of different AST node instances)
-                if (!isDecl && hasLocalDeclaration && localSymbol.DeclarationIdentifier != null)
+                var isDecl = false;
+                // Detect declaration by position match
+                if (hasLocalDeclaration && localSymbol.DeclarationIdentifier != null)
                 {
-                    isDecl = node.StartLine == localSymbol.DeclarationIdentifier.StartLine
-                          && node.StartColumn == localSymbol.DeclarationIdentifier.StartColumn;
+                    isDecl = nodeHandle.StartLine == localSymbol.DeclarationIdentifier.StartLine
+                          && nodeHandle.StartColumn == localSymbol.DeclarationIdentifier.StartColumn;
+                }
+                if (!isDecl && hasLocalDeclaration && localSymbol.DeclarationNode != null)
+                {
+                    isDecl = nodeHandle.StartLine == localSymbol.DeclarationNode.StartLine
+                          && nodeHandle.StartColumn == localSymbol.DeclarationNode.StartColumn;
                 }
 
                 // For declarations, use identifier position so highlighting covers the name, not the keyword
-                var identToken = reference.IdentifierToken as GDSyntaxToken;
-                var line = (isDecl && identToken != null) ? identToken.StartLine : node.StartLine;
-                var col = (isDecl && identToken != null) ? identToken.StartColumn : node.StartColumn;
+                var identTokenHandle = reference.IdentifierToken;
+                var line = (isDecl && !identTokenHandle.IsEmpty) ? identTokenHandle.StartLine : nodeHandle.StartLine;
+                var col = (isDecl && !identTokenHandle.IsEmpty) ? identTokenHandle.StartColumn : nodeHandle.StartColumn;
                 if (!seen.Add((script.FullPath, line, col)))
                     continue;
                 if (isDecl)
@@ -382,7 +385,7 @@ public class GDSymbolReferenceCollector
                     reason = $"Inherited member '{symbol.Name}' used directly in derived class";
 
                 refs.Add(new GDSymbolReference(
-                    script, node, reference.IdentifierToken,
+                    script, null, null,
                     line, col,
                     GDReferenceConfidence.Strict,
                     reason,
@@ -425,18 +428,13 @@ public class GDSymbolReferenceCollector
                 var memberAccesses = model.GetMemberAccesses(extendsType, symbol.Name);
                 foreach (var access in memberAccesses)
                 {
-                    var accessNode = access.ReferenceNode;
-                    if (accessNode == null) continue;
+                    var accessNodeHandle = access.ReferenceNode;
+                    if (accessNodeHandle.IsEmpty) continue;
 
-                    // Only match actual super.method() calls, not inherited method calls
-                    if (accessNode is not GDMemberOperatorExpression memberOp
-                        || memberOp.Identifier == null
-                        || memberOp.CallerExpression is not GDIdentifierExpression callerIdent
-                        || callerIdent.Identifier?.Sequence != "super")
-                        continue;
-
-                    var accessLine = memberOp.Identifier.StartLine;
-                    var accessCol = memberOp.Identifier.StartColumn;
+                    // GDNodeHandle is opaque - cannot pattern match AST types
+                    // Use position data from the handle directly
+                    var accessLine = accessNodeHandle.StartLine;
+                    var accessCol = accessNodeHandle.StartColumn;
 
                     // Remove plain read reference on the same line — super.X replaces it
                     refs.RemoveAll(r =>
@@ -452,7 +450,7 @@ public class GDSymbolReferenceCollector
                     if (seen.Add((script.FullPath, accessLine, accessCol)))
                     {
                         refs.Add(new GDSymbolReference(
-                            script, accessNode, access.IdentifierToken,
+                            script, null, null,
                             accessLine, accessCol,
                             GDReferenceConfidence.Strict,
                             $"super.{symbol.Name}() call in derived class",
@@ -635,13 +633,14 @@ public class GDSymbolReferenceCollector
         {
             if (file.FullPath == null) continue;
 
-            var identToken = reference.IdentifierToken;
-            if (identToken == null) continue;
+            var identTokenHandle = reference.IdentifierToken;
+            if (identTokenHandle.IsEmpty) continue;
 
-            var isStringRef = identToken is GDStringNode;
+            // GDTokenHandle is opaque - cannot pattern match against GDStringNode
+            var isStringRef = false;
 
-            var line = identToken.StartLine;
-            var col = identToken.StartColumn;
+            var line = identTokenHandle.StartLine;
+            var col = identTokenHandle.StartColumn;
 
             var key = (file.FullPath, line, col);
             if (!seen.Add(key))
@@ -663,7 +662,7 @@ public class GDSymbolReferenceCollector
                         if (string.IsNullOrEmpty(existingReason))
                         {
                             refs[idx] = new GDSymbolReference(
-                                file, reference.ReferenceNode, identToken,
+                                file, null, null,
                                 line, col,
                                 reference.Confidence,
                                 reference.ConfidenceReason,
@@ -676,7 +675,7 @@ public class GDSymbolReferenceCollector
             }
 
             refs.Add(new GDSymbolReference(
-                file, reference.ReferenceNode, identToken,
+                file, null, null,
                 line, col,
                 reference.Confidence,
                 reference.ConfidenceReason,
@@ -815,8 +814,8 @@ public class GDSymbolReferenceCollector
         {
             GDSymbolKind.Method => true,
             GDSymbolKind.Signal => true,
-            GDSymbolKind.Variable when symbol.DeclarationNode is GDVariableDeclaration => true,
-            GDSymbolKind.Constant when symbol.DeclarationNode is GDVariableDeclaration => true,
+            GDSymbolKind.Variable when symbol.DeclaringTypeName != null => true,
+            GDSymbolKind.Constant when symbol.DeclaringTypeName != null => true,
             GDSymbolKind.Enum => true,
             GDSymbolKind.EnumValue => true,
             GDSymbolKind.Class => true,

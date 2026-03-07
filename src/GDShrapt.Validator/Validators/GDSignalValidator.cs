@@ -265,21 +265,9 @@ namespace GDShrapt.Reader
             // First check user-defined signals in the class scope
             if (string.IsNullOrEmpty(typeName))
             {
-                // Check class-level signal declarations
-                var symbol = Context.Scopes.Lookup(signalName);
-                if (symbol?.Kind == GDSymbolKind.Signal && symbol.Declaration is GDSignalDeclaration signalDecl)
-                {
-                    return new GDSignalInfo
-                    {
-                        Name = signalName,
-                        Parameters = signalDecl.Parameters?
-                            .OfType<GDParameterDeclaration>()
-                            .Select(p => new GDRuntimeParameterInfo(
-                                p.Identifier?.Sequence ?? "",
-                                p.Type?.BuildName() ?? "Variant"))
-                            .ToList()
-                    };
-                }
+                var userSignal = Context.GetUserSignal(signalName);
+                if (userSignal != null)
+                    return userSignal;
             }
 
             // Check through project runtime provider if available

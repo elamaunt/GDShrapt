@@ -12,17 +12,30 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDFixProvider : IGDFixProvider
 {
+    private readonly GDNodeRegistry? _registry;
+
+    public GDFixProvider()
+    {
+    }
+
+    internal GDFixProvider(GDNodeRegistry? registry)
+    {
+        _registry = registry;
+    }
+
     /// <summary>
     /// Gets available fixes for a diagnostic.
     /// </summary>
     public IEnumerable<GDFixDescriptor> GetFixes(
         string diagnosticCode,
-        GDNode? node,
+        GDNodeHandle handle,
         IGDMemberAccessAnalyzer? analyzer,
         IGDRuntimeProvider? runtimeProvider)
     {
         if (string.IsNullOrEmpty(diagnosticCode))
             yield break;
+
+        var node = _registry?.ResolveNode(handle);
 
         // 1. Always offer suppression
         if (node != null)

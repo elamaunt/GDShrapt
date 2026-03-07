@@ -9,7 +9,7 @@ namespace GDShrapt.Semantics;
 /// <summary>
 /// Resolves compile-time values by composing three layers:
 ///   Layer 1: Literal extraction + local const (via IGDStaticValueRules + class declarations)
-///   Layer 2: Cross-file const (via IGDRuntimeProvider.GetConstantInitializer)
+///   Layer 2: Cross-file const (via IGDRuntimeProvider.GetConstantValue)
 ///   Layer 3: Call-site parameter flow (via GDCallSiteRegistry)
 /// </summary>
 internal sealed class GDStaticValueAnalyzer
@@ -43,10 +43,10 @@ internal sealed class GDStaticValueAnalyzer
             return Array.Empty<GDResolvedValue>();
 
         // Layer 1a: Literal
-        var literal = _rules.TryExtractLiteral(expr);
+        var literal = _rules.TryExtractLiteral(expr.ToHandle());
         if (literal != null)
         {
-            var sourceNode = _rules.GetEditableSourceNode(expr);
+            var sourceNode = _rules.GetEditableSourceNode(expr.ToHandle());
             return new[] { new GDResolvedValue(literal, sourceNode, GDReferenceConfidence.Strict) };
         }
 
@@ -94,13 +94,13 @@ internal sealed class GDStaticValueAnalyzer
         {
             foreach (var right in rightVals)
             {
-                var combined = _rules.TryEvaluateBinaryOp(dualOp.OperatorType, left.Value, right.Value);
+                var combined = _rules.TryEvaluateBinaryOp(dualOp.OperatorType.ToString(), left.Value, right.Value);
                 if (combined != null)
                 {
                     var confidence = left.Confidence > right.Confidence
                         ? left.Confidence
                         : right.Confidence;
-                    results.Add(new GDResolvedValue(combined, null, confidence));
+                    results.Add(new GDResolvedValue(combined, default, confidence));
                 }
             }
         }
@@ -196,8 +196,8 @@ internal sealed class GDStaticValueAnalyzer
         if (string.IsNullOrEmpty(callerType) || string.IsNullOrEmpty(memberName))
             return Array.Empty<GDResolvedValue>();
 
-        var initializer = _runtimeProvider.GetConstantInitializer(callerType, memberName);
-        if (initializer == null)
+        var constValue = _runtimeProvider.GetConstantValue(callerType, memberName);
+        if (constValue is not GDExpression initializer)
             return Array.Empty<GDResolvedValue>();
 
         return ResolveValues(initializer, depth + 1);

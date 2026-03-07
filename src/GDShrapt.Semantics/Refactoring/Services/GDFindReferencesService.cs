@@ -493,31 +493,49 @@ public class GDFindReferencesService : GDRefactoringServiceBase
 
         foreach (var gdRef in references)
         {
-            var node = gdRef.ReferenceNode;
-            if (node == null)
+            var nodeHandle = gdRef.ReferenceNode;
+            if (nodeHandle.IsEmpty)
                 continue;
 
-            var identifier = gdRef.IdentifierToken as GDIdentifier;
-            if (identifier == null)
+            var tokenHandle = gdRef.IdentifierToken;
+            if (tokenHandle.IsEmpty)
                 continue;
 
-            var (contextText, hlStart, hlEnd) = GetContextWithHighlight(identifier);
-            var refKind = DetermineReferenceKind(identifier);
-            var confidenceReason = semanticModel.GetConfidenceReason(identifier) ?? "Resolved via SemanticModel";
+            // Resolve handles back to AST nodes for context and kind determination
+            var resolvedNode = semanticModel.GetNodeAtPosition(nodeHandle.StartLine, nodeHandle.StartColumn);
+            var resolvedIdentifier = semanticModel.GetIdentifierAtPosition(tokenHandle.StartLine, tokenHandle.StartColumn);
+
+            string contextText;
+            int hlStart, hlEnd;
+            GDReferenceKind refKind;
+
+            if (resolvedIdentifier != null)
+            {
+                (contextText, hlStart, hlEnd) = GetContextWithHighlight(resolvedIdentifier);
+                refKind = DetermineReferenceKind(resolvedIdentifier);
+            }
+            else
+            {
+                contextText = scope.Name;
+                hlStart = 0;
+                hlEnd = scope.Name.Length;
+                refKind = GDReferenceKind.Read;
+            }
+
+            var refNode = resolvedNode ?? (GDNode)new GDClassDeclaration();
 
             results.Add(new GDReferenceLocation(
                 scope.Name,
                 filePath,
-                identifier.StartLine,
-                identifier.StartColumn,
-                identifier.EndColumn,
+                tokenHandle.StartLine,
+                tokenHandle.StartColumn,
+                tokenHandle.EndColumn,
                 refKind,
                 gdRef.Confidence,
-                node,
+                refNode,
                 contextText,
                 hlStart,
-                hlEnd,
-                confidenceReason));
+                hlEnd));
         }
 
         // Also add the declaration if not already included

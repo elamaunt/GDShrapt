@@ -1,8 +1,9 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 
-namespace GDShrapt.Abstractions;
+namespace GDShrapt.Semantics;
 
 /// <summary>
 /// Collects duck type information by analyzing member accesses and method calls.
@@ -131,7 +132,7 @@ public class GDDuckTypeCollector : GDVisitor
         if (leftVar != null && IsUntypedVariable(leftVar))
         {
             var rightType = InferSimpleType(dualOp.RightExpression);
-            EnsureDuckType(leftVar).RequireOperator(opType.Value, rightType);
+            EnsureDuckType(leftVar).RequireOperator(opType.Value.ToString(), rightType);
         }
 
         // Right operand - if it's an untyped variable, record the operator requirement
@@ -139,7 +140,7 @@ public class GDDuckTypeCollector : GDVisitor
         if (rightVar != null && IsUntypedVariable(rightVar))
         {
             var leftType = InferSimpleType(dualOp.LeftExpression);
-            EnsureDuckType(rightVar).RequireOperator(opType.Value, leftType);
+            EnsureDuckType(rightVar).RequireOperator(opType.Value.ToString(), leftType);
         }
     }
 

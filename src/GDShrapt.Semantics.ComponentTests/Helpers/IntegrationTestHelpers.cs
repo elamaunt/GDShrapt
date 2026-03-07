@@ -141,9 +141,9 @@ public static class IntegrationTestHelpers
                     SymbolName = symbolName,
                     Kind = DetermineReferenceKindFromGDReference(reference),
                     FilePath = filePath,
-                    Line = GetLine(reference.ReferenceNode),
-                    Column = GetColumn(reference.ReferenceNode),
-                    Node = reference.ReferenceNode
+                    Line = reference.ReferenceNode.StartLine,
+                    Column = reference.ReferenceNode.StartColumn,
+                    Node = null
                 });
             }
         }
@@ -156,13 +156,8 @@ public static class IntegrationTestHelpers
     /// </summary>
     private static ReferenceKind DetermineReferenceKindFromGDReference(GDReference reference)
     {
-        var node = reference.ReferenceNode;
-        if (node == null)
+        if (reference.ReferenceNode.IsEmpty)
             return ReferenceKind.Read;
-
-        // Check if it's a call expression
-        if (node.Parent is GDCallExpression)
-            return ReferenceKind.Call;
 
         // Trust reference.IsWrite - it's already correctly computed by SemanticModel
         if (reference.IsWrite)
@@ -252,7 +247,7 @@ public static class IntegrationTestHelpers
         if (node == null)
             return 0;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartLine ?? 0;
     }
 
@@ -264,7 +259,7 @@ public static class IntegrationTestHelpers
         if (node == null)
             return 0;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartColumn ?? 0;
     }
 

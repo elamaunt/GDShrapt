@@ -48,10 +48,10 @@ namespace GDShrapt.Reader
             if (!Context.TryDeclare(symbol))
             {
                 var existing = Context.Scopes.LookupLocal(symbol.Name);
-                ReportError(
+                Context.AddDiagnostic(GDDiagnostic.Error(
                     GDDiagnosticCode.DuplicateDeclaration,
                     $"'{symbol.Name}' is already declared in this scope",
-                    symbol.Declaration);
+                    symbol.DeclarationNode));
                 return false;
             }
             return true;

@@ -231,7 +231,7 @@ public class GDTypeResolver
         // Add class scope if we have script context
         if (scriptInfo?.Class != null)
         {
-            scopeStack.Push(GDScopeType.Class, scriptInfo.Class);
+            scopeStack.Push(GDScopeType.Class, scriptInfo.Class.ToHandle());
 
             // Add class members to scope
             foreach (var member in scriptInfo.Class.Members)
@@ -251,7 +251,7 @@ public class GDTypeResolver
         var method = FindParentOfType<GDMethodDeclaration>(expression);
         if (method != null)
         {
-            scopeStack.Push(GDScopeType.Method, method);
+            scopeStack.Push(GDScopeType.Method, method.ToHandle());
 
             // Add parameters
             if (method.Parameters != null)
@@ -261,7 +261,7 @@ public class GDTypeResolver
                     if (param.Identifier != null)
                     {
                         var typeName = param.Type?.BuildName() ?? "Variant";
-                        var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param, typeName: typeName);
+                        var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param.ToHandle(), typeName: typeName);
                         scopeStack.TryDeclare(symbol);
                     }
                 }
@@ -290,7 +290,7 @@ public class GDTypeResolver
             if (statement is GDVariableDeclarationStatement varDecl && varDecl.Identifier != null)
             {
                 var typeName = varDecl.Type?.BuildName() ?? InferInitializerType(varDecl.Initializer);
-                var symbol = GDSymbol.Variable(varDecl.Identifier.Sequence, varDecl, typeName: typeName);
+                var symbol = GDSymbol.Variable(varDecl.Identifier.Sequence, varDecl.ToHandle(), typeName: typeName);
                 scopeStack.TryDeclare(symbol);
             }
         }
@@ -327,14 +327,14 @@ public class GDTypeResolver
 
             GDVariableDeclaration variable when variable.Identifier != null =>
                 variable.ConstKeyword != null
-                    ? GDSymbol.Constant(variable.Identifier.Sequence, variable, typeName: variable.Type?.BuildName() ?? InferInitializerType(variable.Initializer))
-                    : GDSymbol.Variable(variable.Identifier.Sequence, variable, typeName: variable.Type?.BuildName() ?? InferInitializerType(variable.Initializer), isStatic: variable.StaticKeyword != null),
+                    ? GDSymbol.Constant(variable.Identifier.Sequence, variable.ToHandle(), typeName: variable.Type?.BuildName() ?? InferInitializerType(variable.Initializer))
+                    : GDSymbol.Variable(variable.Identifier.Sequence, variable.ToHandle(), typeName: variable.Type?.BuildName() ?? InferInitializerType(variable.Initializer), isStatic: variable.StaticKeyword != null),
 
             GDSignalDeclaration signal when signal.Identifier != null =>
-                GDSymbol.Signal(signal.Identifier.Sequence, signal),
+                GDSymbol.Signal(signal.Identifier.Sequence, signal.ToHandle()),
 
             GDEnumDeclaration enumDecl when enumDecl.Identifier != null =>
-                GDSymbol.Enum(enumDecl.Identifier.Sequence, enumDecl),
+                GDSymbol.Enum(enumDecl.Identifier.Sequence, enumDecl.ToHandle()),
 
             _ => null
         };
@@ -342,7 +342,7 @@ public class GDTypeResolver
 
     private static GDSymbol CreateMethodSymbol(GDMethodDeclaration method)
     {
-        var symbol = GDSymbol.Method(method.Identifier!.Sequence, method, method.IsStatic);
+        var symbol = GDSymbol.Method(method.Identifier!.Sequence, method.ToHandle(), method.IsStatic);
         symbol.ReturnTypeName = method.ReturnType?.BuildName();
         symbol.Parameters = method.Parameters?
             .Select((p, i) => new GDParameterSymbolInfo(

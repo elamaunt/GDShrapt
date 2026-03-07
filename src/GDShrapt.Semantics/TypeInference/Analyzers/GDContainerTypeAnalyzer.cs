@@ -146,21 +146,8 @@ internal class GDContainerTypeAnalyzer
             if (string.IsNullOrEmpty(name))
                 return null;
 
-            // Try scope first (for class-level variables)
-            if (_scopes != null)
-            {
-                var symbol = _scopes.Lookup(name);
-                if (symbol?.Declaration is GDVariableDeclaration varDecl &&
-                    varDecl.Initializer is GDDictionaryInitializerExpression init)
-                {
-                    return init;
-                }
-                if (symbol?.Declaration is GDVariableDeclarationStatement varStmt &&
-                    varStmt.Initializer is GDDictionaryInitializerExpression stmtInit)
-                {
-                    return stmtInit;
-                }
-            }
+            // GDSymbol.DeclarationNode is GDNodeHandle (opaque) - cannot resolve to AST node
+            // Skip scope-based lookup and fall through to class member search below
 
             // Try class members
             var classDecl = dictExpr.RootClassDeclaration;

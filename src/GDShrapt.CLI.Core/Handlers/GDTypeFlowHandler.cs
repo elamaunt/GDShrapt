@@ -678,31 +678,32 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         var references = semanticModel.GetReferencesTo(symbol);
         foreach (var reference in references.Take(20))
         {
-            if (reference.ReferenceNode == null)
+            if (reference.ReferenceNode.IsEmpty)
                 continue;
 
-            var usageContext = GetUsageContext(reference);
-            var usageKind = GetDetailedUsageKind(reference);
-            var (sourceObjectName, sourceType) = GetSourceObjectInfo(reference, symbol.Name, semanticModel);
+            var resolvedRefNode = ResolveHandle(reference.ReferenceNode, script);
+            var usageContext = GetUsageContext(reference, resolvedRefNode);
+            var usageKind = GetDetailedUsageKind(reference, resolvedRefNode);
+            var (sourceObjectName, sourceType) = GetSourceObjectInfo(reference, symbol.Name, semanticModel, resolvedRefNode);
 
             // Determine the type based on usage kind
             var usageType = GetUsageResultType(reference, usageKind, node.Type, semanticModel);
 
             // Build description with line number and context-specific info
-            var location = GDSourceLocation.FromNode(reference.ReferenceNode, script.FullPath);
+            var location = GDSourceLocation.FromHandle(reference.ReferenceNode, script.FullPath);
             var description = BuildUsageDescription(usageKind, usageContext, location);
 
             var usageNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
-                Label = GetDetailedUsageLabel(reference, usageContext),
+                Label = GetDetailedUsageLabel(reference, usageContext, resolvedRefNode),
                 Type = usageType,
                 Kind = usageKind,
                 Confidence = CalculateExpressionConfidence(usageType),
                 Description = description,
                 Level = 1,
                 SourceScript = script,
-                AstNode = reference.ReferenceNode,
+                AstNode = null,
                 Location = location,
                 SourceObjectName = sourceObjectName,
                 SourceType = sourceType
@@ -726,26 +727,19 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (usageKind == GDTypeFlowNodeKind.Comparison)
             return "bool";
 
-        // For property access, method call, indexer - infer from the parent expression
-        var parent = reference.ReferenceNode?.Parent;
-        if (parent != null)
-        {
-            var parentTypeInfo = semanticModel.TypeSystem.GetType(parent);
-            if (!parentTypeInfo.IsVariant)
-                return parentTypeInfo.DisplayName;
-        }
+        // Infer type from reference's inferred type if available
+        if (reference.InferredType != null && !reference.InferredType.IsVariant)
+            return reference.InferredType.DisplayName;
 
-        // Fall back to the reference's inferred type or default
-        var refTypeInfo = semanticModel.TypeSystem.GetType(reference.ReferenceNode);
-        return refTypeInfo.IsVariant ? (defaultType ?? "Variant") : refTypeInfo.DisplayName;
+        return defaultType ?? "Variant";
     }
 
     /// <summary>
     /// Gets detailed usage kind by examining parent expressions.
     /// </summary>
-    protected static GDTypeFlowNodeKind GetDetailedUsageKind(GDReference reference)
+    protected static GDTypeFlowNodeKind GetDetailedUsageKind(GDReference reference, GDNode? resolvedNode)
     {
-        var node = reference.ReferenceNode;
+        var node = resolvedNode;
         var parent = node?.Parent;
 
         return parent switch
@@ -771,9 +765,9 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// <summary>
     /// Gets detailed usage label including member name.
     /// </summary>
-    protected static string GetDetailedUsageLabel(GDReference reference, string context)
+    protected static string GetDetailedUsageLabel(GDReference reference, string context, GDNode? resolvedNode)
     {
-        var node = reference.ReferenceNode;
+        var node = resolvedNode;
         var parent = node?.Parent;
 
         // Get the symbol name being referenced
@@ -798,9 +792,9 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// Gets source object info (name and type) for a reference.
     /// </summary>
     protected static (string? objectName, string? objectType) GetSourceObjectInfo(
-        GDReference reference, string symbolName, GDSemanticModel semanticModel)
+        GDReference reference, string symbolName, GDSemanticModel semanticModel, GDNode? resolvedNode)
     {
-        var node = reference.ReferenceNode;
+        var node = resolvedNode;
 
         // If the reference itself is an identifier that's being accessed
         if (node is GDIdentifierExpression idExpr)
@@ -1018,11 +1012,17 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         var references = semanticModel.GetReferencesTo(symbol);
         foreach (var reference in references.Take(10))
         {
-            if (reference.ReferenceNode == null)
+            if (reference.ReferenceNode.IsEmpty)
                 continue;
 
-            var usageTypeInfo = semanticModel.TypeSystem.GetType(reference.ReferenceNode);
-            var usageType = usageTypeInfo.IsVariant ? node.Type : usageTypeInfo.DisplayName;
+            var resolvedRefNode2 = ResolveHandle(reference.ReferenceNode, script);
+            var usageType = node.Type ?? "Variant";
+            if (resolvedRefNode2 != null)
+            {
+                var usageTypeInfo = semanticModel.TypeSystem.GetType(resolvedRefNode2);
+                if (!usageTypeInfo.IsVariant)
+                    usageType = usageTypeInfo.DisplayName;
+            }
             var usageNode = new GDTypeFlowNode
             {
                 Id = GenerateNodeId(),
@@ -1033,8 +1033,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                 Description = "Call site",
                 Level = 1,
                 SourceScript = script,
-                AstNode = reference.ReferenceNode,
-                Location = GDSourceLocation.FromNode(reference.ReferenceNode, script.FullPath)
+                AstNode = resolvedRefNode2,
+                Location = GDSourceLocation.FromHandle(reference.ReferenceNode, script.FullPath)
             };
             RegisterNode(usageNode);
             node.Outflows.Add(usageNode);
@@ -1080,9 +1080,9 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// <summary>
     /// Gets the usage context description.
     /// </summary>
-    protected static string GetUsageContext(GDReference reference)
+    protected static string GetUsageContext(GDReference reference, GDNode? resolvedNode)
     {
-        var node = reference.ReferenceNode;
+        var node = resolvedNode;
         var parent = node?.Parent;
 
         return parent switch
@@ -1100,9 +1100,9 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// <summary>
     /// Gets a label for a usage.
     /// </summary>
-    protected static string GetUsageLabel(GDReference reference, string context)
+    protected static string GetUsageLabel(GDReference reference, string context, GDNode? resolvedNode = null)
     {
-        var node = reference.ReferenceNode;
+        var node = resolvedNode;
         var parent = node?.Parent;
 
         return parent switch
@@ -1364,5 +1364,16 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
 
         var typeInfo = script.SemanticModel.TypeSystem.GetType(astNode);
         return typeInfo.IsVariant ? null : typeInfo.DisplayName;
+    }
+
+    /// <summary>
+    /// Resolves a GDNodeHandle back to a GDNode by finding the node at the handle's position.
+    /// </summary>
+    protected static GDNode? ResolveHandle(GDNodeHandle handle, GDScriptFile? script)
+    {
+        if (handle.IsEmpty || script?.SemanticModel == null)
+            return null;
+
+        return script.SemanticModel.GetNodeAtPosition(handle.StartLine, handle.StartColumn);
     }
 }

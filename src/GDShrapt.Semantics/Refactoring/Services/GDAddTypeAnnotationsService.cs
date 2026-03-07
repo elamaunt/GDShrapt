@@ -158,8 +158,8 @@ public class GDAddTypeAnnotationsService
             var typeNode = context.GetTypeNode();
             if (typeNode != null)
             {
-                var firstToken = typeNode.AllTokens.FirstOrDefault();
-                var lastToken = typeNode.AllTokens.LastOrDefault();
+                var firstToken = typeNode.FirstLeafToken;
+                var lastToken = typeNode.LastLeafToken;
                 if (firstToken != null && lastToken != null)
                 {
                     edit = new GDTextEdit(

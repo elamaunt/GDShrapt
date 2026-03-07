@@ -119,7 +119,7 @@ public class GDDiagnosticsServices
         if (diagnostic == null || node == null)
             return System.Array.Empty<GDFixDescriptor>();
 
-        return FixProvider.GetFixes(diagnostic.Code, node, analyzer, runtimeProvider);
+        return FixProvider.GetFixes(diagnostic.Code, node.ToHandle(), analyzer, runtimeProvider);
     }
 }
 

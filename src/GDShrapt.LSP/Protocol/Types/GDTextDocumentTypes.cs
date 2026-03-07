@@ -237,3 +237,15 @@ public class GDFormattingOptions
     [JsonPropertyName("trimFinalNewlines")]
     public bool? TrimFinalNewlines { get; set; }
 }
+
+/// <summary>
+/// Parameters for the gdshrapt/unionReferences custom request.
+/// </summary>
+public class GDUnionReferencesParams
+{
+    /// <summary>
+    /// The name of the symbol to find union references for.
+    /// </summary>
+    [JsonPropertyName("symbolName")]
+    public string SymbolName { get; set; } = string.Empty;
+}

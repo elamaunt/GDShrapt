@@ -224,7 +224,7 @@ internal class GDMethodSignatureInferenceEngine
         var dependencies = _cycleDetector.GetDependencies(methodKey).ToList();
 
         // Get method location
-        var firstToken = method.AllTokens.FirstOrDefault();
+        var firstToken = method.FirstLeafToken;
 
         return new GDMethodInferenceReport
         {

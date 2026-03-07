@@ -263,8 +263,9 @@ internal class GDFlowAnalyzer : GDVisitor
         if (string.IsNullOrEmpty(name))
             return;
 
-        var declSemType = varDecl.Type != null
-            ? GDSemanticType.FromTypeNode(varDecl.Type)
+        var declTypeName = varDecl.Type?.BuildName();
+        var declSemType = !string.IsNullOrEmpty(declTypeName)
+            ? new GDSimpleSemanticType(declTypeName)
             : null;
         var initSemType = varDecl.Initializer != null
             ? ResolveSemanticType(varDecl.Initializer)

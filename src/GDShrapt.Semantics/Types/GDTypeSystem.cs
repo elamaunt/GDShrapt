@@ -38,7 +38,11 @@ public class GDTypeSystem : IGDTypeSystem
 
         var typeNode = _model.GetTypeNodeForExpression(expr);
         if (typeNode != null)
-            return GDSemanticType.FromTypeNode(typeNode);
+        {
+            var builtName = typeNode.BuildName();
+            if (!string.IsNullOrEmpty(builtName))
+                return new GDSimpleSemanticType(builtName);
+        }
 
         var typeName = _model.GetTypeForNode(expr);
         return GDSemanticType.FromRuntimeTypeName(typeName);

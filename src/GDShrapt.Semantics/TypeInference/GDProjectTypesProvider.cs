@@ -661,7 +661,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         return (null, null);
     }
 
-    public GDExpression? GetConstantInitializer(string typeName, string constantName)
+    public object? GetConstantValue(string typeName, string constantName)
     {
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(constantName))
             return null;
@@ -963,20 +963,41 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             return property.TypeName;
         }
 
-        var inferred = GDSemanticType.InferFromInitializer(property.VariableDeclaration.Initializer);
+        var inferredName = InferInitializerTypeName(property.VariableDeclaration.Initializer);
 
         lock (property)
         {
             if (!property.TypeInferred)
             {
-                if (inferred is not GDVariantSemanticType)
-                    property.TypeName = inferred.DisplayName;
+                if (inferredName != null && inferredName != "Variant")
+                    property.TypeName = inferredName;
 
                 property.TypeInferred = true;
             }
         }
 
         return property.TypeName;
+    }
+
+    private static string? InferInitializerTypeName(GDExpression? initializer)
+    {
+        if (initializer == null)
+            return "Variant";
+
+        return initializer switch
+        {
+            GDNumberExpression num => num.Number?.ResolveNumberType() switch
+            {
+                GDNumberType.LongDecimal or GDNumberType.LongBinary or GDNumberType.LongHexadecimal => "int",
+                GDNumberType.Double => "float",
+                _ => "int"
+            },
+            GDStringExpression => "String",
+            GDBoolExpression => "bool",
+            GDArrayInitializerExpression => "Array",
+            GDDictionaryInitializerExpression => "Dictionary",
+            _ => "Variant"
+        };
     }
 }
 

@@ -235,7 +235,7 @@ namespace GDShrapt.Semantics
                     continue;
 
                 // Get position from the call expression
-                var token = call.AllTokens.FirstOrDefault();
+                var token = call.FirstLeafToken;
                 var line = token?.StartLine ?? 0;
                 var column = token?.StartColumn ?? 0;
 

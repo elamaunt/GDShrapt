@@ -573,12 +573,12 @@ namespace GDShrapt.Reader
             return result;
         }
 
-        public GDExpression GetConstantInitializer(string typeName, string constantName)
+        public object? GetConstantValue(string typeName, string constantName)
         {
             foreach (var provider in _providers)
             {
-                var init = provider.GetConstantInitializer(typeName, constantName);
-                if (init != null) return init;
+                var val = provider.GetConstantValue(typeName, constantName);
+                if (val != null) return val;
             }
             return null;
         }

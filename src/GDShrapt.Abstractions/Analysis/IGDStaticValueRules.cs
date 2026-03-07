@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -9,17 +7,17 @@ namespace GDShrapt.Abstractions;
 public interface IGDStaticValueRules
 {
     /// <summary>
-    /// Try to extract a compile-time value from a literal expression.
+    /// Try to extract a compile-time value from a literal expression node.
     /// </summary>
-    object? TryExtractLiteral(GDExpression expr);
+    object? TryExtractLiteral(GDNodeHandle node);
 
     /// <summary>
     /// Try to evaluate a binary operation on two known values.
     /// </summary>
-    object? TryEvaluateBinaryOp(GDDualOperatorType op, object left, object right);
+    object? TryEvaluateBinaryOp(string operatorName, object left, object right);
 
     /// <summary>
-    /// Get the AST node suitable for rename/edit. Null if value is computed.
+    /// Get the handle to the AST node suitable for rename/edit. Empty if value is computed.
     /// </summary>
-    GDExpression? GetEditableSourceNode(GDExpression expr);
+    GDNodeHandle GetEditableSourceNode(GDNodeHandle node);
 }

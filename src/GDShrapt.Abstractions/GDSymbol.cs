@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -22,24 +21,14 @@ public class GDSymbol
     public GDSymbolKind Kind { get; }
 
     /// <summary>
-    /// The AST node where this symbol is declared.
+    /// Handle to the AST node where this symbol is declared.
     /// </summary>
-    public GDNode? Declaration { get; }
-
-    /// <summary>
-    /// The resolved type of this symbol.
-    /// </summary>
-    public GDType? Type { get; }
+    public GDNodeHandle DeclarationNode { get; }
 
     /// <summary>
     /// The type name as string (e.g., "int", "String", "Player").
     /// </summary>
     public string? TypeName { get; }
-
-    /// <summary>
-    /// The full type node from AST (includes generic type arguments for Array[T], Dictionary[K,V]).
-    /// </summary>
-    public GDTypeNode? TypeNode { get; }
 
     /// <summary>
     /// True if this symbol is static.
@@ -91,69 +80,77 @@ public class GDSymbol
     /// </summary>
     public string? ConfidenceReason { get; set; }
 
+    /// <summary>
+    /// Whether this symbol has an explicit type annotation in its declaration.
+    /// For variables: var x: int = ... (true), var x := ... (true via inference), var x = ... (false).
+    /// For parameters: func foo(x: int) (true), func foo(x) (false).
+    /// </summary>
+    public bool HasTypeAnnotation { get; set; }
+
+    /// <summary>
+    /// Whether this symbol was initialized to null (e.g., var x = null).
+    /// </summary>
+    public bool IsInitializedToNull { get; set; }
+
     // === Constructor ===
 
     public GDSymbol(
         string name,
         GDSymbolKind kind,
-        GDNode? declaration = null,
-        GDType? type = null,
+        GDNodeHandle declaration = default,
         string? typeName = null,
-        bool isStatic = false,
-        GDTypeNode? typeNode = null)
+        bool isStatic = false)
     {
         Name = name;
         Kind = kind;
-        Declaration = declaration;
-        Type = type;
+        DeclarationNode = declaration;
         TypeName = typeName;
         IsStatic = isStatic;
-        TypeNode = typeNode;
     }
 
     // === Factory methods for basic symbols ===
 
-    public static GDSymbol Variable(string name, GDNode declaration, GDType? type = null, string? typeName = null, bool isStatic = false, GDTypeNode? typeNode = null)
-        => new GDSymbol(name, GDSymbolKind.Variable, declaration, type, typeName, isStatic, typeNode);
+    public static GDSymbol Variable(string name, GDNodeHandle declaration, string? typeName = null, bool isStatic = false)
+        => new GDSymbol(name, GDSymbolKind.Variable, declaration, typeName, isStatic);
 
-    public static GDSymbol Constant(string name, GDNode declaration, GDType? type = null, string? typeName = null, GDTypeNode? typeNode = null)
-        => new GDSymbol(name, GDSymbolKind.Constant, declaration, type, typeName, typeNode: typeNode);
+    public static GDSymbol Constant(string name, GDNodeHandle declaration, string? typeName = null)
+        => new GDSymbol(name, GDSymbolKind.Constant, declaration, typeName);
 
-    public static GDSymbol Parameter(string name, GDNode declaration, GDType? type = null, string? typeName = null, GDTypeNode? typeNode = null)
-        => new GDSymbol(name, GDSymbolKind.Parameter, declaration, type, typeName, typeNode: typeNode);
+    public static GDSymbol Parameter(string name, GDNodeHandle declaration, string? typeName = null)
+        => new GDSymbol(name, GDSymbolKind.Parameter, declaration, typeName);
 
-    public static GDSymbol Method(string name, GDNode declaration, bool isStatic = false)
+    public static GDSymbol Method(string name, GDNodeHandle declaration, bool isStatic = false)
         => new GDSymbol(name, GDSymbolKind.Method, declaration, isStatic: isStatic);
 
-    public static GDSymbol Signal(string name, GDNode declaration)
+    public static GDSymbol Signal(string name, GDNodeHandle declaration)
         => new GDSymbol(name, GDSymbolKind.Signal, declaration);
 
     /// <summary>
     /// Creates a property symbol (a variable with get/set accessors).
     /// </summary>
-    public static GDSymbol Property(string name, GDNode declaration, GDType? type = null, string? typeName = null, bool isStatic = false, GDTypeNode? typeNode = null)
-        => new GDSymbol(name, GDSymbolKind.Property, declaration, type, typeName, isStatic, typeNode);
+    public static GDSymbol Property(string name, GDNodeHandle declaration, string? typeName = null, bool isStatic = false)
+        => new GDSymbol(name, GDSymbolKind.Property, declaration, typeName, isStatic);
 
-    public static GDSymbol Class(string name, GDNode declaration)
+    public static GDSymbol Class(string name, GDNodeHandle declaration)
         => new GDSymbol(name, GDSymbolKind.Class, declaration);
 
-    public static GDSymbol Enum(string name, GDNode declaration)
+    public static GDSymbol Enum(string name, GDNodeHandle declaration)
         => new GDSymbol(name, GDSymbolKind.Enum, declaration);
 
-    public static GDSymbol EnumValue(string name, GDNode declaration)
+    public static GDSymbol EnumValue(string name, GDNodeHandle declaration)
         => new GDSymbol(name, GDSymbolKind.EnumValue, declaration);
 
     /// <summary>
     /// For-loop iterator variable.
     /// </summary>
-    public static GDSymbol Iterator(string name, GDNode declaration, GDType? type = null, string? typeName = null, GDTypeNode? typeNode = null)
-        => new GDSymbol(name, GDSymbolKind.Iterator, declaration, type, typeName, typeNode: typeNode);
+    public static GDSymbol Iterator(string name, GDNodeHandle declaration, string? typeName = null)
+        => new GDSymbol(name, GDSymbolKind.Iterator, declaration, typeName);
 
     /// <summary>
     /// Match case binding variable (var x in match patterns).
     /// </summary>
-    public static GDSymbol MatchCaseBinding(string name, GDNode declaration, GDType? type = null, string? typeName = null)
-        => new GDSymbol(name, GDSymbolKind.MatchCaseBinding, declaration, type, typeName);
+    public static GDSymbol MatchCaseBinding(string name, GDNodeHandle declaration, string? typeName = null)
+        => new GDSymbol(name, GDSymbolKind.MatchCaseBinding, declaration, typeName);
 
     // === Factory methods for semantic context ===
 
@@ -163,7 +160,7 @@ public class GDSymbol
     public static GDSymbol Local(
         string name,
         GDSymbolKind kind,
-        GDNode? declaration,
+        GDNodeHandle declaration = default,
         string? scriptPath = null)
     {
         return new GDSymbol(name, kind, declaration)
@@ -180,7 +177,7 @@ public class GDSymbol
     public static GDSymbol ClassMember(
         string name,
         GDSymbolKind kind,
-        GDNode? declaration,
+        GDNodeHandle declaration,
         string declaringTypeName,
         string? declaringScriptPath,
         bool isInherited = false)
@@ -206,7 +203,7 @@ public class GDSymbol
         string? typeName = null,
         string? confidenceReason = null)
     {
-        return new GDSymbol(memberName, kind, null, typeName: typeName)
+        return new GDSymbol(memberName, kind, typeName: typeName)
         {
             DeclaringTypeName = "Unknown",
             Confidence = GDReferenceConfidence.Potential,
@@ -224,7 +221,7 @@ public class GDSymbol
         string declaringTypeName,
         bool isStatic = false)
     {
-        return new GDSymbol(name, kind, null, typeName: typeName, isStatic: isStatic)
+        return new GDSymbol(name, kind, typeName: typeName, isStatic: isStatic)
         {
             DeclaringTypeName = declaringTypeName,
             Confidence = GDReferenceConfidence.Strict,

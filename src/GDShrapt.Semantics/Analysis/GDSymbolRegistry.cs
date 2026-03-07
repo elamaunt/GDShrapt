@@ -149,10 +149,7 @@ internal class GDSymbolRegistry
         }
         list.Add(symbol);
 
-        if (symbol.DeclarationNode != null)
-        {
-            _nodeToSymbol[symbol.DeclarationNode] = symbol;
-        }
+        _allSymbolsCache = null;
     }
 
     /// <summary>

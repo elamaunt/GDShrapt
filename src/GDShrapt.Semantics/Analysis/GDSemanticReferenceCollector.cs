@@ -132,7 +132,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         _currentScope = new GDScopeInfo(GDScopeType.Global, _scriptFile.Class);
         _scopeStack.Push(_currentScope);
 
-        _currentGDScope = new GDScope(GDScopeType.Global, null, _scriptFile.Class);
+        _currentGDScope = new GDScope(GDScopeType.Global, null, _scriptFile.Class.ToHandle());
         _gdScopeStack.Push(_currentGDScope);
 
         _currentNarrowingContext = new GDTypeNarrowingContext();
@@ -207,7 +207,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (string.IsNullOrEmpty(className))
             return;
 
-        DeclareClassMember(GDSymbol.Class(className, innerClass), context, declaringTypeName);
+        DeclareClassMember(GDSymbol.Class(className, innerClass.ToHandle()), context, declaringTypeName, innerClass);
 
         context.EnterScope(GDScopeType.Class, innerClass);
 
@@ -217,12 +217,14 @@ internal class GDSemanticReferenceCollector : GDVisitor
         context.ExitScope();
     }
 
-    private void DeclareClassMember(GDSymbol symbol, GDValidationContext context, string declaringTypeName)
+    private void DeclareClassMember(GDSymbol symbol, GDValidationContext context, string declaringTypeName, GDNode? declarationNode = null)
     {
         context.Declare(symbol);
-        var symbolInfo = GDSymbolInfo.ClassMember(symbol, declaringTypeName, _scriptFile);
-        symbolInfo.Documentation = GDDocCommentExtractor.Extract(symbol.Declaration);
+        var symbolInfo = GDSymbolInfo.ClassMember(symbol, declaringTypeName, _scriptFile, resolveNode: _model!.ResolveNode);
+        symbolInfo.Documentation = GDDocCommentExtractor.Extract(declarationNode);
         _model!.RegisterSymbol(symbolInfo);
+        if (declarationNode != null)
+            _model!.SetNodeSymbol(declarationNode, symbolInfo);
     }
 
     private void RegisterClassVariable(GDVariableDeclaration varDecl, GDValidationContext context, string declaringTypeName)
@@ -234,8 +236,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var typeNode = varDecl.Type;
         var typeName = typeNode?.BuildName();
         var isStatic = varDecl.StaticKeyword != null;
-        var symbol = GDSymbol.Variable(name, varDecl, typeName: typeName, typeNode: typeNode, isStatic: isStatic);
-        DeclareClassMember(symbol, context, declaringTypeName);
+        var symbol = GDSymbol.Variable(name, varDecl.ToHandle(), typeName: typeName, isStatic: isStatic);
+        DeclareClassMember(symbol, context, declaringTypeName, varDecl);
     }
 
     private void RegisterProperty(GDVariableDeclaration propDecl, GDValidationContext context, string declaringTypeName)
@@ -247,8 +249,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var typeNode = propDecl.Type;
         var typeName = typeNode?.BuildName();
         var isStatic = propDecl.StaticKeyword != null;
-        var symbol = GDSymbol.Property(name, propDecl, typeName: typeName, typeNode: typeNode, isStatic: isStatic);
-        DeclareClassMember(symbol, context, declaringTypeName);
+        var symbol = GDSymbol.Property(name, propDecl.ToHandle(), typeName: typeName, isStatic: isStatic);
+        DeclareClassMember(symbol, context, declaringTypeName, propDecl);
 
         _propertyAccessors[name] = (propDecl.FirstAccessorDeclarationNode, propDecl.SecondAccessorDeclarationNode);
     }
@@ -260,7 +262,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             return;
 
         var isStatic = methodDecl.IsStatic;
-        var symbol = GDSymbol.Method(name, methodDecl, isStatic: isStatic);
+        var symbol = GDSymbol.Method(name, methodDecl.ToHandle(), isStatic: isStatic);
         symbol.ReturnTypeName = methodDecl.ReturnType?.BuildName();
         symbol.Parameters = methodDecl.Parameters?
             .Select((p, i) => new GDParameterSymbolInfo(
@@ -270,7 +272,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 i))
             .ToList();
 
-        DeclareClassMember(symbol, context, declaringTypeName);
+        DeclareClassMember(symbol, context, declaringTypeName, methodDecl);
     }
 
     private void RegisterSignal(GDSignalDeclaration signalDecl, GDValidationContext context, string declaringTypeName)
@@ -279,7 +281,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (string.IsNullOrEmpty(name))
             return;
 
-        DeclareClassMember(GDSymbol.Signal(name, signalDecl), context, declaringTypeName);
+        DeclareClassMember(GDSymbol.Signal(name, signalDecl.ToHandle()), context, declaringTypeName, signalDecl);
     }
 
     private void RegisterConstant(GDVariableDeclaration constDecl, GDValidationContext context, string declaringTypeName)
@@ -290,7 +292,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         var typeNode = constDecl.Type;
         var typeName = typeNode?.BuildName();
-        DeclareClassMember(GDSymbol.Constant(name, constDecl, typeName: typeName, typeNode: typeNode), context, declaringTypeName);
+        DeclareClassMember(GDSymbol.Constant(name, constDecl.ToHandle(), typeName: typeName), context, declaringTypeName, constDecl);
     }
 
     private void RegisterEnum(GDEnumDeclaration enumDecl, GDValidationContext context, string declaringTypeName)
@@ -299,7 +301,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (string.IsNullOrEmpty(name))
             return;
 
-        DeclareClassMember(GDSymbol.Enum(name, enumDecl), context, declaringTypeName);
+        DeclareClassMember(GDSymbol.Enum(name, enumDecl.ToHandle()), context, declaringTypeName, enumDecl);
     }
 
     #endregion
@@ -309,7 +311,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDMethodDeclaration methodDeclaration)
     {
         PushScope(GDScopeType.Method, methodDeclaration);
-        _validationContext?.Scopes.Push(GDScopeType.Method, methodDeclaration);
+        _validationContext?.Scopes.Push(GDScopeType.Method, methodDeclaration.ToHandle());
         RegisterParameters(methodDeclaration.Parameters, methodDeclaration);
     }
 
@@ -332,9 +334,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
             var typeNode = param.Type;
             var typeName = typeNode?.BuildName() ?? "Variant";
-            var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
+            var symbol = GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName);
 
-            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: declaringScopeNode));
+            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: declaringScopeNode, resolveNode: _model!.ResolveNode));
             _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
@@ -342,7 +344,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDForStatement forStatement)
     {
         PushScope(GDScopeType.ForLoop, forStatement);
-        _validationContext?.Scopes.Push(GDScopeType.ForLoop, forStatement);
+        _validationContext?.Scopes.Push(GDScopeType.ForLoop, forStatement.ToHandle());
 
         var iteratorName = forStatement.Variable?.Sequence;
         if (!string.IsNullOrEmpty(iteratorName))
@@ -357,8 +359,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 }
             }
 
-            var symbol = GDSymbol.Iterator(iteratorName, forStatement, typeName: elementTypeName);
-            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: forStatement));
+            var symbol = GDSymbol.Iterator(iteratorName, forStatement.ToHandle(), typeName: elementTypeName);
+            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: forStatement, resolveNode: _model!.ResolveNode));
             _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
@@ -372,7 +374,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDWhileStatement whileStatement)
     {
         PushScope(GDScopeType.WhileLoop, whileStatement);
-        _validationContext?.Scopes.Push(GDScopeType.WhileLoop, whileStatement);
+        _validationContext?.Scopes.Push(GDScopeType.WhileLoop, whileStatement.ToHandle());
     }
 
     public override void Left(GDWhileStatement whileStatement)
@@ -384,7 +386,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDMethodExpression methodExpression)
     {
         PushScope(GDScopeType.Lambda, methodExpression);
-        _validationContext?.Scopes.Push(GDScopeType.Lambda, methodExpression);
+        _validationContext?.Scopes.Push(GDScopeType.Lambda, methodExpression.ToHandle());
         RegisterParameters(methodExpression.Parameters, methodExpression);
     }
 
@@ -397,7 +399,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDMatchStatement matchStatement)
     {
         PushScope(GDScopeType.Match, matchStatement);
-        _validationContext?.Scopes.Push(GDScopeType.Match, matchStatement);
+        _validationContext?.Scopes.Push(GDScopeType.Match, matchStatement.ToHandle());
     }
 
     public override void Left(GDMatchStatement matchStatement)
@@ -409,7 +411,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDIfStatement ifStatement)
     {
         PushScope(GDScopeType.Conditional, ifStatement);
-        _validationContext?.Scopes.Push(GDScopeType.Conditional, ifStatement);
+        _validationContext?.Scopes.Push(GDScopeType.Conditional, ifStatement.ToHandle());
 
         _narrowingStack.Push(_currentNarrowingContext ?? new GDTypeNarrowingContext());
     }
@@ -431,6 +433,14 @@ internal class GDSemanticReferenceCollector : GDVisitor
         _validationContext?.Scopes.Pop();
     }
 
+    private GDNode? ResolveDeclarationNode(GDSymbolInfo? symbol)
+    {
+        if (symbol?.Symbol == null)
+            return symbol?.DeclarationNode;
+
+        return _model?.ResolveNode(symbol.Symbol.DeclarationNode);
+    }
+
     private string? ResolveVariableDeclaredType(string name, GDNode contextNode)
     {
         var symbol = _model?.FindSymbolInScope(name, contextNode);
@@ -440,16 +450,20 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (symbol.TypeName != null)
             return symbol.TypeName;
 
-        if (_typeEngine != null && symbol.DeclarationNode != null)
+        if (_typeEngine != null)
         {
-            GDExpression? initializer = null;
-            if (symbol.DeclarationNode is GDVariableDeclarationStatement localVar)
-                initializer = localVar.Initializer;
-            else if (symbol.DeclarationNode is GDVariableDeclaration classVar)
-                initializer = classVar.Initializer;
+            var declNode = ResolveDeclarationNode(symbol);
+            if (declNode != null)
+            {
+                GDExpression? initializer = null;
+                if (declNode is GDVariableDeclarationStatement localVar)
+                    initializer = localVar.Initializer;
+                else if (declNode is GDVariableDeclaration classVar)
+                    initializer = classVar.Initializer;
 
-            if (initializer != null)
-                return _typeEngine.InferSemanticType(initializer)?.DisplayName;
+                if (initializer != null)
+                    return _typeEngine.InferSemanticType(initializer)?.DisplayName;
+            }
         }
 
         return null;
@@ -549,7 +563,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDInnerClassDeclaration innerClass)
     {
         PushScope(GDScopeType.Class, innerClass);
-        _validationContext?.Scopes.Push(GDScopeType.Class, innerClass);
+        _validationContext?.Scopes.Push(GDScopeType.Class, innerClass.ToHandle());
     }
 
     public override void Left(GDInnerClassDeclaration innerClass)
@@ -564,7 +578,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         _scopeStack.Push(scope);
         _currentScope = scope;
 
-        var gdScope = new GDScope(type, _currentGDScope, node);
+        var gdScope = new GDScope(type, _currentGDScope, node.ToHandle());
         _gdScopeStack.Push(gdScope);
         _currentGDScope = gdScope;
     }
@@ -591,7 +605,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDGetAccessorBodyDeclaration getterBody)
     {
         PushScope(GDScopeType.Method, getterBody);
-        _validationContext?.Scopes.Push(GDScopeType.Method, getterBody);
+        _validationContext?.Scopes.Push(GDScopeType.Method, getterBody.ToHandle());
     }
 
     public override void Left(GDGetAccessorBodyDeclaration getterBody)
@@ -603,7 +617,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Visit(GDSetAccessorBodyDeclaration setterBody)
     {
         PushScope(GDScopeType.Method, setterBody);
-        _validationContext?.Scopes.Push(GDScopeType.Method, setterBody);
+        _validationContext?.Scopes.Push(GDScopeType.Method, setterBody.ToHandle());
 
         var param = setterBody.Parameter;
         if (param != null)
@@ -615,8 +629,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var typeNode = param.Type;
                 var typeName = typeNode?.BuildName() ?? propType;
 
-                var symbol = GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode);
-                _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: setterBody));
+                var symbol = GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName);
+                _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: setterBody, resolveNode: _model!.ResolveNode));
                 _validationContext?.Scopes.TryDeclare(symbol);
             }
         }
@@ -694,9 +708,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         {
             var typeNode = variableDeclaration.Type;
             var typeName = typeNode?.BuildName();
-            var symbol = GDSymbol.Variable(varName, variableDeclaration, typeName: typeName, typeNode: typeNode);
+            var symbol = GDSymbol.Variable(varName, variableDeclaration.ToHandle(), typeName: typeName);
             var enclosingScope = FindEnclosingScopeNode(variableDeclaration);
-            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope));
+            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingScope, resolveNode: _model!.ResolveNode));
             _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
@@ -706,9 +720,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var varName = matchCaseVariable.Identifier?.Sequence;
         if (!string.IsNullOrEmpty(varName))
         {
-            var symbol = GDSymbol.MatchCaseBinding(varName, matchCaseVariable);
+            var symbol = GDSymbol.MatchCaseBinding(varName, matchCaseVariable.ToHandle());
             var enclosingMatchCase = FindEnclosingMatchCase(matchCaseVariable);
-            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingMatchCase));
+            _model!.RegisterSymbol(GDSymbolInfo.Local(symbol, _scriptFile, declaringScopeNode: enclosingMatchCase, resolveNode: _model!.ResolveNode));
             _validationContext?.Scopes.TryDeclare(symbol);
         }
     }
@@ -1499,17 +1513,15 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var reason = $"self+string: {callerMethodName}(self, \"{literalValue}\")";
 
         var duckSymbol = GDSymbolInfo.DuckTyped(literalValue, declaredSymbol.Kind, null, reason);
-        var sourceNode = resolved.SourceNode ?? (GDNode?)null;
-        if (sourceNode != null)
+        if (!resolved.SourceNode.IsEmpty)
         {
-            CreateReference(duckSymbol, sourceNode, GDReferenceConfidence.Potential,
+            CreateReference(duckSymbol, resolved.SourceNode, GDReferenceConfidence.Potential,
                 callerTypeName: GDWellKnownTypes.Variant);
         }
 
-        var refNode = resolved.SourceNode ?? (GDNode?)null;
-        if (refNode != null)
+        if (!resolved.SourceNode.IsEmpty)
         {
-            CreateReference(declaredSymbol, refNode, GDReferenceConfidence.Potential,
+            CreateReference(declaredSymbol, resolved.SourceNode, GDReferenceConfidence.Potential,
                 callerTypeName: null);
         }
     }
@@ -1528,10 +1540,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var reason = $"typed-object: {callerMethodName}({typeName}, \"{literalValue}\")";
 
         var duckSymbol = GDSymbolInfo.DuckTyped(literalValue, symbolKind, typeName, reason);
-        var sourceNode = resolved.SourceNode ?? (GDNode?)null;
-        if (sourceNode != null)
+        if (!resolved.SourceNode.IsEmpty)
         {
-            CreateReference(duckSymbol, sourceNode, GDReferenceConfidence.Potential,
+            CreateReference(duckSymbol, resolved.SourceNode, GDReferenceConfidence.Potential,
                 callerTypeName: GDWellKnownTypes.Variant);
         }
 
@@ -1539,10 +1550,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
         var localSymbol = _model!.FindSymbol(literalValue);
         if (localSymbol != null && IsCompatibleKind(localSymbol.Kind, symbolKind))
         {
-            var refNode = resolved.SourceNode ?? (GDNode?)null;
-            if (refNode != null)
+            if (!resolved.SourceNode.IsEmpty)
             {
-                CreateReference(localSymbol, refNode, GDReferenceConfidence.Potential,
+                CreateReference(localSymbol, resolved.SourceNode, GDReferenceConfidence.Potential,
                     callerTypeName: null);
             }
         }
@@ -1569,11 +1579,35 @@ internal class GDSemanticReferenceCollector : GDVisitor
         };
     }
 
+    private void CreateReference(GDSymbolInfo symbol, GDNodeHandle nodeHandle, GDReferenceConfidence confidence, string? callerTypeName = null)
+    {
+        var reference = new GDReference
+        {
+            ReferenceNode = nodeHandle,
+            Scope = _currentGDScope,
+            IsWrite = _inAssignmentLeft,
+            IsRead = !_inAssignmentLeft || _isCompoundAssignment,
+            IsPropertyWriteOnCaller = _inPropertyWriteCaller,
+            Confidence = confidence,
+            ConfidenceReason = BuildConfidenceReason(symbol, confidence),
+            CallerTypeName = callerTypeName
+        };
+
+        _inPropertyWriteCaller = false;
+
+        _model!.AddReference(symbol, reference);
+
+        if (!string.IsNullOrEmpty(callerTypeName))
+        {
+            _model.AddMemberAccess(callerTypeName, symbol.Name, reference);
+        }
+    }
+
     private void CreateReference(GDSymbolInfo symbol, GDNode node, GDReferenceConfidence confidence, string? callerTypeName = null)
     {
         var reference = new GDReference
         {
-            ReferenceNode = node,
+            ReferenceNode = node.ToHandle(),
             Scope = _currentGDScope,
             IsWrite = _inAssignmentLeft,
             IsRead = !_inAssignmentLeft || _isCompoundAssignment,
@@ -1581,7 +1615,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             Confidence = confidence,
             ConfidenceReason = BuildConfidenceReason(symbol, confidence),
             CallerTypeName = callerTypeName,
-            IdentifierToken = ResolveIdentifierToken(node)
+            IdentifierToken = ResolveIdentifierToken(node).ToHandle()
         };
 
         _inPropertyWriteCaller = false;
@@ -1593,8 +1627,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var typeNode = _typeEngine.InferTypeNode(expr);
                 if (typeNode != null)
                 {
-                    reference.InferredType = GDSemanticType.FromTypeNode(typeNode);
-                    reference.InferredTypeNode = typeNode;
+                    var typeName = typeNode.BuildName();
+                    if (!string.IsNullOrEmpty(typeName))
+                        reference.InferredType = new GDSimpleSemanticType(typeName);
                 }
             }
             finally

@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.CLI.Core;
@@ -51,6 +52,24 @@ public class GDSourceLocation
             StartColumn = node.StartColumn,
             EndLine = node.EndLine,
             EndColumn = node.EndColumn
+        };
+    }
+
+    /// <summary>
+    /// Creates a source location from a node handle.
+    /// </summary>
+    public static GDSourceLocation? FromHandle(GDNodeHandle handle, string? filePath)
+    {
+        if (handle.IsEmpty)
+            return null;
+
+        return new GDSourceLocation
+        {
+            FilePath = filePath ?? handle.FilePath,
+            StartLine = handle.StartLine,
+            StartColumn = handle.StartColumn,
+            EndLine = handle.EndLine,
+            EndColumn = handle.EndColumn
         };
     }
 

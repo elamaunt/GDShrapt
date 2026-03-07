@@ -364,7 +364,7 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
             // Collect argument types from emit references
             var refs = semanticModel.GetReferencesTo(signalSymbol);
-            var paramTypes = InferSignalParameterTypesFromEmits(refs, parameters, semanticModel);
+            var paramTypes = InferSignalParameterTypesFromEmits(refs, parameters, semanticModel, script);
 
             var paramIndex = 0;
             foreach (var param in parameters)
@@ -420,19 +420,25 @@ public class GDInlayHintHandler : IGDInlayHintHandler
     private static List<string?> InferSignalParameterTypesFromEmits(
         IReadOnlyList<GDReference> refs,
         IEnumerable<GDParameterDeclaration> parameters,
-        GDSemanticModel semanticModel)
+        GDSemanticModel semanticModel,
+        GDScriptFile script)
     {
         var paramCount = parameters.Count();
         var paramTypes = new List<string?>(new string?[paramCount]);
 
         foreach (var reference in refs)
         {
-            if (reference.ReferenceNode == null)
+            if (reference.ReferenceNode.IsEmpty)
+                continue;
+
+            // Resolve handle to AST node for navigation
+            var refNode = ResolveHandle(reference.ReferenceNode, script);
+            if (refNode == null)
                 continue;
 
             // Find emit() calls: signal.emit(arg1, arg2, ...)
-            var callExpr = reference.ReferenceNode.Parent as GDCallExpression
-                        ?? reference.ReferenceNode.Parent?.Parent as GDCallExpression;
+            var callExpr = refNode.Parent as GDCallExpression
+                        ?? refNode.Parent?.Parent as GDCallExpression;
             if (callExpr == null)
                 continue;
 
@@ -515,4 +521,11 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         return (identifier.EndLine + 1, identifier.EndColumn + 1);
     }
 
+    private static GDNode? ResolveHandle(GDNodeHandle handle, GDScriptFile? script)
+    {
+        if (handle.IsEmpty || script?.SemanticModel == null)
+            return null;
+
+        return script.SemanticModel.GetNodeAtPosition(handle.StartLine, handle.StartColumn);
+    }
 }

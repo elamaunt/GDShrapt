@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using GDShrapt.Abstractions;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Reader
 {
@@ -10,6 +11,7 @@ namespace GDShrapt.Reader
     {
         private readonly List<GDDiagnostic> _diagnostics;
         private readonly Dictionary<string, GDFunctionSignature> _userFunctions;
+        private readonly Dictionary<string, GDSignalInfo> _userSignals = new Dictionary<string, GDSignalInfo>();
 
         public GDScopeStack Scopes { get; }
         public IReadOnlyList<GDDiagnostic> Diagnostics => _diagnostics;
@@ -139,6 +141,27 @@ namespace GDShrapt.Reader
             return signature;
         }
 
+        /// <summary>
+        /// Registers a user-defined signal. Called during declaration collection phase.
+        /// </summary>
+        public void RegisterSignal(string name, GDSignalInfo signalInfo)
+        {
+            if (!string.IsNullOrEmpty(name))
+                _userSignals[name] = signalInfo;
+        }
+
+        /// <summary>
+        /// Gets a user-defined signal by name.
+        /// </summary>
+        public GDSignalInfo GetUserSignal(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            _userSignals.TryGetValue(name, out var signal);
+            return signal;
+        }
+
         public void AddError(GDDiagnosticCode code, string message, GDNode node)
         {
             _diagnostics.Add(GDDiagnostic.Error(code, message, node));
@@ -169,9 +192,14 @@ namespace GDShrapt.Reader
             _diagnostics.Add(GDDiagnostic.Hint(code, message, token));
         }
 
+        public void AddDiagnostic(GDDiagnostic diagnostic)
+        {
+            _diagnostics.Add(diagnostic);
+        }
+
         public GDScope EnterScope(GDScopeType type, GDNode node = null)
         {
-            return Scopes.Push(type, node);
+            return Scopes.Push(type, node.ToHandle());
         }
 
         public GDScope ExitScope()

@@ -617,7 +617,7 @@ internal class GDExpressionTypeService
                 {
                     if (varDecl.Type != null)
                     {
-                        var typeFromAnnotation = GDContainerElementType.FromTypeNode(varDecl.Type);
+                        var typeFromAnnotation = ContainerElementTypeFromTypeNode(varDecl.Type);
                         if (typeFromAnnotation != null)
                             return typeFromAnnotation;
                     }
@@ -631,7 +631,7 @@ internal class GDExpressionTypeService
 
         // 3. Fallback to TypeEngine
         var typeNode = _typeEngine?.InferTypeNode(expr);
-        return GDContainerElementType.FromTypeNode(typeNode);
+        return ContainerElementTypeFromTypeNode(typeNode);
     }
 
     private string? GetRootVariableName(GDExpression? expr)
@@ -1075,4 +1075,33 @@ internal class GDExpressionTypeService
     /// Finds the containing method for a parameter declaration.
     /// </summary>
     #endregion
+
+    private static GDContainerElementType? ContainerElementTypeFromTypeNode(GDTypeNode? typeNode)
+    {
+        if (typeNode == null)
+            return null;
+
+        if (typeNode is GDArrayTypeNode arrayType)
+        {
+            var result = new GDContainerElementType { IsDictionary = false };
+            var innerName = arrayType.InnerType?.BuildName();
+            if (!string.IsNullOrEmpty(innerName))
+                result.ElementUnionType.AddTypeName(innerName);
+            return result;
+        }
+
+        if (typeNode is GDDictionaryTypeNode dictType)
+        {
+            var result = new GDContainerElementType { IsDictionary = true, KeyUnionType = new GDUnionType() };
+            var keyName = dictType.KeyType?.BuildName();
+            var valName = dictType.ValueType?.BuildName();
+            if (!string.IsNullOrEmpty(keyName))
+                result.KeyUnionType.AddTypeName(keyName);
+            if (!string.IsNullOrEmpty(valName))
+                result.ElementUnionType.AddTypeName(valName);
+            return result;
+        }
+
+        return null;
+    }
 }

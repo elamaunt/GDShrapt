@@ -94,7 +94,7 @@ internal class GDCallSiteInfo
         Confidence = confidence;
         IsDuckTyped = false;
 
-        var token = callExpression.AllTokens.FirstOrDefault();
+        var token = callExpression.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }
@@ -161,7 +161,7 @@ internal class GDCallSiteInfo
         ReceiverVariableName = receiverVariableName;
         UnionReceiverType = unionReceiverType;
 
-        var token = callExpression.AllTokens.FirstOrDefault();
+        var token = callExpression.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }

@@ -42,8 +42,5 @@ Used by: GDShrapt.Semantics, GDShrapt.CLI, GDShrapt.Plugin</Description>
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\GDShrapt.Reader\GDShrapt.Reader.csproj" />
-  </ItemGroup>
 
 </Project>

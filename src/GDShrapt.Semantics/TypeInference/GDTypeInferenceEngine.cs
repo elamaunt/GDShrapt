@@ -533,7 +533,8 @@ namespace GDShrapt.Semantics
             }
 
             var typeNode = InferTypeNode(expression);
-            return GDSemanticType.FromTypeNode(typeNode);
+            var typeName = typeNode?.BuildName();
+            return !string.IsNullOrEmpty(typeName) ? new GDSimpleSemanticType(typeName) : null;
         }
 
         /// <summary>
@@ -843,10 +844,7 @@ namespace GDShrapt.Semantics
 
             if (symbol != null)
             {
-                // Prefer TypeNode if available (has generic type info)
-                if (symbol.TypeNode != null)
-                    return symbol.TypeNode;
-                // Fall back to TypeName
+                // Use TypeName if available
                 if (!string.IsNullOrEmpty(symbol.TypeName))
                     return CreateSimpleType(symbol.TypeName);
 
@@ -871,26 +869,13 @@ namespace GDShrapt.Semantics
                     return CreateSimpleType("Callable");
                 }
 
-                // Fallback: infer type from declaration
-                // Handle local variables (statements)
-                if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt)
+                // Fallback: type already captured in TypeName
+                return null;
+
+                // NOTE: Declaration-based inference removed since DeclarationNode is now GDNodeHandle.
+                // Type info should be captured in symbol.TypeName during symbol registration.
+                if (false)
                 {
-                    // Check explicit type annotation FIRST
-                    if (varDeclStmt.Type != null)
-                        return varDeclStmt.Type;
-                    // Then try initializer
-                    if (varDeclStmt.Initializer != null)
-                        return InferTypeNode(varDeclStmt.Initializer);
-                }
-                // Handle class-level variables (declarations)
-                if (symbol.Declaration is GDVariableDeclaration varDecl)
-                {
-                    // Check explicit type annotation FIRST
-                    if (varDecl.Type != null)
-                        return varDecl.Type;
-                    // Then try initializer
-                    if (varDecl.Initializer != null)
-                        return InferTypeNode(varDecl.Initializer);
                 }
             }
 
@@ -1420,7 +1405,10 @@ namespace GDShrapt.Semantics
                 foreach (var param in method.Parameters)
                 {
                     if (param.Type != null)
-                        paramTypes.Add(GDSemanticType.FromTypeNode(param.Type));
+                    {
+                        var pTypeName = param.Type.BuildName();
+                        paramTypes.Add(!string.IsNullOrEmpty(pTypeName) ? new GDSimpleSemanticType(pTypeName) : GDVariantSemanticType.Instance);
+                    }
                     else if (param.DefaultValue != null)
                     {
                         var inferredType = InferTypeNode(param.DefaultValue)?.BuildName();
@@ -1437,7 +1425,8 @@ namespace GDShrapt.Semantics
             GDSemanticType returnType = null;
             if (method.ReturnType != null)
             {
-                returnType = GDSemanticType.FromTypeNode(method.ReturnType);
+                var retTypeName = method.ReturnType?.BuildName();
+                returnType = !string.IsNullOrEmpty(retTypeName) ? new GDSimpleSemanticType(retTypeName) : null;
                 if (returnType.IsVariant)
                     returnType = null;
             }
@@ -1521,8 +1510,7 @@ namespace GDShrapt.Semantics
 
             if (symbol?.Kind == GDSymbolKind.Method)
             {
-                if (symbol.Declaration is GDMethodDeclaration methodDecl)
-                    return BuildCallableSemanticType(methodDecl);
+                // GDSymbol.DeclarationNode is GDNodeHandle (opaque) - fall through to class member search
             }
 
             // Check class members
@@ -2033,8 +2021,8 @@ namespace GDShrapt.Semantics
             // For array addition with incompatible types, use GDContainerElementType to compute union
             if (resultNode == null && opType == GDDualOperatorType.Addition)
             {
-                var leftContainer = GDContainerElementType.FromTypeNode(leftTypeNode);
-                var rightContainer = GDContainerElementType.FromTypeNode(rightTypeNode);
+                var leftContainer = ContainerElementTypeFromTypeNode(leftTypeNode);
+                var rightContainer = ContainerElementTypeFromTypeNode(rightTypeNode);
 
                 if (leftContainer != null && rightContainer != null &&
                     !leftContainer.IsDictionary && !rightContainer.IsDictionary)
@@ -2544,10 +2532,13 @@ namespace GDShrapt.Semantics
             // Return expression: should match method return type
             if (parent is GDReturnExpression)
             {
-                var methodScope = _scopes?.GetEnclosingFunction();
-                if (methodScope?.Node is GDMethodDeclaration methodDecl)
+                // Walk up the AST from the parent to find the enclosing method declaration
+                var ancestor = parent.Parent;
+                while (ancestor != null)
                 {
-                    return methodDecl.ReturnType?.BuildName();
+                    if (ancestor is GDMethodDeclaration methodDecl)
+                        return methodDecl.ReturnType?.BuildName();
+                    ancestor = ancestor.Parent;
                 }
             }
 
@@ -2652,6 +2643,35 @@ namespace GDShrapt.Semantics
         }
 
         #endregion
+
+        private static GDContainerElementType? ContainerElementTypeFromTypeNode(GDTypeNode? typeNode)
+        {
+            if (typeNode == null)
+                return null;
+
+            if (typeNode is GDArrayTypeNode arrayType)
+            {
+                var result = new GDContainerElementType { IsDictionary = false };
+                var innerName = arrayType.InnerType?.BuildName();
+                if (!string.IsNullOrEmpty(innerName))
+                    result.ElementUnionType.AddTypeName(innerName);
+                return result;
+            }
+
+            if (typeNode is GDDictionaryTypeNode dictType)
+            {
+                var result = new GDContainerElementType { IsDictionary = true, KeyUnionType = new GDUnionType() };
+                var keyName = dictType.KeyType?.BuildName();
+                var valName = dictType.ValueType?.BuildName();
+                if (!string.IsNullOrEmpty(keyName))
+                    result.KeyUnionType.AddTypeName(keyName);
+                if (!string.IsNullOrEmpty(valName))
+                    result.ElementUnionType.AddTypeName(valName);
+                return result;
+            }
+
+            return null;
+        }
     }
 
 }

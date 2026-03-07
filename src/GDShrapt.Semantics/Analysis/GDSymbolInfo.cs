@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -27,13 +29,44 @@ public class GDSymbolInfo
 
     /// <summary>
     /// The AST node where this symbol is declared.
+    /// Lazily resolved from GDNodeHandle when first accessed.
     /// </summary>
-    public GDNode? DeclarationNode { get; }
+    public GDNode? DeclarationNode
+    {
+        get
+        {
+            if (!_declarationResolved)
+            {
+                _declarationResolved = true;
+                _declarationNode = Symbol != null ? _resolveNode?.Invoke(Symbol.DeclarationNode) : null;
+                _declarationIdentifier = _declarationNode != null
+                    ? ResolveDeclarationIdentifier(_declarationNode, Name)
+                    : null;
+            }
+            return _declarationNode;
+        }
+    }
 
     /// <summary>
     /// The identifier token within the declaration node.
     /// </summary>
-    public GDSyntaxToken? DeclarationIdentifier { get; }
+    public GDSyntaxToken? DeclarationIdentifier
+    {
+        get
+        {
+            if (!_declarationResolved)
+            {
+                // Force resolution
+                _ = DeclarationNode;
+            }
+            return _declarationIdentifier;
+        }
+    }
+
+    private bool _declarationResolved;
+    private GDNode? _declarationNode;
+    private GDSyntaxToken? _declarationIdentifier;
+    private readonly Func<GDNodeHandle, GDNode?>? _resolveNode;
 
     /// <summary>
     /// The type name of this symbol (e.g., "int", "String", "Player").
@@ -113,7 +146,7 @@ public class GDSymbolInfo
     /// Prefers the declaration identifier; falls back to the first token of the declaration node.
     /// </summary>
     public GDSyntaxToken? PositionToken => DeclarationIdentifier
-        ?? DeclarationNode?.AllTokens.FirstOrDefault();
+        ?? DeclarationNode?.FirstLeafToken;
 
     /// <summary>
     /// The scope type of this symbol, computed from its Kind and context.
@@ -166,15 +199,14 @@ public class GDSymbolInfo
         GDScriptFile? accessingScript = null,
         GDReferenceConfidence confidence = GDReferenceConfidence.Strict,
         string? confidenceReason = null,
-        GDNode? declaringScopeNode = null)
+        GDNode? declaringScopeNode = null,
+        Func<GDNodeHandle, GDNode?>? resolveNode = null)
     {
         Symbol = symbol;
         Name = symbol.Name;
         Kind = symbol.Kind;
-        DeclarationNode = symbol.Declaration;
-        DeclarationIdentifier = ResolveDeclarationIdentifier(symbol.Declaration, symbol.Name);
+        _resolveNode = resolveNode;
         TypeName = symbol.TypeName;
-        TypeNode = symbol.TypeNode;
         IsStatic = symbol.IsStatic;
         ReturnTypeName = symbol.ReturnTypeName;
         Parameters = symbol.Parameters;
@@ -203,7 +235,7 @@ public class GDSymbolInfo
         Symbol = null;
         Name = name;
         Kind = kind;
-        DeclarationNode = null;
+        _declarationResolved = true; // No handle to resolve for built-in types
         TypeName = typeName;
         TypeNode = null;
         IsStatic = isStatic;
@@ -225,7 +257,8 @@ public class GDSymbolInfo
     public static GDSymbolInfo Local(
         GDSymbol symbol,
         GDScriptFile? script = null,
-        GDNode? declaringScopeNode = null)
+        GDNode? declaringScopeNode = null,
+        Func<GDNodeHandle, GDNode?>? resolveNode = null)
     {
         return new GDSymbolInfo(
             symbol,
@@ -234,7 +267,8 @@ public class GDSymbolInfo
             accessingScript: script,
             confidence: GDReferenceConfidence.Strict,
             confidenceReason: "Local variable in scope",
-            declaringScopeNode: declaringScopeNode);
+            declaringScopeNode: declaringScopeNode,
+            resolveNode: resolveNode);
     }
 
     /// <summary>
@@ -244,7 +278,8 @@ public class GDSymbolInfo
         GDSymbol symbol,
         string declaringTypeName,
         GDScriptFile declaringScript,
-        GDScriptFile? accessingScript = null)
+        GDScriptFile? accessingScript = null,
+        Func<GDNodeHandle, GDNode?>? resolveNode = null)
     {
         var isInherited = accessingScript != null && accessingScript != declaringScript;
         return new GDSymbolInfo(
@@ -255,7 +290,8 @@ public class GDSymbolInfo
             confidence: GDReferenceConfidence.Strict,
             confidenceReason: isInherited
                 ? $"Inherited member from {declaringTypeName}"
-                : $"Class member in {declaringTypeName}");
+                : $"Class member in {declaringTypeName}",
+            resolveNode: resolveNode);
     }
 
     /// <summary>

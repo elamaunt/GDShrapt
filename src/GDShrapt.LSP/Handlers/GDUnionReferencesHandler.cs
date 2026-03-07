@@ -31,7 +31,19 @@ public class GDUnionReferencesHandler
         var result = _findRefsHandler.FindAllReferences(symbolName);
 
         // Filter: only duck-typed code references, not signal connections or scene signals
-        var codeUnions = result.SharedLocations
+        var allLocations = new List<GDCliReferenceLocation>();
+
+        foreach (var group in result.PrimaryGroups)
+        {
+            if (group.IsCrossFile)
+                CollectLocations(group, allLocations);
+        }
+        foreach (var group in result.UnrelatedGroups)
+        {
+            CollectLocations(group, allLocations);
+        }
+
+        var codeUnions = allLocations
             .Where(r => !r.IsSignalConnection && !r.IsSceneSignal && !r.IsContractString);
 
         var locations = new List<GDLspLocation>();
@@ -50,5 +62,12 @@ public class GDUnionReferencesHandler
         }
 
         return Task.FromResult<GDLspLocation[]?>(locations.Count > 0 ? locations.ToArray() : null);
+    }
+
+    private static void CollectLocations(GDReferenceGroup group, List<GDCliReferenceLocation> locations)
+    {
+        locations.AddRange(group.Locations);
+        foreach (var child in group.Overrides)
+            CollectLocations(child, locations);
     }
 }

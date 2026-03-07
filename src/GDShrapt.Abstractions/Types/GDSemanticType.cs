@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -59,45 +58,7 @@ public abstract class GDSemanticType
     /// </summary>
     public virtual bool IsUnion => false;
 
-    /// <summary>
-    /// Creates a GDTypeNode representation of this type, if possible.
-    /// Returns null for types that cannot be represented as AST nodes (unions).
-    /// </summary>
-    public virtual GDTypeNode? ToTypeNode() => null;
-
     public override string ToString() => DisplayName;
-
-    /// <summary>
-    /// Creates a semantic type from an AST type node.
-    /// Directly converts GDArrayTypeNode/GDDictionaryTypeNode to GDContainerSemanticType
-    /// without string serialization.
-    /// </summary>
-    public static GDSemanticType FromTypeNode(GDTypeNode? typeNode)
-    {
-        if (typeNode == null)
-            return GDVariantSemanticType.Instance;
-
-        if (typeNode is GDArrayTypeNode arrayNode)
-        {
-            var elem = FromTypeNode(arrayNode.InnerType);
-            return new GDContainerSemanticType(isDictionary: false, elementType: elem);
-        }
-
-        if (typeNode is GDDictionaryTypeNode dictNode)
-        {
-            var key = FromTypeNode(dictNode.KeyType);
-            var val = FromTypeNode(dictNode.ValueType);
-            return new GDContainerSemanticType(isDictionary: true, elementType: val, keyType: key);
-        }
-
-        var name = typeNode.BuildName();
-        if (string.IsNullOrEmpty(name) || name == "Variant")
-            return GDVariantSemanticType.Instance;
-        if (name == "null")
-            return GDNullSemanticType.Instance;
-
-        return new GDSimpleSemanticType(name, typeNode);
-    }
 
     /// <summary>
     /// Converts a runtime type name string to GDSemanticType.
@@ -145,44 +106,6 @@ public abstract class GDSemanticType
         }
 
         return new GDSimpleSemanticType(typeName);
-    }
-
-    /// <summary>
-    /// Infers a semantic type from an initializer expression using AST pattern matching.
-    /// Handles literals (numbers, strings, bools) and container constructors (arrays, dictionaries).
-    /// Returns Variant for unrecognized expressions.
-    /// </summary>
-    public static GDSemanticType InferFromInitializer(GDExpression? initializer)
-    {
-        return initializer switch
-        {
-            null => GDVariantSemanticType.Instance,
-            GDArrayInitializerExpression => new GDSimpleSemanticType("Array"),
-            GDDictionaryInitializerExpression => new GDSimpleSemanticType("Dictionary"),
-            GDNumberExpression num => num.Number?.ResolveNumberType() switch
-            {
-                GDNumberType.LongDecimal or GDNumberType.LongBinary or GDNumberType.LongHexadecimal
-                    => new GDSimpleSemanticType("int"),
-                GDNumberType.Double => new GDSimpleSemanticType("float"),
-                _ => GDVariantSemanticType.Instance
-            },
-            GDStringExpression => new GDSimpleSemanticType("String"),
-            GDBoolExpression => new GDSimpleSemanticType("bool"),
-            GDCallExpression call => InferFromCallExpression(call),
-            _ => GDVariantSemanticType.Instance
-        };
-    }
-
-    private static GDSemanticType InferFromCallExpression(GDCallExpression call)
-    {
-        if (call.CallerExpression is GDIdentifierExpression identExpr)
-        {
-            var name = identExpr.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(name) && char.IsUpper(name[0]))
-                return new GDSimpleSemanticType(name);
-        }
-
-        return GDVariantSemanticType.Instance;
     }
 
     /// <summary>

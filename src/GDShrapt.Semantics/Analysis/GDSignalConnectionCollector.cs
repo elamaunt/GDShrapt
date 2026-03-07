@@ -99,7 +99,7 @@ internal class GDSignalConnectionCollector
             {
                 var scopeStack = new GDScopeStack();
                 scopeStack.Push(GDScopeType.Global);
-                scopeStack.Push(GDScopeType.Class, scriptFile.Class);
+                scopeStack.Push(GDScopeType.Class, scriptFile.Class.ToHandle());
                 _typeEngine = new GDTypeInferenceEngine(runtimeProvider, scopeStack);
             }
         }

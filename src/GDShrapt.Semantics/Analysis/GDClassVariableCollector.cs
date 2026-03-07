@@ -49,7 +49,7 @@ internal class GDClassVariableCollector : GDVisitor
                 if (varDecl.ConstKeyword != null)
                     continue;
 
-                var token = varDecl.AllTokens.FirstOrDefault();
+                var token = varDecl.FirstLeafToken;
                 var profile = new GDVariableUsageProfile(name)
                 {
                     IsClassLevel = true,
@@ -63,13 +63,13 @@ internal class GDClassVariableCollector : GDVisitor
                 {
                     var initType = _typeEngine?.InferSemanticType(varDecl.Initializer);
                     var isHighConfidence = DetermineHighConfidence(varDecl.Initializer, initType);
-                    var initToken = varDecl.Initializer.AllTokens.FirstOrDefault();
+                    var initToken = varDecl.Initializer.FirstLeafToken;
 
                     profile.Assignments.Add(new GDAssignmentObservation
                     {
                         InferredType = initType,
                         IsHighConfidence = isHighConfidence,
-                        Node = varDecl,
+                        Node = varDecl.ToHandle(),
                         Line = initToken?.StartLine ?? profile.DeclarationLine,
                         Column = initToken?.StartColumn ?? profile.DeclarationColumn,
                         Kind = GDAssignmentKind.Initialization
@@ -122,13 +122,13 @@ internal class GDClassVariableCollector : GDVisitor
 
         var valueType = _typeEngine?.InferSemanticType(dualOp.RightExpression);
         var isHighConfidence = DetermineHighConfidence(dualOp.RightExpression, valueType);
-        var token = dualOp.AllTokens.FirstOrDefault();
+        var token = dualOp.FirstLeafToken;
 
         profile.Assignments.Add(new GDAssignmentObservation
         {
             InferredType = valueType,
             IsHighConfidence = isHighConfidence,
-            Node = dualOp,
+            Node = dualOp.ToHandle(),
             Line = token?.StartLine ?? 0,
             Column = token?.StartColumn ?? 0,
             Kind = isCompoundAssignment ? GDAssignmentKind.CompoundAssignment : GDAssignmentKind.DirectAssignment

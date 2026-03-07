@@ -27,11 +27,11 @@ func process(a, b):
         var duckTypeB = semanticModel?.GetDuckType("b");
 
         Assert.IsNotNull(duckTypeA, "Variable 'a' should have duck type requirements");
-        Assert.IsTrue(duckTypeA.RequiredOperators.ContainsKey(GDDualOperatorType.Addition),
+        Assert.IsTrue(duckTypeA.RequiredOperators.ContainsKey(GDDualOperatorType.Addition.ToString()),
             "Variable 'a' should require Addition operator");
 
         Assert.IsNotNull(duckTypeB, "Variable 'b' should have duck type requirements");
-        Assert.IsTrue(duckTypeB.RequiredOperators.ContainsKey(GDDualOperatorType.Addition),
+        Assert.IsTrue(duckTypeB.RequiredOperators.ContainsKey(GDDualOperatorType.Addition.ToString()),
             "Variable 'b' should require Addition operator");
     }
 
@@ -46,10 +46,10 @@ func process(a):
 
         var duckType = semanticModel?.GetDuckType("a");
         Assert.IsNotNull(duckType, "Variable 'a' should have duck type requirements");
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Addition),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Addition.ToString()),
             "Variable 'a' should require Addition operator");
 
-        var operandTypes = duckType.RequiredOperators[GDDualOperatorType.Addition];
+        var operandTypes = duckType.RequiredOperators[GDDualOperatorType.Addition.ToString()];
         Assert.IsTrue(operandTypes.Any(t => t.DisplayName == "int"),
             "Addition operand type should include 'int'");
     }
@@ -65,10 +65,10 @@ func process(a):
 
         var duckType = semanticModel?.GetDuckType("a");
         Assert.IsNotNull(duckType, "Variable 'a' should have duck type requirements");
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Addition),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Addition.ToString()),
             "Variable 'a' should require Addition operator");
 
-        var operandTypes = duckType.RequiredOperators[GDDualOperatorType.Addition];
+        var operandTypes = duckType.RequiredOperators[GDDualOperatorType.Addition.ToString()];
         Assert.IsTrue(operandTypes.Any(t => t.DisplayName == "String"),
             "Addition operand type should include 'String'");
     }
@@ -91,11 +91,11 @@ func process(a):
         var duckType = semanticModel?.GetDuckType("a");
         Assert.IsNotNull(duckType, "Variable 'a' should have duck type requirements");
 
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Addition),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Addition.ToString()),
             "Variable 'a' should require Addition operator");
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Subtraction),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Subtraction.ToString()),
             "Variable 'a' should require Subtraction operator");
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Multiply),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Multiply.ToString()),
             "Variable 'a' should require Multiply operator");
     }
 
@@ -112,9 +112,9 @@ func process(value):
         var duckType = semanticModel?.GetDuckType("value");
         Assert.IsNotNull(duckType, "Variable 'value' should have duck type requirements");
 
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Division),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Division.ToString()),
             "Variable 'value' should require Division operator");
-        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Mod),
+        Assert.IsTrue(duckType.RequiredOperators.ContainsKey(GDDualOperatorType.Mod.ToString()),
             "Variable 'value' should require Mod operator");
     }
 
@@ -161,7 +161,7 @@ func process(a, b):
         // Comparison operators are not arithmetic, should not be collected
         if (duckTypeA != null)
         {
-            Assert.IsFalse(duckTypeA.RequiredOperators.ContainsKey(GDDualOperatorType.MoreThan),
+            Assert.IsFalse(duckTypeA.RequiredOperators.ContainsKey(GDDualOperatorType.MoreThan.ToString()),
                 "Comparison operators should not be collected");
         }
     }
@@ -177,7 +177,7 @@ func process(a, b):
         var resolver = new GDDuckTypeResolver(runtimeProvider);
 
         var duckType = new GDDuckType();
-        duckType.RequireOperator(GDDualOperatorType.Addition, GDSemanticType.FromRuntimeTypeName("int"));
+        duckType.RequireOperator(GDDualOperatorType.Addition.ToString(), GDSemanticType.FromRuntimeTypeName("int"));
 
         var compatibleTypes = resolver.FindCompatibleTypes(duckType).ToList();
 
@@ -196,7 +196,7 @@ func process(a, b):
         var resolver = new GDDuckTypeResolver(runtimeProvider);
 
         var duckType = new GDDuckType();
-        duckType.RequireOperator(GDDualOperatorType.Subtraction, GDSemanticType.FromRuntimeTypeName("int"));
+        duckType.RequireOperator(GDDualOperatorType.Subtraction.ToString(), GDSemanticType.FromRuntimeTypeName("int"));
 
         var compatibleTypes = resolver.FindCompatibleTypes(duckType).ToList();
 

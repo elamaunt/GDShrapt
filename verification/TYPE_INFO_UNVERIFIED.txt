@@ -1,3 +1,296 @@
 # TYPE_INFO_UNVERIFIED.txt
 # Copy entries to TYPE_INFO_VERIFIED.txt and add # OK
 
+test_scripts/cross_file_inference.gd
+  240:11 Variable entity
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  250:11 Variable op
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/cyclic_inference.gd
+  185:32 Variable child_result
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/dynamic_dispatch.gd
+  131:36 Variable value
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  167:16 Variable value
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  311:49 Variable handler
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  403:51 Iterator advice
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  411:32 Variable proceed
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  422:32 Iterator advice
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+
+test_scripts/ecs_like_system.gd
+  197:20 Variable transform
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  197:20 Variable velocity
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  211:25 Variable health
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  222:25 Variable transform
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  222:25 Variable ai
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  226:40 Variable context
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  226:40 Variable new_state
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  333:79 Variable cell
+    declared: (none)
+    inferred: Vector2i
+    effective: Vector2i
+    confidence: High
+    nullable: no
+
+  335:29 Iterator eid
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  336:34 Variable transform
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  384:47 Variable eid
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/game_patterns.gd
+  352:28 Variable dmg
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  356:26 Variable total
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  356:26 Variable base
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  356:26 Variable scaling
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  356:26 Iterator stat
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  466:21 Variable item
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  466:21 Variable count
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/inheritance_test.gd
+  82:33 Variable collider
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:33 Variable normal
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  82:33 Variable position_coll
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/polymorphic_interfaces.gd
+  183:40 Variable found
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  237:49 Variable decorator
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Certain
+    nullable: no
+
+  237:49 Variable next_func
+    declared: (none)
+    inferred: Callable
+    effective: Callable
+    confidence: High
+    nullable: no
+
+
+test_scripts/semantic_validation_demo.gd
+  298:28 Variable _keys
+    declared: (none)
+    inferred: Array
+    effective: Array
+    confidence: High
+    nullable: no
+
+
+test_scripts/signal_callback_chains.gd
+  166:44 Variable result
+    declared: (none)
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: High
+    nullable: no
+
+  174:26 Variable result
+    declared: (none)
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: High
+    nullable: no
+
+  517:31 Variable result
+    declared: (none)
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: High
+    nullable: no
+
+
+test_scripts/type_guards.gd
+  34:22 Variable type_val
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  197:23 Variable name
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+

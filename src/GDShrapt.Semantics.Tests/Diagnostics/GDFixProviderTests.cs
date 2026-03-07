@@ -1,4 +1,5 @@
 using FluentAssertions;
+using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace GDShrapt.Semantics.Tests;
@@ -28,7 +29,7 @@ func process(obj):
         var classDecl = _reader.ParseFileContent(code);
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
 
         fixes.Should().ContainSingle(f => f is GDSuppressionFixDescriptor);
         var suppression = fixes.OfType<GDSuppressionFixDescriptor>().First();
@@ -39,7 +40,7 @@ func process(obj):
     [TestMethod]
     public void GetFixes_NullNode_ReturnsEmpty()
     {
-        var fixes = _fixProvider.GetFixes("GD7002", null, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", default, null, null).ToList();
 
         fixes.Should().BeEmpty();
     }
@@ -54,7 +55,7 @@ func process(obj):
         var classDecl = _reader.ParseFileContent(code);
         var passExpr = classDecl.AllNodes.OfType<GDPassExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("", passExpr, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("", passExpr.ToHandle(), null, null).ToList();
 
         fixes.Should().BeEmpty();
     }
@@ -73,7 +74,7 @@ func process(obj):
         var classDecl = _reader.ParseFileContent(code);
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
 
         var typeGuards = fixes.OfType<GDTypeGuardFixDescriptor>().ToList();
         typeGuards.Should().NotBeEmpty();
@@ -91,7 +92,7 @@ func process(obj):
         var classDecl = _reader.ParseFileContent(code);
         var callExpr = classDecl.AllNodes.OfType<GDCallExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7003", callExpr, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7003", callExpr.ToHandle(), null, null).ToList();
 
         var methodGuards = fixes.OfType<GDMethodGuardFixDescriptor>().ToList();
         methodGuards.Should().ContainSingle();
@@ -110,7 +111,7 @@ func process(obj):
         var classDecl = _reader.ParseFileContent(code);
         var callExpr = classDecl.AllNodes.OfType<GDCallExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7003", callExpr, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7003", callExpr.ToHandle(), null, null).ToList();
 
         fixes.OfType<GDTypeGuardFixDescriptor>().Should().NotBeEmpty();
     }
@@ -126,7 +127,7 @@ func process(obj):
         var outerMemberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>()
             .First(m => m.Identifier?.Sequence == "health");
 
-        var fixes = _fixProvider.GetFixes("GD7002", outerMemberAccess, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", outerMemberAccess.ToHandle(), null, null).ToList();
 
         var typeGuards = fixes.OfType<GDTypeGuardFixDescriptor>().ToList();
         // Should extract root variable "obj" from "obj.component"
@@ -158,7 +159,7 @@ func process():
             GDRuntimeMemberInfo.Property("scale", "Vector2")
         });
 
-        var fixes = _fixProvider.GetFixes("GD3009", memberAccess, null, mockProvider).ToList();
+        var fixes = _fixProvider.GetFixes("GD3009", memberAccess.ToHandle(), null, mockProvider).ToList();
 
         // Without semantic analysis to get type, typo fixes won't work
         // This test verifies the structure is in place
@@ -179,7 +180,7 @@ func test():
         var classDecl = _reader.ParseFileContent(code);
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
         var suppression = fixes.OfType<GDSuppressionFixDescriptor>().First();
 
         suppression.Kind.Should().Be(GDFixKind.Suppress);
@@ -197,7 +198,7 @@ func test():
         var classDecl = _reader.ParseFileContent(code);
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
         var typeGuard = fixes.OfType<GDTypeGuardFixDescriptor>().First();
 
         typeGuard.Kind.Should().Be(GDFixKind.AddTypeGuard);
@@ -216,7 +217,7 @@ func test():
         var classDecl = _reader.ParseFileContent(code);
         var call = classDecl.AllNodes.OfType<GDCallExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7003", call, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7003", call.ToHandle(), null, null).ToList();
         var methodGuard = fixes.OfType<GDMethodGuardFixDescriptor>().First();
 
         methodGuard.Kind.Should().Be(GDFixKind.AddMethodGuard);
@@ -241,7 +242,7 @@ func test():
         var classDecl = _reader.ParseFileContent(code);
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
-        var fixes = _fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
 
         // Should at least have suppression
         fixes.Should().NotBeEmpty();
@@ -260,7 +261,7 @@ func outer():
 
         if (call != null)
         {
-            var fixes = _fixProvider.GetFixes("GD7003", call, null, null).ToList();
+            var fixes = _fixProvider.GetFixes("GD7003", call.ToHandle(), null, null).ToList();
 
             var typeGuard = fixes.OfType<GDTypeGuardFixDescriptor>().FirstOrDefault();
             if (typeGuard != null)
@@ -280,7 +281,7 @@ func test():
         var classDecl = _reader.ParseFileContent(code);
         var varDecl = classDecl.AllNodes.OfType<GDVariableDeclarationStatement>().First();
 
-        var fixes = _fixProvider.GetFixes("GD9999", varDecl, null, null).ToList();
+        var fixes = _fixProvider.GetFixes("GD9999", varDecl.ToHandle(), null, null).ToList();
 
         // Should only contain suppression for unknown codes
         fixes.Should().ContainSingle();
@@ -352,6 +353,6 @@ func test():
         public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
         public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
         public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
-        public GDShrapt.Reader.GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+        public object? GetConstantValue(string typeName, string constantName) => null;
     }
 }

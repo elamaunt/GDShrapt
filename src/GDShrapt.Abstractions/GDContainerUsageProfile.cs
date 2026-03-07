@@ -1,6 +1,4 @@
-using GDShrapt.Reader;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GDShrapt.Abstractions;
 
@@ -128,7 +126,7 @@ public class GDContainerUsageProfile
     /// <summary>
     /// Adds a value usage observation.
     /// </summary>
-    public void AddValueUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNode? node)
+    public void AddValueUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNodeHandle node = default)
     {
         if (inferredType == null)
             return;
@@ -139,15 +137,15 @@ public class GDContainerUsageProfile
             InferredType = inferredType,
             IsHighConfidence = !inferredType.IsVariant,
             Node = node,
-            Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
-            Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
+            Line = node.StartLine,
+            Column = node.StartColumn
         });
     }
 
     /// <summary>
     /// Adds a key usage observation (for dictionaries).
     /// </summary>
-    public void AddKeyUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNode? node)
+    public void AddKeyUsage(GDSemanticType? inferredType, GDContainerUsageKind kind, GDNodeHandle node = default)
     {
         if (inferredType == null || inferredType.IsVariant)
             return;
@@ -158,8 +156,8 @@ public class GDContainerUsageProfile
             InferredType = inferredType,
             IsHighConfidence = !inferredType.IsVariant,
             Node = node,
-            Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
-            Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
+            Line = node.StartLine,
+            Column = node.StartColumn
         });
     }
 }
@@ -185,9 +183,9 @@ public class GDContainerUsageObservation
     public bool IsHighConfidence { get; set; }
 
     /// <summary>
-    /// AST node of the usage (for navigation).
+    /// Handle to the AST node of the usage (for navigation).
     /// </summary>
-    public GDNode? Node { get; set; }
+    public GDNodeHandle Node { get; set; }
 
     /// <summary>
     /// Line number of the usage (1-based).

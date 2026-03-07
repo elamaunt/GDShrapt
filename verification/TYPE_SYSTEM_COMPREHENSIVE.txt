@@ -1181,939 +1181,6 @@ test_scripts/completion_test.gd
     nullable:     no
 
 
-test_scripts/cross_file_inference.gd
-================================================================================
-
---- 9:0 Variable entity_manager ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 10:0 Variable duck_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 11:0 Variable cyclic_processor ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 12:0 Variable signal_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 13:0 Variable poly_manager ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 14:0 Variable union_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 15:0 Variable dynamic_caller ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 18:0 Variable current_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 19:0 Variable last_result ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 22:0 Method _ready ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 35:0 Method process_entity ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 35:20 Parameter entity_data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Dictionary[String, Variant]
-    confidence:   High
-    reason:       single type from constraints
-    duck-typed:   yes
-  Duck Constraints:
-    methods:      has(-1)
-    properties:   has
-
---- 37:1 Variable entity ---
-  Type Info:
-    declared:     (none)
-    inferred:     Entity
-    effective:    Entity
-    confidence:   High
-    nullable:     no
-
---- 41:2 Variable transform ---
-  Type Info:
-    declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
-    nullable:     no
-
---- 45:2 Variable health ---
-  Type Info:
-    declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
-    nullable:     no
-
---- 51:0 Method apply_damage ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 51:18 Parameter attacker ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 51:28 Parameter target ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 51:36 Parameter amount ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 53:1 Variable result ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-
---- 58:0 Method run_cyclic_computation ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 58:28 Parameter input ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 60:1 Variable step1 ---
-  Type Info:
-    declared:     (none)
-    inferred:     Array
-    effective:    Array
-    confidence:   High
-    nullable:     no
-
---- 61:1 Variable step2 ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-
---- 62:1 Variable step3 ---
-  Type Info:
-    declared:     (none)
-    inferred:     bool
-    effective:    bool
-    confidence:   High
-    nullable:     no
-
---- 66:0 Method setup_signal_handlers ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 66:27 Parameter target ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 72:1 Variable op ---
-  Type Info:
-    declared:     (none)
-    inferred:     AsyncOperation
-    effective:    AsyncOperation
-    confidence:   High
-    nullable:     no
-
---- 77:0 Method _on_damage_event ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 77:22 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Array
-    confidence:   Medium
-    reason:       single type from constraints
-    duck-typed:   yes
-
---- 81:0 Method _on_spawn_event ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 81:21 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 85:0 Method _on_operation_result ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 85:26 Parameter result ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 89:0 Method register_handlers ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 89:23 Parameter objects ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Array
-    confidence:   Medium
-    reason:       single type from constraints
-    duck-typed:   yes
-
---- 91:1 Iterator obj ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 102:0 Method get_result_from_anywhere ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 102:30 Parameter source_name ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 102:43 Parameter key ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 117:0 Method execute_on_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 117:24 Parameter handler_type ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 117:38 Parameter action ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 117:46 Parameter args ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 143:0 Method complex_chain_operation ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 143:29 Parameter initial_data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 147:1 Variable entity ---
-  Type Info:
-    declared:     (none)
-    inferred:     Entity
-    effective:    Entity
-    confidence:   High
-    nullable:     no
-
---- 151:1 Variable processed ---
-  Type Info:
-    declared:     (none)
-    inferred:     Array
-    effective:    Array
-    confidence:   High
-    nullable:     no
-
---- 153:7 Parameter v ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 157:1 Variable cycled ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-
---- 159:7 Parameter acc ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 159:12 Parameter item ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 182:0 Variable cross_file_callbacks ---
-  Type Info:
-    declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
-    nullable:     no
-
---- 185:0 Method register_cross_file_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 185:33 Parameter event_name ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 185:45 Parameter handler_type ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 197:0 Method _create_entity_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 198:13 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 201:0 Method _create_damage_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 202:13 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 205:0 Method _create_signal_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 206:13 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 211:0 Method _create_dynamic_handler ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 212:13 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 215:0 Method invoke_cross_file ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 215:23 Parameter event_name ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 215:35 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 217:2 Variable callback ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 225:0 Method _on_effect_result ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 225:23 Parameter result ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 229:0 Method _process_cyclic ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 229:21 Parameter data ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 233:0 Method _handle_union ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 233:19 Parameter value ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 237:0 Method create_game_object ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 237:24 Parameter object_type ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 237:37 Parameter params ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Dictionary[String, Variant] | Object
-    confidence:   High
-    reason:       union from type checks
-    duck-typed:   yes
-
---- 241:3 Variable entity ---
-  Type Info:
-    declared:     (none)
-    inferred:     Entity
-    effective:    Entity
-    confidence:   High
-    nullable:     no
-
---- 251:3 Variable op ---
-  Type Info:
-    declared:     (none)
-    inferred:     AsyncOperation
-    effective:    AsyncOperation
-    confidence:   High
-    nullable:     no
-
---- 274:0 Method _on_hit_callback ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 274:22 Parameter target ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 274:30 Parameter damage ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 275:1 Variable health ---
-  Type Info:
-    declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
-    nullable:     no
-
---- 287:0 Method _on_entity_died ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 287:21 Parameter entity_id ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 292:0 Method _calculate_damage ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 292:23 Parameter base ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 292:29 Parameter target ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 293:1 Variable defense ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-
---- 299:0 Method setup_bidirectional ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 308:0 Method stress_test_inference ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 308:27 Parameter depth ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 308:34 Parameter initial_value ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Variant
-    confidence:   Unknown
-
---- 313:1 Variable step1 ---
-  Type Info:
-    declared:     (none)
-    inferred:     Array
-    effective:    Array
-    confidence:   High
-    nullable:     no
-
---- 313:61 Parameter v ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
---- 314:1 Variable step2 ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
-    nullable:     no
-
---- 315:1 Variable step3 ---
-  Type Info:
-    declared:     (none)
-    inferred:     bool
-    effective:    bool
-    confidence:   High
-    nullable:     no
-
---- 316:1 Variable step4 ---
-  Type Info:
-    declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
-    nullable:     no
-
---- 321:0 Method parallel_inference_test ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
-    nullable:     no
-
---- 321:29 Parameter inputs ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-  Parameter Inference:
-    inferred:     Array
-    confidence:   Medium
-    reason:       single type from constraints
-    duck-typed:   yes
-
---- 323:1 Variable results ---
-  Type Info:
-    declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
-    nullable:     no
-    container:    Dictionary[String, Variant]
-
---- 330:1 Iterator input ---
-  Type Info:
-    declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Certain
-    nullable:     no
-
-
 test_scripts/cycles_test.gd
 ================================================================================
 
@@ -2206,9 +1273,9 @@ test_scripts/cycles_test.gd
 --- 30:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 35:0 Method string_builder_cycle ---
@@ -2250,6 +1317,7 @@ test_scripts/cycles_test.gd
     effective:    Array
     confidence:   High
     nullable:     no
+    container:    Array[Variant] (homogeneous)
 
 --- 46:1 Iterator i ---
   Type Info:
@@ -2372,10 +1440,11 @@ test_scripts/cycles_test.gd
 --- 94:1 Variable node ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, Dictionary | int]
+    effective:    Dictionary[String, Dictionary | int]
+    confidence:   Medium
     nullable:     no
+    union:        Dictionary[String, Dictionary|int]
 
 --- 103:0 Method iterator_pattern ---
   Type Info:
@@ -2453,9 +1522,9 @@ test_scripts/cycles_test.gd
 --- 118:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 124:0 Method _reducer ---
@@ -2482,9 +1551,9 @@ test_scripts/cycles_test.gd
 --- 124:19 Parameter item ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
   Parameter Inference:
     inferred:     int
@@ -2520,10 +1589,11 @@ test_scripts/cycles_test.gd
 --- 137:2 Variable old_value ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     Array | int
+    effective:    Array | int
     confidence:   High
     nullable:     no
+    union:        Array|int
 
   Flow Narrowing:
     _reducer():
@@ -3212,12 +2282,12 @@ test_scripts/cyclic_inference.gd
     confidence:   Unknown
     nullable:     no
 
---- 186:3 Variable child_result ---
+--- 185:32 Variable child_result ---
   Type Info:
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 192:0 Method traverse_and_transform ---
@@ -3600,22 +2670,22 @@ test_scripts/cyclic_inference.gd
       114:4 item -> String (base: Variant)
       115:9 item -> String (base: Variant)
     _advance_generator():
-      231:4 current -> int (base: Variant)
-      232:9 current -> int (base: Variant)
-      233:4 current -> float (base: Variant)
-      234:9 current -> float (base: Variant)
-      235:4 current -> String (base: Variant)
-      236:9 current -> String (base: Variant)
+      231:4 current -> int (base: int)
+      232:9 current -> int (base: int)
+      233:4 current -> float (base: float)
+      234:9 current -> float (base: float)
+      235:4 current -> String (base: String)
+      236:9 current -> String (base: String)
     parse_expr():
       246:4 result -> null (base: null)
       258:5 right -> null (base: null)
-      261:5 op -> String (base: Variant)
+      261:5 op -> String (base: String)
     parse_term():
       273:4 result -> null (base: null)
       285:5 right -> null (base: null)
-      288:5 op -> String (base: Variant)
+      288:5 op -> String (base: String)
     parse_factor():
-      304:4 token -> String (base: Variant)
+      304:4 token -> String (base: String)
       306:5 inner -> null (base: null)
 
 
@@ -3866,9 +2936,9 @@ test_scripts/diagnostics_issues.gd
 --- 98:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 103:0 Method duplicate_keys ---
@@ -6180,9 +5250,9 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 --- 95:1 Variable mutable_var ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 101:0 Method test_gd5010_invalid ---
@@ -7680,7 +6750,7 @@ test_scripts/duck_caller.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 
@@ -7825,7 +6895,6 @@ test_scripts/duck_typing_advanced.gd
     effective:    Array
     confidence:   High
     nullable:     no
-    container:    Array[void] (homogeneous)
 
 --- 35:1 Iterator t ---
   Type Info:
@@ -7981,9 +7050,9 @@ test_scripts/duck_typing_advanced.gd
 --- 84:1 Variable nearest ---
   Type Info:
     declared:     (none)
-    inferred:     Node
-    effective:    Node
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 85:1 Variable nearest_dist ---
@@ -7997,9 +7066,9 @@ test_scripts/duck_typing_advanced.gd
 --- 87:1 Iterator c ---
   Type Info:
     declared:     (none)
-    inferred:     Node
-    effective:    Node
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 88:2 Variable d ---
@@ -8736,6 +7805,7 @@ test_scripts/dynamic_dispatch.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
+    container:    Dictionary[Variant, Variant] (homogeneous)
 
 --- 38:1 Iterator method ---
   Type Info:
@@ -9069,9 +8139,9 @@ test_scripts/dynamic_dispatch.gd
 --- 102:1 Variable handler_method ---
   Type Info:
     declared:     (none)
-    inferred:     String
-    effective:    String
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 113:0 Method broadcast_message ---
@@ -9113,6 +8183,7 @@ test_scripts/dynamic_dispatch.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
+    container:    Dictionary[Variant, Variant] (homogeneous)
 
 --- 115:1 Iterator target ---
   Type Info:
@@ -9178,7 +8249,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Unknown
     nullable:     no
 
---- 132:3 Variable value ---
+--- 131:36 Variable value ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -9289,7 +8360,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Unknown
     nullable:     no
 
---- 168:3 Variable value ---
+--- 167:16 Variable value ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -9701,7 +8772,7 @@ test_scripts/dynamic_dispatch.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 291:0 Method create_builder ---
@@ -9811,6 +8882,7 @@ test_scripts/dynamic_dispatch.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
+    container:    Dictionary[Variant, Variant] (homogeneous)
 
 --- 311:2 Iterator handler_name ---
   Type Info:
@@ -9820,7 +8892,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
 
---- 312:3 Variable handler ---
+--- 311:49 Variable handler ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -10300,10 +9372,10 @@ test_scripts/dynamic_dispatch.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 404:3 Iterator advice ---
+--- 403:51 Iterator advice ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -10332,15 +9404,15 @@ test_scripts/dynamic_dispatch.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 412:3 Variable proceed ---
+--- 411:32 Variable proceed ---
   Type Info:
     declared:     (none)
-    inferred:     Callable()
-    effective:    Callable()
-    confidence:   Medium
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 421:1 Iterator pattern ---
@@ -10348,10 +9420,10 @@ test_scripts/dynamic_dispatch.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 423:3 Iterator advice ---
+--- 422:32 Iterator advice ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -10553,7 +9625,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 51:0 Method get_entity ---
@@ -10738,7 +9810,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 93:0 Method query_entities ---
@@ -10791,7 +9863,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 109:0 Method query_with_components ---
@@ -10836,7 +9908,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 115:2 Variable comps ---
@@ -10852,7 +9924,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 123:0 Method query_by_tag ---
@@ -10887,7 +9959,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 131:0 Method query_by_predicate ---
@@ -10924,7 +9996,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 135:2 Variable entity ---
@@ -11242,10 +10314,10 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 198:3 Variable transform ---
+--- 197:20 Variable transform ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11253,7 +10325,7 @@ test_scripts/ecs_like_system.gd
     confidence:   Unknown
     nullable:     no
 
---- 199:3 Variable velocity ---
+--- 197:20 Variable velocity ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11325,10 +10397,10 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 212:3 Variable health ---
+--- 211:25 Variable health ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11392,10 +10464,10 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 223:3 Variable ai ---
+--- 222:25 Variable transform ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11403,7 +10475,7 @@ test_scripts/ecs_like_system.gd
     confidence:   Unknown
     nullable:     no
 
---- 224:3 Variable transform ---
+--- 222:25 Variable ai ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11411,15 +10483,15 @@ test_scripts/ecs_like_system.gd
     confidence:   Unknown
     nullable:     no
 
---- 227:4 Variable context ---
+--- 226:40 Variable context ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
---- 233:4 Variable new_state ---
+--- 226:40 Variable new_state ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11529,7 +10601,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 256:2 Variable component ---
@@ -11574,7 +10646,7 @@ test_scripts/ecs_like_system.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Variant]
+    container:    Dictionary[String, Dictionary] (homogeneous)
   Parameter Inference:
     inferred:     Variant
     confidence:   Unknown
@@ -11691,7 +10763,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 312:2 Variable transform ---
@@ -11805,7 +10877,7 @@ test_scripts/ecs_like_system.gd
     confidence:   Certain
     nullable:     no
 
---- 334:3 Variable cell ---
+--- 333:79 Variable cell ---
   Type Info:
     declared:     (none)
     inferred:     Vector2i
@@ -11813,15 +10885,15 @@ test_scripts/ecs_like_system.gd
     confidence:   High
     nullable:     no
 
---- 336:4 Iterator eid ---
+--- 335:29 Iterator eid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
---- 337:5 Variable transform ---
+--- 336:34 Variable transform ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -11844,14 +10916,14 @@ test_scripts/ecs_like_system.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Variant]
+    container:    Dictionary[String, Dictionary] (homogeneous)
 
 --- 353:1 Iterator eid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 354:2 Variable entity ---
@@ -11867,7 +10939,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 363:2 Iterator eid ---
@@ -11875,7 +10947,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 368:0 Method deserialize_world ---
@@ -11893,7 +10965,7 @@ test_scripts/ecs_like_system.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Variant]
+    container:    Dictionary[String, Dictionary] (homogeneous)
   Parameter Inference:
     inferred:     Dictionary[String, Variant] | Object
     confidence:   High
@@ -11913,7 +10985,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 376:2 Variable edata ---
@@ -11937,7 +11009,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 384:2 Iterator eid_str ---
@@ -11948,12 +11020,12 @@ test_scripts/ecs_like_system.gd
     confidence:   Unknown
     nullable:     no
 
---- 385:3 Variable eid ---
+--- 384:47 Variable eid ---
   Type Info:
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 391:0 Method debug_entity ---
@@ -11996,7 +11068,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 407:0 Method debug_statistics ---
@@ -12021,7 +11093,7 @@ test_scripts/ecs_like_system.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
   Flow Narrowing:
@@ -12880,8 +11952,8 @@ test_scripts/formatting_issues.gd
 --- 77:1 Variable filtered ---
   Type Info:
     declared:     (none)
-    inferred:     Array
-    effective:    Array
+    inferred:     Array[int]
+    effective:    Array[int]
     confidence:   High
     nullable:     no
 
@@ -13453,7 +12525,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 129:0 Method get_dialog_choices ---
@@ -13525,7 +12597,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 154:2 Variable op ---
@@ -13549,7 +12621,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 177:0 Method select_choice ---
@@ -13785,7 +12857,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 252:0 Method _complete_quest ---
@@ -13955,7 +13027,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 300:1 Variable conditions ---
@@ -14044,7 +13116,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 325:1 Variable effect_func ---
@@ -14135,9 +13207,9 @@ test_scripts/game_patterns.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, int] (homogeneous)
+    container:    Dictionary[String, Variant]
 
---- 353:3 Variable dmg ---
+--- 352:28 Variable dmg ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -14145,7 +13217,7 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
 
---- 357:4 Variable base ---
+--- 356:26 Variable total ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -14153,7 +13225,7 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
 
---- 358:4 Variable scaling ---
+--- 356:26 Variable base ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -14161,7 +13233,7 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
 
---- 359:4 Variable total ---
+--- 356:26 Variable scaling ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -14169,7 +13241,7 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
 
---- 360:4 Iterator stat ---
+--- 356:26 Iterator stat ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -14211,6 +13283,7 @@ test_scripts/game_patterns.gd
     effective:    Array
     confidence:   High
     nullable:     no
+    container:    Array[Variant] (homogeneous)
 
 --- 383:1 Iterator i ---
   Type Info:
@@ -14510,7 +13583,7 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
 
---- 467:3 Variable item ---
+--- 466:21 Variable item ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -14518,12 +13591,12 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
 
---- 472:3 Variable count ---
+--- 466:21 Variable count ---
   Type Info:
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 481:1 Variable result ---
@@ -14776,29 +13849,29 @@ test_scripts/game_patterns.gd
     get_dialog_choices():
       130:4 current_node -> null (base: null)
     _check_choice_condition():
-      145:4 condition -> null (base: Variant)
-      148:4 condition -> String (base: Variant)
-      149:30 condition -> String (base: Variant)
-      150:4 condition -> Callable (base: Variant)
+      145:4 condition -> null (base: null)
+      148:4 condition -> String (base: String)
+      149:30 condition -> String (base: String)
+      150:4 condition -> Callable (base: Callable)
       151:9 condition -> Callable (base: Variant)
-      152:4 condition -> Dictionary (base: Variant)
+      152:4 condition -> Dictionary (base: Dictionary)
       153:17 condition -> Dictionary (base: Variant)
       154:11 condition -> Dictionary (base: Variant)
       155:14 condition -> Dictionary (base: Variant)
     can_use_ability():
-      302:5 condition -> Callable (base: Variant)
-      303:10 condition -> Callable (base: Variant)
+      302:5 condition -> Callable (base: Callable)
+      303:10 condition -> Callable (base: Callable)
     use_ability():
-      328:4 effect_func -> Callable (base: Variant)
-      329:11 effect_func -> Callable (base: Variant)
-      330:6 effect_func -> Dictionary (base: Variant)
-      331:34 effect_func -> Dictionary (base: Variant)
+      328:4 effect_func -> Callable (base: Callable)
+      329:11 effect_func -> Callable (base: Callable)
+      330:6 effect_func -> Dictionary (base: Dictionary)
+      331:34 effect_func -> Dictionary (base: Dictionary)
     _apply_effect_template():
-      354:6 dmg -> int (base: Variant)
-      355:30 dmg -> int (base: Variant)
-      356:8 dmg -> Dictionary (base: Variant)
-      357:15 dmg -> Dictionary (base: Variant)
-      358:18 dmg -> Dictionary (base: Variant)
+      354:6 dmg -> int (base: int)
+      355:30 dmg -> int (base: int)
+      356:8 dmg -> Dictionary (base: Dictionary)
+      357:15 dmg -> Dictionary (base: Dictionary)
+      358:18 dmg -> Dictionary (base: Dictionary)
     _matches_filter():
       447:4 item_filter -> String (base: Variant)
       448:42 item_filter -> String (base: Variant)
@@ -14806,12 +13879,12 @@ test_scripts/game_patterns.gd
       450:9 item_filter -> Callable (base: Variant)
     craft():
       469:6 item -> null (base: Variant)
-      482:4 result -> Callable (base: Variant)
-      483:2 result -> Callable (base: Variant)
-      483:11 result -> Callable (base: Variant)
-      484:6 result -> Dictionary (base: Variant)
-      485:2 result -> Dictionary (base: Variant)
-      485:11 result -> Dictionary (base: Variant)
+      482:4 result -> Callable (base: Callable)
+      483:2 result -> Callable (base: Callable)
+      483:11 result -> Callable (base: Callable)
+      484:6 result -> Dictionary (base: Dictionary)
+      485:2 result -> Dictionary (base: Dictionary)
+      485:11 result -> Dictionary (base: Dictionary)
     _serialize_value():
       533:4 value -> Vector2 (base: Variant)
       534:27 value -> Vector2 (base: Variant)
@@ -15381,9 +14454,9 @@ test_scripts/getters_setters.gd
 
   Flow Narrowing:
     test_property_chain():
-      154:4 node -> Node2D (base: Node)
-      156:12 node -> Node2D (base: Node)
-      157:13 node -> Node2D (base: Node)
+      154:4 node -> Node2D (base: Node2D)
+      156:12 node -> Node2D (base: Node2D)
+      157:13 node -> Node2D (base: Node2D)
 
 
 test_scripts/global.gd
@@ -15684,28 +14757,28 @@ test_scripts/inheritance_test.gd
     confidence:   High
     nullable:     no
 
---- 83:3 Variable collider ---
+--- 82:33 Variable collider ---
   Type Info:
     declared:     (none)
-    inferred:     Object
-    effective:    Object
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
---- 84:3 Variable normal ---
+--- 82:33 Variable normal ---
   Type Info:
     declared:     (none)
-    inferred:     Vector2
-    effective:    Vector2
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
---- 85:3 Variable position_coll ---
+--- 82:33 Variable position_coll ---
   Type Info:
     declared:     (none)
-    inferred:     Vector2
-    effective:    Vector2
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 88:0 Method use_node_methods ---
@@ -16568,9 +15641,9 @@ test_scripts/local_variables.gd
 --- 145:1 Variable d ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 150:0 Method type_narrowing_local ---
@@ -16719,13 +15792,13 @@ test_scripts/local_variables.gd
       110:4 input -> int (base: Variant)
       111:9 input -> int (base: Variant)
     variable_with_default():
-      131:4 local -> null (base: Variant)
-      132:2 local -> null (base: Variant)
+      131:4 local -> null (base: null)
+      132:2 local -> null (base: null)
     type_narrowing_local():
-      154:4 result -> Dictionary (base: Variant)
-      156:13 result -> Dictionary (base: Variant)
-      159:4 result -> Array (base: Variant)
-      161:13 result -> Array (base: Variant)
+      154:4 result -> Dictionary (base: Dictionary)
+      156:13 result -> Dictionary (base: Dictionary)
+      159:4 result -> Array (base: Array)
+      161:13 result -> Array (base: Array)
 
 
 test_scripts/method_chains.gd
@@ -16759,8 +15832,8 @@ test_scripts/method_chains.gd
 --- 13:1 Variable result ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -16840,7 +15913,7 @@ test_scripts/method_chains.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 31:0 Method string_chain ---
@@ -16869,8 +15942,8 @@ test_scripts/method_chains.gd
 --- 33:1 Variable result ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -16978,8 +16051,8 @@ test_scripts/method_chains.gd
 --- 64:1 Variable result ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -17134,13 +16207,13 @@ test_scripts/method_chains.gd
   Flow Narrowing:
     optional_chain_pattern():
       47:4 data -> null (base: Variant)
-      51:4 level1 -> null (base: Variant)
-      55:4 level2 -> null (base: Variant)
+      51:4 level1 -> null (base: null)
+      55:4 level2 -> null (base: null)
     node_chain():
-      92:4 parent -> null (base: Node)
-      96:4 grandparent -> null (base: Node)
-      99:4 grandparent -> Node2D (base: Node)
-      100:9 grandparent -> Node2D (base: Node)
+      92:4 parent -> null (base: null)
+      96:4 grandparent -> null (base: null)
+      99:4 grandparent -> Node2D (base: Node2D)
+      100:9 grandparent -> Node2D (base: Node2D)
     mixed_chain():
       107:4 input -> Dictionary (base: Variant)
       108:9 input -> Dictionary (base: Variant)
@@ -17274,7 +16347,7 @@ test_scripts/neutral_ui_caller.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 16:0 Method update_single ---
@@ -17290,7 +16363,7 @@ test_scripts/neutral_ui_caller.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
   Parameter Inference:
     inferred:     UIPanelA | UIPanelB
@@ -17745,7 +16818,7 @@ test_scripts/polymorphic_interfaces.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 40:2 Variable before ---
@@ -17788,7 +16861,7 @@ test_scripts/polymorphic_interfaces.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 52:0 Method update_all ---
@@ -17815,7 +16888,7 @@ test_scripts/polymorphic_interfaces.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 59:0 Variable damage_calculator ---
@@ -18303,12 +17376,12 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Unknown
     nullable:     no
 
---- 184:3 Variable found ---
+--- 183:40 Variable found ---
   Type Info:
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 191:0 Method collect_from_tree ---
@@ -18504,7 +17577,7 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Certain
     nullable:     no
 
---- 238:3 Variable decorator ---
+--- 237:49 Variable decorator ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -18512,7 +17585,7 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Certain
     nullable:     no
 
---- 239:3 Variable next_func ---
+--- 237:49 Variable next_func ---
   Type Info:
     declared:     (none)
     inferred:     Callable
@@ -18903,7 +17976,6 @@ test_scripts/polymorphic_interfaces.gd
     effective:    Array
     confidence:   High
     nullable:     no
-    container:    Array[null] (homogeneous)
 
 --- 343:1 Iterator i ---
   Type Info:
@@ -19878,9 +18950,9 @@ test_scripts/rename_test.gd
 --- 94:1 Variable complex ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 105:0 Method test_rename_in_array_operations ---
@@ -19903,9 +18975,9 @@ test_scripts/rename_test.gd
 --- 114:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 121:0 Method calculate_with_factor ---
@@ -20633,21 +19705,21 @@ test_scripts/scene_nodes.gd
 
   Flow Narrowing:
     _ready():
-      47:4 sprite_node -> Sprite2D (base: Node)
-      48:2 sprite_node -> Sprite2D (base: Node)
+      47:4 sprite_node -> Sprite2D (base: Sprite2D)
+      48:2 sprite_node -> Sprite2D (base: Sprite2D)
     get_children_of_type():
       85:5 child -> Sprite2D (base: Node)
       86:17 child -> Sprite2D (base: Node)
     get_parent_of_type():
-      111:5 current -> Control (base: Node)
-      112:10 current -> Control (base: Node)
+      111:5 current -> Control (base: Control)
+      112:10 current -> Control (base: Control)
     process_all_children():
       151:5 child -> Node2D (base: Node)
       152:3 child -> Node2D (base: Node)
       153:7 child -> Control (base: Node)
       154:3 child -> Control (base: Node)
     access_sibling():
-      185:4 parent -> null (base: Node)
+      185:4 parent -> null (base: null)
 
 
 test_scripts/scene_references.gd
@@ -21608,7 +20680,7 @@ test_scripts/semantic_validation_demo.gd
     confidence:   Certain
     nullable:     no
 
---- 300:3 Variable _keys ---
+--- 298:28 Variable _keys ---
   Type Info:
     declared:     (none)
     inferred:     Array
@@ -21690,8 +20762,8 @@ test_scripts/semantic_validation_demo.gd
 
   Flow Narrowing:
     member_access_validation_demo():
-      209:4 value -> Node2D (base: null)
-      210:11 value -> Node2D (base: null)
+      209:4 value -> Node2D (base: Node2D)
+      210:11 value -> Node2D (base: Node2D)
     complex_scenario_3():
       294:5 entity -> Node2D (base: Variant)
       296:3 entity -> Node2D (base: Variant)
@@ -22382,7 +21454,7 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
 
---- 167:3 Variable result ---
+--- 166:44 Variable result ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary
@@ -22406,7 +21478,7 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
 
---- 175:3 Variable result ---
+--- 174:26 Variable result ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary
@@ -22732,7 +21804,7 @@ test_scripts/signal_callback_chains.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 260:1 Method emit_error ---
@@ -22759,7 +21831,7 @@ test_scripts/signal_callback_chains.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 266:1 Method emit_complete ---
@@ -22775,7 +21847,7 @@ test_scripts/signal_callback_chains.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 272:1 Method map ---
@@ -23704,7 +22776,7 @@ test_scripts/signal_callback_chains.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 487:0 Class ParallelCallback ---
@@ -23755,7 +22827,7 @@ test_scripts/signal_callback_chains.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 497:0 Class ConditionalCallback ---
@@ -23876,7 +22948,7 @@ test_scripts/signal_callback_chains.gd
     confidence:   Medium
     nullable:     no
 
---- 518:3 Variable result ---
+--- 517:31 Variable result ---
   Type Info:
     declared:     (none)
     inferred:     Dictionary
@@ -25021,24 +24093,24 @@ test_scripts/standard_methods.gd
 --- 32:1 Variable duplicated ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
+    inferred:     Array[int]
+    effective:    Array[int]
     confidence:   High
     nullable:     no
 
 --- 33:1 Variable sliced ---
   Type Info:
     declared:     (none)
-    inferred:     Array
-    effective:    Array
+    inferred:     Array[int]
+    effective:    Array[int]
     confidence:   High
     nullable:     no
 
 --- 34:1 Variable filtered ---
   Type Info:
     declared:     (none)
-    inferred:     Array
-    effective:    Array
+    inferred:     Array[int]
+    effective:    Array[int]
     confidence:   High
     nullable:     no
 
@@ -25158,16 +24230,16 @@ test_scripts/standard_methods.gd
 --- 61:1 Variable find_key ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
+    inferred:     String
+    effective:    String
+    confidence:   High
     nullable:     no
 
 --- 64:1 Variable duplicated ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
+    inferred:     Array[int]
+    effective:    Array[int]
     confidence:   High
     nullable:     no
 
@@ -25198,8 +24270,8 @@ test_scripts/standard_methods.gd
 --- 76:1 Variable length ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -25414,8 +24486,8 @@ test_scripts/standard_methods.gd
 --- 119:1 Variable length ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -25590,8 +24662,8 @@ test_scripts/standard_methods.gd
 --- 152:1 Variable length ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -26340,7 +25412,7 @@ test_scripts/todo_examples.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 31:1 Variable result ---
@@ -26364,7 +25436,7 @@ test_scripts/todo_examples.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
   Parameter Inference:
     inferred:     Variant
@@ -26400,7 +25472,7 @@ test_scripts/todo_examples.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 68:0 Method export_to_json ---
@@ -26433,7 +25505,7 @@ test_scripts/todo_examples.gd
 
   Flow Narrowing:
     validate_data():
-      63:5 item -> null (base: Variant)
+      63:5 item -> null (base: null)
 
 
 test_scripts/type_guards.gd
@@ -26487,7 +25559,7 @@ test_scripts/type_guards.gd
     methods:      has(-1), keys(-1)
     properties:   has, keys
 
---- 35:3 Variable type_val ---
+--- 34:22 Variable type_val ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -26865,7 +25937,7 @@ test_scripts/type_guards.gd
     confidence:   Unknown
     nullable:     no
 
---- 198:3 Variable name ---
+--- 197:23 Variable name ---
   Type Info:
     declared:     (none)
     inferred:     Variant
@@ -27071,8 +26143,8 @@ test_scripts/type_guards.gd
       32:4 data -> Dictionary (base: Variant)
       34:5 data -> Dictionary (base: Variant)
       35:18 data -> Dictionary (base: Variant)
-      36:6 type_val -> String (base: Variant)
-      38:11 type_val -> String (base: Variant)
+      36:6 type_val -> String (base: String)
+      38:11 type_val -> String (base: String)
     type_guard_with_and():
       46:4 value -> Array (base: Variant)
       46:23 value -> Array (base: Variant)
@@ -27115,10 +26187,10 @@ test_scripts/type_guards.gd
       195:4 value -> Dictionary (base: Variant)
       197:5 value -> Dictionary (base: Variant)
       198:14 value -> Dictionary (base: Variant)
-      199:6 name -> String (base: Variant)
-      200:24 name -> String (base: Variant)
-      201:8 name -> int (base: Variant)
-      202:31 name -> int (base: Variant)
+      199:6 name -> String (base: String)
+      200:24 name -> String (base: String)
+      201:8 name -> int (base: int)
+      202:31 name -> int (base: int)
     guard_with_method_call():
       209:4 value -> Array (base: Variant)
       209:23 value -> Array (base: Variant)
@@ -27327,8 +26399,8 @@ test_scripts/type_inference.gd
 --- 51:1 Variable step3 ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     float
+    effective:    float
     confidence:   High
     nullable:     no
 
@@ -27360,8 +26432,8 @@ test_scripts/type_inference.gd
 --- 61:1 Variable filtered ---
   Type Info:
     declared:     (none)
-    inferred:     Array
-    effective:    Array
+    inferred:     Array[int]
+    effective:    Array[int]
     confidence:   High
     nullable:     no
 
@@ -27376,9 +26448,9 @@ test_scripts/type_inference.gd
 --- 62:1 Variable mapped ---
   Type Info:
     declared:     (none)
-    inferred:     Array
-    effective:    Array
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 62:32 Parameter x ---
@@ -27394,7 +26466,7 @@ test_scripts/type_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Medium
+    confidence:   Unknown
     nullable:     no
 
 --- 63:34 Parameter a ---
@@ -27552,9 +26624,9 @@ test_scripts/type_inference.gd
 --- 117:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 120:1 Iterator key ---
@@ -27562,7 +26634,7 @@ test_scripts/type_inference.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Certain
+    confidence:   Unknown
     nullable:     no
 
 --- 124:0 Method test_dictionary_access ---
@@ -27585,17 +26657,17 @@ test_scripts/type_inference.gd
 --- 128:1 Variable name_val ---
   Type Info:
     declared:     (none)
-    inferred:     String
-    effective:    String
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 129:1 Variable value_val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Medium
     nullable:     no
 
 --- 134:0 Method test_call_inference ---
@@ -27721,25 +26793,25 @@ test_scripts/type_inference.gd
 --- 160:1 Variable int_elem ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 161:1 Variable float_elem ---
   Type Info:
     declared:     (none)
-    inferred:     float
-    effective:    float
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 162:1 Variable string_elem ---
   Type Info:
     declared:     (none)
-    inferred:     String
-    effective:    String
-    confidence:   High
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 167:0 Method test_complex_expression_inference ---
@@ -28498,7 +27570,7 @@ test_scripts/union_returns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   High
     nullable:     no
 
 --- 183:30 MatchCaseBinding c ---
@@ -28506,7 +27578,7 @@ test_scripts/union_returns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   High
     nullable:     no
 
 --- 185:3 MatchCaseBinding first ---
@@ -28514,7 +27586,7 @@ test_scripts/union_returns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   High
     nullable:     no
 
 --- 187:2 MatchCaseBinding x ---
@@ -28644,7 +27716,7 @@ test_scripts/union_returns.gd
       42:4 input -> int (base: Variant)
       42:21 input -> int (base: Variant)
     load_resource():
-      67:4 resource -> null (base: Resource)
+      67:4 resource -> null (base: null)
     process_input():
       75:4 input -> int (base: Variant)
       76:9 input -> int (base: Variant)
@@ -28675,7 +27747,7 @@ test_scripts/union_returns.gd
       126:4 child -> String (base: String)
       127:35 child -> String (base: String)
     callback_return():
-      134:4 result -> null (base: Variant)
+      134:4 result -> null (base: null)
     exception_pattern():
       143:6 data -> Dictionary (base: Variant)
       144:11 data -> Dictionary (base: Variant)
@@ -28798,9 +27870,9 @@ test_scripts/union_types_complex.gd
 --- 42:1 Iterator p ---
   Type Info:
     declared:     (none)
-    inferred:     Node
-    effective:    Node
-    confidence:   Certain
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
     nullable:     no
 
 --- 48:0 Method get_position_or_null ---
@@ -28971,7 +28043,7 @@ test_scripts/union_types_complex.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   High
     nullable:     no
 
 --- 118:3 MatchCaseBinding first ---
@@ -28979,7 +28051,7 @@ test_scripts/union_types_complex.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   High
     nullable:     no
 
 --- 120:2 MatchCaseBinding x ---
@@ -29033,6 +28105,7 @@ test_scripts/union_types_complex.gd
     effective:    Array
     confidence:   High
     nullable:     no
+    container:    Array[Variant] (homogeneous)
 
 --- 140:1 Iterator item ---
   Type Info:
@@ -29346,6 +28419,7 @@ test_scripts/union_types_complex.gd
     effective:    Array
     confidence:   High
     nullable:     no
+    container:    Array[Variant] (homogeneous)
 
 --- 243:1 Iterator item ---
   Type Info:
@@ -29420,6 +28494,7 @@ test_scripts/union_types_complex.gd
     effective:    Array
     confidence:   High
     nullable:     no
+    container:    Array[Variant] (homogeneous)
 
 --- 257:1 Iterator item ---
   Type Info:
@@ -29860,10 +28935,10 @@ test_scripts/union_types_complex.gd
       157:4 item -> Dictionary (base: Variant)
       158:9 item -> Dictionary (base: Variant)
     safe_get_nested():
-      190:5 current -> null (base: Variant)
-      192:5 current -> Dictionary (base: Variant)
-      193:3 current -> Dictionary (base: Variant)
-      193:13 current -> Dictionary (base: Variant)
+      190:5 current -> null (base: null)
+      192:5 current -> Dictionary (base: Dictionary)
+      193:3 current -> Dictionary (base: Dictionary)
+      193:13 current -> Dictionary (base: Dictionary)
       194:7 current -> Array (base: Variant)
       194:28 key -> int (base: Variant)
       195:6 key -> int (base: Variant)
@@ -29873,7 +28948,7 @@ test_scripts/union_types_complex.gd
       197:13 current -> Array (base: Variant)
       197:21 key -> int (base: Variant)
     map_with_fallback():
-      245:5 transformed -> null (base: Variant)
+      245:5 transformed -> null (base: null)
     _compute_result():
       302:4 params -> String (base: Variant)
       303:9 params -> String (base: Variant)
@@ -29890,15 +28965,15 @@ test_scripts/union_types_complex.gd
       348:8 data -> Dictionary (base: Variant)
       356:49 type_field -> String (base: Variant)
     type_flow_test_method():
-      379:4 local -> null (base: Variant)
-      383:4 local -> Dictionary (base: Variant)
-      385:14 local -> Dictionary (base: Variant)
-      387:13 local -> Dictionary (base: Variant)
-      389:14 local -> Dictionary (base: Variant)
+      379:4 local -> null (base: null)
+      383:4 local -> Dictionary (base: Dictionary)
+      385:14 local -> Dictionary (base: Dictionary)
+      387:13 local -> Dictionary (base: Dictionary)
+      389:14 local -> Dictionary (base: Dictionary)
       393:4 local -> Array (base: Variant)
       393:23 local -> Array (base: Variant)
       395:9 local -> Array (base: Variant)
-      403:4 local -> String (base: Variant)
+      403:4 local -> String (base: String)
 
 
 test_scripts/unrelated_class.gd
@@ -30149,4 +29224,4 @@ test_scripts/validation_edge_cases.gd
     nullable:     no
 
 
-# Summary: 58 files analyzed
+# Summary: 57 files analyzed

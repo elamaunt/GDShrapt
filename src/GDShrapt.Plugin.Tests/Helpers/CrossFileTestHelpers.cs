@@ -126,7 +126,7 @@ public static class CrossFileTestHelpers
                     FileName = Path.GetFileName(scriptFile.FullPath ?? "unknown"),
                     Line = GetLine(symbolInfo.DeclarationNode),
                     Column = GetColumn(symbolInfo.DeclarationNode),
-                    Node = symbolInfo.DeclarationNode
+                    Node = symbolInfo.DeclarationNode.ToHandle()
                 });
             }
 
@@ -139,9 +139,9 @@ public static class CrossFileTestHelpers
                     Kind = DetermineReferenceKind(reference),
                     FilePath = scriptFile.FullPath,
                     FileName = Path.GetFileName(scriptFile.FullPath ?? "unknown"),
-                    Line = GetLine(reference.ReferenceNode),
-                    Column = GetColumn(reference.ReferenceNode),
-                    Node = reference.ReferenceNode
+                    Line = reference.ReferenceNode.StartLine,
+                    Column = reference.ReferenceNode.StartColumn,
+                    Node = default
                 });
             }
         }
@@ -180,7 +180,7 @@ public static class CrossFileTestHelpers
                     FileName = Path.GetFileName(scriptFile.FullPath ?? "unknown"),
                     Line = usage.Line,
                     Column = usage.Column,
-                    Node = usage.Node
+                    Node = usage.Node.ToHandle()
                 });
             }
         }
@@ -225,12 +225,8 @@ public static class CrossFileTestHelpers
 
     private static CrossFileReferenceKind DetermineReferenceKind(GDReference reference)
     {
-        var node = reference.ReferenceNode;
-        if (node == null)
+        if (reference.ReferenceNode.IsEmpty)
             return CrossFileReferenceKind.Read;
-
-        if (node.Parent is GDCallExpression)
-            return CrossFileReferenceKind.Call;
 
         if (reference.IsWrite)
             return CrossFileReferenceKind.Write;
@@ -254,7 +250,7 @@ public static class CrossFileTestHelpers
         if (node == null)
             return 0;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartLine ?? 0;
     }
 
@@ -263,7 +259,7 @@ public static class CrossFileTestHelpers
         if (node == null)
             return 0;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartColumn ?? 0;
     }
 }
@@ -279,7 +275,7 @@ public class CrossFileReference
     public string? FileName { get; set; }
     public int Line { get; set; }
     public int Column { get; set; }
-    public GDNode? Node { get; set; }
+    public GDNodeHandle Node { get; set; }
 
     public override string ToString()
     {

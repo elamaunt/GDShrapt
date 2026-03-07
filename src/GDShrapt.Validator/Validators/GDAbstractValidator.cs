@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
 
@@ -15,6 +16,7 @@ namespace GDShrapt.Reader
     {
         private bool _isInAbstractMethod;
         private GDMethodDeclaration _currentMethod;
+        private readonly HashSet<string> _abstractInnerClasses = new HashSet<string>();
 
         public GDAbstractValidator(GDValidationContext context) : base(context)
         {
@@ -33,6 +35,16 @@ namespace GDShrapt.Reader
         public override void Visit(GDInnerClassDeclaration innerClass)
         {
             ValidateAbstractInnerClass(innerClass);
+
+            // Track abstract inner classes for instantiation checks
+            var className = innerClass.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(className))
+            {
+                bool isAbstract = innerClass.AttributesDeclaredBefore
+                    .Any(attr => attr.Attribute?.IsAbstract() == true);
+                if (isAbstract)
+                    _abstractInnerClasses.Add(className);
+            }
         }
 
         public override void Visit(GDMethodDeclaration method)
@@ -167,16 +179,12 @@ namespace GDShrapt.Reader
                     var symbol = LookupSymbol(className);
                     if (symbol?.Kind == GDSymbolKind.Class)
                     {
-                        // Check if the class has @abstract annotation
-                        if (symbol.Declaration is GDInnerClassDeclaration innerClass)
+                        if (_abstractInnerClasses.Contains(className))
                         {
-                            if (innerClass.AttributesDeclaredBefore.Any(attr => attr.Attribute?.IsAbstract() == true))
-                            {
-                                ReportError(
-                                    GDDiagnosticCode.AbstractClassInstantiation,
-                                    $"Cannot instantiate abstract class '{className}'",
-                                    callExpr);
-                            }
+                            ReportError(
+                                GDDiagnosticCode.AbstractClassInstantiation,
+                                $"Cannot instantiate abstract class '{className}'",
+                                callExpr);
                         }
                     }
                 }

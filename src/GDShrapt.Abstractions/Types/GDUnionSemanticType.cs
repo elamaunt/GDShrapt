@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -67,11 +66,6 @@ public class GDUnionSemanticType : GDSemanticType
         if (nonNull.Count == 1)
             return nonNull[0];
         return new GDUnionSemanticType(nonNull);
-    }
-
-    public override GDTypeNode? ToTypeNode()
-    {
-        return null;
     }
 
     public override bool Equals(object? obj)

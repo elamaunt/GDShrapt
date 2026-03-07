@@ -134,22 +134,9 @@ internal static class GDStaticStringExtractor
             if (scopes != null)
             {
                 var symbol = scopes.Lookup(varName);
-                if (symbol?.Declaration is GDVariableDeclaration varDecl)
+                if (symbol != null && symbol.IsConst && !string.IsNullOrEmpty(symbol.TypeName))
                 {
-                    // Check if it's a const or type-inferred variable
-                    if (varDecl.ConstKeyword != null)
-                        return varDecl.Initializer;
-
-                    // Type-inferred: var name := "value"
-                    if (varDecl.TypeColon != null && varDecl.Type == null)
-                        return varDecl.Initializer;
-                }
-
-                if (symbol?.Declaration is GDVariableDeclarationStatement varStmt)
-                {
-                    // Type-inferred local: var name := "value" (Colon present, Type is null)
-                    if (varStmt.Colon != null && varStmt.Type == null)
-                        return varStmt.Initializer;
+                    return null;
                 }
             }
 

@@ -1095,6 +1095,11 @@ namespace GDShrapt.Reader
                 if (token is GDNode node)
                     node.Form.Freeze();
             }
+
+            // Cache leaf tokens on the owner node after children are frozen
+            _owner._cachedFirstLeafToken = _owner.FindFirstLeafToken();
+            _owner._cachedLastLeafToken = _owner.FindLastLeafToken();
+            _owner._leafTokensCached = true;
         }
 
         private GDSyntaxToken[] BuildSnapshot()

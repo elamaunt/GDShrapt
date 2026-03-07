@@ -69,7 +69,7 @@ internal class GDArgumentInfo
         IsHighConfidence = isHighConfidence;
         ExpressionText = expression?.ToString() ?? "";
 
-        var token = expression?.AllTokens.FirstOrDefault();
+        var token = expression?.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }
@@ -93,7 +93,7 @@ internal class GDArgumentInfo
         SourceVariableName = sourceVariableName;
         ExpressionText = expression?.ToString() ?? "";
 
-        var token = expression?.AllTokens.FirstOrDefault();
+        var token = expression?.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }

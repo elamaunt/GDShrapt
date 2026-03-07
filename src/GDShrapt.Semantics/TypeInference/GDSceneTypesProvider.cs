@@ -1327,7 +1327,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
         return fullPath;
     }
 
-    public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+    public object? GetConstantValue(string typeName, string constantName) => null;
 
     #endregion
 

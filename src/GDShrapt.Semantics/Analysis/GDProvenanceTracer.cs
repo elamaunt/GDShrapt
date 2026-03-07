@@ -39,7 +39,7 @@ public static class GDProvenanceTracer
                     ?.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(collectionName))
                 {
-                    var forLine = (forStmt.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                    var forLine = (forStmt.FirstLeafToken?.StartLine ?? 0) + 1;
                     var innerChain = TraceContainerOrigin(
                         project, projectModel, runtimeProvider,
                         callSiteFile, enclosingType, collectionName, maxDepth - 1);
@@ -60,7 +60,7 @@ public static class GDProvenanceTracer
                     ?.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(collectionName))
                 {
-                    var forLine = (forStmt.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                    var forLine = (forStmt.FirstLeafToken?.StartLine ?? 0) + 1;
                     var innerChain = TraceContainerOrigin(
                         project, projectModel, runtimeProvider,
                         callSiteFile, enclosingType, collectionName, maxDepth - 1);
@@ -239,13 +239,12 @@ public static class GDProvenanceTracer
 
         foreach (var usage in profile.ValueUsages)
         {
-            if (usage.Node == null) continue;
+            if (usage.Node.IsEmpty) continue;
             if (usage.Kind != GDContainerUsageKind.Append
                 && usage.Kind != GDContainerUsageKind.PushBack
                 && usage.Kind != GDContainerUsageKind.PushFront) continue;
 
-            var callNode = usage.Node is GDCallExpression ce
-                ? ce : FindParentOfType<GDCallExpression>(usage.Node);
+            var callNode = FindCallExpressionAtLine(file, usage.Node.StartLine);
             if (callNode == null) continue;
 
             var args = callNode.Parameters?.ToList();
@@ -255,7 +254,7 @@ public static class GDProvenanceTracer
             var appendedVarName = appendedIdent.Identifier?.Sequence;
             if (string.IsNullOrEmpty(appendedVarName)) continue;
 
-            var method = FindEnclosingMethod(usage.Node);
+            var method = FindMethodAtLine(file, usage.Node.StartLine + 1);
             if (method == null) continue;
 
             var paramIdx = FindParameterIndex(method, appendedVarName);
@@ -278,7 +277,7 @@ public static class GDProvenanceTracer
                         var paramType = signalParams[paramIdx];
                         if (!string.IsNullOrEmpty(paramType) && paramType != "Variant")
                         {
-                            var usageLine = (usage.Node.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                            var usageLine = usage.Node.StartLine + 1;
                             chain.Add(new GDCallSiteProvenanceEntry(
                                 file.FullPath ?? "", usageLine,
                                 $"{containerVarName}.append({appendedVarName}) " +
@@ -409,6 +408,13 @@ public static class GDProvenanceTracer
                 return method;
         }
         return null;
+    }
+
+    internal static GDCallExpression? FindCallExpressionAtLine(GDScriptFile file, int line0Based)
+    {
+        if (file.Class == null) return null;
+        return file.Class.AllNodes.OfType<GDCallExpression>()
+            .FirstOrDefault(c => c.StartLine == line0Based);
     }
 
     internal static GDForStatement? FindForStatementAtLine(GDScriptFile file, string varName, int line1Based)

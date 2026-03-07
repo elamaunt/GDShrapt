@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -53,8 +51,6 @@ public class GDTypeVariableSemanticType : GDSemanticType
 
         return false;
     }
-
-    public override GDTypeNode? ToTypeNode() => null;
 
     public override bool Equals(object? obj)
     {

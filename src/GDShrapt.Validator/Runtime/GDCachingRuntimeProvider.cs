@@ -247,9 +247,9 @@ namespace GDShrapt.Reader
             return _inner.GetAvoidanceLayerDetails();
         }
 
-        public GDExpression GetConstantInitializer(string typeName, string constantName)
+        public object? GetConstantValue(string typeName, string constantName)
         {
-            return _inner.GetConstantInitializer(typeName, constantName);
+            return _inner.GetConstantValue(typeName, constantName);
         }
 
         private static string NormalizeTypeName(string typeName)

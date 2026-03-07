@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Reader
 {
@@ -109,7 +110,7 @@ namespace GDShrapt.Reader
             _context.RegisterFunction(methodName, signature);
 
             // Register as a symbol for scope lookup, report duplicate if already exists
-            if (!_context.TryDeclare(GDSymbol.Method(methodName, methodDeclaration, methodDeclaration.IsStatic)))
+            if (!_context.TryDeclare(GDSymbol.Method(methodName, methodDeclaration.ToHandle(), methodDeclaration.IsStatic)))
             {
                 _context.AddError(
                     GDDiagnosticCode.DuplicateDeclaration,
@@ -134,11 +135,11 @@ namespace GDShrapt.Reader
             bool declared;
             if (variableDeclaration.ConstKeyword != null)
             {
-                declared = _context.TryDeclare(GDSymbol.Constant(varName, variableDeclaration, typeName: typeName, typeNode: typeNode));
+                declared = _context.TryDeclare(GDSymbol.Constant(varName, variableDeclaration.ToHandle(), typeName: typeName));
             }
             else
             {
-                declared = _context.TryDeclare(GDSymbol.Variable(varName, variableDeclaration, typeName: typeName, typeNode: typeNode, isStatic: variableDeclaration.IsStatic));
+                declared = _context.TryDeclare(GDSymbol.Variable(varName, variableDeclaration.ToHandle(), typeName: typeName, isStatic: variableDeclaration.IsStatic));
             }
 
             if (!declared)
@@ -159,13 +160,25 @@ namespace GDShrapt.Reader
             var signalName = signalDeclaration.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(signalName))
             {
-                if (!_context.TryDeclare(GDSymbol.Signal(signalName, signalDeclaration)))
+                if (!_context.TryDeclare(GDSymbol.Signal(signalName, signalDeclaration.ToHandle())))
                 {
                     _context.AddError(
                         GDDiagnosticCode.DuplicateDeclaration,
                         $"Signal '{signalName}' is already declared",
                         signalDeclaration);
                 }
+
+                // Register signal info for later validation
+                _context.RegisterSignal(signalName, new GDSignalInfo
+                {
+                    Name = signalName,
+                    Parameters = signalDeclaration.Parameters?
+                        .OfType<GDParameterDeclaration>()
+                        .Select(p => new GDRuntimeParameterInfo(
+                            p.Identifier?.Sequence ?? "",
+                            p.Type?.BuildName() ?? "Variant"))
+                        .ToList()
+                });
             }
         }
 
@@ -178,7 +191,7 @@ namespace GDShrapt.Reader
             var enumName = enumDeclaration.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(enumName))
             {
-                if (!_context.TryDeclare(GDSymbol.Enum(enumName, enumDeclaration)))
+                if (!_context.TryDeclare(GDSymbol.Enum(enumName, enumDeclaration.ToHandle())))
                 {
                     _context.AddError(
                         GDDiagnosticCode.DuplicateDeclaration,
@@ -201,7 +214,7 @@ namespace GDShrapt.Reader
                     var valueName = value.Identifier?.Sequence;
                     if (!string.IsNullOrEmpty(valueName))
                     {
-                        if (!_context.TryDeclare(GDSymbol.EnumValue(valueName, value)))
+                        if (!_context.TryDeclare(GDSymbol.EnumValue(valueName, value.ToHandle())))
                         {
                             // Only report duplicate for anonymous enums.
                             // Named enums can have overlapping value names (enum A { X }, enum B { X })
@@ -229,7 +242,7 @@ namespace GDShrapt.Reader
             if (!string.IsNullOrEmpty(className))
             {
                 // Register inner class symbol in parent scope
-                if (!_context.TryDeclare(GDSymbol.Class(className, innerClass)))
+                if (!_context.TryDeclare(GDSymbol.Class(className, innerClass.ToHandle())))
                 {
                     _context.AddError(
                         GDDiagnosticCode.DuplicateDeclaration,

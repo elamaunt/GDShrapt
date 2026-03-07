@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -115,13 +114,13 @@ public interface IGDRuntimeProvider
     IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails();
 
     /// <summary>
-    /// Gets the initializer expression for a constant declared in a type.
+    /// Gets the resolved value for a constant declared in a type.
     /// Used for cross-file const value resolution.
     /// </summary>
     /// <param name="typeName">The type containing the constant.</param>
     /// <param name="constantName">The constant name.</param>
-    /// <returns>The initializer expression, or null if not a const or not found.</returns>
-    GDExpression? GetConstantInitializer(string typeName, string constantName);
+    /// <returns>The constant value, or null if not a const or not found.</returns>
+    object? GetConstantValue(string typeName, string constantName);
 
     // ========================================
     // Type Traits (from TypesMap)

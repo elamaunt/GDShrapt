@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
+using GDShrapt.Validator;
 
 namespace GDShrapt.Reader
 {
@@ -188,7 +189,7 @@ namespace GDShrapt.Reader
                     {
                         var typeNode = param.Type;
                         var typeName = typeNode?.BuildName();
-                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName));
 
                         // Validate parameter type annotation
                         ValidateTypeAnnotation(typeNode, param);
@@ -265,7 +266,7 @@ namespace GDShrapt.Reader
                 {
                     var typeNode = param.Type;
                     var typeName = typeNode?.BuildName();
-                    TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+                    TryDeclareSymbol(GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName));
                 }
             }
         }
@@ -287,7 +288,7 @@ namespace GDShrapt.Reader
             {
                 var typeNode = variableDeclaration.Type;
                 var typeName = typeNode?.BuildName();
-                TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration, typeName: typeName, typeNode: typeNode));
+                TryDeclareSymbol(GDSymbol.Variable(varName, variableDeclaration.ToHandle(), typeName: typeName));
 
                 // Validate type annotation
                 ValidateTypeAnnotation(typeNode, variableDeclaration);
@@ -302,7 +303,7 @@ namespace GDShrapt.Reader
             var iteratorName = forStatement.Variable?.Sequence;
             if (!string.IsNullOrEmpty(iteratorName))
             {
-                Context.Declare(GDSymbol.Iterator(iteratorName, forStatement));
+                Context.Declare(GDSymbol.Iterator(iteratorName, forStatement.ToHandle()));
             }
         }
 
@@ -396,7 +397,7 @@ namespace GDShrapt.Reader
             var varName = matchCaseVariable.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
             {
-                TryDeclareSymbol(GDSymbol.Variable(varName, matchCaseVariable));
+                TryDeclareSymbol(GDSymbol.Variable(varName, matchCaseVariable.ToHandle()));
             }
         }
 
@@ -415,7 +416,7 @@ namespace GDShrapt.Reader
                     {
                         var typeNode = param.Type;
                         var typeName = typeNode?.BuildName();
-                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: typeNode));
+                        TryDeclareSymbol(GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName));
 
                         // Validate lambda parameter type annotation
                         ValidateTypeAnnotation(typeNode, param);
@@ -560,9 +561,9 @@ namespace GDShrapt.Reader
                             var typeNode = varDecl.Type;
                             var typeName = typeNode?.BuildName();
                             if (varDecl.ConstKeyword != null)
-                                Context.Declare(GDSymbol.Constant(varName, varDecl, typeName: typeName, typeNode: typeNode));
+                                Context.Declare(GDSymbol.Constant(varName, varDecl.ToHandle(), typeName: typeName));
                             else
-                                Context.Declare(GDSymbol.Variable(varName, varDecl, typeName: typeName, typeNode: typeNode, isStatic: varDecl.IsStatic));
+                                Context.Declare(GDSymbol.Variable(varName, varDecl.ToHandle(), typeName: typeName, isStatic: varDecl.IsStatic));
                         }
                         break;
 
@@ -570,7 +571,7 @@ namespace GDShrapt.Reader
                         var methodName = methodDecl.Identifier?.Sequence;
                         if (!string.IsNullOrEmpty(methodName))
                         {
-                            Context.Declare(GDSymbol.Method(methodName, methodDecl, methodDecl.IsStatic));
+                            Context.Declare(GDSymbol.Method(methodName, methodDecl.ToHandle(), methodDecl.IsStatic));
                             var parameters = methodDecl.Parameters?.ToList() ?? new System.Collections.Generic.List<GDParameterDeclaration>();
                             Context.RegisterFunction(methodName, new GDFunctionSignature
                             {
@@ -587,14 +588,14 @@ namespace GDShrapt.Reader
                     case GDSignalDeclaration signalDecl:
                         var signalName = signalDecl.Identifier?.Sequence;
                         if (!string.IsNullOrEmpty(signalName))
-                            Context.Declare(GDSymbol.Signal(signalName, signalDecl));
+                            Context.Declare(GDSymbol.Signal(signalName, signalDecl.ToHandle()));
                         break;
 
                     case GDEnumDeclaration enumDecl:
                         var enumName = enumDecl.Identifier?.Sequence;
                         if (!string.IsNullOrEmpty(enumName))
                         {
-                            Context.Declare(GDSymbol.Enum(enumName, enumDecl));
+                            Context.Declare(GDSymbol.Enum(enumName, enumDecl.ToHandle()));
                         }
                         // Register ALL enum values for direct access within the class.
                         // In GDScript, named enum values can be accessed both as EnumName.VALUE and directly as VALUE.
@@ -604,7 +605,7 @@ namespace GDShrapt.Reader
                             {
                                 var valueName = value.Identifier?.Sequence;
                                 if (!string.IsNullOrEmpty(valueName))
-                                    Context.Declare(GDSymbol.EnumValue(valueName, value));
+                                    Context.Declare(GDSymbol.EnumValue(valueName, value.ToHandle()));
                             }
                         }
                         break;
@@ -612,7 +613,7 @@ namespace GDShrapt.Reader
                     case GDInnerClassDeclaration nestedInnerClass:
                         var nestedClassName = nestedInnerClass.Identifier?.Sequence;
                         if (!string.IsNullOrEmpty(nestedClassName))
-                            Context.Declare(GDSymbol.Class(nestedClassName, nestedInnerClass));
+                            Context.Declare(GDSymbol.Class(nestedClassName, nestedInnerClass.ToHandle()));
                         break;
                 }
             }

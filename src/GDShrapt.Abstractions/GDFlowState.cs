@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -78,7 +77,7 @@ public class GDFlowState
     /// Sets the type of a variable (for assignments).
     /// Resets narrowing and replaces current type with new one.
     /// </summary>
-    public void SetVariableType(string name, GDSemanticType? typeName, GDNode? assignmentNode = null)
+    public void SetVariableType(string name, GDSemanticType? typeName)
     {
         if (string.IsNullOrEmpty(name))
             return;

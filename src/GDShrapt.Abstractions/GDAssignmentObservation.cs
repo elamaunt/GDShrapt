@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -19,9 +17,9 @@ public class GDAssignmentObservation
     public bool IsHighConfidence { get; set; }
 
     /// <summary>
-    /// The AST node of the assignment (for navigation).
+    /// Handle to the AST node of the assignment (for navigation).
     /// </summary>
-    public GDNode? Node { get; set; }
+    public GDNodeHandle Node { get; set; }
 
     /// <summary>
     /// Line number of the assignment (1-based).

@@ -119,7 +119,7 @@ internal class GDCrossFileContainerUsageCollector
             {
                 _scopeStack = new GDScopeStack();
                 _scopeStack.Push(GDScopeType.Global);
-                _scopeStack.Push(GDScopeType.Class, scriptFile.Class);
+                _scopeStack.Push(GDScopeType.Class, scriptFile.Class.ToHandle());
                 _typeEngine = new GDTypeInferenceEngine(runtimeProvider, _scopeStack);
             }
         }
@@ -130,7 +130,7 @@ internal class GDCrossFileContainerUsageCollector
             // Note: Pop happens in Left(GDMethodDeclaration) after children are visited
             if (_scopeStack != null && _runtimeProvider != null)
             {
-                _scopeStack.Push(GDScopeType.Method, method);
+                _scopeStack.Push(GDScopeType.Method, method.ToHandle());
 
                 // Add parameters to scope so type inference can resolve them
                 if (method.Parameters != null)
@@ -140,7 +140,7 @@ internal class GDCrossFileContainerUsageCollector
                         if (param.Identifier != null)
                         {
                             var typeName = param.Type?.BuildName() ?? "Variant";
-                            var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param, typeName: typeName);
+                            var symbol = GDSymbol.Parameter(param.Identifier.Sequence, param.ToHandle(), typeName: typeName);
                             _scopeStack.Declare(symbol);
                         }
                     }
@@ -240,13 +240,13 @@ internal class GDCrossFileContainerUsageCollector
                 var keyType = _typeEngine?.InferSemanticType(indexer.InnerExpression);
                 if (keyType != null && !keyType.IsVariant)
                 {
-                    var token = sourceNode.AllTokens.FirstOrDefault();
+                    var token = sourceNode.FirstLeafToken;
                     _observations.Add(new GDContainerUsageObservation
                     {
                         Kind = GDContainerUsageKind.KeyAssignment,
                         InferredType = keyType,
                         IsHighConfidence = true,
-                        Node = sourceNode,
+                        Node = sourceNode.ToHandle(),
                         Line = token?.StartLine ?? 0,
                         Column = token?.StartColumn ?? 0,
                         SourceFilePath = _scriptFile.FullPath
@@ -260,13 +260,13 @@ internal class GDCrossFileContainerUsageCollector
                 var valueType = _typeEngine?.InferSemanticType(valueExpr);
                 if (valueType != null && !valueType.IsVariant)
                 {
-                    var token = sourceNode.AllTokens.FirstOrDefault();
+                    var token = sourceNode.FirstLeafToken;
                     _observations.Add(new GDContainerUsageObservation
                     {
                         Kind = GDContainerUsageKind.IndexAssignment,
                         InferredType = valueType,
                         IsHighConfidence = true,
-                        Node = sourceNode,
+                        Node = sourceNode.ToHandle(),
                         Line = token?.StartLine ?? 0,
                         Column = token?.StartColumn ?? 0,
                         SourceFilePath = _scriptFile.FullPath
@@ -288,13 +288,13 @@ internal class GDCrossFileContainerUsageCollector
             var valueType = _typeEngine?.InferSemanticType(valueExpr);
             if (valueType != null)
             {
-                var token = sourceNode.AllTokens.FirstOrDefault();
+                var token = sourceNode.FirstLeafToken;
                 _observations.Add(new GDContainerUsageObservation
                 {
                     Kind = usageKind,
                     InferredType = valueType,
                     IsHighConfidence = !valueType.IsVariant,
-                    Node = sourceNode,
+                    Node = sourceNode.ToHandle(),
                     Line = token?.StartLine ?? 0,
                     Column = token?.StartColumn ?? 0,
                     SourceFilePath = _scriptFile.FullPath

@@ -222,7 +222,7 @@ internal class GDCallSiteCollector
             {
                 var scopeStack = new GDScopeStack();
                 scopeStack.Push(GDScopeType.Global);
-                scopeStack.Push(GDScopeType.Class, scriptFile.Class);
+                scopeStack.Push(GDScopeType.Class, scriptFile.Class.ToHandle());
                 _fallbackTypeEngine = new GDTypeInferenceEngine(runtimeProvider, scopeStack);
             }
         }

@@ -105,19 +105,10 @@ public class GDSemanticSignalValidator : GDValidationVisitor
     private GDSignalInfo? FindSignal(GDMemberOperatorExpression? callerExpr, string signalName)
     {
         // First check user-defined signals in the class scope
-        var symbol = Context.Scopes.Lookup(signalName);
-        if (symbol?.Kind == GDSymbolKind.Signal && symbol.Declaration is GDSignalDeclaration signalDecl)
+        var userSignal = Context.GetUserSignal(signalName);
+        if (userSignal != null)
         {
-            return new GDSignalInfo
-            {
-                Name = signalName,
-                Parameters = signalDecl.Parameters?
-                    .OfType<GDParameterDeclaration>()
-                    .Select(p => new GDRuntimeParameterInfo(
-                        p.Identifier?.Sequence ?? "",
-                        p.Type?.BuildName() ?? "Variant"))
-                    .ToList()
-            };
+            return userSignal;
         }
 
         // Check through project runtime provider if available

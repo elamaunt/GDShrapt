@@ -221,10 +221,15 @@ internal class GDScopeService
             return refs;
 
         // Filter references to those in the same method
+        // Compare by position since scope Node is GDNodeHandle and declaringMethodNode is GDNode
         return refs.Where(r =>
         {
             var enclosingMethod = GetEnclosingMethodScope(r);
-            return enclosingMethod?.Node == declaringMethodNode;
+            if (enclosingMethod == null)
+                return false;
+            var scopeNode = enclosingMethod.Node;
+            return scopeNode.StartLine == declaringMethodNode.StartLine
+                && scopeNode.StartColumn == declaringMethodNode.StartColumn;
         });
     }
 

@@ -129,7 +129,7 @@ public class GDSecurityScanningService
                 Category = GDSecurityCategory.UnsafePattern,
                 Severity = GDSecuritySeverity.High,
                 FilePath = file.FullPath ?? "",
-                Line = reference.ReferenceNode?.StartLine ?? 0,
+                Line = reference.ReferenceNode.StartLine,
                 Code = "SEC010",
                 Message = "OS.execute() can execute arbitrary commands",
                 Recommendation = "Validate and sanitize all inputs. Consider using safer alternatives"
@@ -143,7 +143,7 @@ public class GDSecurityScanningService
                 Category = GDSecurityCategory.UnsafePattern,
                 Severity = GDSecuritySeverity.Medium,
                 FilePath = file.FullPath ?? "",
-                Line = reference.ReferenceNode?.StartLine ?? 0,
+                Line = reference.ReferenceNode.StartLine,
                 Code = "SEC011",
                 Message = "OS.shell_open() can open arbitrary URLs/files",
                 Recommendation = "Validate URLs before opening. Use allowlists for permitted domains"
@@ -157,7 +157,7 @@ public class GDSecurityScanningService
                 Category = GDSecurityCategory.UnsafePattern,
                 Severity = GDSecuritySeverity.High,
                 FilePath = file.FullPath ?? "",
-                Line = reference.ReferenceNode?.StartLine ?? 0,
+                Line = reference.ReferenceNode.StartLine,
                 Code = "SEC012",
                 Message = "str2var() can deserialize arbitrary data",
                 Recommendation = "Never use str2var() with untrusted input. Use JSON parsing instead"

@@ -59,7 +59,7 @@ namespace GDShrapt.Linter
                     ReportIssue(
                         GDLintSeverity.Hint,
                         $"Expected {requiredEmptyLines} empty line(s) before function, found {emptyLines}",
-                        funcToken ?? (GDSyntaxToken)currentMethod.AllTokens.FirstOrDefault(),
+                        funcToken ?? (GDSyntaxToken)currentMethod.FirstLeafToken,
                         $"Add {requiredEmptyLines - emptyLines} empty line(s)");
                 }
                 else if (emptyLines > requiredEmptyLines + 1)
@@ -67,7 +67,7 @@ namespace GDShrapt.Linter
                     ReportIssue(
                         GDLintSeverity.Hint,
                         $"Too many empty lines before function ({emptyLines}), expected {requiredEmptyLines}",
-                        funcToken ?? (GDSyntaxToken)currentMethod.AllTokens.FirstOrDefault(),
+                        funcToken ?? (GDSyntaxToken)currentMethod.FirstLeafToken,
                         $"Remove {emptyLines - requiredEmptyLines} empty line(s)");
                 }
             }

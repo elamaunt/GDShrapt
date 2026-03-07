@@ -115,7 +115,7 @@ public class GDDiagnosticsService
             {
                 unifiedDiagnostic.FixDescriptors = _fixProvider.GetFixes(
                     ruleId,
-                    diagnostic.Node,
+                    diagnostic.Node.ToHandle(),
                     options.MemberAccessAnalyzer,
                     options.RuntimeProvider
                 ).ToList();
@@ -155,7 +155,7 @@ public class GDDiagnosticsService
                 {
                     unifiedDiagnostic.FixDescriptors = _fixProvider.GetFixes(
                         issue.RuleId,
-                        node,
+                        node.ToHandle(),
                         options.MemberAccessAnalyzer,
                         options.RuntimeProvider
                     ).ToList();

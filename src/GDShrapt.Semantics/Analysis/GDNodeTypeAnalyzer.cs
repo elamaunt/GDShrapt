@@ -186,19 +186,21 @@ internal sealed class GDNodeTypeAnalyzer
             return GDTypeDiff.Empty(identExpr, name);
 
         // Analyze based on declaration type
-        if (symbol.DeclarationNode is GDParameterDeclaration param)
+        var declNode = ResolveDeclarationNode(symbol);
+
+        if (declNode is GDParameterDeclaration param)
         {
             var diff = AnalyzeParameter(param);
             return WrapWithNarrowedType(diff, identExpr, name);
         }
 
-        if (symbol.DeclarationNode is GDVariableDeclaration varDecl)
+        if (declNode is GDVariableDeclaration varDecl)
         {
             var diff = AnalyzeVariable(varDecl);
             return WrapWithNarrowedType(diff, identExpr, name);
         }
 
-        if (symbol.DeclarationNode is GDVariableDeclarationStatement localVar)
+        if (declNode is GDVariableDeclarationStatement localVar)
         {
             var diff = AnalyzeLocalVariable(localVar);
             return WrapWithNarrowedType(diff, identExpr, name);
@@ -301,7 +303,7 @@ internal sealed class GDNodeTypeAnalyzer
             if (!string.IsNullOrEmpty(methodName))
             {
                 var symbol = _semanticModel.FindSymbol(methodName);
-                if (symbol?.DeclarationNode is GDMethodDeclaration method)
+                if (ResolveDeclarationNode(symbol) is GDMethodDeclaration method)
                 {
                     var returnType = method.ReturnType?.BuildName();
                     if (!string.IsNullOrEmpty(returnType))
@@ -458,6 +460,14 @@ internal sealed class GDNodeTypeAnalyzer
 
         var callSiteTypes = _semanticModel.GetCallSiteTypes(methodName, paramName);
         return callSiteTypes ?? new GDUnionType();
+    }
+
+    private GDNode? ResolveDeclarationNode(GDSymbolInfo? symbol)
+    {
+        if (symbol?.Symbol == null)
+            return symbol?.DeclarationNode;
+
+        return _semanticModel.ResolveNode(symbol.Symbol.DeclarationNode);
     }
 
     /// <summary>

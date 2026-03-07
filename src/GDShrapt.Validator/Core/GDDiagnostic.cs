@@ -1,3 +1,5 @@
+using GDShrapt.Abstractions;
+
 namespace GDShrapt.Reader
 {
     /// <summary>
@@ -82,11 +84,32 @@ namespace GDShrapt.Reader
             }
         }
 
+        /// <summary>
+        /// Creates a diagnostic from a GDNodeHandle (position-only, no AST node).
+        /// </summary>
+        public GDDiagnostic(
+            GDDiagnosticSeverity severity,
+            GDDiagnosticCode code,
+            string message,
+            GDNodeHandle handle)
+        {
+            Severity = severity;
+            Code = code;
+            Message = message;
+            StartLine = handle.StartLine + 1;  // Convert 0-based to 1-based
+            StartColumn = handle.StartColumn;
+            EndLine = handle.EndLine + 1;      // Convert 0-based to 1-based
+            EndColumn = handle.EndColumn;
+        }
+
         public static GDDiagnostic Error(GDDiagnosticCode code, string message, GDNode node)
             => new GDDiagnostic(GDDiagnosticSeverity.Error, code, message, node);
 
         public static GDDiagnostic Error(GDDiagnosticCode code, string message, GDSyntaxToken token)
             => new GDDiagnostic(GDDiagnosticSeverity.Error, code, message, token);
+
+        public static GDDiagnostic Error(GDDiagnosticCode code, string message, GDNodeHandle handle)
+            => new GDDiagnostic(GDDiagnosticSeverity.Error, code, message, handle);
 
         public static GDDiagnostic Warning(GDDiagnosticCode code, string message, GDNode node)
             => new GDDiagnostic(GDDiagnosticSeverity.Warning, code, message, node);

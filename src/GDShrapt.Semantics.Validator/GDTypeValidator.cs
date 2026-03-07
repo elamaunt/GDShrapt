@@ -157,7 +157,9 @@ namespace GDShrapt.Semantics.Validator
                     continue;
 
                 var typeName = param.Type?.BuildName();
-                Context.Declare(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: param.Type));
+                var sym = GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName);
+                sym.HasTypeAnnotation = param.Type != null;
+                Context.Declare(sym);
             }
         }
 
@@ -188,7 +190,9 @@ namespace GDShrapt.Semantics.Validator
                     typeName = expectedTypes[paramIndex];
                 }
 
-                Context.Declare(GDSymbol.Parameter(paramName, param, typeName: typeName, typeNode: param.Type));
+                var sym = GDSymbol.Parameter(paramName, param.ToHandle(), typeName: typeName);
+                sym.HasTypeAnnotation = param.Type != null || !string.IsNullOrEmpty(typeName);
+                Context.Declare(sym);
                 paramIndex++;
             }
         }
@@ -245,7 +249,7 @@ namespace GDShrapt.Semantics.Validator
                     if (!string.IsNullOrEmpty(varName))
                     {
                         var symbol = Context.Scopes.Lookup(varName);
-                        if (symbol?.Declaration is GDVariableDeclarationStatement)
+                        if (symbol?.Kind == GDSymbolKind.Variable)
                         {
                             var profile = _semanticModel?.TypeSystem.GetContainerProfile(varName);
                             if (profile == null || profile.ValueUsages.Count == 0)
@@ -470,7 +474,7 @@ namespace GDShrapt.Semantics.Validator
 
             // Use explicit type if present (var x: int = ...)
             var typeName = varDecl.Type?.BuildName();
-            GDTypeNode typeNode = varDecl.Type;
+            bool hasTypeAnnotation = varDecl.Type != null || varDecl.Colon != null;
 
             // Infer type from initializer if no explicit type annotation
             // var x := 42  → Colon != null, Type == null → infer int
@@ -489,7 +493,12 @@ namespace GDShrapt.Semantics.Validator
                 typeName = "Variant";
             }
 
-            Context.Declare(GDSymbol.Variable(varName, varDecl, typeName: typeName, typeNode: typeNode));
+            bool isInitNull = varDecl.Initializer is GDIdentifierExpression initId && initId.Identifier?.Sequence == "null";
+
+            var sym = GDSymbol.Variable(varName, varDecl.ToHandle(), typeName: typeName);
+            sym.HasTypeAnnotation = hasTypeAnnotation;
+            sym.IsInitializedToNull = isInitNull;
+            Context.Declare(sym);
         }
 
         private void ValidateVariableDeclaration(GDVariableDeclarationStatement varDecl)
@@ -577,7 +586,7 @@ namespace GDShrapt.Semantics.Validator
                 return;
 
             var typeName = forStmt.VariableType?.BuildName();
-            GDTypeNode typeNode = forStmt.VariableType;
+            bool hasTypeAnnotation = forStmt.VariableType != null;
 
             if (string.IsNullOrEmpty(typeName) && forStmt.Collection != null)
             {
@@ -587,7 +596,9 @@ namespace GDShrapt.Semantics.Validator
             if (string.IsNullOrEmpty(typeName) || typeName == "Unknown")
                 typeName = "Variant";
 
-            Context.Declare(GDSymbol.Variable(varName, forStmt, typeName: typeName, typeNode: typeNode));
+            var sym = GDSymbol.Variable(varName, forStmt.ToHandle(), typeName: typeName);
+            sym.HasTypeAnnotation = hasTypeAnnotation;
+            Context.Declare(sym);
         }
 
         private void ValidateForLoopVariable(GDForStatement forStmt)
@@ -964,14 +975,9 @@ namespace GDShrapt.Semantics.Validator
 
             // Also check local scope
             var symbol = Context.Scopes.Lookup(varName);
-            if (symbol?.Declaration is GDVariableDeclarationStatement varDeclStmt)
+            if (symbol?.Kind == GDSymbolKind.Variable && symbol.IsInitializedToNull)
             {
-                // Check if initializer is null
-                if (varDeclStmt.Initializer is GDIdentifierExpression initIdent &&
-                    initIdent.Identifier?.Sequence == "null")
-                {
-                    return true;
-                }
+                return true;
             }
 
             return false;
@@ -1008,13 +1014,13 @@ namespace GDShrapt.Semantics.Validator
                 return;
 
             // If it's a typed parameter (explicit annotation or inferred), it's safe
-            if (symbol.Declaration is GDParameterDeclaration paramDecl &&
-                (paramDecl.Type != null || !string.IsNullOrEmpty(symbol.TypeName)))
+            if (symbol.Kind == GDSymbolKind.Parameter &&
+                (symbol.HasTypeAnnotation || !string.IsNullOrEmpty(symbol.TypeName)))
                 return;
 
             // Untyped parameter or untyped variable could be null
-            if (symbol.Declaration is GDParameterDeclaration ||
-                (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt && varDeclStmt.Type == null && varDeclStmt.Colon == null))
+            if (symbol.Kind == GDSymbolKind.Parameter ||
+                (symbol.Kind == GDSymbolKind.Variable && !symbol.HasTypeAnnotation))
             {
                 ReportWarning(
                     GDDiagnosticCode.ComparisonWithPotentiallyNull,
@@ -1263,22 +1269,10 @@ namespace GDShrapt.Semantics.Validator
             if (symbol == null)
                 return false;
 
-            // Check if it's a local variable declaration without type annotation
-            if (symbol.Declaration is GDVariableDeclarationStatement varDeclStmt)
+            // Check if it's a variable (local or class-level) without type annotation
+            if (symbol.Kind == GDSymbolKind.Variable)
             {
-                // var x := 42  → Colon != null, Type == null → typed via inference
-                // var x: int = 42 → Type != null → explicitly typed
-                // var x = 42   → Colon == null → Variant (untyped)
-                return varDeclStmt.Type == null && varDeclStmt.Colon == null;
-            }
-
-            // Check if it's a class-level variable declaration
-            if (symbol.Declaration is GDVariableDeclaration varDecl)
-            {
-                // var x := 42  → TypeColon != null, Type == null → typed via inference
-                // var x: int = 42 → Type != null → explicitly typed
-                // var x = 42   → TypeColon == null → Variant (untyped)
-                return varDecl.Type == null && varDecl.TypeColon == null;
+                return !symbol.HasTypeAnnotation;
             }
 
             return false;

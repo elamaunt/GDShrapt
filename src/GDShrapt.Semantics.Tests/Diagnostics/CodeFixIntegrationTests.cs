@@ -1,4 +1,5 @@
 using FluentAssertions;
+using GDShrapt.Semantics;
 using GDShrapt.Validator;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -125,7 +126,7 @@ func process(obj):
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
         var fixProvider = new GDFixProvider();
-        var fixes = fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
 
         var suppression = fixes.OfType<GDSuppressionFixDescriptor>().First();
 
@@ -145,7 +146,7 @@ func process(obj):
         var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
 
         var fixProvider = new GDFixProvider();
-        var fixes = fixProvider.GetFixes("GD7002", memberAccess, null, null).ToList();
+        var fixes = fixProvider.GetFixes("GD7002", memberAccess.ToHandle(), null, null).ToList();
 
         var typeGuard = fixes.OfType<GDTypeGuardFixDescriptor>().First();
 
@@ -164,7 +165,7 @@ func process(obj):
         var call = classDecl.AllNodes.OfType<GDCallExpression>().First();
 
         var fixProvider = new GDFixProvider();
-        var fixes = fixProvider.GetFixes("GD7003", call, null, null).ToList();
+        var fixes = fixProvider.GetFixes("GD7003", call.ToHandle(), null, null).ToList();
 
         var methodGuard = fixes.OfType<GDMethodGuardFixDescriptor>().First();
 

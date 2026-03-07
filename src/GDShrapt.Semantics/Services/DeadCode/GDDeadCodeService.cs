@@ -315,7 +315,7 @@ public class GDDeadCodeService
                 };
             }
             else if (reads.All(r => r.IsPropertyWriteOnCaller)
-                     && IsLocallyConstructedNonEscaping(symbol, references))
+                     && IsLocallyConstructedNonEscaping(symbol, references, semanticModel))
             {
                 var token = symbol.PositionToken;
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
@@ -407,7 +407,7 @@ public class GDDeadCodeService
 
                 var posToken = symbol.PositionToken;
                 var declNode = symbol.DeclarationNode;
-                var endToken = declNode?.AllTokens.LastOrDefault();
+                var endToken = declNode?.LastLeafToken;
 
                 var item = new GDDeadCodeItem(GDDeadCodeKind.Function, methodName, file.FullPath ?? "")
                 {
@@ -921,8 +921,9 @@ public class GDDeadCodeService
             if (options.ShouldSkipMethod(methodName))
                 continue;
 
+            var methodDeclNode = methodSymbol.DeclarationNode;
             var paramSymbols = semanticModel.GetSymbolsOfKind(GDSymbolKind.Parameter)
-                .Where(p => p.DeclaringScopeNode == methodSymbol.DeclarationNode)
+                .Where(p => p.DeclaringScopeNode == methodDeclNode)
                 .ToList();
 
             foreach (var paramSymbol in paramSymbols)
@@ -1055,8 +1056,9 @@ public class GDDeadCodeService
         {
             var enumName = enumSymbol.Name;
 
+            var enumDeclNode = enumSymbol.DeclarationNode;
             var enumValues = semanticModel.GetSymbolsOfKind(GDSymbolKind.EnumValue)
-                .Where(ev => ev.DeclaringScopeNode == enumSymbol.DeclarationNode)
+                .Where(ev => ev.DeclaringScopeNode == enumDeclNode)
                 .ToList();
 
             foreach (var valueSymbol in enumValues)
@@ -1142,7 +1144,7 @@ public class GDDeadCodeService
             {
                 var posToken = symbol.PositionToken;
                 var declNode = symbol.DeclarationNode;
-                var endToken = declNode?.AllTokens.LastOrDefault();
+                var endToken = declNode?.LastLeafToken;
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.InnerClass, className, file.FullPath ?? "")
                 {
@@ -1177,7 +1179,8 @@ public class GDDeadCodeService
 
     private static bool IsLocallyConstructedNonEscaping(
         GDSymbolInfo symbol,
-        IReadOnlyList<GDReference> allReferences)
+        IReadOnlyList<GDReference> allReferences,
+        GDSemanticModel semanticModel)
     {
         if (symbol.ScopeType != GDSymbolScopeType.LocalVariable)
             return false;
@@ -1187,7 +1190,7 @@ public class GDDeadCodeService
 
         foreach (var writeRef in allReferences.Where(r => r.IsWrite))
         {
-            if (!IsConstructorSourceAssignment(writeRef))
+            if (!IsConstructorSourceAssignment(writeRef, semanticModel))
                 return false;
         }
 
@@ -1238,22 +1241,31 @@ public class GDDeadCodeService
         return false;
     }
 
-    private static bool IsConstructorSourceAssignment(GDReference writeRef)
+    private static bool IsConstructorSourceAssignment(GDReference writeRef, GDSemanticModel semanticModel)
     {
-        var node = writeRef.ReferenceNode;
-        var parent = node?.Parent;
-        while (parent != null)
+        var handle = writeRef.ReferenceNode;
+        if (handle.IsEmpty)
+            return true;
+
+        var node = semanticModel.GetNodeAtPosition(handle.StartLine, handle.StartColumn);
+        if (node == null)
+            return true;
+
+        // Walk up to find the GDDualOperatorExpression (assignment)
+        var current = node;
+        while (current != null)
         {
-            if (parent is GDDualOperatorExpression dualOp)
+            if (current is GDDualOperatorExpression dualOp)
             {
-                return dualOp.RightExpression != null
-                    && IsConstructorExpression(dualOp.RightExpression);
+                // Check if right side is a constructor expression
+                if (dualOp.RightExpression != null)
+                    return IsConstructorExpression(dualOp.RightExpression);
+                return false;
             }
-            if (parent is GDVariableDeclarationStatement)
-                return true;
-            parent = parent.Parent;
+            current = current.Parent;
         }
-        return true;
+
+        return false;
     }
 
     private static bool HasEscapeInAST(GDSymbolInfo symbol)

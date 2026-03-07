@@ -1,9 +1,10 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace GDShrapt.Abstractions;
+namespace GDShrapt.Semantics;
 
 /// <summary>
 /// Analyzes control flow to extract type narrowing information.

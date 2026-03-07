@@ -999,7 +999,7 @@ internal class RenameIdentifierCommand : Command
         var semanticRefs = _symbolsHandler.GetReferencesToSymbol(symbol, ScriptFile.FullPath);
         foreach (var reference in semanticRefs)
         {
-            var refNode = reference.ReferenceNode;
+            var refNode = ResolveHandle(reference.ReferenceNode, ScriptFile);
             if (refNode is GDIdentifierExpression refExpr && refExpr.Identifier != null)
             {
                 memberReferences.AddLast(new GDMemberReference
@@ -1046,7 +1046,7 @@ internal class RenameIdentifierCommand : Command
         // Rename all references
         foreach (var reference in semanticRefs)
         {
-            var refNode = reference.ReferenceNode;
+            var refNode = ResolveHandle(reference.ReferenceNode, ScriptFile);
             if (refNode is GDIdentifierExpression refExpr && refExpr.Identifier != null)
                 refExpr.Identifier.Sequence = newName;
             else if (refNode is GDNode node)
@@ -1329,6 +1329,13 @@ internal class RenameIdentifierCommand : Command
         _renamingDialog.SetReferencesList(references);
 
         return await _renamingDialog.ShowForResult();
+    }
+
+    private static GDNode? ResolveHandle(GDNodeHandle handle, GDScriptFile? script)
+    {
+        if (handle.IsEmpty || script?.SemanticModel == null)
+            return null;
+        return script.SemanticModel.GetNodeAtPosition(handle.StartLine, handle.StartColumn);
     }
 
     private void OnNavigateToReference(string filePath, int line, int column, int endColumn)

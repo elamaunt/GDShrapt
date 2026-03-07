@@ -1,4 +1,3 @@
-using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -54,7 +53,7 @@ public class GDScopeStack
     /// <summary>
     /// Pushes a new scope onto the stack.
     /// </summary>
-    public GDScope Push(GDScopeType type, GDNode? node = null)
+    public GDScope Push(GDScopeType type, GDNodeHandle node = default)
     {
         var parent = Current;
         var scope = new GDScope(type, parent, node);

@@ -1,4 +1,3 @@
-using GDShrapt.Reader;
 using System.Collections.Generic;
 
 namespace GDShrapt.Abstractions;
@@ -27,11 +26,11 @@ public class GDScope
     public IEnumerable<GDSymbol> Symbols => _symbols.Values;
 
     /// <summary>
-    /// The AST node associated with this scope (e.g., method declaration, for statement).
+    /// Handle to the AST node associated with this scope (e.g., method declaration, for statement).
     /// </summary>
-    public GDNode? Node { get; }
+    public GDNodeHandle Node { get; }
 
-    public GDScope(GDScopeType type, GDScope? parent = null, GDNode? node = null)
+    public GDScope(GDScopeType type, GDScope? parent = null, GDNodeHandle node = default)
     {
         Type = type;
         Parent = parent;

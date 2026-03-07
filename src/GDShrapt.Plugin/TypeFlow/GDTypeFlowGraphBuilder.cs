@@ -555,14 +555,18 @@ internal class GDTypeFlowGraphBuilder
 
         foreach (var reference in refs.Take(10))
         {
-            if (reference.ReferenceNode == null)
+            if (reference.ReferenceNode.IsEmpty)
+                continue;
+
+            var resolvedRefNode = ResolveHandle(reference.ReferenceNode, script);
+            if (resolvedRefNode == null)
                 continue;
 
             var loc = (reference.ReferenceNode.StartLine, reference.ReferenceNode.StartColumn);
             if (!processedLocations.Add(loc))
                 continue;
 
-            var parent = reference.ReferenceNode.Parent;
+            var parent = resolvedRefNode.Parent;
 
             // Handle different parent expression types
             if (parent is GDCallExpression call)
@@ -614,7 +618,7 @@ internal class GDTypeFlowGraphBuilder
             else
             {
                 // Find parent dual operator or return up the tree
-                var foundNode = FindAndCreateParentContextNode(reference.ReferenceNode, script, semanticModel);
+                var foundNode = FindAndCreateParentContextNode(resolvedRefNode, script, semanticModel);
                 if (foundNode != null)
                 {
                     sourceNode.Outflows.Add(foundNode);
@@ -662,9 +666,10 @@ internal class GDTypeFlowGraphBuilder
     /// </summary>
     private GDTypeFlowNode CreateGenericUsageNode(GDReference reference, GDScriptFile script)
     {
-        var node = reference.ReferenceNode;
-        var kind = GetNodeKindFromExpression(node);
-        var label = GetLabelFromExpression(node);
+        var handle = reference.ReferenceNode;
+        var node = ResolveHandle(handle, script);
+        var kind = node != null ? GetNodeKindFromExpression(node) : GDTypeFlowNodeKind.Unknown;
+        var label = node != null ? GetLabelFromExpression(node) : "usage";
 
         return new GDTypeFlowNode
         {
@@ -673,8 +678,8 @@ internal class GDTypeFlowGraphBuilder
             Type = reference.InferredType?.DisplayName ?? "Variant",
             Kind = kind,
             Confidence = reference.Confidence == GDReferenceConfidence.Strict ? 0.9f : 0.5f,
-            Description = $"Line {node.StartLine + 1}",
-            Location = GDSourceLocation.FromNode(node, script.FullPath),
+            Description = $"Line {handle.StartLine + 1}",
+            Location = GDSourceLocation.FromHandle(handle, script.FullPath),
             SourceScript = script,
             AstNode = node
         };
@@ -1406,6 +1411,13 @@ internal class GDTypeFlowGraphBuilder
     /// <summary>
     /// Generates a unique node ID.
     /// </summary>
+    private static GDNode? ResolveHandle(GDNodeHandle handle, GDScriptFile? script)
+    {
+        if (handle.IsEmpty || script?.SemanticModel == null)
+            return null;
+        return script.SemanticModel.GetNodeAtPosition(handle.StartLine, handle.StartColumn);
+    }
+
     private string GenerateNodeId()
     {
         return $"node_{_nodeIdCounter++}";

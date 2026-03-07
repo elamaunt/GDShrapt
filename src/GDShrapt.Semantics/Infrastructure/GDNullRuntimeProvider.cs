@@ -18,7 +18,7 @@ internal sealed class GDNullRuntimeProvider : IGDRuntimeProvider
     public bool IsKnownType(string typeName) => false;
     public GDRuntimeTypeInfo? GetTypeInfo(string typeName) => null;
     public GDRuntimeMemberInfo? GetMember(string typeName, string memberName) => null;
-    public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+    public object? GetConstantValue(string typeName, string constantName) => null;
     public string? GetBaseType(string typeName) => null;
     public bool IsAssignableTo(string sourceType, string targetType) => sourceType == targetType;
     public GDRuntimeFunctionInfo? GetGlobalFunction(string functionName) => null;

@@ -133,8 +133,8 @@ func add_item(item):
     {
         // Arrange
         var localProfile = new GDContainerUsageProfile("items");
-        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append, null);
-        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append);
 
         var crossFileUsages = new[]
         {
@@ -163,7 +163,7 @@ func add_item(item):
     {
         // Arrange
         var localProfile = new GDContainerUsageProfile("items");
-        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.Append);
 
         var crossFileUsages = new[]
         {
@@ -196,7 +196,7 @@ func add_item(item):
     {
         // Arrange
         var localProfile = new GDContainerUsageProfile("cache") { IsDictionary = true };
-        localProfile.AddKeyUsage(GDSemanticType.FromRuntimeTypeName("String"), GDContainerUsageKind.IndexAssign, null);
+        localProfile.AddKeyUsage(GDSemanticType.FromRuntimeTypeName("String"), GDContainerUsageKind.IndexAssign);
 
         var crossFileUsages = new[]
         {
@@ -331,7 +331,7 @@ func write(cache: Cache, data):
 
         // Create local profile for dictionary
         var localProfile = new GDContainerUsageProfile("entries") { IsDictionary = true };
-        localProfile.AddKeyUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.IndexAssign, null);
+        localProfile.AddKeyUsage(GDSemanticType.FromRuntimeTypeName("int"), GDContainerUsageKind.IndexAssign);
 
         var merged = GDCrossFileContainerUsageCollector.MergeProfiles(localProfile, crossUsages);
         var inferredType = merged.ComputeInferredType();
@@ -381,7 +381,7 @@ func import_to(storage: Storage):
         var crossUsages = crossCollector.CollectUsages("Storage", "items");
 
         var localProfile = new GDContainerUsageProfile("items");
-        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("Resource"), GDContainerUsageKind.Append, null);
+        localProfile.AddValueUsage(GDSemanticType.FromRuntimeTypeName("Resource"), GDContainerUsageKind.Append);
 
         var merged = GDCrossFileContainerUsageCollector.MergeProfiles(localProfile, crossUsages);
         var inferredType = merged.ComputeInferredType();

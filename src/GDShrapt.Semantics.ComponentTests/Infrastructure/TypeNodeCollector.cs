@@ -81,14 +81,14 @@ public class TypeNodeCollector
     private int GetNodeLine(GDNode? node)
     {
         if (node == null) return 0;
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token != null ? token.StartLine + 1 : 0;
     }
 
     private int GetNodeColumn(GDNode? node)
     {
         if (node == null) return 0;
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartColumn ?? 0;
     }
 

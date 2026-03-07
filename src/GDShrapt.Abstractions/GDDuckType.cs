@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -32,8 +31,8 @@ public class GDDuckType
     /// Operators that this duck type must support.
     /// Key = operator type, Value = observed operand types from the other side of the operator.
     /// </summary>
-    public Dictionary<GDDualOperatorType, List<GDSemanticType>> RequiredOperators { get; }
-        = new Dictionary<GDDualOperatorType, List<GDSemanticType>>();
+    public Dictionary<string, List<GDSemanticType>> RequiredOperators { get; }
+        = new Dictionary<string, List<GDSemanticType>>();
 
     /// <summary>
     /// Known base types this could be (from 'is' checks).
@@ -87,7 +86,7 @@ public class GDDuckType
     /// <summary>
     /// Adds an operator requirement with optional operand type.
     /// </summary>
-    public void RequireOperator(GDDualOperatorType op, GDSemanticType? operandType = null)
+    public void RequireOperator(string op, GDSemanticType? operandType = null)
     {
         if (!RequiredOperators.TryGetValue(op, out var operands))
         {

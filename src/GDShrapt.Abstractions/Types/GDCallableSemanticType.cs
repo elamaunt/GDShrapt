@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GDShrapt.Reader;
 
 namespace GDShrapt.Abstractions;
 
@@ -117,14 +116,6 @@ public class GDCallableSemanticType : GDSemanticType
             return true;
 
         return false;
-    }
-
-    public override GDTypeNode? ToTypeNode()
-    {
-        if (ReturnType == null && ParameterTypes == null)
-            return null;
-
-        return null;
     }
 
     public override bool Equals(object? obj)

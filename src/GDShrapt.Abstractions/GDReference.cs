@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -8,9 +6,9 @@ namespace GDShrapt.Abstractions;
 public class GDReference
 {
     /// <summary>
-    /// The AST node that contains this reference.
+    /// Handle to the AST node that contains this reference.
     /// </summary>
-    public GDNode? ReferenceNode { get; set; }
+    public GDNodeHandle ReferenceNode { get; set; }
 
     /// <summary>
     /// The scope in which this reference occurs.
@@ -21,11 +19,6 @@ public class GDReference
     /// The inferred type at this reference location.
     /// </summary>
     public GDSemanticType? InferredType { get; set; }
-
-    /// <summary>
-    /// The full type node at this reference location.
-    /// </summary>
-    public GDTypeNode? InferredTypeNode { get; set; }
 
     /// <summary>
     /// True if this reference is a write (assignment target).
@@ -54,11 +47,11 @@ public class GDReference
     public string? CallerTypeName { get; set; }
 
     /// <summary>
-    /// The specific identifier token that this reference points to.
+    /// Handle to the specific identifier token that this reference points to.
     /// For member access (e.g., super.take_damage()), this is the "take_damage" identifier,
     /// not the entire expression node. Use this for precise edit positioning.
     /// </summary>
-    public GDSyntaxToken? IdentifierToken { get; set; }
+    public GDTokenHandle IdentifierToken { get; set; }
 
     /// <summary>
     /// True when this read reference exists because the variable was the caller

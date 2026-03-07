@@ -118,7 +118,8 @@ internal class GDDuckTypeService
         string symbolName,
         string? symbolTypeName,
         GDUnionType? unionType,
-        IEnumerable<GDReference>? references)
+        IEnumerable<GDReference>? references,
+        GDSemanticModel? semanticModel = null)
     {
         if (string.IsNullOrEmpty(symbolName))
             return true;
@@ -143,14 +144,24 @@ internal class GDDuckTypeService
         {
             foreach (var reference in references)
             {
-                if (reference.ReferenceNode?.Parent is GDMemberOperatorExpression memberOp)
+                if (reference.ReferenceNode.IsEmpty)
+                    continue;
+
+                // Resolve the handle back to a GDNode to check type guards
+                GDNode? refNode = null;
+                if (semanticModel != null)
+                    refNode = semanticModel.GetNodeAtPosition(
+                        reference.ReferenceNode.StartLine, reference.ReferenceNode.StartColumn);
+
+                if (refNode?.Parent is GDMemberOperatorExpression memberOp)
                 {
                     var narrowedType = GetNarrowedType(symbolName, memberOp);
                     if (string.IsNullOrEmpty(narrowedType))
-                    {
-                        // This usage is not in a type guard - duck type is needed
                         return false;
-                    }
+                }
+                else
+                {
+                    return false;
                 }
             }
         }

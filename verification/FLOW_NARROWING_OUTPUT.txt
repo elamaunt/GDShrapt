@@ -49,25 +49,25 @@ test_scripts/cyclic_inference.gd
     115:9 item -> String (base: Variant)
 
   _advance_generator()
-    231:4 current -> int (base: Variant)
-    232:9 current -> int (base: Variant)
-    233:4 current -> float (base: Variant)
-    234:9 current -> float (base: Variant)
-    235:4 current -> String (base: Variant)
-    236:9 current -> String (base: Variant)
+    231:4 current -> int (base: int)
+    232:9 current -> int (base: int)
+    233:4 current -> float (base: float)
+    234:9 current -> float (base: float)
+    235:4 current -> String (base: String)
+    236:9 current -> String (base: String)
 
   parse_expr()
     246:4 result -> null (base: null)
     258:5 right -> null (base: null)
-    261:5 op -> String (base: Variant)
+    261:5 op -> String (base: String)
 
   parse_term()
     273:4 result -> null (base: null)
     285:5 right -> null (base: null)
-    288:5 op -> String (base: Variant)
+    288:5 op -> String (base: String)
 
   parse_factor()
-    304:4 token -> String (base: Variant)
+    304:4 token -> String (base: String)
     306:5 inner -> null (base: null)
 
 test_scripts/diagnostics/validator/control_flow_errors.gd
@@ -201,32 +201,32 @@ test_scripts/game_patterns.gd
     130:4 current_node -> null (base: null)
 
   _check_choice_condition()
-    145:4 condition -> null (base: Variant)
-    148:4 condition -> String (base: Variant)
-    149:30 condition -> String (base: Variant)
-    150:4 condition -> Callable (base: Variant)
+    145:4 condition -> null (base: null)
+    148:4 condition -> String (base: String)
+    149:30 condition -> String (base: String)
+    150:4 condition -> Callable (base: Callable)
     151:9 condition -> Callable (base: Variant)
-    152:4 condition -> Dictionary (base: Variant)
+    152:4 condition -> Dictionary (base: Dictionary)
     153:17 condition -> Dictionary (base: Variant)
     154:11 condition -> Dictionary (base: Variant)
     155:14 condition -> Dictionary (base: Variant)
 
   can_use_ability()
-    302:5 condition -> Callable (base: Variant)
-    303:10 condition -> Callable (base: Variant)
+    302:5 condition -> Callable (base: Callable)
+    303:10 condition -> Callable (base: Callable)
 
   use_ability()
-    328:4 effect_func -> Callable (base: Variant)
-    329:11 effect_func -> Callable (base: Variant)
-    330:6 effect_func -> Dictionary (base: Variant)
-    331:34 effect_func -> Dictionary (base: Variant)
+    328:4 effect_func -> Callable (base: Callable)
+    329:11 effect_func -> Callable (base: Callable)
+    330:6 effect_func -> Dictionary (base: Dictionary)
+    331:34 effect_func -> Dictionary (base: Dictionary)
 
   _apply_effect_template()
-    354:6 dmg -> int (base: Variant)
-    355:30 dmg -> int (base: Variant)
-    356:8 dmg -> Dictionary (base: Variant)
-    357:15 dmg -> Dictionary (base: Variant)
-    358:18 dmg -> Dictionary (base: Variant)
+    354:6 dmg -> int (base: int)
+    355:30 dmg -> int (base: int)
+    356:8 dmg -> Dictionary (base: Dictionary)
+    357:15 dmg -> Dictionary (base: Dictionary)
+    358:18 dmg -> Dictionary (base: Dictionary)
 
   _matches_filter()
     447:4 item_filter -> String (base: Variant)
@@ -236,12 +236,12 @@ test_scripts/game_patterns.gd
 
   craft()
     469:6 item -> null (base: Variant)
-    482:4 result -> Callable (base: Variant)
-    483:2 result -> Callable (base: Variant)
-    483:11 result -> Callable (base: Variant)
-    484:6 result -> Dictionary (base: Variant)
-    485:2 result -> Dictionary (base: Variant)
-    485:11 result -> Dictionary (base: Variant)
+    482:4 result -> Callable (base: Callable)
+    483:2 result -> Callable (base: Callable)
+    483:11 result -> Callable (base: Callable)
+    484:6 result -> Dictionary (base: Dictionary)
+    485:2 result -> Dictionary (base: Dictionary)
+    485:11 result -> Dictionary (base: Dictionary)
 
   _serialize_value()
     533:4 value -> Vector2 (base: Variant)
@@ -271,9 +271,9 @@ test_scripts/game_patterns.gd
 
 test_scripts/getters_setters.gd
   test_property_chain()
-    154:4 node -> Node2D (base: Node)
-    156:12 node -> Node2D (base: Node)
-    157:13 node -> Node2D (base: Node)
+    154:4 node -> Node2D (base: Node2D)
+    156:12 node -> Node2D (base: Node2D)
+    157:13 node -> Node2D (base: Node2D)
 
 test_scripts/inheritance_test.gd
   check_types()
@@ -301,26 +301,26 @@ test_scripts/local_variables.gd
     111:9 input -> int (base: Variant)
 
   variable_with_default()
-    131:4 local -> null (base: Variant)
-    132:2 local -> null (base: Variant)
+    131:4 local -> null (base: null)
+    132:2 local -> null (base: null)
 
   type_narrowing_local()
-    154:4 result -> Dictionary (base: Variant)
-    156:13 result -> Dictionary (base: Variant)
-    159:4 result -> Array (base: Variant)
-    161:13 result -> Array (base: Variant)
+    154:4 result -> Dictionary (base: Dictionary)
+    156:13 result -> Dictionary (base: Dictionary)
+    159:4 result -> Array (base: Array)
+    161:13 result -> Array (base: Array)
 
 test_scripts/method_chains.gd
   optional_chain_pattern()
     47:4 data -> null (base: Variant)
-    51:4 level1 -> null (base: Variant)
-    55:4 level2 -> null (base: Variant)
+    51:4 level1 -> null (base: null)
+    55:4 level2 -> null (base: null)
 
   node_chain()
-    92:4 parent -> null (base: Node)
-    96:4 grandparent -> null (base: Node)
-    99:4 grandparent -> Node2D (base: Node)
-    100:9 grandparent -> Node2D (base: Node)
+    92:4 parent -> null (base: null)
+    96:4 grandparent -> null (base: null)
+    99:4 grandparent -> Node2D (base: Node2D)
+    100:9 grandparent -> Node2D (base: Node2D)
 
   mixed_chain()
     107:4 input -> Dictionary (base: Variant)
@@ -347,16 +347,16 @@ test_scripts/polymorphic_interfaces.gd
 
 test_scripts/scene_nodes.gd
   _ready()
-    47:4 sprite_node -> Sprite2D (base: Node)
-    48:2 sprite_node -> Sprite2D (base: Node)
+    47:4 sprite_node -> Sprite2D (base: Sprite2D)
+    48:2 sprite_node -> Sprite2D (base: Sprite2D)
 
   get_children_of_type()
     85:5 child -> Sprite2D (base: Node)
     86:17 child -> Sprite2D (base: Node)
 
   get_parent_of_type()
-    111:5 current -> Control (base: Node)
-    112:10 current -> Control (base: Node)
+    111:5 current -> Control (base: Control)
+    112:10 current -> Control (base: Control)
 
   process_all_children()
     151:5 child -> Node2D (base: Node)
@@ -365,7 +365,7 @@ test_scripts/scene_nodes.gd
     154:3 child -> Control (base: Node)
 
   access_sibling()
-    185:4 parent -> null (base: Node)
+    185:4 parent -> null (base: null)
 
 test_scripts/scene_references.gd
   get_enemies()
@@ -374,8 +374,8 @@ test_scripts/scene_references.gd
 
 test_scripts/semantic_validation_demo.gd
   member_access_validation_demo()
-    209:4 value -> Node2D (base: null)
-    210:11 value -> Node2D (base: null)
+    209:4 value -> Node2D (base: Node2D)
+    210:11 value -> Node2D (base: Node2D)
 
   complex_scenario_3()
     294:5 entity -> Node2D (base: Variant)
@@ -398,7 +398,7 @@ test_scripts/signals_test.gd
 
 test_scripts/todo_examples.gd
   validate_data()
-    63:5 item -> null (base: Variant)
+    63:5 item -> null (base: null)
 
 test_scripts/type_guards.gd
   process_value()
@@ -417,8 +417,8 @@ test_scripts/type_guards.gd
     32:4 data -> Dictionary (base: Variant)
     34:5 data -> Dictionary (base: Variant)
     35:18 data -> Dictionary (base: Variant)
-    36:6 type_val -> String (base: Variant)
-    38:11 type_val -> String (base: Variant)
+    36:6 type_val -> String (base: String)
+    38:11 type_val -> String (base: String)
 
   type_guard_with_and()
     46:4 value -> Array (base: Variant)
@@ -469,10 +469,10 @@ test_scripts/type_guards.gd
     195:4 value -> Dictionary (base: Variant)
     197:5 value -> Dictionary (base: Variant)
     198:14 value -> Dictionary (base: Variant)
-    199:6 name -> String (base: Variant)
-    200:24 name -> String (base: Variant)
-    201:8 name -> int (base: Variant)
-    202:31 name -> int (base: Variant)
+    199:6 name -> String (base: String)
+    200:24 name -> String (base: String)
+    201:8 name -> int (base: int)
+    202:31 name -> int (base: int)
 
   guard_with_method_call()
     209:4 value -> Array (base: Variant)
@@ -491,7 +491,7 @@ test_scripts/union_returns.gd
     42:21 input -> int (base: Variant)
 
   load_resource()
-    67:4 resource -> null (base: Resource)
+    67:4 resource -> null (base: null)
 
   process_input()
     75:4 input -> int (base: Variant)
@@ -527,7 +527,7 @@ test_scripts/union_returns.gd
     127:35 child -> String (base: String)
 
   callback_return()
-    134:4 result -> null (base: Variant)
+    134:4 result -> null (base: null)
 
   exception_pattern()
     143:6 data -> Dictionary (base: Variant)
@@ -588,10 +588,10 @@ test_scripts/union_types_complex.gd
     158:9 item -> Dictionary (base: Variant)
 
   safe_get_nested()
-    190:5 current -> null (base: Variant)
-    192:5 current -> Dictionary (base: Variant)
-    193:3 current -> Dictionary (base: Variant)
-    193:13 current -> Dictionary (base: Variant)
+    190:5 current -> null (base: null)
+    192:5 current -> Dictionary (base: Dictionary)
+    193:3 current -> Dictionary (base: Dictionary)
+    193:13 current -> Dictionary (base: Dictionary)
     194:7 current -> Array (base: Variant)
     194:28 key -> int (base: Variant)
     195:6 key -> int (base: Variant)
@@ -602,7 +602,7 @@ test_scripts/union_types_complex.gd
     197:21 key -> int (base: Variant)
 
   map_with_fallback()
-    245:5 transformed -> null (base: Variant)
+    245:5 transformed -> null (base: null)
 
   _compute_result()
     302:4 params -> String (base: Variant)
@@ -623,14 +623,14 @@ test_scripts/union_types_complex.gd
     356:49 type_field -> String (base: Variant)
 
   type_flow_test_method()
-    379:4 local -> null (base: Variant)
-    383:4 local -> Dictionary (base: Variant)
-    385:14 local -> Dictionary (base: Variant)
-    387:13 local -> Dictionary (base: Variant)
-    389:14 local -> Dictionary (base: Variant)
+    379:4 local -> null (base: null)
+    383:4 local -> Dictionary (base: Dictionary)
+    385:14 local -> Dictionary (base: Dictionary)
+    387:13 local -> Dictionary (base: Dictionary)
+    389:14 local -> Dictionary (base: Dictionary)
     393:4 local -> Array (base: Variant)
     393:23 local -> Array (base: Variant)
     395:9 local -> Array (base: Variant)
-    403:4 local -> String (base: Variant)
+    403:4 local -> String (base: String)
 
 # Summary: 414 narrowings in 23 files

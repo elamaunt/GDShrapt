@@ -1,5 +1,3 @@
-using GDShrapt.Reader;
-
 namespace GDShrapt.Abstractions;
 
 /// <summary>
@@ -64,49 +62,6 @@ public class GDContainerElementType
     }
 
     #region Static Factory Methods
-
-    /// <summary>
-    /// Creates a GDContainerElementType from a GDTypeNode (AST type from parser).
-    /// Returns null if the type is not a container type.
-    /// </summary>
-    public static GDContainerElementType? FromTypeNode(GDTypeNode? typeNode)
-    {
-        if (typeNode == null)
-            return null;
-
-        if (typeNode is GDArrayTypeNode arrayNode)
-        {
-            var result = new GDContainerElementType { IsDictionary = false };
-            if (arrayNode.InnerType != null)
-            {
-                var innerTypeName = arrayNode.InnerType.BuildName();
-                if (!string.IsNullOrEmpty(innerTypeName))
-                    result.ElementUnionType.AddTypeName(innerTypeName);
-            }
-            return result;
-        }
-
-        if (typeNode is GDDictionaryTypeNode dictNode)
-        {
-            var result = new GDContainerElementType { IsDictionary = true };
-            if (dictNode.KeyType != null)
-            {
-                result.KeyUnionType = new GDUnionType();
-                var keyTypeName = dictNode.KeyType.BuildName();
-                if (!string.IsNullOrEmpty(keyTypeName))
-                    result.KeyUnionType.AddTypeName(keyTypeName);
-            }
-            if (dictNode.ValueType != null)
-            {
-                var valueTypeName = dictNode.ValueType.BuildName();
-                if (!string.IsNullOrEmpty(valueTypeName))
-                    result.ElementUnionType.AddTypeName(valueTypeName);
-            }
-            return result;
-        }
-
-        return null;
-    }
 
     /// <summary>
     /// Combines two array types. Used for array addition (Array[A] + Array[B]).

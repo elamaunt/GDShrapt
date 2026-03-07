@@ -227,7 +227,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         if (args == null || args.Count == 0)
             return;
 
-        var token = call.AllTokens.FirstOrDefault();
+        var token = call.FirstLeafToken;
         var line = token?.StartLine ?? 0;
         var column = token?.StartColumn ?? 0;
 
@@ -243,7 +243,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Kind = GDContainerUsageKind.Append,
                         InferredType = valueType,
                         IsHighConfidence = isHighConfidence,
-                        Node = call,
+                        Node = call.ToHandle(),
                         Line = line,
                         Column = column
                     });
@@ -259,7 +259,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Kind = GDContainerUsageKind.PushFront,
                         InferredType = valueType,
                         IsHighConfidence = isHighConfidence,
-                        Node = call,
+                        Node = call.ToHandle(),
                         Line = line,
                         Column = column
                     });
@@ -276,7 +276,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Kind = GDContainerUsageKind.Insert,
                         InferredType = valueType,
                         IsHighConfidence = isHighConfidence,
-                        Node = call,
+                        Node = call.ToHandle(),
                         Line = line,
                         Column = column
                     });
@@ -292,7 +292,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Kind = GDContainerUsageKind.Fill,
                         InferredType = valueType,
                         IsHighConfidence = isHighConfidence,
-                        Node = call,
+                        Node = call.ToHandle(),
                         Line = line,
                         Column = column
                     });
@@ -310,7 +310,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Kind = GDContainerUsageKind.GetWithDefault,
                         InferredType = keyType,
                         IsHighConfidence = keyConfidence,
-                        Node = call,
+                        Node = call.ToHandle(),
                         Line = line,
                         Column = column
                     });
@@ -322,7 +322,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                         Kind = GDContainerUsageKind.GetWithDefault,
                         InferredType = defaultType,
                         IsHighConfidence = defaultConfidence,
-                        Node = call,
+                        Node = call.ToHandle(),
                         Line = line,
                         Column = column
                     });
@@ -333,7 +333,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
 
     private void AnalyzeIndexAssignment(GDIndexerExpression indexer, GDExpression? value, GDContainerUsageProfile profile)
     {
-        var token = indexer.AllTokens.FirstOrDefault();
+        var token = indexer.FirstLeafToken;
         var line = token?.StartLine ?? 0;
         var column = token?.StartColumn ?? 0;
 
@@ -345,7 +345,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
             Kind = GDContainerUsageKind.IndexAssign,
             InferredType = valueType,
             IsHighConfidence = valueConfidence,
-            Node = indexer,
+            Node = indexer.ToHandle(),
             Line = line,
             Column = column
         });
@@ -360,7 +360,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                 Kind = GDContainerUsageKind.IndexAssign,
                 InferredType = keyType,
                 IsHighConfidence = keyConfidence,
-                Node = indexer,
+                Node = indexer.ToHandle(),
                 Line = line,
                 Column = column
             });
@@ -375,14 +375,14 @@ internal class GDClassContainerUsageCollector : GDVisitor
             {
                 var valueType = _typeEngine?.InferSemanticType(value);
                 var isHighConfidence = DetermineHighConfidence(value, valueType);
-                var token = value.AllTokens.FirstOrDefault();
+                var token = value.FirstLeafToken;
 
                 profile.ValueUsages.Add(new GDContainerUsageObservation
                 {
                     Kind = GDContainerUsageKind.Initialization,
                     InferredType = valueType,
                     IsHighConfidence = isHighConfidence,
-                    Node = value,
+                    Node = value.ToHandle(),
                     Line = token?.StartLine ?? 0,
                     Column = token?.StartColumn ?? 0
                 });
@@ -392,7 +392,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         {
             foreach (var kv in dictInit.KeyValues ?? Enumerable.Empty<GDDictionaryKeyValueDeclaration>())
             {
-                var token = kv.AllTokens.FirstOrDefault();
+                var token = kv.FirstLeafToken;
                 var line = token?.StartLine ?? 0;
                 var column = token?.StartColumn ?? 0;
 
@@ -404,7 +404,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                     Kind = GDContainerUsageKind.Initialization,
                     InferredType = keyType,
                     IsHighConfidence = keyConfidence,
-                    Node = kv,
+                    Node = kv.ToHandle(),
                     Line = line,
                     Column = column
                 });
@@ -417,7 +417,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
                     Kind = GDContainerUsageKind.Initialization,
                     InferredType = valueType,
                     IsHighConfidence = valueConfidence,
-                    Node = kv,
+                    Node = kv.ToHandle(),
                     Line = line,
                     Column = column
                 });
