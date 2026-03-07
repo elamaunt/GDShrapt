@@ -2,6 +2,7 @@ using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace GDShrapt.Semantics;
@@ -38,6 +39,9 @@ internal class GDFlowAnalyzer : GDVisitor
     private readonly HashSet<GDExpression> _resolvingExpressions = new();
     private const int MaxResolveDepth = 30;
 
+    // File path for origin tracking
+    private string? _filePath;
+
     public GDFlowAnalyzer(GDTypeInferenceEngine? typeEngine)
     {
         _typeEngine = typeEngine;
@@ -64,6 +68,64 @@ internal class GDFlowAnalyzer : GDVisitor
         : this(typeEngine, expressionTypeProvider)
     {
         _onreadyVariablesProvider = onreadyVariablesProvider;
+    }
+
+    /// <summary>
+    /// Sets the file path for origin tracking.
+    /// </summary>
+    public void SetFilePath(string? filePath) => _filePath = filePath;
+
+    private GDFlowLocation LocationFromNode(GDNode? node)
+    {
+        if (node == null)
+            return default;
+        return new GDFlowLocation(_filePath, node.StartLine, node.StartColumn);
+    }
+
+    private GDTypeOrigin CreateOrigin(GDTypeOriginKind kind, GDNode? node, GDTypeOriginConfidence confidence = GDTypeOriginConfidence.Inferred, string? description = null, GDAbstractValue? value = null)
+    {
+        return new GDTypeOrigin(kind, confidence, LocationFromNode(node), description: description, value: value);
+    }
+
+    /// <summary>
+    /// Infers the appropriate origin kind based on the expression AST structure.
+    /// Call expressions get CallSiteReturn, literals get Literal, etc.
+    /// </summary>
+    private static GDTypeOriginKind InferOriginKindFromExpression(GDExpression? expr, GDTypeOriginKind fallback)
+    {
+        if (expr == null)
+            return fallback;
+
+        if (expr is GDCallExpression callExpr)
+        {
+            // Check for member call (method call on object)
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
+            {
+                var methodName = memberOp.Identifier?.Sequence;
+                if (methodName == "instantiate")
+                    return GDTypeOriginKind.InstantiateInjection;
+            }
+
+            // Check for preload/load
+            var callName = callExpr.CallerExpression is GDIdentifierExpression identExpr
+                ? identExpr.Identifier?.Sequence
+                : null;
+            if (callName == "preload" || callName == "load")
+                return GDTypeOriginKind.PreloadInjection;
+
+            return GDTypeOriginKind.CallSiteReturn;
+        }
+
+        if (expr is GDGetNodeExpression || expr is GDGetUniqueNodeExpression)
+            return GDTypeOriginKind.SceneInjection;
+
+        if (expr is GDNumberExpression || expr is GDStringExpression || expr is GDBoolExpression)
+            return GDTypeOriginKind.Literal;
+
+        if (expr is GDMemberOperatorExpression)
+            return GDTypeOriginKind.MemberAccess;
+
+        return fallback;
     }
 
     /// <summary>
@@ -97,7 +159,11 @@ internal class GDFlowAnalyzer : GDVisitor
                 var name = param.Identifier?.Sequence;
                 var declType = param.Type?.BuildName();
                 if (!string.IsNullOrEmpty(name))
-                    _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(declType));
+                {
+                    var semType = GDSemanticType.FromRuntimeTypeName(declType);
+                    var origin = CreateOrigin(GDTypeOriginKind.ParameterDeclaration, param, GDTypeOriginConfidence.Exact);
+                    _currentState.DeclareVariable(name, semType, null, origin, null);
+                }
             }
         }
 
@@ -152,7 +218,11 @@ internal class GDFlowAnalyzer : GDVisitor
             }
 
             if (!string.IsNullOrEmpty(name))
-                _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(declType));
+            {
+                var semType = GDSemanticType.FromRuntimeTypeName(declType);
+                var origin = CreateOrigin(GDTypeOriginKind.ParameterDeclaration, param, GDTypeOriginConfidence.Exact);
+                _currentState.DeclareVariable(name, semType, null, origin, null);
+            }
         }
 
         // Collect container usage profiles
@@ -209,7 +279,16 @@ internal class GDFlowAnalyzer : GDVisitor
                 initSemType = declSemType;
         }
 
-        _currentState.DeclareVariable(name, declSemType, initSemType);
+        // Create origins for declaration and initialization
+        var declOrigin = declSemType != null
+            ? CreateOrigin(GDTypeOriginKind.Declaration, varDecl, GDTypeOriginConfidence.Exact)
+            : null;
+        var initOriginKind = InferOriginKindFromExpression(varDecl.Initializer, GDTypeOriginKind.Initialization);
+        var initOrigin = initSemType != null
+            ? CreateOrigin(initOriginKind, varDecl.Initializer as GDNode ?? varDecl, GDTypeOriginConfidence.Inferred)
+            : null;
+
+        _currentState.DeclareVariable(name, declSemType, initSemType, declOrigin, initOrigin);
         RecordState(varDecl);
     }
 
@@ -238,17 +317,342 @@ internal class GDFlowAnalyzer : GDVisitor
                     var rhsSemType = ResolveSemanticType(dualOp.RightExpression);
                     if (rhsSemType != null && !rhsSemType.IsVariant)
                     {
+                        var baseKind = opType.Value == GDDualOperatorType.Assignment
+                            ? GDTypeOriginKind.Assignment
+                            : GDTypeOriginKind.CompoundAssignment;
+                        var originKind = opType.Value == GDDualOperatorType.Assignment
+                            ? InferOriginKindFromExpression(dualOp.RightExpression, baseKind)
+                            : baseKind;
+                        var origin = CreateOrigin(originKind, dualOp);
+
                         var adjustedType = AdjustTypeForDeclaredType(name, rhsSemType.DisplayName);
                         if (adjustedType != rhsSemType.DisplayName)
-                            _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(adjustedType), dualOp);
+                            _currentState.SetVariableType(name, GDSemanticType.FromRuntimeTypeName(adjustedType), origin);
                         else
-                            _currentState.SetVariableType(name, rhsSemType, dualOp);
+                            _currentState.SetVariableType(name, rhsSemType, origin);
                     }
                 }
+            }
+            else if (dualOp.LeftExpression is GDMemberOperatorExpression memberExpr)
+            {
+                TryTrackPropertyMutation(dualOp, memberExpr);
             }
             RecordState(dualOp);
         }
     }
+
+    #endregion
+
+    #region Mutation Tracking
+
+    public override void Visit(GDExpressionStatement exprStmt)
+    {
+        if (exprStmt.Expression is GDCallExpression call)
+        {
+            TryTrackMutationFromCall(call);
+        }
+    }
+
+    private void TryTrackMutationFromCall(GDCallExpression call)
+    {
+        var callName = GetMethodName(call);
+        if (callName == null)
+            return;
+
+        var receiverName = GetReceiverName(call);
+        var isConditional = _branchStatesStack.Count > 0;
+        var location = LocationFromNode(call);
+
+        switch (callName)
+        {
+            case "add_child" or "add_sibling":
+            {
+                if (receiverName == null)
+                    return;
+
+                var flowType = _currentState.GetVariableType(receiverName);
+                if (flowType == null)
+                    return;
+
+                var childType = InferFirstArgType(call);
+                var childSnapshot = InferFirstArgSceneSnapshot(call);
+
+                var mutation = new GDStateMutation(
+                    GDStateMutationKind.AddChild,
+                    location,
+                    isConditional: isConditional,
+                    nodeType: childType,
+                    addedSceneSnapshot: childSnapshot);
+
+                ApplyMutationToVariable(receiverName, mutation);
+                break;
+            }
+
+            case "remove_child":
+            {
+                if (receiverName == null)
+                    return;
+
+                var childPath = InferFirstArgStringValue(call);
+
+                var mutation = new GDStateMutation(
+                    GDStateMutationKind.RemoveChild,
+                    location,
+                    isConditional: isConditional,
+                    nodePath: childPath);
+
+                ApplyMutationToVariable(receiverName, mutation);
+                break;
+            }
+
+            case "queue_free" or "free":
+            {
+                if (receiverName == null)
+                    return;
+
+                var mutation = new GDStateMutation(
+                    GDStateMutationKind.QueueFree,
+                    location,
+                    isConditional: isConditional);
+
+                ApplyMutationToVariable(receiverName, mutation);
+                break;
+            }
+
+            case "show":
+            {
+                if (receiverName == null)
+                    return;
+
+                var mutation = new GDStateMutation(
+                    GDStateMutationKind.MethodCall,
+                    location,
+                    isConditional: isConditional,
+                    propertyName: "visible",
+                    newValue: new GDLiteralValue(true, GDSemanticType.FromRuntimeTypeName("bool")));
+
+                ApplyMutationToVariable(receiverName, mutation);
+                break;
+            }
+
+            case "hide":
+            {
+                if (receiverName == null)
+                    return;
+
+                var mutation = new GDStateMutation(
+                    GDStateMutationKind.MethodCall,
+                    location,
+                    isConditional: isConditional,
+                    propertyName: "visible",
+                    newValue: new GDLiteralValue(false, GDSemanticType.FromRuntimeTypeName("bool")));
+
+                ApplyMutationToVariable(receiverName, mutation);
+                break;
+            }
+        }
+    }
+
+    private void TryTrackPropertyMutation(GDDualOperatorExpression dualOp, GDMemberOperatorExpression memberExpr)
+    {
+        if (dualOp.Operator?.OperatorType != GDDualOperatorType.Assignment)
+            return;
+
+        var receiverName = GetIdentifierName(memberExpr.CallerExpression);
+        var propertyName = memberExpr.Identifier?.Sequence;
+
+        if (receiverName == null || propertyName == null)
+            return;
+
+        var flowType = _currentState.GetVariableType(receiverName);
+        if (flowType == null)
+            return;
+
+        var isConditional = _branchStatesStack.Count > 0;
+        var location = LocationFromNode(dualOp);
+
+        switch (propertyName)
+        {
+            case "collision_layer":
+            {
+                if (TryGetIntValue(dualOp.RightExpression, out var layerValue))
+                {
+                    var mutation = new GDStateMutation(
+                        GDStateMutationKind.CollisionLayerChange,
+                        location,
+                        isConditional: isConditional,
+                        newCollisionState: new GDCollisionLayerState(layerValue, 0));
+                    ApplyMutationToVariable(receiverName, mutation);
+                }
+                break;
+            }
+
+            case "collision_mask":
+            {
+                if (TryGetIntValue(dualOp.RightExpression, out var maskValue))
+                {
+                    var mutation = new GDStateMutation(
+                        GDStateMutationKind.CollisionMaskChange,
+                        location,
+                        isConditional: isConditional,
+                        newCollisionState: new GDCollisionLayerState(0, maskValue));
+                    ApplyMutationToVariable(receiverName, mutation);
+                }
+                break;
+            }
+
+            case "visible" or "modulate" or "position" or "rotation" or "scale":
+            {
+                var abstractValue = TryResolveAbstractValue(dualOp.RightExpression);
+                var mutation = new GDStateMutation(
+                    GDStateMutationKind.PropertySet,
+                    location,
+                    isConditional: isConditional,
+                    propertyName: propertyName,
+                    newValue: abstractValue);
+                ApplyMutationToVariable(receiverName, mutation);
+                break;
+            }
+        }
+    }
+
+    private void ApplyMutationToVariable(string variableName, GDStateMutation mutation)
+    {
+        var flowType = _currentState.GetVariableType(variableName);
+        if (flowType == null)
+            return;
+
+        // Walk through origins to find one with an object state and apply mutation
+        foreach (var (semType, origins) in flowType.CurrentType.GetAllOrigins())
+        {
+            foreach (var origin in origins)
+            {
+                if (origin.ObjectState != null)
+                {
+                    var newState = origin.ObjectState.WithMutation(mutation);
+                    var updatedOrigin = new GDTypeOrigin(
+                        origin.Kind,
+                        origin.Confidence,
+                        origin.Location,
+                        upstream: origin.Upstream,
+                        description: origin.Description,
+                        value: origin.Value,
+                        objectState: newState,
+                        escapePoint: origin.EscapePoint);
+
+                    flowType.CurrentType.ReplaceOrigin(semType, origin, updatedOrigin);
+                    return;
+                }
+            }
+        }
+    }
+
+    private static string? GetMethodName(GDCallExpression call)
+    {
+        if (call.CallerExpression is GDMemberOperatorExpression memberExpr)
+            return memberExpr.Identifier?.Sequence;
+        return null;
+    }
+
+    private static string? GetReceiverName(GDCallExpression call)
+    {
+        if (call.CallerExpression is GDMemberOperatorExpression memberExpr)
+            return GetIdentifierName(memberExpr.CallerExpression);
+        return null;
+    }
+
+    private static string? GetIdentifierName(GDExpression? expr)
+    {
+        if (expr is GDIdentifierExpression identExpr)
+            return identExpr.Identifier?.Sequence;
+        return null;
+    }
+
+    private string? InferFirstArgType(GDCallExpression call)
+    {
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+
+        var argType = ResolveSemanticType(args[0]);
+        return argType?.DisplayName;
+    }
+
+    private Abstractions.GDSceneSnapshot? InferFirstArgSceneSnapshot(GDCallExpression call)
+    {
+        // If add_child argument is x.instantiate(), try to get the scene snapshot
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+
+        if (args[0] is GDCallExpression innerCall)
+        {
+            var innerCallName = GetMethodName(innerCall);
+            if (innerCallName == "instantiate" && innerCall.CallerExpression is GDMemberOperatorExpression)
+            {
+                // Try to extract scene path from preload call
+                // This will be resolved through the type injection system
+            }
+        }
+        return null;
+    }
+
+    private static string? InferFirstArgStringValue(GDCallExpression call)
+    {
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+
+        if (args[0] is GDStringExpression strExpr)
+            return strExpr.String?.Sequence;
+
+        if (args[0] is GDIdentifierExpression identExpr)
+            return identExpr.Identifier?.Sequence;
+
+        return null;
+    }
+
+    private static bool TryGetIntValue(GDExpression? expr, out int value)
+    {
+        value = 0;
+        if (expr is GDNumberExpression numExpr)
+            return int.TryParse(numExpr.Number?.Sequence, out value);
+        return false;
+    }
+
+    private GDAbstractValue? TryResolveAbstractValue(GDExpression? expr)
+    {
+        if (expr == null)
+            return null;
+
+        if (expr is GDBoolExpression boolExpr)
+        {
+            var boolVal = boolExpr.Value == true;
+            return new GDLiteralValue(boolVal, GDSemanticType.FromRuntimeTypeName("bool"));
+        }
+
+        if (expr is GDNumberExpression numExpr)
+        {
+            var seq = numExpr.Number?.Sequence;
+            if (seq != null && int.TryParse(seq, out var intVal))
+                return new GDLiteralValue(intVal, GDSemanticType.FromRuntimeTypeName("int"));
+            if (seq != null && float.TryParse(seq, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var floatVal))
+                return new GDLiteralValue(floatVal, GDSemanticType.FromRuntimeTypeName("float"));
+        }
+
+        if (expr is GDStringExpression strExpr)
+        {
+            var strVal = strExpr.String?.Sequence;
+            if (strVal != null)
+                return new GDLiteralValue(strVal, GDSemanticType.FromRuntimeTypeName("String"));
+        }
+
+        return null;
+    }
+
+    #endregion
+
+    #region Assignment Helpers
 
     private static bool IsAssignmentOperator(GDDualOperatorType opType)
     {
@@ -283,7 +687,9 @@ internal class GDFlowAnalyzer : GDVisitor
         var symbol = _typeEngine?.Scopes?.Lookup(name);
         if (symbol?.TypeName != null)
         {
-            _currentState.DeclareVariable(name, GDSemanticType.FromRuntimeTypeName(symbol.TypeName));
+            var semType = GDSemanticType.FromRuntimeTypeName(symbol.TypeName);
+            var origin = CreateOrigin(GDTypeOriginKind.Declaration, identExpr, GDTypeOriginConfidence.Exact);
+            _currentState.DeclareVariable(name, semType, null, origin, null);
         }
     }
 
@@ -579,7 +985,9 @@ internal class GDFlowAnalyzer : GDVisitor
         var loopState = preLoopState.CreateChild();
         if (!string.IsNullOrEmpty(context.IteratorName))
         {
-            loopState.DeclareVariable(context.IteratorName, null, GDSemanticType.FromRuntimeTypeName(context.IteratorType));
+            var iterSemType = GDSemanticType.FromRuntimeTypeName(context.IteratorType);
+            var iterOrigin = CreateOrigin(GDTypeOriginKind.ForLoopIterator, forStmt);
+            loopState.DeclareVariable(context.IteratorName, null, iterSemType, null, iterOrigin);
         }
 
         _currentState = loopState;
@@ -757,7 +1165,9 @@ internal class GDFlowAnalyzer : GDVisitor
                     ? guardType
                     : subjectType;
 
-                state.DeclareVariable(name, null, GDSemanticType.FromRuntimeTypeName(bindingType));
+                var semType = GDSemanticType.FromRuntimeTypeName(bindingType);
+                var origin = CreateOrigin(GDTypeOriginKind.MatchPatternNarrowing, varExpr);
+                state.DeclareVariable(name, null, semType, null, origin);
             }
             return;
         }
@@ -817,7 +1227,9 @@ internal class GDFlowAnalyzer : GDVisitor
                 var paramType = param.Type?.BuildName();
                 if (!string.IsNullOrEmpty(paramName))
                 {
-                    lambdaState.DeclareVariable(paramName, GDSemanticType.FromRuntimeTypeName(paramType));
+                    var semType = GDSemanticType.FromRuntimeTypeName(paramType);
+                    var origin = CreateOrigin(GDTypeOriginKind.ParameterDeclaration, param, GDTypeOriginConfidence.Exact);
+                    lambdaState.DeclareVariable(paramName, semType, null, origin, null);
                     lambdaState.MarkNonNull(paramName);
                 }
             }
@@ -880,8 +1292,9 @@ internal class GDFlowAnalyzer : GDVisitor
 
                 if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(typeName))
                 {
-                    state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(typeName));
-                    // Type narrowing implies non-null
+                    var narrowedType = GDSemanticType.FromRuntimeTypeName(typeName);
+                    var constraint = new GDNarrowingConstraint(GDNarrowingKind.IsCheck, narrowedType, LocationFromNode(condition));
+                    state.NarrowType(varName, narrowedType, constraint);
                     state.MarkNonNull(varName);
                 }
             }

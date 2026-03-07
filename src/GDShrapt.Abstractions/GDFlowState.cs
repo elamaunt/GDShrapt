@@ -97,8 +97,32 @@ public class GDFlowState
             newType.CurrentType.AddType(typeName);
             newType.IsPotentiallyNull = (typeName is GDNullSemanticType);
         }
-        newType.LastAssignmentNode = assignmentNode;
+        _variables[name] = newType;
+    }
 
+    /// <summary>
+    /// Sets the type of a variable with origin tracking.
+    /// </summary>
+    public void SetVariableType(string name, GDSemanticType? typeName, GDTypeOrigin? origin)
+    {
+        if (string.IsNullOrEmpty(name))
+            return;
+
+        var existing = GetVariableType(name) ?? new GDFlowVariableType();
+        var newType = existing.Clone();
+
+        newType.IsNarrowed = false;
+        newType.NarrowedFromType = null;
+
+        newType.CurrentType = new GDUnionType();
+        if (typeName != null && !typeName.IsVariant)
+        {
+            if (origin != null)
+                newType.CurrentType.AddType(typeName, origin);
+            else
+                newType.CurrentType.AddType(typeName);
+            newType.IsPotentiallyNull = (typeName is GDNullSemanticType);
+        }
         _variables[name] = newType;
     }
 
@@ -121,6 +145,37 @@ public class GDFlowState
         else if (declaredType != null && !declaredType.IsVariant)
         {
             flowType.CurrentType.AddType(declaredType);
+            flowType.IsPotentiallyNull = false;
+        }
+
+        _variables[name] = flowType;
+    }
+
+    /// <summary>
+    /// Declares a variable with origin tracking.
+    /// </summary>
+    public void DeclareVariable(string name, GDSemanticType? declaredType, GDSemanticType? initType, GDTypeOrigin? declOrigin, GDTypeOrigin? initOrigin)
+    {
+        if (string.IsNullOrEmpty(name))
+            return;
+
+        var flowType = new GDFlowVariableType { DeclaredType = declaredType };
+
+        if (initType != null && !initType.IsVariant)
+        {
+            if (initOrigin != null)
+                flowType.CurrentType.AddType(initType, initOrigin);
+            else
+                flowType.CurrentType.AddType(initType);
+            if (initType is not GDNullSemanticType)
+                flowType.IsPotentiallyNull = false;
+        }
+        else if (declaredType != null && !declaredType.IsVariant)
+        {
+            if (declOrigin != null)
+                flowType.CurrentType.AddType(declaredType, declOrigin);
+            else
+                flowType.CurrentType.AddType(declaredType);
             flowType.IsPotentiallyNull = false;
         }
 
@@ -152,6 +207,37 @@ public class GDFlowState
         var narrowed = existing.Clone();
         narrowed.IsNarrowed = true;
         narrowed.NarrowedFromType = toType;
+        _variables[name] = narrowed;
+    }
+
+    /// <summary>
+    /// Applies type narrowing with origin and narrowing constraint tracking.
+    /// </summary>
+    public void NarrowType(string name, GDSemanticType toType, GDNarrowingConstraint? constraint)
+    {
+        if (string.IsNullOrEmpty(name) || toType == null)
+            return;
+
+        var existing = GetVariableType(name);
+        if (existing == null)
+        {
+            var newType = new GDFlowVariableType
+            {
+                IsNarrowed = true,
+                NarrowedFromType = toType
+            };
+            newType.CurrentType.AddType(toType);
+            if (constraint != null)
+                newType.AddNarrowing(constraint);
+            _variables[name] = newType;
+            return;
+        }
+
+        var narrowed = existing.Clone();
+        narrowed.IsNarrowed = true;
+        narrowed.NarrowedFromType = toType;
+        if (constraint != null)
+            narrowed.AddNarrowing(constraint);
         _variables[name] = narrowed;
     }
 
@@ -339,6 +425,7 @@ public class GDFlowState
 
     /// <summary>
     /// Merges two variable types into a Union.
+    /// Preserves per-type origins and escape points from both branches.
     /// </summary>
     private static GDFlowVariableType? MergeVariableTypes(GDFlowVariableType? a, GDFlowVariableType? b)
     {
@@ -356,7 +443,7 @@ public class GDFlowState
             IsPotentiallyNull = a.IsPotentiallyNull || b.IsPotentiallyNull
         };
 
-        // Merge current types into Union
+        // Merge current types into Union (preserves per-type origins)
         merged.CurrentType.MergeWith(a.CurrentType);
         merged.CurrentType.MergeWith(b.CurrentType);
 
@@ -365,6 +452,12 @@ public class GDFlowState
             merged.CurrentType.AddType(a.NarrowedFromType);
         if (b.IsNarrowed && b.NarrowedFromType != null)
             merged.CurrentType.AddType(b.NarrowedFromType);
+
+        // Merge escape points (union from both branches)
+        foreach (var ep in a.EscapePoints)
+            merged.AddEscapePoint(ep);
+        foreach (var ep in b.EscapePoints)
+            merged.AddEscapePoint(ep);
 
         // Merge duck-type constraints (intersection: only keep what BOTH branches have)
         if (a.DuckType != null && b.DuckType != null)

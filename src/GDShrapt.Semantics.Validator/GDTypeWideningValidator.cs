@@ -1,3 +1,4 @@
+using System.Linq;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
@@ -6,6 +7,7 @@ namespace GDShrapt.Semantics.Validator;
 /// <summary>
 /// Detects assignments that widen a typed variable.
 /// GD7019: Assignment widens typed variable (sprite = get_node("X") widens Sprite2D to Node).
+/// Enriches diagnostic messages with origin provenance when available.
 /// </summary>
 public class GDTypeWideningValidator : GDValidationVisitor
 {
@@ -70,11 +72,28 @@ public class GDTypeWideningValidator : GDValidationVisitor
         if (_runtimeProvider.IsAssignableTo(declaredTypeName, rhsTypeName) &&
             !_runtimeProvider.IsAssignableTo(rhsTypeName, declaredTypeName))
         {
-            ReportWarning(
-                GDDiagnosticCode.TypeWideningAssignment,
-                $"Assignment widens '{declaredTypeName}' to '{rhsTypeName}'",
-                dualOp);
+            var message = BuildWideningMessage(declaredTypeName, rhsTypeName, flowVar, rhsType);
+            ReportWarning(GDDiagnosticCode.TypeWideningAssignment, message, dualOp);
         }
+    }
+
+    private static string BuildWideningMessage(
+        string declaredTypeName, string rhsTypeName,
+        GDFlowVariableType flowVar, GDSemanticType rhsType)
+    {
+        // Try to find origin for the RHS type in flow data
+        var origins = flowVar.CurrentType.GetOrigins(rhsType);
+        if (origins.Count > 0)
+        {
+            var origin = origins[0];
+            var originDesc = origin.Description ?? origin.Kind.ToString();
+            var locationSuffix = origin.Location.Line > 0
+                ? $" at line {origin.Location.Line + 1}"
+                : "";
+            return $"Assignment widens '{declaredTypeName}' to '{rhsTypeName}' (from {originDesc}{locationSuffix})";
+        }
+
+        return $"Assignment widens '{declaredTypeName}' to '{rhsTypeName}'";
     }
 
     private static bool IsNumericType(string typeName)

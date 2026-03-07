@@ -154,6 +154,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     internal GDExpressionTypeService ExpressionTypeService => _expressionTypeService;
 
     private IGDTypeSystem? _typeSystem;
+    private IGDDataFlowQuery? _dataFlowQuery;
 
     /// <summary>
     /// Gets the type system interface.
@@ -162,6 +163,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Always available; uses NullRuntimeProvider if no RuntimeProvider was specified.
     /// </summary>
     public IGDTypeSystem TypeSystem => _typeSystem ??= new GDTypeSystem(this, _runtimeProvider ?? GDNullRuntimeProvider.Instance);
+
+    /// <summary>
+    /// Gets the data flow query interface.
+    /// Provides rich data flow information: per-type origins, values, object state, escape points, conflicts.
+    /// </summary>
+    public IGDDataFlowQuery DataFlow => _dataFlowQuery ??= new GDDataFlowQueryService(
+        _flowRegistry, _runtimeProvider, GetOrCreateFlowAnalyzer);
 
     /// <summary>
     /// Creates a semantic model for a script file.
@@ -194,6 +202,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             _nodeTypeNodes);
         _expressionTypeService.SetFindSymbolDelegate(FindSymbol);
         _expressionTypeService.SetGetOnreadyVariablesDelegate(GetOnreadyVariables);
+        _expressionTypeService.SetFilePath(_scriptFile?.FullPath);
 
         _confidenceService = new GDConfidenceService(
             runtimeProvider,
@@ -788,7 +797,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (methodScope == null)
             return null;
 
-        return _flowRegistry.GetOrCreateFlowAnalyzer(methodScope, _typeEngine, GetExpressionTypeWithoutFlow, () => GetOnreadyVariables());
+        return _flowRegistry.GetOrCreateFlowAnalyzer(methodScope, _typeEngine, GetExpressionTypeWithoutFlow, () => GetOnreadyVariables(), _scriptFile?.FullPath);
     }
 
     /// <summary>

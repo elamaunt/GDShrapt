@@ -137,6 +137,14 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 if (sref.IdentifierToken != null)
                     endCol = sref.IdentifierToken.EndColumn;
 
+                var reason = sref.ConfidenceReason;
+
+                // Enrich reason with origin provenance for potential references
+                if (sref.Confidence == GDReferenceConfidence.Potential && sref.Node != null && _projectModel != null)
+                {
+                    reason = EnrichReasonWithOrigin(sref, reason);
+                }
+
                 locations.Add(new GDCliReferenceLocation
                 {
                     FilePath = sref.FilePath!,
@@ -154,7 +162,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                     ReceiverTypeName = sref.IsSignalConnection ? sref.CallerTypeName : null,
                     Confidence = sref.IsContractString || sref.IsSignalConnection || isCrossFile
                         ? sref.Confidence : (GDReferenceConfidence?)null,
-                    Reason = sref.ConfidenceReason,
+                    Reason = reason,
                     Context = GetSourceLine(sref.FilePath!, line1)
                 });
             }
@@ -297,6 +305,43 @@ public class GDFindRefsHandler : IGDFindRefsHandler
     {
         var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
         return model?.BaseTypeName;
+    }
+
+    private string? EnrichReasonWithOrigin(GDSymbolReference sref, string? baseReason)
+    {
+        if (sref.Node == null || _projectModel == null)
+            return baseReason;
+
+        var model = _projectModel.GetSemanticModel(sref.Script);
+        if (model == null)
+            return baseReason;
+
+        var symbol = model.GetSymbolForNode(sref.Node);
+        if (symbol == null)
+            return baseReason;
+
+        // Try to get flow variable type at this reference location
+        var flowVar = model.GetFlowVariableType(symbol.Name, sref.Node);
+        if (flowVar == null || !flowVar.CurrentType.HasOrigins)
+            return baseReason;
+
+        // Find origin with highest confidence that explains the potential reference
+        foreach (var (type, origins) in flowVar.CurrentType.GetAllOrigins())
+        {
+            if (origins.Count == 0)
+                continue;
+
+            var origin = origins[0];
+            var desc = origin.Description ?? origin.Kind.ToString();
+            var confidence = origin.Confidence.ToString().ToLowerInvariant();
+            var enriched = $"{desc} ({confidence})";
+
+            if (!string.IsNullOrEmpty(baseReason))
+                return $"{baseReason} — origin: {enriched}";
+            return $"origin: {enriched}";
+        }
+
+        return baseReason;
     }
 
     private class RawGroup

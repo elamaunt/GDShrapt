@@ -116,11 +116,6 @@ public class GDTypeInfo
     // ========================================
 
     /// <summary>
-    /// Last assignment node (for tracing type source).
-    /// </summary>
-    public GDNode? LastAssignmentNode { get; set; }
-
-    /// <summary>
     /// Confidence level in the inferred type.
     /// </summary>
     public GDTypeConfidence Confidence { get; set; } = GDTypeConfidence.Unknown;
@@ -189,8 +184,7 @@ public class GDTypeInfo
             IsNullable = !flowType.IsGuaranteedNonNull,
             IsGuaranteedNonNull = flowType.IsGuaranteedNonNull,
             IsPotentiallyNull = flowType.IsPotentiallyNull,
-            DuckTypeConstraints = flowType.DuckType,
-            LastAssignmentNode = flowType.LastAssignmentNode
+            DuckTypeConstraints = flowType.DuckType
         };
 
         // Determine confidence

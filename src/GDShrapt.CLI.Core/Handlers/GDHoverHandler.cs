@@ -105,6 +105,23 @@ public class GDHoverHandler : IGDHoverHandler
             {
                 hover += $"\n\ninferred return: `{inferredReturn.DisplayName}`";
             }
+
+            // Show injected origin info for the call result if available
+            var resultVarNode = callExpr.Parent;
+            if (resultVarNode is GDVariableDeclarationStatement varStmt)
+            {
+                var varName = varStmt.Identifier?.Sequence;
+                if (varName != null)
+                {
+                    var flowVar = semanticModel.GetFlowVariableType(varName, varStmt);
+                    if (flowVar != null && flowVar.CurrentType.HasOrigins)
+                    {
+                        var originInfo = BuildOriginInfo(flowVar);
+                        if (!string.IsNullOrEmpty(originInfo))
+                            hover += $"\n\n{originInfo}";
+                    }
+                }
+            }
         }
 
         return hover;
@@ -332,12 +349,28 @@ public class GDHoverHandler : IGDHoverHandler
             annotations.Add($"inferred: `{inferredType}`");
         }
 
+        // Show origin provenance chain
+        if (flowVarType != null && flowVarType.CurrentType.HasOrigins)
+        {
+            var originInfo = BuildOriginInfo(flowVarType);
+            if (!string.IsNullOrEmpty(originInfo))
+                annotations.Add(originInfo);
+        }
+
         // Show duck-type constraints
         if (flowVarType?.DuckType != null)
         {
             var duckInfo = BuildDuckTypeInfo(flowVarType.DuckType);
             if (!string.IsNullOrEmpty(duckInfo))
                 annotations.Add(duckInfo);
+        }
+
+        // Show escape points
+        if (flowVarType != null && flowVarType.EscapePoints.Count > 0)
+        {
+            var escapeInfo = BuildEscapeInfo(flowVarType.EscapePoints);
+            if (!string.IsNullOrEmpty(escapeInfo))
+                annotations.Add(escapeInfo);
         }
 
         // Show parameter annotation
@@ -382,6 +415,61 @@ public class GDHoverHandler : IGDHoverHandler
         }
 
         return result;
+    }
+
+    private static string? BuildOriginInfo(GDFlowVariableType flowVarType)
+    {
+        var parts = new List<string>();
+
+        foreach (var (type, origins) in flowVarType.CurrentType.GetAllOrigins())
+        {
+            if (origins.Count == 0)
+                continue;
+
+            var origin = origins[0];
+            var desc = origin.Description ?? origin.Kind.ToString();
+            var confidence = origin.Confidence.ToString().ToLowerInvariant();
+
+            var entry = $"`{type.DisplayName}` ← {desc} ({confidence})";
+
+            // Show attached abstract value
+            if (origin.Value != null)
+                entry += $" = `{origin.Value.DisplayValue}`";
+
+            // Show object state summary
+            if (origin.ObjectState != null)
+            {
+                var scenePath = origin.ObjectState.GetRootSceneSnapshot()?.ScenePath;
+                if (scenePath != null)
+                    entry += $" [scene: {scenePath}]";
+
+                var collisionLayers = origin.ObjectState.GetCurrentCollisionLayers();
+                if (collisionLayers != null)
+                    entry += $" [layers: {collisionLayers}]";
+            }
+
+            parts.Add(entry);
+        }
+
+        if (parts.Count == 0)
+            return null;
+
+        return "origin: " + string.Join("  \n", parts);
+    }
+
+    private static string? BuildEscapeInfo(IReadOnlyList<GDEscapePoint> escapePoints)
+    {
+        if (escapePoints.Count == 0)
+            return null;
+
+        if (escapePoints.Count == 1)
+        {
+            var ep = escapePoints[0];
+            var desc = ep.Description ?? ep.Kind.ToString();
+            return $"⚠ escapes: {desc}";
+        }
+
+        return $"⚠ escapes: {escapePoints.Count} point(s)";
     }
 
     /// <summary>

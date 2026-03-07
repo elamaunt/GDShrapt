@@ -1,6 +1,6 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-07 01:24:43
+Generated: 2026-03-07 05:41:50
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
@@ -703,7 +703,7 @@ DIAGNOSTICS BY FILE
    216:10  [GD7005] Warning - Variable 'unknown' may be null when accessing 'some_property'
    222:12  [GD3009] Warning - Property 'nonexistent_property' not found on type 'String'
    242:5   [GDL201] Warning - Local variable 'node' is declared but never used
-   242:11  [GD3022] Hint - Annotation 'Node' is wider than inferred type 'Node2D'
+   242:11  [GD3022] Hint - Annotation 'Node' is wider than inferred type 'Node2D' (from CallSiteReturn)
    245:5   [GDL201] Warning - Local variable 'f' is declared but never used
    251:1   [GD3001] Warning - Type mismatch in assignment: cannot assign 'String' to 'int'
    256:1   [GD7019] Warning - Assignment widens 'Node2D' to 'Node'

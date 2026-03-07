@@ -1,4 +1,5 @@
-using GDShrapt.Reader;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace GDShrapt.Abstractions;
@@ -16,6 +17,7 @@ public class GDFlowVariableType
 
     /// <summary>
     /// The explicitly declared type (if any). Null for Variant variables.
+    /// Also added to CurrentType as an origin with Kind=Declaration during construction.
     /// </summary>
     public GDSemanticType? DeclaredType { get; set; }
 
@@ -28,11 +30,6 @@ public class GDFlowVariableType
     /// The narrowing type that currently applies (for restoration).
     /// </summary>
     public GDSemanticType? NarrowedFromType { get; set; }
-
-    /// <summary>
-    /// Last assignment AST node (for source tracking).
-    /// </summary>
-    public GDNode? LastAssignmentNode { get; set; }
 
     /// <summary>
     /// Whether this variable is guaranteed to be non-null at this program point.
@@ -53,6 +50,40 @@ public class GDFlowVariableType
     /// </summary>
     public GDDuckType? DuckType { get; set; }
 
+    private List<GDNarrowingConstraint>? _activeNarrowings;
+    private List<GDEscapePoint>? _escapePoints;
+
+    /// <summary>
+    /// Active narrowing constraints at this program point.
+    /// </summary>
+    public IReadOnlyList<GDNarrowingConstraint> ActiveNarrowings
+        => (IReadOnlyList<GDNarrowingConstraint>?)_activeNarrowings ?? Array.Empty<GDNarrowingConstraint>();
+
+    /// <summary>
+    /// Points where this variable's data escaped analysis scope.
+    /// </summary>
+    public IReadOnlyList<GDEscapePoint> EscapePoints
+        => (IReadOnlyList<GDEscapePoint>?)_escapePoints ?? Array.Empty<GDEscapePoint>();
+
+    public void AddNarrowing(GDNarrowingConstraint narrowing)
+    {
+        if (_activeNarrowings == null)
+            _activeNarrowings = new List<GDNarrowingConstraint>();
+        _activeNarrowings.Add(narrowing);
+    }
+
+    public void ClearNarrowings()
+    {
+        _activeNarrowings?.Clear();
+    }
+
+    public void AddEscapePoint(GDEscapePoint escape)
+    {
+        if (_escapePoints == null)
+            _escapePoints = new List<GDEscapePoint>();
+        _escapePoints.Add(escape);
+    }
+
     /// <summary>
     /// Gets the effective type for display/inference.
     /// Priority: narrowing > declared (when current is null/generic base) > current inferred > declared > Variant
@@ -68,13 +99,9 @@ public class GDFlowVariableType
             {
                 var currentEffective = CurrentType.EffectiveType;
 
-                // If DeclaredType exists and CurrentType is only "null", prefer DeclaredType
-                // This ensures "var x: Node = null" returns "Node", not "null"
                 if (DeclaredType != null && currentEffective is GDNullSemanticType)
                     return DeclaredType;
 
-                // If DeclaredType is a generic version of CurrentType, prefer DeclaredType
-                // e.g., DeclaredType = "Dictionary[String,int]", CurrentType = "Dictionary"
                 if (DeclaredType != null && IsGenericVersionOf(DeclaredType.DisplayName, currentEffective.DisplayName))
                     return DeclaredType;
 
@@ -85,22 +112,17 @@ public class GDFlowVariableType
         }
     }
 
-    /// <summary>
-    /// Checks if genericType is a generic version of baseType.
-    /// e.g., "Dictionary[String,int]" is generic version of "Dictionary".
-    /// </summary>
     private static bool IsGenericVersionOf(string genericType, string baseType)
     {
         if (string.IsNullOrEmpty(genericType) || string.IsNullOrEmpty(baseType))
             return false;
 
-        // Check if genericType starts with baseType followed by '['
         var bracketIndex = genericType.IndexOf('[');
         if (bracketIndex <= 0)
             return false;
 
         var genericBase = genericType.Substring(0, bracketIndex);
-        return genericBase.Equals(baseType, System.StringComparison.Ordinal);
+        return genericBase.Equals(baseType, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -119,10 +141,8 @@ public class GDFlowVariableType
                 if (CurrentType.IsSingleType)
                 {
                     var singleType = CurrentType.Types.First();
-                    // Prefer DeclaredType when current is null
                     if (DeclaredType != null && singleType is GDNullSemanticType)
                         return DeclaredType.DisplayName;
-                    // Prefer DeclaredType if it's a generic version
                     if (DeclaredType != null && IsGenericVersionOf(DeclaredType.DisplayName, singleType.DisplayName))
                         return DeclaredType.DisplayName;
                     return singleType.DisplayName;
@@ -144,10 +164,11 @@ public class GDFlowVariableType
         DeclaredType = DeclaredType,
         IsNarrowed = IsNarrowed,
         NarrowedFromType = NarrowedFromType,
-        LastAssignmentNode = LastAssignmentNode,
         IsGuaranteedNonNull = IsGuaranteedNonNull,
         IsPotentiallyNull = IsPotentiallyNull,
-        DuckType = DuckType != null ? CloneDuckType(DuckType) : null
+        DuckType = DuckType != null ? CloneDuckType(DuckType) : null,
+        _activeNarrowings = _activeNarrowings != null ? new List<GDNarrowingConstraint>(_activeNarrowings) : null,
+        _escapePoints = _escapePoints != null ? new List<GDEscapePoint>(_escapePoints) : null
     };
 
     private static GDDuckType CloneDuckType(GDDuckType original)
@@ -174,8 +195,23 @@ public class GDFlowVariableType
             CommonBaseType = original.CommonBaseType,
             ConfidenceReason = original.ConfidenceReason
         };
-        foreach (var t in original.Types)
-            clone.Types.Add(t);
+
+        if (original.HasOrigins)
+        {
+            // Use AddType(type, origin) which adds both type and origin
+            foreach (var tracked in original.AllTrackedTypes)
+                clone.AddType(tracked.Type, tracked.Origin);
+
+            // Also add any types that have no origins
+            foreach (var t in original.Types)
+                clone.Types.Add(t); // HashSet.Add is idempotent
+        }
+        else
+        {
+            foreach (var t in original.Types)
+                clone.Types.Add(t);
+        }
+
         return clone;
     }
 

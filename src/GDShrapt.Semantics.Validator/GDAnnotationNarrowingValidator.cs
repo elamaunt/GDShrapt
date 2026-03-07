@@ -85,6 +85,7 @@ public class GDAnnotationNarrowingValidator : GDValidationVisitor
     /// <summary>
     /// GD3022: Annotation is wider than the inferred type.
     /// Example: var enemy: Node = Sprite2D.new() — annotation 'Node' is wider than 'Sprite2D'.
+    /// Enriches message with origin provenance when available.
     /// </summary>
     private void CheckAnnotationWider(GDTypeNode typeNode, GDExpression initializer, string declaredTypeName, string? varName, GDNode node)
     {
@@ -121,12 +122,34 @@ public class GDAnnotationNarrowingValidator : GDValidationVisitor
         if (_runtimeProvider.IsAssignableTo(inferredTypeName, declaredTypeName) &&
             !_runtimeProvider.IsAssignableTo(declaredTypeName, inferredTypeName))
         {
+            var message = BuildAnnotationWiderMessage(declaredTypeName, inferredTypeName, inferredType, varName, node);
             ReportDiagnostic(
                 _options.AnnotationNarrowingSeverity,
                 GDDiagnosticCode.AnnotationWiderThanInferred,
-                $"Annotation '{declaredTypeName}' is wider than inferred type '{inferredTypeName}'",
+                message,
                 typeNode);
         }
+    }
+
+    private string BuildAnnotationWiderMessage(string declaredTypeName, string inferredTypeName,
+        GDSemanticType inferredType, string? varName, GDNode node)
+    {
+        if (varName != null)
+        {
+            var flowVar = _semanticModel.GetFlowVariableType(varName, node);
+            if (flowVar != null)
+            {
+                var origins = flowVar.CurrentType.GetOrigins(inferredType);
+                if (origins.Count > 0)
+                {
+                    var origin = origins[0];
+                    var originDesc = origin.Description ?? origin.Kind.ToString();
+                    return $"Annotation '{declaredTypeName}' is wider than inferred type '{inferredTypeName}' (from {originDesc})";
+                }
+            }
+        }
+
+        return $"Annotation '{declaredTypeName}' is wider than inferred type '{inferredTypeName}'";
     }
 
     private static bool IsNumericType(string typeName)

@@ -76,7 +76,8 @@ internal class GDFlowAnalysisRegistry
         GDNode methodScope,
         GDTypeInferenceEngine? typeEngine,
         System.Func<GDExpression, string?>? expressionTypeGetter = null,
-        System.Func<IEnumerable<string>>? onreadyVarsGetter = null)
+        System.Func<IEnumerable<string>>? onreadyVarsGetter = null,
+        string? filePath = null)
     {
         if (_methodFlowAnalyzers.TryGetValue(methodScope, out var existing))
         {
@@ -84,6 +85,8 @@ internal class GDFlowAnalysisRegistry
         }
 
         var analyzer = new GDFlowAnalyzer(typeEngine, expressionTypeGetter, onreadyVarsGetter);
+        if (filePath != null)
+            analyzer.SetFilePath(filePath);
         // Cache BEFORE Analyze to prevent infinite recursion
         _methodFlowAnalyzers[methodScope] = analyzer;
         analyzer.AnalyzeScope(methodScope);

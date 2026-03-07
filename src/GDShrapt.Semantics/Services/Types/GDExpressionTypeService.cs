@@ -34,6 +34,9 @@ internal class GDExpressionTypeService
     // Local type service for enum access
     private GDLocalTypeService? _localTypeService;
 
+    // File path for origin tracking in flow analysis
+    private string? _filePath;
+
     internal GDExpressionTypeService(
         IGDRuntimeProvider? runtimeProvider,
         GDTypeInferenceEngine? typeEngine,
@@ -61,6 +64,11 @@ internal class GDExpressionTypeService
     internal void SetLocalTypeService(GDLocalTypeService? localTypeService)
     {
         _localTypeService = localTypeService;
+    }
+
+    internal void SetFilePath(string? filePath)
+    {
+        _filePath = filePath;
     }
 
     /// <summary>
@@ -567,7 +575,8 @@ internal class GDExpressionTypeService
             methodScope,
             _typeEngine,
             GetExpressionTypeWithoutFlow,
-            _getOnreadyVariables ?? (() => Enumerable.Empty<string>()));
+            _getOnreadyVariables ?? (() => Enumerable.Empty<string>()),
+            _filePath);
     }
 
     private GDRuntimeMemberInfo? FindMemberWithInheritance(string? typeName, string? memberName)

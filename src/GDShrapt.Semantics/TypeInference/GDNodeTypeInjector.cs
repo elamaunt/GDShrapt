@@ -3,6 +3,7 @@ using GDShrapt.Reader;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GDFlowSceneSnapshot = GDShrapt.Abstractions.GDSceneSnapshot;
 
 namespace GDShrapt.Semantics;
 
@@ -19,6 +20,12 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     private readonly GDGodotTypesProvider? _godotTypesProvider;
     private readonly IGDLogger? _logger;
 
+    // Scene snapshot cache: built once per scene path
+    private readonly Dictionary<string, GDFlowSceneSnapshot?> _snapshotCache = new();
+
+    // Side-channel: origin data from the last InjectType call
+    private GDTypeOrigin? _lastInjectionOrigin;
+
     public GDNodeTypeInjector(
         GDSceneTypesProvider? sceneProvider = null,
         IGDScriptProvider? scriptProvider = null,
@@ -31,15 +38,45 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         _logger = logger;
     }
 
+    /// <summary>
+    /// Returns the origin data from the last InjectType call, or null if no origin was produced.
+    /// This is a side-channel: call it immediately after InjectType to get the associated origin.
+    /// </summary>
+    public GDTypeOrigin? GetLastInjectionOrigin() => _lastInjectionOrigin;
+
+    /// <summary>
+    /// Gets or builds a cached scene snapshot for a scene path.
+    /// </summary>
+    public GDFlowSceneSnapshot? GetSceneSnapshot(string scenePath)
+    {
+        if (_snapshotCache.TryGetValue(scenePath, out var cached))
+            return cached;
+
+        if (_sceneProvider == null)
+            return null;
+
+        if (_sceneProvider.GetSceneInfo(scenePath) == null)
+            _sceneProvider.LoadScene(scenePath);
+
+        var sceneInfo = _sceneProvider.GetSceneInfo(scenePath);
+        var snapshot = GDSceneSnapshotBuilder.Build(sceneInfo);
+        _snapshotCache[scenePath] = snapshot;
+        return snapshot;
+    }
+
     public string? InjectType(GDNode node, GDTypeInjectionContext context)
     {
-        return node switch
+        _lastInjectionOrigin = null;
+
+        string? result = node switch
         {
             GDGetNodeExpression getNode => InferGetNodeType(getNode, context),
             GDGetUniqueNodeExpression uniqueNode => InferUniqueNodeType(uniqueNode, context),
             GDCallExpression call => InferCallType(call, context),
             _ => null
         };
+
+        return result;
     }
 
     private string? InferGetNodeType(GDGetNodeExpression expr, GDTypeInjectionContext context)
@@ -51,7 +88,16 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         if (string.IsNullOrEmpty(nodePath))
             return null;
 
-        return ResolveNodeType(nodePath, context.ScriptPath);
+        var result = ResolveNodeType(nodePath, context.ScriptPath);
+        if (result != null)
+        {
+            _lastInjectionOrigin = new GDTypeOrigin(
+                GDTypeOriginKind.SceneInjection,
+                GDTypeOriginConfidence.Exact,
+                LocationFromNode(expr),
+                description: $"$\"{nodePath}\"");
+        }
+        return result;
     }
 
     private string? InferUniqueNodeType(GDGetUniqueNodeExpression expr, GDTypeInjectionContext context)
@@ -63,7 +109,16 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         if (string.IsNullOrEmpty(nodeName))
             return null;
 
-        return ResolveUniqueNodeType(nodeName, context.ScriptPath);
+        var result = ResolveUniqueNodeType(nodeName, context.ScriptPath);
+        if (result != null)
+        {
+            _lastInjectionOrigin = new GDTypeOrigin(
+                GDTypeOriginKind.SceneInjection,
+                GDTypeOriginConfidence.Exact,
+                LocationFromNode(expr),
+                description: $"%{nodeName}");
+        }
+        return result;
     }
 
     private string? ResolveUniqueNodeType(string nodeName, string? scriptPath)
@@ -113,7 +168,18 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
 
             var nodePath = GDNodePathExtractor.ExtractFromCallExpression(call, resolveVariable);
             if (!string.IsNullOrEmpty(nodePath))
-                return ResolveNodeType(nodePath, context.ScriptPath);
+            {
+                var result = ResolveNodeType(nodePath, context.ScriptPath);
+                if (result != null)
+                {
+                    _lastInjectionOrigin = new GDTypeOrigin(
+                        GDTypeOriginKind.SceneInjection,
+                        GDTypeOriginConfidence.Exact,
+                        LocationFromNode(call),
+                        description: $"{callName}(\"{nodePath}\")");
+                }
+                return result;
+            }
         }
 
         // preload() and load()
@@ -121,7 +187,18 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         {
             var resourcePath = GDNodePathExtractor.ExtractResourcePath(call);
             if (!string.IsNullOrEmpty(resourcePath))
-                return ResolvePreloadType(resourcePath);
+            {
+                var result = ResolvePreloadType(resourcePath);
+                if (result != null)
+                {
+                    _lastInjectionOrigin = new GDTypeOrigin(
+                        GDTypeOriginKind.PreloadInjection,
+                        GDTypeOriginConfidence.Exact,
+                        LocationFromNode(call),
+                        value: new GDResourcePathValue(resourcePath, result));
+                }
+                return result;
+            }
         }
 
         // preload("scene.tscn").instantiate() or scene_var.instantiate()
@@ -129,7 +206,32 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         {
             var scenePath = ExtractScenePathFromCaller(call, context.ScriptPath);
             if (!string.IsNullOrEmpty(scenePath))
-                return ResolveSceneRootType(scenePath);
+            {
+                var result = ResolveSceneRootType(scenePath);
+                if (result != null)
+                {
+                    var snapshot = GetSceneSnapshot(scenePath);
+                    GDObjectState? objectState = null;
+                    if (snapshot != null)
+                    {
+                        GDCollisionLayerState? rootCollision = null;
+                        if (snapshot.Nodes.Count > 0)
+                            rootCollision = snapshot.Nodes[0].CollisionLayers;
+
+                        objectState = new GDObjectState(
+                            sceneSnapshot: snapshot,
+                            collisionLayers: rootCollision);
+                    }
+
+                    _lastInjectionOrigin = new GDTypeOrigin(
+                        GDTypeOriginKind.InstantiateInjection,
+                        GDTypeOriginConfidence.Exact,
+                        LocationFromNode(call),
+                        value: new GDResourcePathValue(scenePath, result),
+                        objectState: objectState);
+                }
+                return result;
+            }
         }
 
         // get_child(N) — try scene instance, then self scene, then add_child tracking
@@ -782,5 +884,12 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         }
 
         return null;
+    }
+
+    private static GDFlowLocation LocationFromNode(GDNode? node)
+    {
+        if (node == null)
+            return default;
+        return new GDFlowLocation(null, node.StartLine, node.StartColumn);
     }
 }

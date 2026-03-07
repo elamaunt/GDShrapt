@@ -516,10 +516,8 @@ namespace GDShrapt.Semantics.Validator
             if (!AreTypesCompatibleForAssignment(initType, declaredType) &&
                 !AreTypesCompatibleForAssignment(declaredType, initType))
             {
-                ReportWarning(
-                    GDDiagnosticCode.TypeAnnotationMismatch,
-                    $"Type mismatch: cannot assign '{initType}' to variable of type '{declaredType}'",
-                    varDecl);
+                var message = BuildTypeMismatchMessage(initType, declaredType, varDecl.Identifier?.Sequence, varDecl);
+                ReportWarning(GDDiagnosticCode.TypeAnnotationMismatch, message, varDecl);
             }
         }
 
@@ -547,11 +545,29 @@ namespace GDShrapt.Semantics.Validator
             if (!AreTypesCompatibleForAssignment(initType, declaredType) &&
                 !AreTypesCompatibleForAssignment(declaredType, initType))
             {
-                ReportWarning(
-                    GDDiagnosticCode.TypeAnnotationMismatch,
-                    $"Type mismatch: cannot assign '{initType}' to variable of type '{declaredType}'",
-                    varDecl);
+                var message = BuildTypeMismatchMessage(initType, declaredType, varDecl.Identifier?.Sequence, varDecl);
+                ReportWarning(GDDiagnosticCode.TypeAnnotationMismatch, message, varDecl);
             }
+        }
+
+        private string BuildTypeMismatchMessage(string initType, string declaredType, string? varName, GDNode node)
+        {
+            if (_semanticModel != null && varName != null)
+            {
+                var flowVar = _semanticModel.GetFlowVariableType(varName, node);
+                if (flowVar != null)
+                {
+                    var initSemanticType = GDSemanticType.FromRuntimeTypeName(initType);
+                    var origins = flowVar.CurrentType.GetOrigins(initSemanticType);
+                    if (origins.Count > 0)
+                    {
+                        var origin = origins[0];
+                        var originDesc = origin.Description ?? origin.Kind.ToString();
+                        return $"Type mismatch: '{initType}' (from {originDesc}) is not assignable to '{declaredType}'";
+                    }
+                }
+            }
+            return $"Type mismatch: cannot assign '{initType}' to variable of type '{declaredType}'";
         }
 
         private void RegisterForLoopVariable(GDForStatement forStmt)
