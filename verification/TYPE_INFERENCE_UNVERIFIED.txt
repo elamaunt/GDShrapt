@@ -1,3 +1,12 @@
 # TYPE_INFERENCE_UNVERIFIED.txt
 # Copy entries to TYPE_INFERENCE_VERIFIED.txt and add # OK
 
+test_scripts/dynamic_dispatch.gd
+266:12 GDIfExpression if_expr -> Variant
+
+test_scripts/ecs_like_system.gd
+263:15 GDIfExpression if_expr -> Variant
+
+test_scripts/getters_setters.gd
+90:11 GDIfExpression if_expr -> Array
+

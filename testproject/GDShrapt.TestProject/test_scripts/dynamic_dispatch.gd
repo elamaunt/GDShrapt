@@ -280,7 +280,7 @@ class DynamicBuilder:
 	func build():
 		for call_info in _pending_calls:
 			if call_info.has("method"):
-				if _target.has_method(call_info["method"]): # 283:7-GD7007-OK
+				if _target.has_method(call_info["method"]):
 					_target.callv(call_info["method"], call_info["args"])
 			elif call_info.has("property"):
 				if call_info["property"] in _target:
@@ -341,7 +341,7 @@ class DynamicProxy:
 		if _intercepts.has(method_name):
 			return _intercepts[method_name].call(_target, method_name, args)
 
-		if _target.has_method(method_name): # 344:5-GD7007-OK
+		if _target.has_method(method_name):
 			return _target.callv(method_name, args)
 
 		return null

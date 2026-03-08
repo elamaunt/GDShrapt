@@ -1,27 +1,27 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-08 06:16:24
+Generated: 2026-03-08 17:26:54
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 731
+Total diagnostics: 726
 Scripts analyzed:  58
 
 By Severity:
   Error     :    30
   Hint      :    94
   Info      :    36
-  Warning   :   571
+  Warning   :   566
 
 By Source:
   Linter              :   301
-  SemanticValidator   :   396
+  SemanticValidator   :   391
   Validator           :    34
 
 By Code (Top 30):
-  GD7007    :  187  (Variable 'timer_node' is @onready - _ready() may not have...)
+  GD7007    :  185  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  155  (Local variable 'unused_var' is declared but never used)
   GD7006    :   39  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
@@ -49,8 +49,8 @@ By Code (Top 30):
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
   GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD4009    :    4  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
-  GD7019    :    4  (Assignment widens 'TestEnum' to 'int')
   GD3006    :    3  (Unknown type: 'CompletelyUnknownType')
+  GD3010    :    3  (Argument type mismatch for 'x' in call to '_take_int': ex...)
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -63,7 +63,7 @@ DIAGNOSTICS BY FILE
     77:5   [GDL203] Info - Function '_process_attack' only contains 'pass'
     77:21  [GDL202] Info - Parameter 'delta' is declared but never used
 
---- test_scripts/completion_test.gd (12 diagnostics) ---
+--- test_scripts/completion_test.gd (9 diagnostics) ---
 
     80:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'texture'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
     81:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'flip_h'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
@@ -74,9 +74,6 @@ DIAGNOSTICS BY FILE
     99:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'wait_time'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
    100:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'one_shot'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
    101:17  [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'time_left'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
-   107:1   [GD7019] Warning - Assignment widens 'TestEnum' to 'int'
-   108:1   [GD7019] Warning - Assignment widens 'TestEnum' to 'int'
-   109:1   [GD7019] Warning - Assignment widens 'TestEnum' to 'int'
 
 --- test_scripts/cross_file_inference.gd (66 diagnostics) ---
 
@@ -402,7 +399,7 @@ DIAGNOSTICS BY FILE
    248:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    251:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/dynamic_dispatch.gd (33 diagnostics) ---
+--- test_scripts/dynamic_dispatch.gd (31 diagnostics) ---
 
      2:11  [GDL222] Warning - 'DynamicDispatch' has 27 public methods (max 20)
     21:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
@@ -427,11 +424,9 @@ DIAGNOSTICS BY FILE
    256:8   [GD7003] Warning - Calling method 'get_file' on untyped expression without type guard
    256:8   [GD7003] Warning - Calling method 'get_path' on untyped expression without type guard
    256:8   [GD7007] Warning - Variable 'obj' may be null when accessing 'get_script'
-   283:7   [GD7007] Warning - Variable '_target' may be null when accessing 'has_method'
    307:18  [GD7007] Warning - Variable 'event' may be null when accessing 'get'
    313:27  [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
    319:18  [GD7007] Warning - Variable 'event' may be null when accessing 'get'
-   344:5   [GD7007] Warning - Variable '_target' may be null when accessing 'has_method'
    361:15  [GD7007] Warning - Variable 'target' may be null when accessing 'get_method_list'
    371:2   [GD7007] Warning - Variable 'logger' may be null when accessing 'call'
    403:5   [GD7007] Warning - Variable 'method_name' may be null when accessing 'match'

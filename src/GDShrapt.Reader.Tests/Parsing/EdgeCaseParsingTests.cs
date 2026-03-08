@@ -1092,5 +1092,50 @@ namespace GDShrapt.Reader.Tests
         }
 
         #endregion
+
+        #region Inline If (Ternary) Tests
+
+        [TestMethod]
+        public void Parser_InlineIf_InVarDeclaration_CorrectTrueExpression()
+        {
+            var code = "func _ready():\n\tvar scale_factor = 1\n\tvar direction = -1\n\tvar scale = scale_factor if direction == 1 else -scale_factor\n";
+            var tree = _reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull();
+            AssertHelper.NoInvalidTokens(tree);
+
+            var output = tree.ToString();
+            output.Should().Be(code);
+
+            var method = tree.Methods.First();
+            var varStmt = method.Statements[2] as GDVariableDeclarationStatement;
+            var ifExpr = varStmt.Initializer as GDIfExpression;
+            ifExpr.Should().NotBeNull();
+            ifExpr.TrueExpression.ToString().Should().Be("scale_factor");
+        }
+
+        [TestMethod]
+        public void Parser_InlineIf_InPlainAssignment_CorrectTrueExpression()
+        {
+            var code = "func _ready():\n\tvar scale_factor = 1\n\tvar direction = -1\n\tscale = scale_factor if direction == 1 else -scale_factor\n";
+            var tree = _reader.ParseFileContent(code);
+
+            tree.Should().NotBeNull();
+            AssertHelper.NoInvalidTokens(tree);
+
+            var output = tree.ToString();
+            output.Should().Be(code);
+
+            var method = tree.Methods.First();
+            var exprStmt = method.Statements[2] as GDExpressionStatement;
+            var assignExpr = exprStmt.Expression as GDDualOperatorExpression;
+            assignExpr.Should().NotBeNull();
+            assignExpr.OperatorType.Should().Be(GDDualOperatorType.Assignment);
+            var ifExpr = assignExpr.RightExpression as GDIfExpression;
+            ifExpr.Should().NotBeNull();
+            ifExpr.TrueExpression.ToString().Should().Be("scale_factor");
+        }
+
+        #endregion
     }
 }
