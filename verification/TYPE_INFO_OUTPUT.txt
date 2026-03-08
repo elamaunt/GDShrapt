@@ -5323,8 +5323,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   114:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -5337,8 +5337,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   120:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 
@@ -5351,8 +5351,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   127:1 Variable val
     declared: (none)
-    inferred: int
-    effective: int
+    inferred: TestEnum
+    effective: TestEnum
     confidence: High
     nullable: no
 

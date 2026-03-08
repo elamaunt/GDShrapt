@@ -318,7 +318,7 @@ namespace GDShrapt.Reader
 
                     if (parentNextToken is GDNode node)
                     {
-                        return node.AllTokens.FirstOrDefault() ?? node.GlobalNextToken;
+                        return node.FirstLeafToken ?? node.GlobalNextToken;
                     }
                     else
                     {
@@ -329,7 +329,7 @@ namespace GDShrapt.Reader
                 {
                     if (localNextToken is GDNode node)
                     {
-                        return node.AllTokens.FirstOrDefault() ?? node.GlobalNextToken;
+                        return node.FirstLeafToken ?? node.GlobalNextToken;
                     }
                     else
                     {
@@ -365,8 +365,8 @@ namespace GDShrapt.Reader
 
                     if (parentPreviousToken is GDNode node)
                     {
-                        return node.AllTokensReversed.FirstOrDefault() ?? node.GlobalPreviousToken;
-                    } 
+                        return node.LastLeafToken ?? node.GlobalPreviousToken;
+                    }
                     else
                     {
                         return parentPreviousToken ?? parent.GlobalPreviousToken;
@@ -376,7 +376,7 @@ namespace GDShrapt.Reader
                 {
                     if (localPreviousToken is GDNode node)
                     {
-                        return node.AllTokensReversed.FirstOrDefault() ?? node.GlobalPreviousToken;
+                        return node.LastLeafToken ?? node.GlobalPreviousToken;
                     }
                     else
                     {

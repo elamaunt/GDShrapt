@@ -385,6 +385,66 @@ namespace GDShrapt.Reader
         /// </summary>
         public GDNode LastChildNode => Form.LastNode;
 
+        internal GDSyntaxToken _cachedFirstLeafToken;
+        internal GDSyntaxToken _cachedLastLeafToken;
+        internal bool _leafTokensCached;
+
+        /// <summary>
+        /// Returns the first leaf token by recursively descending into child nodes.
+        /// Cached after Freeze() for O(1) access.
+        /// </summary>
+        public GDSyntaxToken FirstLeafToken
+        {
+            get
+            {
+                if (_leafTokensCached) return _cachedFirstLeafToken;
+                return FindFirstLeafToken();
+            }
+        }
+
+        /// <summary>
+        /// Returns the last leaf token by recursively descending from the end.
+        /// Cached after Freeze() for O(1) access.
+        /// </summary>
+        public GDSyntaxToken LastLeafToken
+        {
+            get
+            {
+                if (_leafTokensCached) return _cachedLastLeafToken;
+                return FindLastLeafToken();
+            }
+        }
+
+        internal GDSyntaxToken FindFirstLeafToken()
+        {
+            foreach (var token in Form.Direct())
+            {
+                if (token is GDNode node)
+                {
+                    var leaf = node.FirstLeafToken;
+                    if (leaf != null) return leaf;
+                }
+                else
+                    return token;
+            }
+            return null;
+        }
+
+        internal GDSyntaxToken FindLastLeafToken()
+        {
+            foreach (var token in Form.Reversed())
+            {
+                if (token is GDNode node)
+                {
+                    var leaf = node.LastLeafToken;
+                    if (leaf != null) return leaf;
+                }
+                else
+                    return token;
+            }
+            return null;
+        }
+
         /// <summary>
         /// Returns variable identifiers that are visible before line and defined by this node and its children.
         /// Actual only for method scope.

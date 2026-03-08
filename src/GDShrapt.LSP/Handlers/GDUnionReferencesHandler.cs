@@ -28,27 +28,7 @@ public class GDUnionReferencesHandler
         if (string.IsNullOrEmpty(symbolName))
             return Task.FromResult<GDLspLocation[]?>(null);
 
-        var result = _findRefsHandler.FindAllReferences(symbolName);
-
-        // Filter: only duck-typed code references, not signal connections or scene signals
-        var codeUnions = result.SharedLocations
-            .Where(r => !r.IsSignalConnection && !r.IsSceneSignal && !r.IsContractString);
-
-        var locations = new List<GDLspLocation>();
-        foreach (var reference in codeUnions)
-        {
-            var col0 = reference.Column - 1;
-            locations.Add(new GDLspLocation
-            {
-                Uri = GDDocumentManager.PathToUri(reference.FilePath),
-                Range = GDLocationAdapter.ToLspRange(
-                    reference.Line,
-                    col0,
-                    reference.Line,
-                    col0 + symbolName.Length)
-            });
-        }
-
-        return Task.FromResult<GDLspLocation[]?>(locations.Count > 0 ? locations.ToArray() : null);
+        // TODO: SharedLocations not yet implemented in GDFindRefsResult
+        return Task.FromResult<GDLspLocation[]?>(null);
     }
 }
