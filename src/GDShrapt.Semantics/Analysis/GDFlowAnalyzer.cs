@@ -39,6 +39,12 @@ internal class GDFlowAnalyzer : GDVisitor
     private readonly HashSet<GDExpression> _resolvingExpressions = new();
     private const int MaxResolveDepth = 30;
 
+    // Track parameter names to exclude from variable usage profiles
+    private readonly HashSet<string> _parameterNames = new();
+
+    // Track class member names accessed during flow analysis
+    private readonly HashSet<string> _classMemberNames = new();
+
     // File path for origin tracking
     private string? _filePath;
 
@@ -163,6 +169,7 @@ internal class GDFlowAnalyzer : GDVisitor
                     var semType = GDSemanticType.FromRuntimeTypeName(declType);
                     var origin = CreateOrigin(GDTypeOriginKind.ParameterDeclaration, param, GDTypeOriginConfidence.Exact);
                     _currentState.DeclareVariable(name, semType, null, origin, null);
+                    _parameterNames.Add(name);
                 }
             }
         }
@@ -682,14 +689,20 @@ internal class GDFlowAnalyzer : GDVisitor
     private void EnsureClassMemberDeclared(string name, GDIdentifierExpression identExpr)
     {
         if (_currentState.GetVariableType(name) != null)
+        {
+            _classMemberNames.Add(name);
             return;
+        }
 
         var symbol = _typeEngine?.Scopes?.Lookup(name);
-        if (symbol?.TypeName != null)
+        if (symbol != null)
         {
-            var semType = GDSemanticType.FromRuntimeTypeName(symbol.TypeName);
+            var semType = !string.IsNullOrEmpty(symbol.TypeName)
+                ? GDSemanticType.FromRuntimeTypeName(symbol.TypeName)
+                : GDVariantSemanticType.Instance;
             var origin = CreateOrigin(GDTypeOriginKind.Declaration, identExpr, GDTypeOriginConfidence.Exact);
             _currentState.DeclareVariable(name, semType, null, origin, null);
+            _classMemberNames.Add(name);
         }
     }
 
@@ -1805,6 +1818,116 @@ internal class GDFlowAnalyzer : GDVisitor
         var state = GetStateAtLocation(location);
         return state?.GetVariableType(variableName);
     }
+
+    #endregion
+
+    #region Profile Extraction
+
+    /// <summary>
+    /// Builds a variable usage profile from flow state data for a Variant variable.
+    /// Returns null if the variable has a declared type (not Variant) or is not found.
+    /// </summary>
+    internal GDVariableUsageProfile? BuildVariableProfile(string varName)
+    {
+        var flowVar = _currentState.GetVariableType(varName);
+        if (flowVar == null)
+            return null;
+
+        if (flowVar.DeclaredType != null && !flowVar.DeclaredType.IsVariant)
+            return null;
+
+        // Skip parameters and class members — only track local var declarations
+        if (_parameterNames.Contains(varName))
+            return null;
+        if (_classMemberNames.Contains(varName))
+            return null;
+
+        var profile = new GDVariableUsageProfile(varName);
+
+        // Use assignment history — preserves ALL assignments across SSA replacements
+        foreach (var record in flowVar.AssignmentHistory)
+        {
+            if (record.Type.IsVariant)
+                continue;
+
+            var kind = record.Kind switch
+            {
+                GDTypeOriginKind.Initialization => GDAssignmentKind.Initialization,
+                GDTypeOriginKind.CompoundAssignment => GDAssignmentKind.CompoundAssignment,
+                _ => GDAssignmentKind.DirectAssignment
+            };
+
+            var isHighConfidence = record.Confidence == GDTypeOriginConfidence.Exact
+                || record.Confidence == GDTypeOriginConfidence.Inferred;
+
+            profile.Assignments.Add(new GDAssignmentObservation
+            {
+                InferredType = record.Type,
+                IsHighConfidence = isHighConfidence,
+                Kind = kind,
+                Line = record.Line,
+                Column = record.Column
+            });
+        }
+
+        return profile.AssignmentCount > 0 ? profile : null;
+    }
+
+    /// <summary>
+    /// Builds a variable usage profile for a class member variable from this method's flow state.
+    /// Unlike BuildVariableProfile, this only returns profiles for class members.
+    /// </summary>
+    internal GDVariableUsageProfile? BuildClassMemberProfile(string varName)
+    {
+        if (!_classMemberNames.Contains(varName))
+            return null;
+
+        var flowVar = _currentState.GetVariableType(varName);
+        if (flowVar == null)
+            return null;
+
+        if (flowVar.DeclaredType != null && !flowVar.DeclaredType.IsVariant)
+            return null;
+
+        var profile = new GDVariableUsageProfile(varName) { IsClassLevel = true };
+
+        foreach (var record in flowVar.AssignmentHistory)
+        {
+            if (record.Type.IsVariant)
+                continue;
+
+            var kind = record.Kind switch
+            {
+                GDTypeOriginKind.Initialization => GDAssignmentKind.Initialization,
+                GDTypeOriginKind.CompoundAssignment => GDAssignmentKind.CompoundAssignment,
+                _ => GDAssignmentKind.DirectAssignment
+            };
+
+            var isHighConfidence = record.Confidence == GDTypeOriginConfidence.Exact
+                || record.Confidence == GDTypeOriginConfidence.Inferred;
+
+            profile.Assignments.Add(new GDAssignmentObservation
+            {
+                InferredType = record.Type,
+                IsHighConfidence = isHighConfidence,
+                Kind = kind,
+                Line = record.Line,
+                Column = record.Column
+            });
+        }
+
+        return profile.AssignmentCount > 0 ? profile : null;
+    }
+
+    /// <summary>
+    /// Gets class member names that were accessed during flow analysis.
+    /// </summary>
+    internal IReadOnlyCollection<string> ClassMemberNames => _classMemberNames;
+
+    /// <summary>
+    /// Gets container profiles collected during flow analysis.
+    /// </summary>
+    internal IReadOnlyDictionary<string, GDContainerUsageProfile> ContainerProfiles => _containerProfiles;
 
     #endregion
 }

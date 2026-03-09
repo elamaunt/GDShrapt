@@ -1750,31 +1750,104 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (classDecl.Members == null)
             return;
 
-        var classCollector = new GDClassVariableCollector(_typeEngine);
-        classCollector.Collect(classDecl);
+        // Identify untyped class-level variables and collect initializer profiles
+        var classVarProfiles = new Dictionary<string, GDVariableUsageProfile>();
+        foreach (var member in classDecl.Members)
+        {
+            if (member is GDVariableDeclaration varDecl)
+            {
+                var name = varDecl.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(name))
+                    continue;
+                if (varDecl.Type != null || varDecl.ConstKeyword != null)
+                    continue;
 
-        foreach (var kv in classCollector.Profiles)
-            _model!.SetVariableProfile(kv.Key, kv.Value);
+                var token = varDecl.AllTokens.FirstOrDefault();
+                var profile = new GDVariableUsageProfile(name)
+                {
+                    IsClassLevel = true,
+                    DeclarationLine = token?.StartLine ?? 0,
+                    DeclarationColumn = token?.StartColumn ?? 0
+                };
 
+                if (varDecl.Initializer != null)
+                {
+                    var initType = _typeEngine?.InferSemanticType(varDecl.Initializer);
+                    if (initType != null && !initType.IsVariant)
+                    {
+                        var initToken = varDecl.Initializer.AllTokens.FirstOrDefault();
+                        profile.Assignments.Add(new GDAssignmentObservation
+                        {
+                            InferredType = initType,
+                            IsHighConfidence = true,
+                            Kind = GDAssignmentKind.Initialization,
+                            Line = initToken?.StartLine ?? profile.DeclarationLine,
+                            Column = initToken?.StartColumn ?? profile.DeclarationColumn
+                        });
+                    }
+                }
+
+                classVarProfiles[name] = profile;
+            }
+        }
+
+        // Analyze all methods — extract local profiles and class member profiles
+        var className = classDecl.ClassName?.Identifier?.Sequence ?? _scriptFile.TypeName ?? "";
         foreach (var member in classDecl.Members)
         {
             if (member is GDMethodDeclaration method)
             {
-                var varCollector = new GDVariableUsageCollector(context.Scopes, _typeEngine);
-                varCollector.Collect(method);
+                var flowAnalyzer = new GDFlowAnalyzer(_typeEngine);
+                flowAnalyzer.Analyze(method);
 
-                foreach (var kv in varCollector.Profiles)
-                    _model!.SetVariableProfile(kv.Key, kv.Value);
+                // Local variable usage profiles
+                foreach (var varName in flowAnalyzer.FinalState.LocalVariables)
+                {
+                    var profile = flowAnalyzer.BuildVariableProfile(varName);
+                    if (profile != null)
+                        _model!.SetVariableProfile(varName, profile);
+                }
 
-                var containerCollector = new GDContainerUsageCollector(context.Scopes, _typeEngine);
-                containerCollector.Collect(method);
-
-                foreach (var kv in containerCollector.Profiles)
+                // Local container profiles
+                foreach (var kv in flowAnalyzer.ContainerProfiles)
                     _model!.SetContainerProfile(kv.Key, kv.Value);
+
+                // Merge class member profiles from this method
+                foreach (var classMemberName in flowAnalyzer.ClassMemberNames)
+                {
+                    var memberProfile = flowAnalyzer.BuildClassMemberProfile(classMemberName);
+                    if (memberProfile == null)
+                        continue;
+
+                    if (classVarProfiles.TryGetValue(classMemberName, out var existingProfile))
+                    {
+                        // Merge assignments from method into class profile, dedup by location
+                        var seen = new HashSet<(int, int)>();
+                        foreach (var a in existingProfile.Assignments)
+                            seen.Add((a.Line, a.Column));
+                        foreach (var a in memberProfile.Assignments)
+                        {
+                            if (seen.Add((a.Line, a.Column)))
+                                existingProfile.Assignments.Add(a);
+                        }
+                    }
+                    else
+                    {
+                        classVarProfiles[classMemberName] = memberProfile;
+                    }
+                }
+
             }
         }
 
-        var className = classDecl.ClassName?.Identifier?.Sequence ?? _scriptFile.TypeName ?? "";
+        // Publish all class-level variable profiles
+        foreach (var kv in classVarProfiles)
+        {
+            if (kv.Value.AssignmentCount > 0)
+                _model!.SetVariableProfile(kv.Key, kv.Value);
+        }
+
+        // Class-level container profiles — cross-method analysis requires walking entire class
         var classContainerCollector = new GDClassContainerUsageCollector(classDecl, _typeEngine);
         classContainerCollector.Collect(classDecl);
 

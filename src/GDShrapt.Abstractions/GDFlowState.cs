@@ -96,6 +96,11 @@ public class GDFlowState
         {
             newType.CurrentType.AddType(typeName);
             newType.IsPotentiallyNull = (typeName is GDNullSemanticType);
+
+            // Record in assignment history
+            var line = assignmentNode?.AllTokens.FirstOrDefault()?.StartLine ?? 0;
+            var column = assignmentNode?.AllTokens.FirstOrDefault()?.StartColumn ?? 0;
+            newType.RecordAssignment(typeName, GDTypeOriginKind.Assignment, GDTypeOriginConfidence.Inferred, line, column);
         }
         _variables[name] = newType;
     }
@@ -122,6 +127,13 @@ public class GDFlowState
             else
                 newType.CurrentType.AddType(typeName);
             newType.IsPotentiallyNull = (typeName is GDNullSemanticType);
+
+            // Record in assignment history
+            var kind = origin?.Kind ?? GDTypeOriginKind.Assignment;
+            var confidence = origin?.Confidence ?? GDTypeOriginConfidence.Inferred;
+            var line = origin?.Location.Line ?? 0;
+            var column = origin?.Location.Column ?? 0;
+            newType.RecordAssignment(typeName, kind, confidence, line, column);
         }
         _variables[name] = newType;
     }
@@ -141,6 +153,7 @@ public class GDFlowState
             flowType.CurrentType.AddType(initType);
             if (initType is not GDNullSemanticType)
                 flowType.IsPotentiallyNull = false;
+            flowType.RecordAssignment(initType, GDTypeOriginKind.Initialization, GDTypeOriginConfidence.Inferred, 0, 0);
         }
         else if (declaredType != null && !declaredType.IsVariant)
         {
@@ -169,6 +182,12 @@ public class GDFlowState
                 flowType.CurrentType.AddType(initType);
             if (initType is not GDNullSemanticType)
                 flowType.IsPotentiallyNull = false;
+
+            var kind = initOrigin?.Kind ?? GDTypeOriginKind.Initialization;
+            var confidence = initOrigin?.Confidence ?? GDTypeOriginConfidence.Inferred;
+            var line = initOrigin?.Location.Line ?? 0;
+            var column = initOrigin?.Location.Column ?? 0;
+            flowType.RecordAssignment(initType, kind, confidence, line, column);
         }
         else if (declaredType != null && !declaredType.IsVariant)
         {
@@ -452,6 +471,19 @@ public class GDFlowState
             merged.CurrentType.AddType(a.NarrowedFromType);
         if (b.IsNarrowed && b.NarrowedFromType != null)
             merged.CurrentType.AddType(b.NarrowedFromType);
+
+        // Merge assignment history (union from both branches, deduplicated by line+column)
+        var seenAssignments = new HashSet<(int Line, int Column)>();
+        foreach (var rec in a.AssignmentHistory)
+        {
+            if (seenAssignments.Add((rec.Line, rec.Column)))
+                merged.RecordAssignment(rec.Type, rec.Kind, rec.Confidence, rec.Line, rec.Column);
+        }
+        foreach (var rec in b.AssignmentHistory)
+        {
+            if (seenAssignments.Add((rec.Line, rec.Column)))
+                merged.RecordAssignment(rec.Type, rec.Kind, rec.Confidence, rec.Line, rec.Column);
+        }
 
         // Merge escape points (union from both branches)
         foreach (var ep in a.EscapePoints)
@@ -782,6 +814,19 @@ public class GDFlowState
                 var beforeCount = myType.CurrentType.Types.Count;
                 myType.CurrentType.MergeWith(otherType.CurrentType);
                 if (myType.CurrentType.Types.Count > beforeCount)
+                    changed = true;
+
+                // Merge assignment histories
+                var existingCount = myType.AssignmentHistory.Count;
+                var seenAssignments = new HashSet<(int, int)>();
+                foreach (var rec in myType.AssignmentHistory)
+                    seenAssignments.Add((rec.Line, rec.Column));
+                foreach (var rec in otherType.AssignmentHistory)
+                {
+                    if (seenAssignments.Add((rec.Line, rec.Column)))
+                        myType.RecordAssignment(rec.Type, rec.Kind, rec.Confidence, rec.Line, rec.Column);
+                }
+                if (myType.AssignmentHistory.Count > existingCount)
                     changed = true;
             }
         }

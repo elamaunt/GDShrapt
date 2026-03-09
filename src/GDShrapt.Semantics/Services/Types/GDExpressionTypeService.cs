@@ -108,7 +108,7 @@ internal class GDExpressionTypeService
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(scope);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
-                    if (flowType != null && !flowType.IsVariant)
+                    if (flowType != null)
                         return flowType;
                 }
             }
@@ -133,24 +133,32 @@ internal class GDExpressionTypeService
             var varName = identExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(varName))
             {
-                // Check container usage profile FIRST for untyped containers
-                var containerType = _containerTypeService.GetInferredContainerType(varName);
-                if (containerType != null && containerType.HasElementTypes)
-                {
-                    return containerType.ToString();
-                }
-
                 var scope = expression.GetContainingMethodScope();
                 if (scope != null)
                 {
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(scope);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
                     if (flowType != null && !flowType.IsVariant)
+                    {
+                        // For untyped containers (Array, Dictionary), check if container profile has refined element types
+                        if (GDWellKnownTypes.IsContainerType(flowType.DisplayName))
+                        {
+                            var containerType = _containerTypeService.GetInferredContainerType(varName);
+                            if (containerType != null && containerType.HasElementTypes)
+                                return containerType.ToString();
+                        }
                         return flowType.DisplayName;
+                    }
                 }
 
-                // Check call-site injected types for parameters (bypasses stale _nodeTypes cache).
-                // Exclude type guards — flow analyzer already handles branch-aware narrowing.
+                // Container usage profile fallback when flow has no data
+                var containerFallback = _containerTypeService.GetInferredContainerType(varName);
+                if (containerFallback != null && containerFallback.HasElementTypes)
+                {
+                    return containerFallback.ToString();
+                }
+
+                // Call-site injected types for parameters — fallback when flow has no data
                 var symbol = _findSymbol?.Invoke(varName);
                 if (symbol?.Kind == GDSymbolKind.Parameter)
                 {
@@ -220,8 +228,22 @@ internal class GDExpressionTypeService
                     var flowAnalyzer = GetOrCreateFlowAnalyzer(scope);
                     var flowType = flowAnalyzer?.GetTypeAtLocation(varName, expression);
                     if (flowType != null && !flowType.IsVariant)
+                    {
+                        // For untyped containers, check if container profile has refined element types
+                        if (GDWellKnownTypes.IsContainerType(flowType.DisplayName))
+                        {
+                            var containerType = _containerTypeService.GetInferredContainerType(varName);
+                            if (containerType != null && containerType.HasElementTypes)
+                                return containerType.ToString();
+                        }
                         return flowType.DisplayName;
+                    }
                 }
+
+                // Container profile fallback when flow has no data
+                var containerFallback = _containerTypeService.GetInferredContainerType(varName);
+                if (containerFallback != null && containerFallback.HasElementTypes)
+                    return containerFallback.ToString();
 
                 // Fall back to narrowing
                 var narrowed = _duckTypeService.GetNarrowedType(varName, expression);

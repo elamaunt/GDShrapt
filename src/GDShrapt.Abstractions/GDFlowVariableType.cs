@@ -50,8 +50,26 @@ public class GDFlowVariableType
     /// </summary>
     public GDDuckType? DuckType { get; set; }
 
+    private List<GDFlowAssignmentRecord>? _assignmentHistory;
     private List<GDNarrowingConstraint>? _activeNarrowings;
     private List<GDEscapePoint>? _escapePoints;
+
+    /// <summary>
+    /// Complete assignment history for this variable. Unlike CurrentType (which is SSA-replaced
+    /// on each assignment), this list accumulates ALL assignments across the variable's lifetime.
+    /// Used by BuildVariableProfile() to produce correct union type profiles.
+    /// </summary>
+    public IReadOnlyList<GDFlowAssignmentRecord> AssignmentHistory
+        => (IReadOnlyList<GDFlowAssignmentRecord>?)_assignmentHistory ?? Array.Empty<GDFlowAssignmentRecord>();
+
+    /// <summary>
+    /// Records an assignment to this variable's history.
+    /// </summary>
+    public void RecordAssignment(GDSemanticType type, GDTypeOriginKind kind, GDTypeOriginConfidence confidence, int line, int column)
+    {
+        _assignmentHistory ??= new List<GDFlowAssignmentRecord>();
+        _assignmentHistory.Add(new GDFlowAssignmentRecord(type, kind, confidence, line, column));
+    }
 
     /// <summary>
     /// Active narrowing constraints at this program point.
@@ -169,6 +187,7 @@ public class GDFlowVariableType
         IsGuaranteedNonNull = IsGuaranteedNonNull,
         IsPotentiallyNull = IsPotentiallyNull,
         DuckType = DuckType != null ? CloneDuckType(DuckType) : null,
+        _assignmentHistory = _assignmentHistory != null ? new List<GDFlowAssignmentRecord>(_assignmentHistory) : null,
         _activeNarrowings = _activeNarrowings != null ? new List<GDNarrowingConstraint>(_activeNarrowings) : null,
         _escapePoints = _escapePoints != null ? new List<GDEscapePoint>(_escapePoints) : null
     };
