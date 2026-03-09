@@ -407,7 +407,7 @@ public class GDDeadCodeService
 
                 var posToken = symbol.PositionToken;
                 var declNode = symbol.DeclarationNode;
-                var endToken = declNode?.AllTokens.LastOrDefault();
+                var endToken = declNode?.LastLeafToken;
 
                 var item = new GDDeadCodeItem(GDDeadCodeKind.Function, methodName, file.FullPath ?? "")
                 {
@@ -1142,7 +1142,7 @@ public class GDDeadCodeService
             {
                 var posToken = symbol.PositionToken;
                 var declNode = symbol.DeclarationNode;
-                var endToken = declNode?.AllTokens.LastOrDefault();
+                var endToken = declNode?.LastLeafToken;
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.InnerClass, className, file.FullPath ?? "")
                 {

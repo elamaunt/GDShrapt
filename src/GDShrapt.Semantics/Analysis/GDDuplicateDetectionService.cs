@@ -139,8 +139,8 @@ public class GDDuplicateDetectionService
 
         if (tokensWithLines.Count == 0) return results;
 
-        var startLine = methodSymbol.DeclarationNode?.StartLine ?? method.AllTokens.FirstOrDefault()?.StartLine ?? 0;
-        var endLine = method.AllTokens.LastOrDefault()?.EndLine ?? 0;
+        var startLine = methodSymbol.DeclarationNode?.StartLine ?? method.FirstLeafToken?.StartLine ?? 0;
+        var endLine = method.LastLeafToken?.EndLine ?? 0;
         var lineCount = endLine - startLine + 1;
 
         if (options.Granularity == GDDuplicateGranularity.Method)

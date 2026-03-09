@@ -67,7 +67,7 @@ internal class GDReturnInfo
         IsImplicit = false;
         ExpressionText = returnExpr.Expression?.ToString();
 
-        var token = returnExpr.AllTokens.FirstOrDefault();
+        var token = returnExpr.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }
@@ -380,7 +380,7 @@ internal class GDReturnTypeCollector
 
     private int GetMethodEndLine()
     {
-        var lastToken = _method.AllTokens.LastOrDefault();
+        var lastToken = _method.LastLeafToken;
         return lastToken?.EndLine ?? 0;
     }
 

@@ -113,7 +113,7 @@ public class GDSymbolInfo
     /// Prefers the declaration identifier; falls back to the first token of the declaration node.
     /// </summary>
     public GDSyntaxToken? PositionToken => DeclarationIdentifier
-        ?? DeclarationNode?.AllTokens.FirstOrDefault();
+        ?? DeclarationNode?.FirstLeafToken;
 
     /// <summary>
     /// The scope type of this symbol, computed from its Kind and context.

@@ -98,8 +98,8 @@ public class GDFlowState
             newType.IsPotentiallyNull = (typeName is GDNullSemanticType);
 
             // Record in assignment history
-            var line = assignmentNode?.AllTokens.FirstOrDefault()?.StartLine ?? 0;
-            var column = assignmentNode?.AllTokens.FirstOrDefault()?.StartColumn ?? 0;
+            var line = assignmentNode?.FirstLeafToken?.StartLine ?? 0;
+            var column = assignmentNode?.FirstLeafToken?.StartColumn ?? 0;
             newType.RecordAssignment(typeName, GDTypeOriginKind.Assignment, GDTypeOriginConfidence.Inferred, line, column);
         }
         _variables[name] = newType;

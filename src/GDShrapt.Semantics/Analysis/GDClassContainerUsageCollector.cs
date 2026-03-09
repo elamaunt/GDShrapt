@@ -227,7 +227,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         if (args == null || args.Count == 0)
             return;
 
-        var token = call.AllTokens.FirstOrDefault();
+        var token = call.FirstLeafToken;
         var line = token?.StartLine ?? 0;
         var column = token?.StartColumn ?? 0;
 
@@ -333,7 +333,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
 
     private void AnalyzeIndexAssignment(GDIndexerExpression indexer, GDExpression? value, GDContainerUsageProfile profile)
     {
-        var token = indexer.AllTokens.FirstOrDefault();
+        var token = indexer.FirstLeafToken;
         var line = token?.StartLine ?? 0;
         var column = token?.StartColumn ?? 0;
 
@@ -375,7 +375,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
             {
                 var valueType = _typeEngine?.InferSemanticType(value);
                 var isHighConfidence = DetermineHighConfidence(value, valueType);
-                var token = value.AllTokens.FirstOrDefault();
+                var token = value.FirstLeafToken;
 
                 profile.ValueUsages.Add(new GDContainerUsageObservation
                 {
@@ -392,7 +392,7 @@ internal class GDClassContainerUsageCollector : GDVisitor
         {
             foreach (var kv in dictInit.KeyValues ?? Enumerable.Empty<GDDictionaryKeyValueDeclaration>())
             {
-                var token = kv.AllTokens.FirstOrDefault();
+                var token = kv.FirstLeafToken;
                 var line = token?.StartLine ?? 0;
                 var column = token?.StartColumn ?? 0;
 

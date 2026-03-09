@@ -33,7 +33,7 @@ namespace GDShrapt.Linter
                     continue;
 
                 // Get the first token of the key for position reporting
-                var keyToken = kvp.Key.AllTokens.FirstOrDefault() ?? (GDSyntaxToken)kvp.Colon ?? kvp.Assign;
+                var keyToken = kvp.Key.FirstLeafToken ?? (GDSyntaxToken)kvp.Colon ?? kvp.Assign;
 
                 if (seenKeys.TryGetValue(keyStr, out var firstOccurrence))
                 {

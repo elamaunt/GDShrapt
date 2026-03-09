@@ -240,7 +240,7 @@ internal class GDCrossFileContainerUsageCollector
                 var keyType = _typeEngine?.InferSemanticType(indexer.InnerExpression);
                 if (keyType != null && !keyType.IsVariant)
                 {
-                    var token = sourceNode.AllTokens.FirstOrDefault();
+                    var token = sourceNode.FirstLeafToken;
                     _observations.Add(new GDContainerUsageObservation
                     {
                         Kind = GDContainerUsageKind.KeyAssignment,
@@ -260,7 +260,7 @@ internal class GDCrossFileContainerUsageCollector
                 var valueType = _typeEngine?.InferSemanticType(valueExpr);
                 if (valueType != null && !valueType.IsVariant)
                 {
-                    var token = sourceNode.AllTokens.FirstOrDefault();
+                    var token = sourceNode.FirstLeafToken;
                     _observations.Add(new GDContainerUsageObservation
                     {
                         Kind = GDContainerUsageKind.IndexAssignment,
@@ -288,7 +288,7 @@ internal class GDCrossFileContainerUsageCollector
             var valueType = _typeEngine?.InferSemanticType(valueExpr);
             if (valueType != null)
             {
-                var token = sourceNode.AllTokens.FirstOrDefault();
+                var token = sourceNode.FirstLeafToken;
                 _observations.Add(new GDContainerUsageObservation
                 {
                     Kind = usageKind,

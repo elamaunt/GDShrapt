@@ -252,7 +252,7 @@ public static class IntegrationTestHelpers
         if (node == null)
             return 0;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartLine ?? 0;
     }
 
@@ -264,7 +264,7 @@ public static class IntegrationTestHelpers
         if (node == null)
             return 0;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         return token?.StartColumn ?? 0;
     }
 

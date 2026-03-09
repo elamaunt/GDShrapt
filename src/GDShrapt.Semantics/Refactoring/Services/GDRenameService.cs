@@ -1560,7 +1560,7 @@ public class GDRenameService
                         var paramType = signalParams[paramIdx];
                         if (!string.IsNullOrEmpty(paramType) && !GDSemanticType.FromRuntimeTypeName(paramType).IsVariant)
                         {
-                            var usageLine = (usage.Node.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                            var usageLine = (usage.Node.FirstLeafToken?.StartLine ?? 0) + 1;
                             var appendCallSite = new GDCallSiteProvenanceEntry(
                                 file.FullPath ?? "", usageLine,
                                 $"{containerVarName}.append({appendedVarName}) " +

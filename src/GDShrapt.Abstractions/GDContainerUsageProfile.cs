@@ -139,8 +139,8 @@ public class GDContainerUsageProfile
             InferredType = inferredType,
             IsHighConfidence = !inferredType.IsVariant,
             Node = node,
-            Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
-            Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
+            Line = node?.FirstLeafToken?.StartLine ?? 0,
+            Column = node?.FirstLeafToken?.StartColumn ?? 0
         });
     }
 
@@ -158,8 +158,8 @@ public class GDContainerUsageProfile
             InferredType = inferredType,
             IsHighConfidence = !inferredType.IsVariant,
             Node = node,
-            Line = node?.AllTokens.FirstOrDefault()?.StartLine ?? 0,
-            Column = node?.AllTokens.FirstOrDefault()?.StartColumn ?? 0
+            Line = node?.FirstLeafToken?.StartLine ?? 0,
+            Column = node?.FirstLeafToken?.StartColumn ?? 0
         });
     }
 }

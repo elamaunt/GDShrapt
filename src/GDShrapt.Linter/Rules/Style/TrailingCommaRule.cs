@@ -64,7 +64,7 @@ namespace GDShrapt.Linter
 
             if (!(tokenAfterLast is GDComma))
             {
-                var reportToken = lastExpr.AllTokens.LastOrDefault() ?? closeBracket;
+                var reportToken = lastExpr.LastLeafToken ?? closeBracket;
                 ReportIssue(
                     "Missing trailing comma in multiline array",
                     reportToken,
@@ -90,7 +90,7 @@ namespace GDShrapt.Linter
 
             if (!(tokenAfterLast is GDComma))
             {
-                var reportToken = lastKvp.AllTokens.LastOrDefault() ?? dict.FigureCloseBracket;
+                var reportToken = lastKvp.LastLeafToken ?? dict.FigureCloseBracket;
                 ReportIssue(
                     "Missing trailing comma in multiline dictionary",
                     reportToken,

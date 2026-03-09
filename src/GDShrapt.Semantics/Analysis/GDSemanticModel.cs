@@ -63,7 +63,7 @@ public class GDTypeUsage
         Node = node;
         Kind = kind;
 
-        var token = node.AllTokens.FirstOrDefault();
+        var token = node.FirstLeafToken;
         Line = token?.StartLine ?? 0;
         Column = token?.StartColumn ?? 0;
     }
@@ -577,7 +577,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     private static int GetNodeStartLine(GDNode? node)
-        => node?.AllTokens.FirstOrDefault()?.StartLine ?? -1;
+        => node?.FirstLeafToken?.StartLine ?? -1;
 
     private static int GetSymbolStartLine(GDSymbolInfo symbol)
         => symbol.PositionToken?.StartLine ?? -1;
@@ -1225,8 +1225,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 if (IsDanglingMemberChainContinuation(stmt))
                     continue;
 
-                var firstToken = stmt.AllTokens.FirstOrDefault();
-                var lastToken = stmt.AllTokens.LastOrDefault();
+                var firstToken = stmt.FirstLeafToken;
+                var lastToken = stmt.LastLeafToken;
                 if (firstToken != null)
                 {
                     results.Add(new GDUnreachableCodeInfo(

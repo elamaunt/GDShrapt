@@ -99,8 +99,8 @@ public class GDMetricsService
         if (methodSymbol.DeclarationNode is not GDMethodDeclaration method)
             return null;
 
-        var firstToken = method.AllTokens.FirstOrDefault();
-        var lastToken = method.AllTokens.LastOrDefault();
+        var firstToken = method.FirstLeafToken;
+        var lastToken = method.LastLeafToken;
 
         int startLine = firstToken?.StartLine ?? 0;
         int endLine = lastToken?.EndLine ?? startLine;

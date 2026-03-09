@@ -39,7 +39,7 @@ public static class GDProvenanceTracer
                     ?.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(collectionName))
                 {
-                    var forLine = (forStmt.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                    var forLine = (forStmt.FirstLeafToken?.StartLine ?? 0) + 1;
                     var innerChain = TraceContainerOrigin(
                         project, projectModel, runtimeProvider,
                         callSiteFile, enclosingType, collectionName, maxDepth - 1);
@@ -60,7 +60,7 @@ public static class GDProvenanceTracer
                     ?.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(collectionName))
                 {
-                    var forLine = (forStmt.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                    var forLine = (forStmt.FirstLeafToken?.StartLine ?? 0) + 1;
                     var innerChain = TraceContainerOrigin(
                         project, projectModel, runtimeProvider,
                         callSiteFile, enclosingType, collectionName, maxDepth - 1);
@@ -278,7 +278,7 @@ public static class GDProvenanceTracer
                         var paramType = signalParams[paramIdx];
                         if (!string.IsNullOrEmpty(paramType) && paramType != "Variant")
                         {
-                            var usageLine = (usage.Node.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
+                            var usageLine = (usage.Node.FirstLeafToken?.StartLine ?? 0) + 1;
                             chain.Add(new GDCallSiteProvenanceEntry(
                                 file.FullPath ?? "", usageLine,
                                 $"{containerVarName}.append({appendedVarName}) " +

@@ -43,7 +43,7 @@ internal class GDVariableUsageCollector : GDVisitor
         if (varDecl.Type != null)
             return;
 
-        var token = varDecl.AllTokens.FirstOrDefault();
+        var token = varDecl.FirstLeafToken;
         var profile = new GDVariableUsageProfile(varName)
         {
             DeclarationLine = token?.StartLine ?? 0,
@@ -57,7 +57,7 @@ internal class GDVariableUsageCollector : GDVisitor
             var initType = _typeEngine?.InferSemanticType(varDecl.Initializer);
             var isHighConfidence = DetermineHighConfidence(varDecl.Initializer, initType);
 
-            var initToken = varDecl.Initializer.AllTokens.FirstOrDefault();
+            var initToken = varDecl.Initializer.FirstLeafToken;
             profile.Assignments.Add(new GDAssignmentObservation
             {
                 InferredType = initType,
@@ -92,7 +92,7 @@ internal class GDVariableUsageCollector : GDVisitor
                 var valueType = _typeEngine?.InferSemanticType(dualOp.RightExpression);
                 var isHighConfidence = DetermineHighConfidence(dualOp.RightExpression, valueType);
 
-                var token = dualOp.AllTokens.FirstOrDefault();
+                var token = dualOp.FirstLeafToken;
                 profile.Assignments.Add(new GDAssignmentObservation
                 {
                     InferredType = valueType,

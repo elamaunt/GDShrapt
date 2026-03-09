@@ -302,7 +302,7 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
 
         foreach (var node in scope.AllNodes)
         {
-            var firstToken = node.AllTokens.FirstOrDefault();
+            var firstToken = node.FirstLeafToken;
             if (firstToken == null)
                 continue;
 

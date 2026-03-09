@@ -1762,7 +1762,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 if (varDecl.Type != null || varDecl.ConstKeyword != null)
                     continue;
 
-                var token = varDecl.AllTokens.FirstOrDefault();
+                var token = varDecl.FirstLeafToken;
                 var profile = new GDVariableUsageProfile(name)
                 {
                     IsClassLevel = true,
@@ -1775,7 +1775,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     var initType = _typeEngine?.InferSemanticType(varDecl.Initializer);
                     if (initType != null && !initType.IsVariant)
                     {
-                        var initToken = varDecl.Initializer.AllTokens.FirstOrDefault();
+                        var initToken = varDecl.Initializer.FirstLeafToken;
                         profile.Assignments.Add(new GDAssignmentObservation
                         {
                             InferredType = initType,

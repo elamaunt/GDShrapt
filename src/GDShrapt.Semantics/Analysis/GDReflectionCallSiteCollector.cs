@@ -107,7 +107,7 @@ internal class GDReflectionCallSiteCollector
             if (IsIteratorNameAccess(firstArg, ctx.IteratorVarName))
             {
                 var filters = ExtractNameFilters(callExpr, ctx);
-                var token = callExpr.AllTokens.FirstOrDefault();
+                var token = callExpr.FirstLeafToken;
 
                 var site = new GDReflectionCallSite
                 {
