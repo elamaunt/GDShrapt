@@ -17,7 +17,7 @@ public class GDLspHoverHandler
         _handler = handler;
     }
 
-    public Task<GDLspHover?> HandleAsync(GDHoverParams @params, CancellationToken cancellationToken)
+    public async Task<GDLspHover?> HandleAsync(GDHoverParams @params, CancellationToken cancellationToken)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
 
@@ -25,10 +25,12 @@ public class GDLspHoverHandler
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
 
-        // Delegate to CLI.Core handler
-        var result = _handler.GetHover(filePath, line, column);
+        // Run on thread pool with cancellation support to avoid blocking LSP thread
+        var result = await Task.Run(() => _handler.GetHover(filePath, line, column), cancellationToken)
+            .ConfigureAwait(false);
+
         if (result == null)
-            return Task.FromResult<GDLspHover?>(null);
+            return null;
 
         // Convert CLI.Core result to LSP hover
         var hover = new GDLspHover
@@ -47,6 +49,6 @@ public class GDLspHoverHandler
                 result.EndColumn.Value);
         }
 
-        return Task.FromResult<GDLspHover?>(hover);
+        return hover;
     }
 }

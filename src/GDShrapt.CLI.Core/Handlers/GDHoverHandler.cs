@@ -505,12 +505,7 @@ public class GDHoverHandler : IGDHoverHandler
 
         var docLines = new List<string>();
 
-        GDSyntaxToken? firstToken = null;
-        foreach (var token in declaration.AllTokens)
-        {
-            firstToken = token;
-            break;
-        }
+        var firstToken = declaration.FirstLeafToken;
 
         if (firstToken == null)
             return null;

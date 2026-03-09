@@ -401,6 +401,31 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return BuildLambdaSymbolInfo(lambdaExpr);
         }
 
+        // Handle $NodePath / %UniqueNode expressions (walk up parent chain)
+        var current = node;
+        while (current != null)
+        {
+            if (current is GDGetNodeExpression getNodeExpr)
+            {
+                var nodePath = GDNodePathExtractor.ExtractFromGetNodeExpression(getNodeExpr);
+                var nodeType = GetExpressionType(getNodeExpr);
+                if (!string.IsNullOrEmpty(nodeType))
+                    return new GDSymbolInfo("$" + (nodePath ?? ""), GDSymbolKind.Property, nodeType, nodeType);
+                return null;
+            }
+
+            if (current is GDGetUniqueNodeExpression uniqueNodeExpr)
+            {
+                var nodeName = GDNodePathExtractor.ExtractFromUniqueNodeExpression(uniqueNodeExpr);
+                var nodeType = GetExpressionType(uniqueNodeExpr);
+                if (!string.IsNullOrEmpty(nodeType))
+                    return new GDSymbolInfo("%" + (nodeName ?? ""), GDSymbolKind.Property, nodeType, nodeType);
+                return null;
+            }
+
+            current = current.Parent as GDNode;
+        }
+
         return null;
     }
 

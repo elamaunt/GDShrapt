@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
@@ -270,5 +271,72 @@ public class GDHoverHandlerTests
 
         // Assert
         result.Should().BeNull();
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnGetNodeExpression_ReturnsNodeType()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        // scene_nodes.gd line 13: @onready var animation_player: AnimationPlayer = $AnimationPlayer
+        // "$AnimationPlayer" starts at column 55 (1-based), LSP 0-based: line=12, char=54
+        var @params = CreateParams("scene_nodes.gd", 12, 54);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Contents.Should().NotBeNull();
+        result.Contents.Value.Should().Contain("AnimationPlayer");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnGetNodeExpression_DoesNotHang()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        // scene_nodes.gd line 13: $AnimationPlayer
+        var @params = CreateParams("scene_nodes.gd", 12, 54);
+
+        Func<Task> act = async () =>
+        {
+            await handler.HandleAsync(@params, CancellationToken.None);
+        };
+
+        await act.Should().CompleteWithinAsync(TimeSpan.FromSeconds(5));
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_CancelledToken_ThrowsOrReturnsQuickly()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        var @params = CreateParams("scene_nodes.gd", 12, 54);
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        Func<Task> act = async () =>
+        {
+            await handler.HandleAsync(@params, cts.Token);
+        };
+
+        await act.Should().CompleteWithinAsync(TimeSpan.FromSeconds(2));
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnInferredGetNode_DoesNotHang()
+    {
+        var (_, handler) = SetupProjectAndHandler();
+
+        // scene_nodes.gd line 17: @onready var ui_container = $UI
+        // "$UI" at column 32 (1-based), LSP 0-based: line=16, char=31
+        var @params = CreateParams("scene_nodes.gd", 16, 31);
+
+        Func<Task> act = async () =>
+        {
+            await handler.HandleAsync(@params, CancellationToken.None);
+        };
+
+        await act.Should().CompleteWithinAsync(TimeSpan.FromSeconds(5));
     }
 }

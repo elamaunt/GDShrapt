@@ -447,7 +447,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// <summary>
     /// Creates a node type injector for scene-based node type inference.
     /// </summary>
-    private GDNodeTypeInjector? CreateNodeTypeInjector()
+    public GDNodeTypeInjector? CreateNodeTypeInjector()
     {
         if (_sceneTypesProvider == null)
             return null;

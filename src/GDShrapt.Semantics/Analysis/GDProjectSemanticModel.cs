@@ -607,15 +607,24 @@ public class GDProjectSemanticModel : IDisposable
         if (string.IsNullOrEmpty(path))
             return null;
 
-        return _fileModels.GetOrAdd(path, _ =>
+        var model = _fileModels.GetOrAdd(path, _ =>
         {
             if (scriptFile.SemanticModel == null)
             {
-                scriptFile.Analyze(RuntimeProvider, callSiteRegistry: _project.CallSiteRegistry);
+                scriptFile.Analyze(RuntimeProvider, _project.CreateNodeTypeInjector(), _project.CallSiteRegistry);
             }
-            // Analyze() guarantees SemanticModel is set (even on parse failure, a minimal model is created)
             return scriptFile.SemanticModel!;
         });
+
+        // Detect stale cache: if the script was re-analyzed externally,
+        // its SemanticModel differs from what we cached.
+        if (scriptFile.SemanticModel != null && !ReferenceEquals(model, scriptFile.SemanticModel))
+        {
+            model = scriptFile.SemanticModel;
+            _fileModels[path] = model;
+        }
+
+        return model;
     }
 
     /// <summary>

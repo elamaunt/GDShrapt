@@ -51,7 +51,7 @@ public abstract class SmokeTestBase
     protected static void SimulateEdit(GDScriptFile script, string newContent)
     {
         script.Reload(newContent);
-        script.Analyze(Project.CreateRuntimeProvider());
+        script.Analyze(Project.CreateRuntimeProvider(), Project.CreateNodeTypeInjector(), Project.CallSiteRegistry);
     }
 
     protected void VerifyCompletionAfterEdit(GDScriptFile script)
@@ -81,5 +81,23 @@ public abstract class SmokeTestBase
             TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
             Position = new GDLspPosition(0, 0)
         }, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    protected static int FindLineContaining(GDScriptFile script, string text)
+    {
+        var lines = script.LastContent?.Split('\n');
+        if (lines == null) return -1;
+        for (int i = 0; i < lines.Length; i++)
+            if (lines[i].Contains(text))
+                return i;
+        return -1;
+    }
+
+    protected static int GetColumnOf(GDScriptFile script, int line, string text)
+    {
+        var lines = script.LastContent?.Split('\n');
+        if (lines == null || line < 0 || line >= lines.Length) return 0;
+        var idx = lines[line].IndexOf(text);
+        return idx >= 0 ? idx : 0;
     }
 }

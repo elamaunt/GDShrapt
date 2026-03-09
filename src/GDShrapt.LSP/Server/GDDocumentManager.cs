@@ -92,7 +92,7 @@ public class GDDocumentManager
             // Fallback: rebuild per-file model directly
             try
             {
-                script.Analyze(_project.CreateRuntimeProvider());
+                script.Analyze(_project.CreateRuntimeProvider(), _project.CreateNodeTypeInjector());
             }
             catch
             {

@@ -1,5 +1,10 @@
+using System;
 using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using GDShrapt.Abstractions;
+using GDShrapt.CLI.Core;
 using GDShrapt.LSP;
 using GDShrapt.Semantics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -175,5 +180,120 @@ public class GDDocumentManagerTests
         // Assert
         var list = new System.Collections.Generic.List<GDOpenDocument>(docs);
         list.Count.Should().Be(3);
+    }
+
+    [TestMethod]
+    public async Task UpdateDocument_ScriptWithGetNodeExpression_DoesNotHang()
+    {
+        var testProjectPath = GetTestProjectPath();
+        if (!Directory.Exists(testProjectPath))
+            return;
+
+        var context = new GDDefaultProjectContext(testProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions());
+        project.LoadScripts();
+        project.AnalyzeAll();
+
+        var projectModel = new GDProjectSemanticModel(project);
+        var manager = new GDDocumentManager(project);
+        manager.SetProjectModel(projectModel);
+        manager.SetInitialAnalysisComplete();
+
+        var scriptPath = Path.Combine(testProjectPath, "test_scripts", "scene_nodes.gd");
+        var uri = GDDocumentManager.PathToUri(scriptPath);
+        var content = File.ReadAllText(scriptPath);
+
+        manager.OpenDocument(uri, content, 1);
+
+        Func<Task> act = () => Task.Run(() =>
+        {
+            manager.UpdateDocument(uri, content + "\nvar test = 1", 2);
+        });
+
+        await act.Should().CompleteWithinAsync(TimeSpan.FromSeconds(10),
+            "UpdateDocument with $NodePath expressions should not hang during semantic analysis");
+    }
+
+    [TestMethod]
+    public async Task HoverAndUpdate_ScriptWithGetNodeExpression_NoRecursion()
+    {
+        var testProjectPath = GetTestProjectPath();
+        if (!Directory.Exists(testProjectPath))
+            return;
+
+        var context = new GDDefaultProjectContext(testProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions());
+        project.LoadScripts();
+        project.AnalyzeAll();
+
+        var projectModel = new GDProjectSemanticModel(project);
+        var manager = new GDDocumentManager(project);
+        manager.SetProjectModel(projectModel);
+        manager.SetInitialAnalysisComplete();
+
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var hoverHandler = registry.GetService<IGDHoverHandler>()!;
+        var lspHoverHandler = new GDLspHoverHandler(hoverHandler);
+
+        var scriptPath = Path.Combine(testProjectPath, "test_scripts", "scene_nodes.gd");
+        var uri = GDDocumentManager.PathToUri(scriptPath);
+        var content = File.ReadAllText(scriptPath);
+
+        manager.OpenDocument(uri, content, 1);
+
+        Func<Task> act = async () =>
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                var hoverParams = new GDHoverParams
+                {
+                    TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+                    Position = new GDLspPosition(12, 54)
+                };
+                await lspHoverHandler.HandleAsync(hoverParams, CancellationToken.None);
+
+                manager.UpdateDocument(uri, content + $"\n# iteration {i}", i + 2);
+            }
+        };
+
+        await act.Should().CompleteWithinAsync(TimeSpan.FromSeconds(30),
+            "Repeated hover + update cycle should not cause recursion or hang");
+    }
+
+    [TestMethod]
+    public void GetSemanticModel_AfterReloadAndAnalyze_ReturnsFreshModel()
+    {
+        var testProjectPath = GetTestProjectPath();
+        if (!Directory.Exists(testProjectPath))
+            return;
+
+        var context = new GDDefaultProjectContext(testProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions());
+        project.LoadScripts();
+        project.AnalyzeAll();
+
+        var projectModel = new GDProjectSemanticModel(project);
+
+        var script = project.ScriptFiles.First(f => f.FullPath != null);
+        var original = script.LastContent!;
+
+        // 1. Get initial model (caches it)
+        var model1 = projectModel.GetSemanticModel(script);
+        model1.Should().NotBeNull();
+
+        // 2. Reload + Analyze (bypassing InvalidateFile)
+        script.Reload(original + "\nvar __test = 1\n");
+        script.Analyze(project.CreateRuntimeProvider());
+
+        // 3. GetSemanticModel should return the FRESH model, not stale cache
+        var model2 = projectModel.GetSemanticModel(script);
+        model2.Should().NotBeNull();
+        model2.Should().NotBeSameAs(model1,
+            "after Reload+Analyze, GetSemanticModel should detect stale cache and return fresh model");
+
+        // 4. Restore
+        script.Reload(original);
+        script.Analyze(project.CreateRuntimeProvider());
     }
 }
