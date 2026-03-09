@@ -200,10 +200,13 @@ internal static class GDFlowNarrowingHelper
 
         if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
         {
+            // Null comparison is already handled by ApplyNullComparisonNarrowing —
+            // don't narrow the variable's type to "null" here
+            if (GDSemanticType.FromRuntimeTypeName(literalType).IsNull)
+                return;
+
             state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(literalType));
-            // Non-null literals mark variable as non-null
-            if (!GDSemanticType.FromRuntimeTypeName(literalType).IsNull)
-                state.MarkNonNull(varName);
+            state.MarkNonNull(varName);
         }
     }
 }

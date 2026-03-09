@@ -509,6 +509,11 @@ public class GDTypeNarrowingAnalyzer
 
         if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(literalType))
         {
+            // Null comparison is already handled by AnalyzeNullComparison —
+            // don't narrow the variable's type to "null" here
+            if (literalType == "null")
+                return;
+
             // Skip tautological narrowing: variable already has this type
             var declaredType = _variableTypeResolver?.Invoke(varName);
             if (declaredType != null && declaredType == literalType)

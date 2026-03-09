@@ -4,7 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
+using GDShrapt.Semantics.Validator;
+using GDShrapt.Validator;
 
 namespace GDShrapt.LSP.SmokeTests;
 
@@ -213,6 +216,81 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
 
         // 4. Restore original
         SimulateEdit(script, original);
+    }
+
+    [TestMethod]
+    public void DoorScript_DummyGp_ShouldHaveGamepieceType_NotNull()
+    {
+        var script = FindScript("doors/door.gd");
+        script.Should().NotBeNull("door.gd should exist in the project");
+
+        // 1. Get semantic model
+        var projectModel = new GDProjectSemanticModel(Project);
+        var semanticModel = projectModel.GetSemanticModel(script!);
+        semanticModel.Should().NotBeNull();
+
+        // 2. Check symbol registration
+        var symbol = semanticModel!.FindSymbol("_dummy_gp");
+        symbol.Should().NotBeNull("_dummy_gp should be registered as a symbol");
+
+        Console.WriteLine($"[DIAG] symbol.TypeName = '{symbol!.TypeName}'");
+        Console.WriteLine($"[DIAG] symbol.Kind = {symbol.Kind}");
+
+        symbol.TypeName.Should().Be("Gamepiece",
+            "explicitly typed variable 'var _dummy_gp: Gamepiece = null' should have TypeName = Gamepiece");
+
+        // 3. Find _dummy_gp.name access in the setter body via AST
+        var memberAccessNodes = script!.Class!.AllNodes
+            .OfType<GDMemberOperatorExpression>()
+            .Where(m => m.Identifier?.Sequence == "name" &&
+                        m.CallerExpression is GDIdentifierExpression id &&
+                        id.Identifier?.Sequence == "_dummy_gp")
+            .ToList();
+
+        Console.WriteLine($"[DIAG] Found {memberAccessNodes.Count} _dummy_gp.name access(es)");
+        memberAccessNodes.Should().NotBeEmpty("door.gd should contain _dummy_gp.name access");
+
+        // 4. Check the type via GetSymbolForNode on the caller expression
+        foreach (var memberAccess in memberAccessNodes)
+        {
+            var callerExpr = memberAccess.CallerExpression!;
+            var callerSymbol = semanticModel.GetSymbolForNode(callerExpr);
+            Console.WriteLine($"[DIAG] GetSymbolForNode(_dummy_gp) at line {callerExpr.FirstLeafToken?.StartLine}: " +
+                $"TypeName='{callerSymbol?.TypeName}', Kind={callerSymbol?.Kind}");
+
+            // Check GetExpressionType separately (bypasses narrowing in GetEffectiveExpressionType)
+            var exprType = ((IGDMemberAccessAnalyzer)semanticModel).GetExpressionType(callerExpr);
+            Console.WriteLine($"[DIAG] GetExpressionType(_dummy_gp) = '{exprType}'");
+
+            // Also check via IGDMemberAccessAnalyzer.GetEffectiveExpressionType (used by validator)
+            var analyzer = (IGDMemberAccessAnalyzer)semanticModel;
+            var effectiveType = analyzer.GetEffectiveExpressionType(callerExpr, memberAccess);
+            Console.WriteLine($"[DIAG] GetEffectiveExpressionType(_dummy_gp) = '{effectiveType}'");
+
+            effectiveType.Should().NotBe("null",
+                "type of _dummy_gp should not be 'null' — it has explicit type annotation Gamepiece");
+        }
+
+        // 5. Run semantic validation on the class
+        var validator = new GDSemanticValidator(semanticModel);
+        var result = validator.Validate(script.Class);
+
+        var gd3009 = result.Diagnostics
+            .Where(d => d.Code == GDDiagnosticCode.PropertyNotFound)
+            .ToList();
+
+        Console.WriteLine($"[DIAG] Total GD3009 (PropertyNotFound) diagnostics: {gd3009.Count}");
+        foreach (var diag in gd3009)
+        {
+            Console.WriteLine($"[DIAG]   {diag.CodeString} L{diag.StartLine}: {diag.Message}");
+        }
+
+        var nullTypeDiags = gd3009
+            .Where(d => d.Message.Contains("type 'null'"))
+            .ToList();
+
+        nullTypeDiags.Should().BeEmpty(
+            "GD3009 should not report 'Property not found on type null' for a variable with explicit Gamepiece type annotation");
     }
 
     [TestMethod]
