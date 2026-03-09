@@ -82,7 +82,7 @@ public class GDSemanticSignalValidator : GDValidationVisitor
         for (int i = 0; i < signalParams.Count && i < signalArgs.Count; i++)
         {
             var expectedType = signalParams[i].Type;
-            if (string.IsNullOrEmpty(expectedType) || expectedType == "Variant")
+            if (string.IsNullOrEmpty(expectedType) || GDSemanticType.FromRuntimeTypeName(expectedType).IsVariant)
                 continue; // Variant accepts anything
 
             var argExpr = signalArgs[i];
@@ -202,11 +202,13 @@ public class GDSemanticSignalValidator : GDValidationVisitor
         if (sourceType == targetType)
             return true;
 
-        if (targetType == "Variant")
+        var targetSemType = GDSemanticType.FromRuntimeTypeName(targetType);
+        if (targetSemType.IsVariant)
             return true;
 
         // null is compatible with reference types
-        if (sourceType == "null")
+        var sourceSemType = GDSemanticType.FromRuntimeTypeName(sourceType);
+        if (sourceSemType.IsNull)
             return true;
 
         // Use semantic model for detailed check

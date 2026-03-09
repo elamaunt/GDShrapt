@@ -20,15 +20,17 @@ internal static class GDFlowNarrowingHelper
         if (string.IsNullOrEmpty(typeName))
             return null;
 
-        // Array[T] -> T
-        var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(typeName);
-        if (arrayElement != null)
-            return arrayElement;
+        // Array[T] -> T, Dictionary[K, V] -> K (key type only)
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+        if (semType is GDContainerSemanticType { IsArray: true } arrayCt)
+            return arrayCt.ElementType.DisplayName;
 
-        // Dictionary[K, V] -> K (key type only)
-        var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
-        if (keyType != null)
-            return keyType;
+        if (semType is GDContainerSemanticType { IsDictionary: true } dictCt)
+        {
+            var keyType = dictCt.KeyType?.DisplayName;
+            if (keyType != null)
+                return keyType;
+        }
 
         // String -> String
         if (typeName == GDWellKnownTypes.Strings.String)
@@ -200,7 +202,7 @@ internal static class GDFlowNarrowingHelper
         {
             state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(literalType));
             // Non-null literals mark variable as non-null
-            if (literalType != "null")
+            if (!GDSemanticType.FromRuntimeTypeName(literalType).IsNull)
                 state.MarkNonNull(varName);
         }
     }

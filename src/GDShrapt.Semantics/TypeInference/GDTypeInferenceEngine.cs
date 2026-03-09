@@ -22,6 +22,7 @@ namespace GDShrapt.Semantics
         // Cache for computed types to avoid recomputation
         private readonly Dictionary<GDNode, string> _typeCache;
         private readonly Dictionary<GDNode, GDTypeNode> _typeNodeCache;
+        private readonly Dictionary<GDNode, GDSemanticType> _semanticTypeCache;
 
         // Optional provider for inferred container element types
         private Func<string, GDContainerElementType> _containerTypeProvider;
@@ -88,6 +89,7 @@ namespace GDShrapt.Semantics
             _injectionContext = injectionContext ?? new GDTypeInjectionContext();
             _typeCache = new Dictionary<GDNode, string>();
             _typeNodeCache = new Dictionary<GDNode, GDTypeNode>();
+            _semanticTypeCache = new Dictionary<GDNode, GDSemanticType>();
             _memberResolver = new GDMemberResolver(_runtimeProvider);
         }
 
@@ -309,37 +311,36 @@ namespace GDShrapt.Semantics
         /// </summary>
         private ContainerTypeInfo? ExtractContainerTypeInfo(string callerType, GDExpression? callerExpr)
         {
+            if (callerExpr != null)
+            {
+                var semanticType = InferSemanticType(callerExpr);
+                if (semanticType is GDContainerSemanticType container)
+                {
+                    return new ContainerTypeInfo
+                    {
+                        ElementType = container.ElementType?.DisplayName,
+                        KeyType = container.KeyType?.DisplayName,
+                        ValueType = container.IsDictionary ? container.ElementType?.DisplayName : null
+                    };
+                }
+            }
+
             var info = TryExtractContainerInfo(callerType);
             if (info != null)
                 return info;
-
-            // For untyped containers, try to infer from the expression
-            if (callerType == "Array" && callerExpr != null)
-            {
-                var inferredType = InferTypeNode(callerExpr)?.BuildName();
-                if (inferredType != null)
-                    return TryExtractContainerInfo(inferredType);
-            }
-
-            if (callerType == "Dictionary" && callerExpr != null)
-            {
-                var inferredType = InferTypeNode(callerExpr)?.BuildName();
-                if (inferredType != null)
-                    return TryExtractContainerInfo(inferredType);
-            }
 
             return null;
         }
 
         private static ContainerTypeInfo? TryExtractContainerInfo(string typeName)
         {
-            var elementType = GDGenericTypeHelper.ExtractArrayElementType(typeName);
-            if (elementType != null)
-                return new ContainerTypeInfo { ElementType = elementType };
+            var semType = GDSemanticType.FromRuntimeTypeName(typeName);
 
-            var (keyType, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
-            if (keyType != null && valueType != null)
-                return new ContainerTypeInfo { KeyType = keyType, ValueType = valueType, ElementType = valueType };
+            if (semType is GDContainerSemanticType { IsArray: true } arrayCt)
+                return new ContainerTypeInfo { ElementType = arrayCt.ElementType.DisplayName };
+
+            if (semType is GDContainerSemanticType { IsDictionary: true } dictCt)
+                return new ContainerTypeInfo { KeyType = dictCt.KeyType?.DisplayName, ValueType = dictCt.ElementType.DisplayName, ElementType = dictCt.ElementType.DisplayName };
 
             return null;
         }
@@ -591,12 +592,17 @@ namespace GDShrapt.Semantics
                 {
                     var elementUnion = ExtractArrayElementTypes(arrayInit);
                     if (!string.IsNullOrEmpty(elementUnion))
-                        return CreateSimpleType($"Array[{elementUnion}]");
+                        return CreateSimpleType(GDGenericTypeHelper.CreateArrayType(elementUnion));
                     return CreateSimpleType("Array");
                 }
 
-                case GDDictionaryInitializerExpression _:
-                    return CreateSimpleType("Dictionary");
+                case GDDictionaryInitializerExpression dictInit:
+                {
+                    var keyUnion = ExtractDictionaryKeyTypes(dictInit);
+                    var valueUnion = ExtractDictionaryValueTypes(dictInit);
+                    var dictType = GDGenericTypeHelper.CreateDictionaryType(keyUnion, valueUnion);
+                    return CreateSimpleType(dictType);
+                }
 
                 // Identifiers - look up in scope or RuntimeProvider
                 case GDIdentifierExpression identExpr:
@@ -713,20 +719,30 @@ namespace GDShrapt.Semantics
                     return arrayType.InnerType;
             }
 
-            // For typed dictionaries: Dictionary[K, V] -> V
+            // For typed dictionaries: Dictionary[K, V] -> try key-specific inference first, then fall back to V
             if (containerTypeNode is GDDictionaryTypeNode dictType)
             {
+                // Try key-specific type inference for more precise results
+                var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, indexerExpr.RootClassDeclaration);
+                var keyStr = GDStaticStringExtractor.TryExtractString(indexerExpr.InnerExpression, resolver);
+
+                if (!string.IsNullOrEmpty(keyStr))
+                {
+                    var specificType = InferDictionaryValueTypeForKey(indexerExpr.CallerExpression, keyStr);
+                    if (!string.IsNullOrEmpty(specificType))
+                        return CreateSimpleType(specificType);
+                }
+
                 if (dictType.ValueType != null)
                     return dictType.ValueType;
             }
 
             // For untyped Array/Dictionary, try to infer from usage
-            var containerType = containerTypeNode?.BuildName();
+            var containerSemantic = InferSemanticType(indexerExpr.CallerExpression);
 
             // For untyped Dictionary, try key-specific type inference first
-            if (containerType == "Dictionary")
+            if (containerSemantic.IsDictionary)
             {
-                // Try to extract the key as a static string
                 var resolver = GDStaticStringExtractor.CreateScopeResolver(_scopes, indexerExpr.RootClassDeclaration);
                 var keyStr = GDStaticStringExtractor.TryExtractString(indexerExpr.InnerExpression, resolver);
 
@@ -738,7 +754,7 @@ namespace GDShrapt.Semantics
                 }
             }
 
-            if (containerType == "Array" || containerType == "Dictionary")
+            if (containerSemantic.IsContainer)
             {
                 // Try to get inferred element type from container usage analysis
                 if (_containerTypeProvider != null)
@@ -763,6 +779,7 @@ namespace GDShrapt.Semantics
             }
 
             // For PackedArrays (PackedByteArray, PackedInt32Array, etc.)
+            var containerType = containerTypeNode?.BuildName();
             if (!string.IsNullOrEmpty(containerType))
             {
                 var elementType = GDPackedArrayTypes.GetElementType(containerType);
@@ -773,7 +790,7 @@ namespace GDShrapt.Semantics
             }
 
             // String indexing returns String (single character)
-            if (containerType == "String")
+            if (containerSemantic.IsString)
             {
                 return CreateSimpleType("String");
             }
@@ -1194,22 +1211,15 @@ namespace GDShrapt.Semantics
                 }
 
                 // Handle chained calls: obj.a().b() where memberExpr.CallerExpression is a call
-                string callerType;
-                if (memberExpr.CallerExpression is GDCallExpression innerCallExpr)
-                {
-                    callerType = InferCallType(innerCallExpr);
-                }
-                else
-                {
-                    callerType = InferTypeNode(memberExpr.CallerExpression)?.BuildName();
-                }
+                var callerSemantic = InferSemanticType(memberExpr.CallerExpression);
+                var callerType = callerSemantic?.DisplayName;
 
                 if (!string.IsNullOrEmpty(methodName))
                 {
                     if (!string.IsNullOrEmpty(callerType))
                     {
                         // Special handling for Dictionary.get("key") - try to infer value type for specific key
-                        if (callerType == "Dictionary" && methodName == "get")
+                        if (callerSemantic.IsDictionary && methodName == "get")
                         {
                             var dictValueType = InferDictionaryGetType(callExpr, memberExpr.CallerExpression);
                             if (!string.IsNullOrEmpty(dictValueType))
@@ -1217,7 +1227,7 @@ namespace GDShrapt.Semantics
                         }
 
                         // Special handling for Object.get("property") - infer property type
-                        if (methodName == "get" && callerType != "Dictionary")
+                        if (methodName == "get" && !callerSemantic.IsDictionary)
                         {
                             var propType = InferObjectGetType(callExpr, callerType);
                             if (!string.IsNullOrEmpty(propType))
@@ -1225,7 +1235,7 @@ namespace GDShrapt.Semantics
                         }
 
                         // Special handling for Callable.call() - extract return type from signature
-                        if ((methodName == "call" || methodName == "callv") && GDWellKnownTypes.IsCallableType(callerType))
+                        if ((methodName == "call" || methodName == "callv") && callerSemantic.IsCallable)
                         {
                             var callableReturnType = ExtractCallableReturnType(callerType);
                             if (!string.IsNullOrEmpty(callableReturnType))
@@ -1249,6 +1259,7 @@ namespace GDShrapt.Semantics
                         }
 
                         var memberInfo = FindMemberWithInheritance(callerType, methodName);
+
                         if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method)
                         {
                             // Apply ReturnTypeRole if available to get more specific type
@@ -1259,7 +1270,7 @@ namespace GDShrapt.Semantics
 
                     // For unknown/Variant caller type, try to find the method in common types
                     // This handles cases like item.to_upper() or item.keys() where item is Variant or untyped parameter
-                    if (string.IsNullOrEmpty(callerType) || callerType == GDWellKnownTypes.Variant)
+                    if (string.IsNullOrEmpty(callerType) || callerSemantic.IsVariant)
                     {
                         var fallbackType = FindMethodReturnTypeInCommonTypes(methodName);
                         if (!string.IsNullOrEmpty(fallbackType))
@@ -1275,15 +1286,22 @@ namespace GDShrapt.Semantics
         /// Extracts the Union type of elements from an Array initializer expression.
         /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
-        private string ExtractArrayElementTypes(GDArrayInitializerExpression arrayInit)
+        internal string ExtractArrayElementTypes(GDArrayInitializerExpression arrayInit)
             => ContainerAnalyzer.ExtractArrayElementTypes(arrayInit);
 
         /// <summary>
         /// Extracts the Union type of values from a Dictionary initializer expression.
         /// Delegates to GDContainerTypeAnalyzer.
         /// </summary>
-        private string ExtractDictionaryValueTypes(GDDictionaryInitializerExpression dictInit)
+        internal string ExtractDictionaryValueTypes(GDDictionaryInitializerExpression dictInit)
             => ContainerAnalyzer.ExtractDictionaryValueTypes(dictInit);
+
+        /// <summary>
+        /// Extracts the Union type of keys from a Dictionary initializer expression.
+        /// Delegates to GDContainerTypeAnalyzer.
+        /// </summary>
+        internal string ExtractDictionaryKeyTypes(GDDictionaryInitializerExpression dictInit)
+            => ContainerAnalyzer.ExtractDictionaryKeyTypes(dictInit);
 
         /// <summary>
         /// Infers the type for Dictionary.get("key") with key-specific type lookup.
@@ -1519,10 +1537,16 @@ namespace GDShrapt.Semantics
             if (symbol == null && _symbolLookupFallback != null)
                 symbol = _symbolLookupFallback(name, identExpr);
 
-            if (symbol?.Kind == GDSymbolKind.Method)
+            if (symbol != null)
             {
-                if (symbol.Declaration is GDMethodDeclaration methodDecl)
-                    return BuildCallableSemanticType(methodDecl);
+                if (symbol.Kind == GDSymbolKind.Method)
+                {
+                    if (symbol.Declaration is GDMethodDeclaration methodDecl)
+                        return BuildCallableSemanticType(methodDecl);
+                }
+
+                // Local variable/parameter/constant shadows any global function or class method
+                return null;
             }
 
             // Check class members
@@ -1605,7 +1629,7 @@ namespace GDShrapt.Semantics
             }
 
             GDSemanticType returnType = null;
-            if (!string.IsNullOrEmpty(memberInfo.Type) && memberInfo.Type != "void" && memberInfo.Type != "Variant")
+            if (!string.IsNullOrEmpty(memberInfo.Type) && memberInfo.Type != "void" && !GDSemanticType.FromRuntimeTypeName(memberInfo.Type).IsVariant)
                 returnType = GDSemanticType.FromRuntimeTypeName(memberInfo.Type);
 
             return new GDCallableSemanticType(returnType, paramTypes, memberInfo.IsVarArgs);
@@ -1625,7 +1649,7 @@ namespace GDShrapt.Semantics
             }
 
             GDSemanticType returnType = null;
-            if (!string.IsNullOrEmpty(funcInfo.ReturnType) && funcInfo.ReturnType != "void" && funcInfo.ReturnType != "Variant")
+            if (!string.IsNullOrEmpty(funcInfo.ReturnType) && funcInfo.ReturnType != "void" && !GDSemanticType.FromRuntimeTypeName(funcInfo.ReturnType).IsVariant)
                 returnType = GDSemanticType.FromRuntimeTypeName(funcInfo.ReturnType);
 
             return new GDCallableSemanticType(returnType, paramTypes, funcInfo.IsVarArgs);
@@ -1799,7 +1823,7 @@ namespace GDShrapt.Semantics
                         typeName = InferTypeNode(param.DefaultValue)?.BuildName();
                     }
 
-                    if (string.IsNullOrEmpty(typeName) || typeName == "null")
+                    if (string.IsNullOrEmpty(typeName) || GDSemanticType.FromRuntimeTypeName(typeName).IsNull)
                     {
                         typeName = GDWellKnownTypes.Variant;
                     }
@@ -1810,7 +1834,7 @@ namespace GDShrapt.Semantics
 
             // Infer return type
             var returnType = InferLambdaReturnType(lambda);
-            if (string.IsNullOrEmpty(returnType) || returnType == "null")
+            if (string.IsNullOrEmpty(returnType) || GDSemanticType.FromRuntimeTypeName(returnType).IsNull)
                 returnType = "void";
 
             // Build signature: (x: int, y: String) -> bool
@@ -1837,7 +1861,7 @@ namespace GDShrapt.Semantics
                     typeName = InferTypeNode(param.DefaultValue)?.BuildName();
                 }
 
-                if (string.IsNullOrEmpty(typeName) || typeName == "null")
+                if (string.IsNullOrEmpty(typeName) || GDSemanticType.FromRuntimeTypeName(typeName).IsNull)
                 {
                     typeName = GDWellKnownTypes.Variant;
                 }
@@ -1900,7 +1924,7 @@ namespace GDShrapt.Semantics
             string paramsSection = null;
 
             // New format: Callable(params) -> returnType  or  Callable(params)
-            if (callableType.StartsWith("Callable("))
+            if (GDSemanticType.FromRuntimeTypeName(callableType).IsCallable)
             {
                 var parenStart = "Callable(".Length;
                 // Find matching closing paren, handling nested parens/brackets
@@ -2168,7 +2192,7 @@ namespace GDShrapt.Semantics
                 return true;
 
             // null is assignable to any reference type
-            if (sourceType == "null")
+            if (GDSemanticType.FromRuntimeTypeName(sourceType).IsNull)
                 return true;
 
             // Use RuntimeProvider for detailed compatibility check
@@ -2191,7 +2215,8 @@ namespace GDShrapt.Semantics
                 return null;
 
             // Simple types (no generic brackets, dots, or union |) - optimize for performance
-            if (typeName.IndexOf('[') < 0 && typeName.IndexOf('.') < 0 && typeName.IndexOf('|') < 0)
+            var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+            if (!semType.IsContainer && typeName.IndexOf('.') < 0 && !semType.IsUnion)
             {
                 // Validate that it's a valid identifier before creating
                 // Must start with letter or underscore, contain only letters, digits, underscores
@@ -2203,11 +2228,29 @@ namespace GDShrapt.Semantics
                 return null;
             }
 
-            // Union types cannot be represented as GDTypeNode since GDType validates identifiers.
-            // Return null here - union types will be handled directly in InferType for call expressions.
-            if (typeName.Contains("|"))
+            // Union types cannot be represented directly as GDTypeNode.
+            // For container types with union elements, preserve the container structure
+            // by substituting Variant for union parts: "Dictionary[String, int | String]" → "Dictionary[String, Variant]"
+            if (semType.IsUnion)
             {
-                // We'll handle this in GetTypeForNode by checking InferCallType directly
+                var baseNameSemType = GDSemanticType.FromRuntimeTypeName(GDGenericTypeHelper.ExtractBaseTypeName(typeName));
+
+                if (baseNameSemType.IsType(GDWellKnownTypes.Containers.Array) && GDGenericTypeHelper.IsGenericArrayType(typeName))
+                {
+                    var elementType = GDGenericTypeHelper.ExtractArrayElementType(typeName);
+                    var safeElement = elementType != null && GDGenericTypeHelper.IsUnionType(elementType) ? GDWellKnownTypes.Variant : elementType;
+                    return TypeParser.ParseType($"Array[{safeElement}]");
+                }
+
+                if (baseNameSemType.IsType(GDWellKnownTypes.Containers.Dictionary) && GDGenericTypeHelper.IsGenericDictionaryType(typeName))
+                {
+                    var (keyType, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+                    var safeKey = keyType != null && GDGenericTypeHelper.IsUnionType(keyType) ? GDWellKnownTypes.Variant : keyType;
+                    var safeValue = valueType != null && GDGenericTypeHelper.IsUnionType(valueType) ? GDWellKnownTypes.Variant : valueType;
+                    return TypeParser.ParseType($"Dictionary[{safeKey}, {safeValue}]");
+                }
+
+                // Non-container union types still cannot be represented as GDTypeNode
                 return null;
             }
 
@@ -2264,18 +2307,33 @@ namespace GDShrapt.Semantics
 
         /// <summary>
         /// Gets the inferred type for any AST node.
-        /// Supports expressions, declarations, statements, and other node types.
+        /// Delegates to GetSemanticTypeForNode and returns DisplayName for backward compatibility.
         /// </summary>
-        /// <param name="node">The AST node to get the type for</param>
-        /// <returns>The inferred type name, or null if cannot be determined</returns>
         public string GetTypeForNode(GDNode node)
+        {
+            return GetSemanticTypeForNode(node)?.DisplayName;
+        }
+
+        /// <summary>
+        /// Gets the inferred semantic type for any AST node.
+        /// Returns a structural GDSemanticType that can be queried via IsArray, IsDictionary, etc.
+        /// </summary>
+        public GDSemanticType GetSemanticTypeForNode(GDNode node)
         {
             if (node == null)
                 return null;
 
-            // Check cache first
-            if (_typeCache.TryGetValue(node, out var cachedType))
-                return cachedType;
+            // Check semantic cache first
+            if (_semanticTypeCache.TryGetValue(node, out var cachedSemantic))
+                return cachedSemantic;
+
+            // Fallback: check legacy string cache
+            if (_typeCache.TryGetValue(node, out var cachedString))
+            {
+                var fromCache = GDSemanticType.FromRuntimeTypeName(cachedString);
+                _semanticTypeCache[node] = fromCache;
+                return fromCache;
+            }
 
             // Try type injector first
             if (_typeInjector != null)
@@ -2283,99 +2341,48 @@ namespace GDShrapt.Semantics
                 var injectedType = _typeInjector.InjectType(node, _injectionContext);
                 if (injectedType != null)
                 {
+                    var injectedSemantic = GDSemanticType.FromRuntimeTypeName(injectedType);
+                    _semanticTypeCache[node] = injectedSemantic;
                     _typeCache[node] = injectedType;
-                    return injectedType;
+                    return injectedSemantic;
                 }
             }
 
-            string type = null;
+            GDSemanticType result = null;
 
             // Handle expressions
             if (node is GDExpression expression)
             {
-                // Special handling for call expressions - InferCallType may return union types
-                // which cannot be represented as GDTypeNode, so we get the type string directly
-                if (expression is GDCallExpression callExpr)
-                {
-                    type = InferCallType(callExpr);
-                }
-                else
-                {
-                    type = InferTypeNode(expression)?.BuildName();
-                }
+                result = InferSemanticType(expression);
             }
             // Handle declarations
             else if (node is GDVariableDeclaration varDecl)
             {
-                type = varDecl.Type?.BuildName();
-                if (string.IsNullOrEmpty(type) && varDecl.Initializer != null)
-                {
-                    // Special handling for dictionary literals - show value union type
-                    if (varDecl.Initializer is GDDictionaryInitializerExpression dictInit)
-                    {
-                        var valueUnion = ExtractDictionaryValueTypes(dictInit);
-                        type = !string.IsNullOrEmpty(valueUnion)
-                            ? $"Dictionary[{valueUnion}]"
-                            : "Dictionary";
-                    }
-                    // Special handling for array literals - show element union type
-                    else if (varDecl.Initializer is GDArrayInitializerExpression arrayInit)
-                    {
-                        var elementUnion = ExtractArrayElementTypes(arrayInit);
-                        type = !string.IsNullOrEmpty(elementUnion)
-                            ? $"Array[{elementUnion}]"
-                            : "Array";
-                    }
-                    else
-                    {
-                        type = InferTypeNode(varDecl.Initializer)?.BuildName();
-                    }
-                }
+                result = InferSemanticTypeForDeclarationType(varDecl.Type, varDecl.Initializer);
             }
             else if (node is GDVariableDeclarationStatement varStmt)
             {
-                type = varStmt.Type?.BuildName();
-                if (string.IsNullOrEmpty(type) && varStmt.Initializer != null)
-                {
-                    // Special handling for dictionary literals - show value union type
-                    if (varStmt.Initializer is GDDictionaryInitializerExpression dictInit)
-                    {
-                        var valueUnion = ExtractDictionaryValueTypes(dictInit);
-                        type = !string.IsNullOrEmpty(valueUnion)
-                            ? $"Dictionary[{valueUnion}]"
-                            : "Dictionary";
-                    }
-                    // Special handling for array literals - show element union type
-                    else if (varStmt.Initializer is GDArrayInitializerExpression arrayInit)
-                    {
-                        var elementUnion = ExtractArrayElementTypes(arrayInit);
-                        type = !string.IsNullOrEmpty(elementUnion)
-                            ? $"Array[{elementUnion}]"
-                            : "Array";
-                    }
-                    else
-                    {
-                        type = InferTypeNode(varStmt.Initializer)?.BuildName();
-                    }
-                }
+                result = InferSemanticTypeForDeclarationType(varStmt.Type, varStmt.Initializer);
             }
             else if (node is GDParameterDeclaration paramDecl)
             {
-                type = paramDecl.Type?.BuildName();
-                if (string.IsNullOrEmpty(type) && paramDecl.DefaultValue != null)
-                    type = InferTypeNode(paramDecl.DefaultValue)?.BuildName();
+                if (paramDecl.Type != null)
+                    result = GDSemanticType.FromTypeNode(paramDecl.Type);
+                else if (paramDecl.DefaultValue != null)
+                    result = InferSemanticType(paramDecl.DefaultValue);
             }
             else if (node is GDMethodDeclaration methodDecl)
             {
                 if (methodDecl.ReturnType != null)
                 {
-                    type = methodDecl.ReturnType.BuildName();
+                    result = GDSemanticType.FromTypeNode(methodDecl.ReturnType);
                 }
                 else
                 {
-                    // Fallback: infer return type from method body
                     var inferredType = InferMethodReturnType(methodDecl);
-                    type = !string.IsNullOrEmpty(inferredType) ? inferredType : "void";
+                    result = !string.IsNullOrEmpty(inferredType)
+                        ? GDSemanticType.FromRuntimeTypeName(inferredType)
+                        : new GDSimpleSemanticType("void");
                 }
             }
             else if (node is GDSignalDeclaration signalDecl)
@@ -2383,7 +2390,7 @@ namespace GDShrapt.Semantics
                 var parameters = signalDecl.Parameters;
                 if (parameters == null || !System.Linq.Enumerable.Any(parameters))
                 {
-                    type = "Signal";
+                    result = new GDSimpleSemanticType("Signal");
                 }
                 else
                 {
@@ -2394,36 +2401,74 @@ namespace GDShrapt.Semantics
                         var paramType = param.Type?.BuildName() ?? GDWellKnownTypes.Variant;
                         paramStrings.Add($"{paramName}: {paramType}");
                     }
-                    type = $"Signal({string.Join(", ", paramStrings)})";
+                    result = new GDSimpleSemanticType($"Signal({string.Join(", ", paramStrings)})");
                 }
             }
             else if (node is GDEnumDeclaration enumDecl)
             {
-                type = enumDecl.Identifier?.Sequence ?? "int";
+                result = new GDSimpleSemanticType(enumDecl.Identifier?.Sequence ?? "int");
             }
             else if (node is GDEnumValueDeclaration)
             {
-                type = "int";
+                result = new GDSimpleSemanticType("int");
             }
             else if (node is GDInnerClassDeclaration innerClass)
             {
-                type = innerClass.Identifier?.Sequence;
+                var name = innerClass.Identifier?.Sequence;
+                if (name != null)
+                    result = new GDSimpleSemanticType(name);
             }
-            // Handle return expression
             else if (node is GDReturnExpression returnExpr)
             {
-                type = returnExpr.Expression != null ? InferTypeNode(returnExpr.Expression)?.BuildName() : "void";
+                result = returnExpr.Expression != null
+                    ? InferSemanticType(returnExpr.Expression)
+                    : new GDSimpleSemanticType("void");
             }
             else if (node is GDExpressionStatement exprStmt)
             {
-                type = InferTypeNode(exprStmt.Expression)?.BuildName();
+                if (exprStmt.Expression != null)
+                    result = InferSemanticType(exprStmt.Expression);
             }
 
             // Cache and return
-            if (type != null)
-                _typeCache[node] = type;
+            if (result != null)
+            {
+                _semanticTypeCache[node] = result;
+                _typeCache[node] = result.DisplayName;
+            }
 
-            return type;
+            return result;
+        }
+
+        private GDSemanticType InferSemanticTypeForDeclarationType(GDTypeNode typeNode, GDExpression initializer)
+        {
+            if (typeNode != null)
+            {
+                var fromNode = GDSemanticType.FromTypeNode(typeNode);
+                if (!fromNode.IsVariant)
+                    return fromNode;
+            }
+
+            if (initializer == null)
+                return null;
+
+            if (initializer is GDDictionaryInitializerExpression dictInit)
+            {
+                var keyUnion = ExtractDictionaryKeyTypes(dictInit);
+                var valueUnion = ExtractDictionaryValueTypes(dictInit);
+                var keyType = GDSemanticType.FromRuntimeTypeName(keyUnion);
+                var valueType = GDSemanticType.FromRuntimeTypeName(valueUnion);
+                return new GDContainerSemanticType(isDictionary: true, elementType: valueType, keyType: keyType);
+            }
+
+            if (initializer is GDArrayInitializerExpression arrayInit)
+            {
+                var elementUnion = ExtractArrayElementTypes(arrayInit);
+                var elementType = GDSemanticType.FromRuntimeTypeName(elementUnion);
+                return new GDContainerSemanticType(isDictionary: false, elementType: elementType);
+            }
+
+            return InferSemanticType(initializer);
         }
 
         /// <summary>
@@ -2571,6 +2616,7 @@ namespace GDShrapt.Semantics
         {
             _typeCache.Clear();
             _typeNodeCache.Clear();
+            _semanticTypeCache.Clear();
         }
 
         private int GetIndexInList(GDExpressionsList list, GDNode node)

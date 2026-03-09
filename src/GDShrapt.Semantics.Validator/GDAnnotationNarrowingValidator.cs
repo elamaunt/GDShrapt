@@ -46,7 +46,8 @@ public class GDAnnotationNarrowingValidator : GDValidationVisitor
             return;
 
         var declaredTypeName = typeNode.BuildName();
-        if (string.IsNullOrEmpty(declaredTypeName) || declaredTypeName == "Variant")
+        var declaredSemType = GDSemanticType.FromRuntimeTypeName(declaredTypeName);
+        if (string.IsNullOrEmpty(declaredTypeName) || declaredSemType.IsVariant)
             return;
 
         // GD7022: Redundant annotation on literal
@@ -103,19 +104,21 @@ public class GDAnnotationNarrowingValidator : GDValidationVisitor
             return;
 
         var inferredTypeName = inferredType.DisplayName;
-        if (inferredTypeName == "null")
+        if (inferredType.IsNull)
             return;
 
         // Skip if same type
         if (inferredTypeName == declaredTypeName)
             return;
 
+        var declaredSemType = GDSemanticType.FromRuntimeTypeName(declaredTypeName);
+
         // Skip container types with specialization (handled by GD3025)
-        if (declaredTypeName == "Array" || declaredTypeName == "Dictionary")
+        if (declaredSemType.IsArray || declaredSemType.IsDictionary)
             return;
 
         // Skip numeric conversions (int ↔ float is not widening)
-        if (IsNumericType(declaredTypeName) && IsNumericType(inferredTypeName))
+        if (declaredSemType.IsNumeric && inferredType.IsNumeric)
             return;
 
         // Check if inferred is assignable to declared (narrower), but not the reverse
@@ -150,11 +153,6 @@ public class GDAnnotationNarrowingValidator : GDValidationVisitor
         }
 
         return $"Annotation '{declaredTypeName}' is wider than inferred type '{inferredTypeName}'";
-    }
-
-    private static bool IsNumericType(string typeName)
-    {
-        return typeName is "int" or "float";
     }
 
     private static string? GetLiteralType(GDExpression? expr)

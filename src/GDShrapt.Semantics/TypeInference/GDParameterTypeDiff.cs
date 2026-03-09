@@ -151,11 +151,13 @@ public class GDParameterTypeDiff
             return true;
 
         // Variant accepts anything
-        if (targetType == "Variant")
+        var targetSemantic = GDSemanticType.FromRuntimeTypeName(targetType);
+        if (targetSemantic.IsVariant)
             return true;
 
         // null is compatible with nullable types
-        if (sourceType == "null")
+        var sourceSemantic = GDSemanticType.FromRuntimeTypeName(sourceType);
+        if (sourceSemantic.IsNull)
             return true; // In GDScript, null can be assigned to any type
 
         // Check inheritance

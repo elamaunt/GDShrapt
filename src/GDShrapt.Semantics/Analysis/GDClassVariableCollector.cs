@@ -155,7 +155,7 @@ internal class GDClassVariableCollector : GDVisitor
             return true;
 
         // If we got a concrete type, treat as high confidence
-        if (!inferredType.IsVariant && !inferredType.DisplayName.StartsWith("Unknown"))
+        if (!inferredType.IsVariant && !inferredType.IsType("Unknown"))
             return true;
 
         return false;

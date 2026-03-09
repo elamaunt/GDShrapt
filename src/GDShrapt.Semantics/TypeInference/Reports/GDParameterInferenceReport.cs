@@ -28,7 +28,7 @@ internal class GDParameterInferenceReport
     /// <summary>
     /// Whether the parameter has an explicit type annotation.
     /// </summary>
-    public bool HasExplicitType => !string.IsNullOrEmpty(ExplicitType) && ExplicitType != "Variant";
+    public bool HasExplicitType => !string.IsNullOrEmpty(ExplicitType) && !GDSemanticType.FromRuntimeTypeName(ExplicitType).IsVariant;
 
     /// <summary>
     /// The inferred Union type from call sites.

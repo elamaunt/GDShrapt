@@ -57,9 +57,10 @@ public class GDContainerSpecializationValidator : GDValidationVisitor
             return;
 
         var typeName = typeNode.BuildName();
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
 
         // Only fire on bare Array or Dictionary (no brackets)
-        if (typeName != "Array" && typeName != "Dictionary")
+        if (!semType.IsArray && !semType.IsDictionary)
             return;
 
         // Get container element type from semantic model
@@ -72,11 +73,11 @@ public class GDContainerSpecializationValidator : GDValidationVisitor
             return;
 
         var elementTypeName = effectiveType.DisplayName;
-        if (elementTypeName == "Variant")
+        if (effectiveType.IsVariant)
             return;
 
         // Build suggestion
-        var suggestion = typeName == "Array"
+        var suggestion = semType.IsArray
             ? $"Array[{elementTypeName}]"
             : $"Dictionary with typed values";
 
@@ -103,11 +104,11 @@ public class GDContainerSpecializationValidator : GDValidationVisitor
         if (flowVar?.DeclaredType == null)
             return;
 
-        var declaredTypeName = flowVar.DeclaredType.DisplayName;
-
         // Only fire on bare "Array" (no specialization)
-        if (declaredTypeName != "Array")
+        if (!flowVar.DeclaredType.IsArray)
             return;
+
+        var declaredTypeName = flowVar.DeclaredType.DisplayName;
 
         // Get element type from usage
         var containerType = _semanticModel.TypeSystem.GetContainerElementType(collectionVarName);
@@ -119,7 +120,7 @@ public class GDContainerSpecializationValidator : GDValidationVisitor
             return;
 
         var elementTypeName = effectiveType.DisplayName;
-        if (elementTypeName == "Variant")
+        if (effectiveType.IsVariant)
             return;
 
         ReportWarning(

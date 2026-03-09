@@ -272,10 +272,12 @@ public class GDTypeDiff
         if (sourceType == targetType)
             return true;
 
-        if (targetType == "Variant")
+        var targetSemantic = GDSemanticType.FromRuntimeTypeName(targetType);
+        if (targetSemantic.IsVariant)
             return true;
 
-        if (sourceType == "null")
+        var sourceSemantic = GDSemanticType.FromRuntimeTypeName(sourceType);
+        if (sourceSemantic.IsNull)
             return true;
 
         if (runtimeProvider != null)

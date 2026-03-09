@@ -210,8 +210,10 @@ namespace GDShrapt.Semantics.Validator
                 return null;
 
             // Get method info with callable metadata
-            // Use base type name for runtime provider lookup (Array[int] -> Array)
-            var baseCallerType = ExtractBaseTypeName(callerType);
+            var callerSemantic = GDSemanticType.FromRuntimeTypeName(callerType);
+            var baseCallerType = callerSemantic is GDContainerSemanticType ct
+                ? (ct.IsDictionary ? "Dictionary" : "Array")
+                : callerType;
             var methodInfo = _semanticModel?.RuntimeProvider?.GetMember(baseCallerType, methodName);
             if (methodInfo?.Parameters == null)
                 return null;
@@ -375,24 +377,20 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private string? GetContainerElementType(GDCallExpression call, string callerType)
         {
-            // Try to extract from generic type annotation: Array[int] -> int
-            var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(callerType);
-            if (arrayElement != null)
-                return arrayElement;
-
-            // For non-generic Array, try to infer from the caller expression
-            var baseCallerType = ExtractBaseTypeName(callerType);
-            if (baseCallerType == "Array" && call.CallerExpression is GDMemberOperatorExpression memberOp)
+            // Use structural type first
+            if (call.CallerExpression is GDMemberOperatorExpression memberOp)
             {
                 var callerExpr = memberOp.CallerExpression;
                 if (callerExpr != null)
                 {
-                    // Use SemanticModel to get more detailed type info
-                    var detailedTypeInfo = _semanticModel?.TypeSystem.GetType(callerExpr);
-                    var detailedType = detailedTypeInfo?.IsVariant == true ? null : detailedTypeInfo?.DisplayName;
-                    var detailedElement = GDGenericTypeHelper.ExtractArrayElementType(detailedType);
-                    if (detailedElement != null)
-                        return detailedElement;
+                    var semanticType = _semanticModel?.TypeSystem.GetType(callerExpr);
+                    if (semanticType is GDContainerSemanticType container)
+                    {
+                        if (container.IsArray && container.ElementType != null && !container.ElementType.IsVariant)
+                            return container.ElementType.DisplayName;
+                        if (container.IsDictionary && container.ElementType != null && !container.ElementType.IsVariant)
+                            return container.ElementType.DisplayName;
+                    }
 
                     // Fallback: use container type inference (tracks append/[]= usage)
                     if (callerExpr is GDIdentifierExpression identExpr)
@@ -437,10 +435,15 @@ namespace GDShrapt.Semantics.Validator
                 }
             }
 
-            // For Dictionary, extract value type
-            var (_, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(callerType);
-            if (valueType != null)
-                return valueType;
+            // Structural type from callerType string (for cases without caller expression)
+            var callerSemantic = GDSemanticType.FromRuntimeTypeName(callerType);
+            if (callerSemantic is GDContainerSemanticType ct)
+            {
+                if (ct.IsArray && ct.ElementType != null && !ct.ElementType.IsVariant)
+                    return ct.ElementType.DisplayName;
+                if (ct.IsDictionary && ct.ElementType != null && !ct.ElementType.IsVariant)
+                    return ct.ElementType.DisplayName;
+            }
 
             return null;
         }
@@ -484,7 +487,7 @@ namespace GDShrapt.Semantics.Validator
             }
 
             // Fallback to Variant for dynamic typing
-            if (string.IsNullOrEmpty(typeName) || typeName == "Unknown")
+            if (string.IsNullOrEmpty(typeName) || GDSemanticType.FromRuntimeTypeName(typeName).IsType("Unknown"))
             {
                 typeName = "Variant";
             }
@@ -506,9 +509,10 @@ namespace GDShrapt.Semantics.Validator
 
             // Infer the type of the initializer
             var initType = InferSimpleType(initializer);
+            var initSemantic = GDSemanticType.FromRuntimeTypeName(initType);
 
             // Skip validation if type couldn't be inferred
-            if (initType == null || initType == "Unknown")
+            if (initType == null || initSemantic.IsType("Unknown"))
                 return;
 
             // Check both directions: upcast (init IS-A declared) and downcast (declared IS-A init)
@@ -535,9 +539,10 @@ namespace GDShrapt.Semantics.Validator
 
             // Infer the type of the initializer
             var initType = InferSimpleType(initializer);
+            var initSemantic = GDSemanticType.FromRuntimeTypeName(initType);
 
             // Skip validation if type couldn't be inferred
-            if (initType == null || initType == "Unknown")
+            if (initType == null || initSemantic.IsType("Unknown"))
                 return;
 
             // Check both directions: upcast (init IS-A declared) and downcast (declared IS-A init)
@@ -584,7 +589,7 @@ namespace GDShrapt.Semantics.Validator
                 typeName = InferCollectionElementType(forStmt.Collection);
             }
 
-            if (string.IsNullOrEmpty(typeName) || typeName == "Unknown")
+            if (string.IsNullOrEmpty(typeName) || GDSemanticType.FromRuntimeTypeName(typeName).IsType("Unknown"))
                 typeName = "Variant";
 
             Context.Declare(GDSymbol.Variable(varName, forStmt, typeName: typeName, typeNode: typeNode));
@@ -600,12 +605,14 @@ namespace GDShrapt.Semantics.Validator
                 return;
 
             var elementType = InferCollectionElementType(forStmt.Collection);
+            var elementSemantic = GDSemanticType.FromRuntimeTypeName(elementType);
 
-            if (elementType == null || elementType == "Unknown" || elementType == "Variant")
+            if (elementType == null || elementSemantic.IsType("Unknown") || elementSemantic.IsVariant)
                 return;
 
             // Variant annotation when a narrower type is known — unnecessary widening
-            if (declaredType == "Variant")
+            var declaredSemantic = GDSemanticType.FromRuntimeTypeName(declaredType);
+            if (declaredSemantic.IsVariant)
             {
                 ReportWarning(
                     GDDiagnosticCode.AnnotationWiderThanInferred,
@@ -636,26 +643,33 @@ namespace GDShrapt.Semantics.Validator
                 return "int";
             }
 
-            var collectionType = InferSimpleType(collection);
-            if (collectionType == null || collectionType == "Unknown")
-                return null;
+            var semanticType = _semanticModel?.TypeSystem.GetType(collection);
+            if (semanticType != null && !semanticType.IsVariant)
+            {
+                if (semanticType is GDContainerSemanticType container)
+                {
+                    if (container.IsArray && container.ElementType != null)
+                        return container.ElementType.DisplayName;
+                    if (container.IsDictionary)
+                        return "Variant";
+                }
 
-            var arrayElement = GDGenericTypeHelper.ExtractArrayElementType(collectionType);
-            if (arrayElement != null)
-                return arrayElement;
+                if (semanticType.IsNumeric)
+                    return "int";
 
-            if (collectionType == "int")
-                return "int";
+                if (semanticType.IsString)
+                    return "String";
 
-            if (collectionType == "String")
-                return "String";
+                var packedElement = GDPackedArrayTypes.GetElementType(semanticType.DisplayName);
+                if (packedElement != null)
+                    return packedElement;
 
-            if (GDGenericTypeHelper.IsDictionaryType(collectionType))
                 return "Variant";
+            }
 
-            var packedElement = GDPackedArrayTypes.GetElementType(collectionType);
-            if (packedElement != null)
-                return packedElement;
+            var collectionType = InferSimpleType(collection);
+            if (collectionType == null || GDSemanticType.FromRuntimeTypeName(collectionType).IsType("Unknown"))
+                return null;
 
             return "Variant";
         }
@@ -665,23 +679,26 @@ namespace GDShrapt.Semantics.Validator
             if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
                 return true;
 
+            var sourceSemantic = GDSemanticType.FromRuntimeTypeName(sourceType);
+            var targetSemantic = GDSemanticType.FromRuntimeTypeName(targetType);
+
             // Same type is always compatible
-            if (sourceType == targetType)
+            if (sourceSemantic.Equals(targetSemantic))
                 return true;
 
             // null is compatible with any reference type
-            if (sourceType == "null")
+            if (sourceSemantic.IsNull)
                 return true;
 
             // Variant accepts anything
-            if (targetType == "Variant")
+            if (targetSemantic.IsVariant)
                 return true;
 
             // Local enum ↔ int compatibility
             if (_semanticModel != null)
             {
-                if ((sourceType == "int" && _semanticModel.IsLocalEnumType(targetType)) ||
-                    (targetType == "int" && _semanticModel.IsLocalEnumType(sourceType)))
+                if ((sourceSemantic.IsType("int") && _semanticModel.IsLocalEnumType(targetType)) ||
+                    (targetSemantic.IsType("int") && _semanticModel.IsLocalEnumType(sourceType)))
                     return true;
             }
 
@@ -694,12 +711,13 @@ namespace GDShrapt.Semantics.Validator
                     return true;
             }
 
-            // Extract base types for generics (Array[int] -> Array)
-            var sourceBase = ExtractBaseTypeName(sourceType);
-            var targetBase = ExtractBaseTypeName(targetType);
-
             // Generic type is assignable to its non-generic base (Array[int] -> Array)
-            if (sourceBase == targetBase && sourceBase != sourceType)
+            if (sourceSemantic is GDContainerSemanticType sc && targetSemantic is GDContainerSemanticType tc &&
+                sc.IsArray == tc.IsArray && sc.IsDictionary == tc.IsDictionary)
+                return true;
+            if (sourceSemantic.IsContainer &&
+                ((sourceSemantic.IsArray && targetSemantic.IsArray) ||
+                 (sourceSemantic.IsDictionary && targetSemantic.IsDictionary)))
                 return true;
 
             // Use semantic model for detailed compatibility check
@@ -708,9 +726,6 @@ namespace GDShrapt.Semantics.Validator
 
             return false;
         }
-
-        private static string ExtractBaseTypeName(string typeName)
-            => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 
         private void ValidateReturnType(GDReturnExpression returnExpr)
         {
@@ -726,12 +741,14 @@ namespace GDShrapt.Semantics.Validator
                 return;
 
             // If declared as void, no value should be returned
-            if (declaredReturnType == "void")
+            var declaredReturnSemantic = GDSemanticType.FromRuntimeTypeName(declaredReturnType);
+            if (declaredReturnSemantic.IsType("void"))
             {
                 if (returnExpr.Expression != null)
                 {
                     var returnedType = InferSimpleType(returnExpr.Expression);
-                    if (returnedType != "void" && returnedType != "Unknown")
+                    var returnedSemantic = GDSemanticType.FromRuntimeTypeName(returnedType);
+                    if (!returnedSemantic.IsType("void") && !returnedSemantic.IsType("Unknown"))
                     {
                         ReportWarning(
                             GDDiagnosticCode.IncompatibleReturnType,
@@ -755,9 +772,10 @@ namespace GDShrapt.Semantics.Validator
 
             // Infer the type of the returned expression
             var actualType = InferSimpleType(returnExpr.Expression);
+            var actualSemantic = GDSemanticType.FromRuntimeTypeName(actualType);
 
             // Skip validation if type couldn't be inferred
-            if (actualType == null || actualType == "Unknown")
+            if (actualType == null || actualSemantic.IsType("Unknown"))
                 return;
 
             // Check both directions: upcast and downcast
@@ -780,8 +798,11 @@ namespace GDShrapt.Semantics.Validator
             if (string.IsNullOrEmpty(actualType) || string.IsNullOrEmpty(declaredType))
                 return true;
 
+            var actualSemantic = GDSemanticType.FromRuntimeTypeName(actualType);
+            var declaredSemantic = GDSemanticType.FromRuntimeTypeName(declaredType);
+
             // Same type is always compatible
-            if (actualType == declaredType)
+            if (actualSemantic.Equals(declaredSemantic))
                 return true;
 
             // 'self' is compatible with any declared return type (it's the current class or subclass)
@@ -789,14 +810,14 @@ namespace GDShrapt.Semantics.Validator
                 return true;
 
             // null is compatible with any reference type
-            if (actualType == "null")
+            if (actualSemantic.IsNull)
                 return true;
 
             // Local enum ↔ int compatibility
             if (_semanticModel != null)
             {
-                if ((actualType == "int" && _semanticModel.IsLocalEnumType(declaredType)) ||
-                    (declaredType == "int" && _semanticModel.IsLocalEnumType(actualType)))
+                if ((actualSemantic.IsType("int") && _semanticModel.IsLocalEnumType(declaredType)) ||
+                    (declaredSemantic.IsType("int") && _semanticModel.IsLocalEnumType(actualType)))
                     return true;
             }
 
@@ -833,6 +854,9 @@ namespace GDShrapt.Semantics.Validator
             if (leftType == null || rightType == null)
                 return;
 
+            var leftSemantic = GDSemanticType.FromRuntimeTypeName(leftType);
+            var rightSemantic = GDSemanticType.FromRuntimeTypeName(rightType);
+
             switch (op)
             {
                 case GDDualOperatorType.Addition:
@@ -843,11 +867,11 @@ namespace GDShrapt.Semantics.Validator
                     if (!AreTypesCompatibleForArithmetic(left, right, leftType, rightType))
                     {
                         // String + anything is allowed in GDScript
-                        if (op == GDDualOperatorType.Addition && (leftType == "String" || rightType == "String"))
+                        if (op == GDDualOperatorType.Addition && (leftSemantic.IsString || rightSemantic.IsString))
                             break;
 
                         // String % anything is string formatting in GDScript
-                        if (op == GDDualOperatorType.Mod && leftType == "String")
+                        if (op == GDDualOperatorType.Mod && leftSemantic.IsString)
                             break;
 
                         ReportWarning(
@@ -863,9 +887,9 @@ namespace GDShrapt.Semantics.Validator
                 case GDDualOperatorType.BitShiftLeft:
                 case GDDualOperatorType.BitShiftRight:
                     // Bitwise ops require int
-                    if (leftType != "int" || rightType != "int")
+                    if (!leftSemantic.IsType("int") || !rightSemantic.IsType("int"))
                     {
-                        if (leftType != "Unknown" && rightType != "Unknown")
+                        if (!leftSemantic.IsType("Unknown") && !rightSemantic.IsType("Unknown"))
                         {
                             ReportWarning(
                                 GDDiagnosticCode.InvalidOperandType,
@@ -904,8 +928,10 @@ namespace GDShrapt.Semantics.Validator
         {
             // 1. Check for exact null type - this is an error (runtime crash)
             // Also check for null literal directly
-            bool leftIsNull = leftType == "null" || IsNullLiteral(left) || IsNullInitializedVariable(left);
-            bool rightIsNull = rightType == "null" || IsNullLiteral(right) || IsNullInitializedVariable(right);
+            var leftCompSemantic = GDSemanticType.FromRuntimeTypeName(leftType);
+            var rightCompSemantic = GDSemanticType.FromRuntimeTypeName(rightType);
+            bool leftIsNull = leftCompSemantic.IsNull || IsNullLiteral(left) || IsNullInitializedVariable(left);
+            bool rightIsNull = rightCompSemantic.IsNull || IsNullLiteral(right) || IsNullInitializedVariable(right);
 
             if (leftIsNull || rightIsNull)
             {
@@ -958,7 +984,7 @@ namespace GDShrapt.Semantics.Validator
             if (_semanticModel != null)
             {
                 var typeInfo = _semanticModel.TypeSystem.GetType(expr);
-                if (typeInfo.DisplayName == "null")
+                if (typeInfo.IsNull)
                     return true;
             }
 
@@ -987,7 +1013,8 @@ namespace GDShrapt.Semantics.Validator
             GDDualOperatorType op)
         {
             // Skip if type is known and non-null
-            if (exprType != "Unknown" && exprType != "Variant")
+            var exprSemantic = GDSemanticType.FromRuntimeTypeName(exprType);
+            if (!exprSemantic.IsType("Unknown") && !exprSemantic.IsVariant)
                 return;
 
             // Check if this is an identifier (variable)
@@ -1142,24 +1169,27 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private static bool AreTypesCompatibleForComparison(string left, string right)
         {
+            var leftSemantic = GDSemanticType.FromRuntimeTypeName(left);
+            var rightSemantic = GDSemanticType.FromRuntimeTypeName(right);
+
             // Unknown types - assume compatible (can't verify)
-            if (left == "Unknown" || right == "Unknown")
+            if (leftSemantic.IsType("Unknown") || rightSemantic.IsType("Unknown"))
                 return true;
 
             // Variant is dynamically typed - allow comparison
-            if (left == "Variant" || right == "Variant")
+            if (leftSemantic.IsVariant || rightSemantic.IsVariant)
                 return true;
 
             // Same type is always compatible
-            if (left == right)
+            if (leftSemantic.Equals(rightSemantic))
                 return true;
 
             // Numeric types are compatible with each other
-            if (IsNumericTypeStatic(left) && IsNumericTypeStatic(right))
+            if (leftSemantic.IsNumeric && rightSemantic.IsNumeric)
                 return true;
 
             // String types are compatible
-            if (IsStringType(left) && IsStringType(right))
+            if (leftSemantic.IsString && rightSemantic.IsString)
                 return true;
 
             // Vector types of the same dimension are comparable
@@ -1205,11 +1235,14 @@ namespace GDShrapt.Semantics.Validator
 
         private void ValidateAssignment(GDExpression target, GDExpression value, string targetType, string valueType, GDNode reportOn)
         {
-            if (targetType == "Unknown" || valueType == "Unknown")
+            var targetAssignSemantic = GDSemanticType.FromRuntimeTypeName(targetType);
+            var valueAssignSemantic = GDSemanticType.FromRuntimeTypeName(valueType);
+
+            if (targetAssignSemantic.IsType("Unknown") || valueAssignSemantic.IsType("Unknown"))
                 return;
 
             // Skip if types match
-            if (targetType == valueType)
+            if (targetAssignSemantic.Equals(valueAssignSemantic))
                 return;
 
             // Qualified type name matching (Constants.TowerType == TowerType)
@@ -1224,8 +1257,8 @@ namespace GDShrapt.Semantics.Validator
             // Local enum ↔ int compatibility
             if (_semanticModel != null)
             {
-                if ((valueType == "int" && _semanticModel.IsLocalEnumType(targetType)) ||
-                    (targetType == "int" && _semanticModel.IsLocalEnumType(valueType)))
+                if ((valueAssignSemantic.IsType("int") && _semanticModel.IsLocalEnumType(targetType)) ||
+                    (targetAssignSemantic.IsType("int") && _semanticModel.IsLocalEnumType(valueType)))
                     return;
             }
 
@@ -1296,12 +1329,14 @@ namespace GDShrapt.Semantics.Validator
             if (operandType == null)
                 return;
 
+            var operandSemantic = GDSemanticType.FromRuntimeTypeName(operandType);
+
             switch (op)
             {
                 case GDSingleOperatorType.Negate:
-                    if (!IsNumericType(operandType) && !IsVectorType(operandType) &&
-                        operandType != "Color" && operandType != "Quaternion" &&
-                        operandType != "Unknown")
+                    if (!operandSemantic.IsNumeric && !IsVectorType(operandType) &&
+                        !operandSemantic.IsType("Color") && !operandSemantic.IsType("Quaternion") &&
+                        !operandSemantic.IsType("Unknown"))
                     {
                         ReportWarning(
                             GDDiagnosticCode.InvalidOperandType,
@@ -1311,7 +1346,7 @@ namespace GDShrapt.Semantics.Validator
                     break;
 
                 case GDSingleOperatorType.BitwiseNegate:
-                    if (operandType != "int" && operandType != "Unknown")
+                    if (!operandSemantic.IsType("int") && !operandSemantic.IsType("Unknown"))
                     {
                         ReportWarning(
                             GDDiagnosticCode.InvalidOperandType,
@@ -1353,17 +1388,20 @@ namespace GDShrapt.Semantics.Validator
             GDExpression leftExpr, GDExpression rightExpr,
             string leftType, string rightType)
         {
-            if (leftType == "Unknown" || rightType == "Unknown")
+            var leftArithSemantic = GDSemanticType.FromRuntimeTypeName(leftType);
+            var rightArithSemantic = GDSemanticType.FromRuntimeTypeName(rightType);
+
+            if (leftArithSemantic.IsType("Unknown") || rightArithSemantic.IsType("Unknown"))
                 return true;
 
             // Variant is dynamically typed and can hold any value, so arithmetic is allowed
-            if (leftType == "Variant" || rightType == "Variant")
+            if (leftArithSemantic.IsVariant || rightArithSemantic.IsVariant)
                 return true;
 
-            if (IsNumericType(leftType) && IsNumericType(rightType))
+            if (leftArithSemantic.IsNumeric && rightArithSemantic.IsNumeric)
                 return true;
 
-            if (leftType == rightType)
+            if (leftArithSemantic.Equals(rightArithSemantic))
                 return true;
 
             // Array concatenation: use GDTypeNode to check array types (no string parsing)
@@ -1372,10 +1410,10 @@ namespace GDShrapt.Semantics.Validator
 
             // Vector * scalar and scalar * Vector operations are valid
             // This includes *, / for scaling vectors
-            if (IsVectorType(leftType) && IsNumericType(rightType))
+            if (IsVectorType(leftType) && rightArithSemantic.IsNumeric)
                 return true;
 
-            if (IsNumericType(leftType) && IsVectorType(rightType))
+            if (leftArithSemantic.IsNumeric && IsVectorType(rightType))
                 return true;
 
             // Transform * Vector and Vector * Transform operations are also valid
@@ -1386,10 +1424,10 @@ namespace GDShrapt.Semantics.Validator
                 return true;
 
             // Color * scalar operations
-            if (leftType == "Color" && IsNumericType(rightType))
+            if (leftArithSemantic.IsType("Color") && rightArithSemantic.IsNumeric)
                 return true;
 
-            if (IsNumericType(leftType) && rightType == "Color")
+            if (leftArithSemantic.IsNumeric && rightArithSemantic.IsType("Color"))
                 return true;
 
             return false;

@@ -24,6 +24,29 @@ public class GDSimpleSemanticType : GDSemanticType
 
     public override bool IsDictionary => TypeName == "Dictionary" || GDGenericTypeHelper.IsGenericDictionaryType(TypeName);
 
+    public override bool IsContainer => IsArray || IsDictionary;
+
+    public override bool IsCallable => GDGenericTypeHelper.IsCallableType(TypeName);
+
+    public override bool IsNumeric => TypeName == "int" || TypeName == "float";
+
+    public override bool IsString => TypeName == "String" || TypeName == "StringName" || TypeName == "NodePath";
+
+    public override bool IsBool => TypeName == "bool";
+
+    public override bool IsType(string typeName) => TypeName == typeName;
+
+    public override bool IsValueType =>
+        IsNumeric || IsString || IsBool || IsContainer || IsCallable
+        || TypeName is "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i"
+            or "Color" or "Rect2" or "Rect2i" or "Transform2D" or "Transform3D"
+            or "Basis" or "Quaternion" or "Plane" or "AABB" or "Projection"
+            or "RID" or "Signal"
+            or "PackedByteArray" or "PackedInt32Array" or "PackedInt64Array"
+            or "PackedFloat32Array" or "PackedFloat64Array" or "PackedStringArray"
+            or "PackedVector2Array" or "PackedVector3Array" or "PackedColorArray"
+            or "PackedVector4Array";
+
     public GDSimpleSemanticType(string typeName, GDTypeNode? astNode = null)
     {
         TypeName = typeName ?? "Variant";
@@ -74,7 +97,7 @@ public class GDSimpleSemanticType : GDSemanticType
         if (AstNode != null)
             return AstNode;
 
-        if (TypeName.Contains('|'))
+        if (GDGenericTypeHelper.IsUnionType(TypeName))
             return null;
 
         return null;

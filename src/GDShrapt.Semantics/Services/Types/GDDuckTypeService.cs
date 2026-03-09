@@ -164,8 +164,10 @@ internal class GDDuckTypeService
     /// </summary>
     private static bool IsConcreteType(string? typeName)
     {
-        return !string.IsNullOrEmpty(typeName)
-            && typeName != "Variant"
-            && !typeName.StartsWith("Unknown");
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+        return !semType.IsVariant && !semType.IsType("Unknown");
     }
 }

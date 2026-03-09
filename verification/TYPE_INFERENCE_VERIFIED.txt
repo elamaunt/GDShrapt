@@ -5526,6 +5526,7 @@ test_scripts/dynamic_dispatch.gd
 266:2 GDIfExpression if_expr -> Variant # OK
 266:2 GDDualOperatorExpression _targetAssignmenttarget -> Variant # OK
 266:2 GDIdentifierExpression _target -> Variant # OK
+266:12 GDIfExpression if_expr -> Variant # OK
 266:12 GDIdentifierExpression target -> Variant # OK
 266:22 GDIdentifierExpression target -> Variant # OK
 266:34 GDDictionaryInitializerExpression {...} -> Dictionary # OK
@@ -6511,6 +6512,7 @@ test_scripts/ecs_like_system.gd
 263:3 GDIfExpression if_expr -> Variant # OK
 263:3 GDDualOperatorExpression componentAssignmentcomp_def[].duplicate() -> Variant # OK
 263:3 GDIdentifierExpression component -> Variant # OK
+263:15 GDIfExpression if_expr -> Variant # OK
 263:15 GDCallExpression comp_def[].duplicate() -> Variant # OK
 263:15 GDMemberOperatorExpression comp_def[].duplicate -> Variant # OK
 263:15 GDIndexerExpression comp_def[] -> Variant # OK
@@ -9139,6 +9141,7 @@ test_scripts/getters_setters.gd
 90:2 GDIfExpression if_expr -> Array # OK
 90:2 GDDualOperatorExpression _itemsAssignmentvalue -> Array # OK
 90:2 GDIdentifierExpression _items -> Array # OK
+90:11 GDIfExpression if_expr -> Array # OK
 90:11 GDIdentifierExpression value -> Array # OK
 90:20 GDDualOperatorExpression valueIsArray -> bool # OK
 90:20 GDIdentifierExpression value -> Array # OK

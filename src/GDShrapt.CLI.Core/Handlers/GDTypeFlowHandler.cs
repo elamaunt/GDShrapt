@@ -363,7 +363,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// </summary>
     protected virtual float CalculateConfidence(Semantics.GDSymbolInfo symbol, string type)
     {
-        if (type == "Variant" || string.IsNullOrEmpty(type))
+        if (string.IsNullOrEmpty(type) || GDSemanticType.FromRuntimeTypeName(type).IsVariant)
             return 0.2f;
 
         // Check for explicit type annotation
@@ -1150,7 +1150,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
     /// </summary>
     protected float CalculateExpressionConfidence(string type)
     {
-        if (type == "Variant" || string.IsNullOrEmpty(type))
+        if (string.IsNullOrEmpty(type) || GDSemanticType.FromRuntimeTypeName(type).IsVariant)
             return 0.2f;
 
         var runtimeProvider = GetRuntimeProvider();

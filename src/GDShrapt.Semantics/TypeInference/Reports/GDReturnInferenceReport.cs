@@ -78,7 +78,7 @@ internal class GDReturnInferenceReport
     /// <summary>
     /// Whether the return type is void (only implicit/null returns).
     /// </summary>
-    public bool IsVoid => ReturnStatements.All(r => r.InferredType == null || r.InferredType == "null");
+    public bool IsVoid => ReturnStatements.All(r => r.InferredType == null || GDSemanticType.FromRuntimeTypeName(r.InferredType).IsNull);
 
     public override string ToString()
     {

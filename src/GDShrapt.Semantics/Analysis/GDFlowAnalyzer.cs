@@ -750,7 +750,7 @@ internal class GDFlowAnalyzer : GDVisitor
         {
             // Try expression type provider first (string path — legacy)
             var primaryType = _expressionTypeProvider?.Invoke(expr);
-            if (!string.IsNullOrEmpty(primaryType) && primaryType != "Variant")
+            if (!string.IsNullOrEmpty(primaryType) && !GDSemanticType.FromRuntimeTypeName(primaryType).IsVariant)
                 return GDSemanticType.FromRuntimeTypeName(primaryType);
 
             // Semantic type engine — direct path, preserves GDCallableSemanticType
@@ -788,7 +788,7 @@ internal class GDFlowAnalyzer : GDVisitor
         {
             // Try expression type provider first (can use union types and richer inference)
             var primaryType = _expressionTypeProvider?.Invoke(expr);
-            if (!string.IsNullOrEmpty(primaryType) && primaryType != "Variant")
+            if (!string.IsNullOrEmpty(primaryType) && !GDSemanticType.FromRuntimeTypeName(primaryType).IsVariant)
                 return primaryType;
 
             // Fall back to basic type engine inference
@@ -1185,8 +1185,8 @@ internal class GDFlowAnalyzer : GDVisitor
         // Handle dictionary patterns: {key: value}
         if (pattern is GDDictionaryInitializerExpression dictExpr)
         {
-            var (_, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(subjectType);
-            var dictValueType = valueType ?? GDWellKnownTypes.Variant;
+            var dictSemType = GDSemanticType.FromRuntimeTypeName(subjectType);
+            var dictValueType = dictSemType is GDContainerSemanticType { IsDictionary: true } dct ? dct.ElementType.DisplayName : GDWellKnownTypes.Variant;
             foreach (var kvp in dictExpr.KeyValues ?? Enumerable.Empty<GDDictionaryKeyValueDeclaration>())
             {
                 DeclareBindingsFromPattern(kvp.Value, state, dictValueType, guardVar, guardType);
@@ -1388,7 +1388,7 @@ internal class GDFlowAnalyzer : GDVisitor
         {
             state.NarrowType(varName, GDSemanticType.FromRuntimeTypeName(literalType));
             // Non-null literals mark variable as non-null
-            if (literalType != "null")
+            if (!GDSemanticType.FromRuntimeTypeName(literalType).IsNull)
                 state.MarkNonNull(varName);
         }
     }
@@ -1417,7 +1417,7 @@ internal class GDFlowAnalyzer : GDVisitor
 
         // Try to extract element/key type from container
         var elementType = ExtractElementTypeFromContainer(containerExpr);
-        if (string.IsNullOrEmpty(elementType) || elementType == "Variant")
+        if (string.IsNullOrEmpty(elementType) || GDSemanticType.FromRuntimeTypeName(elementType).IsVariant)
             return;
 
         // Get current variable type for intersection calculation
@@ -1497,7 +1497,7 @@ internal class GDFlowAnalyzer : GDVisitor
                 if (!string.IsNullOrEmpty(typeName) && typeName != "Array" && typeName != "Dictionary")
                 {
                     var extractedType = GDFlowNarrowingHelper.ExtractElementTypeFromTypeName(typeName);
-                    if (!string.IsNullOrEmpty(extractedType) && extractedType != "Variant")
+                    if (!string.IsNullOrEmpty(extractedType) && !GDSemanticType.FromRuntimeTypeName(extractedType).IsVariant)
                         return extractedType;
                 }
 
@@ -1509,14 +1509,14 @@ internal class GDFlowAnalyzer : GDVisitor
                     if (profile.IsDictionary && inferredElementType.KeyUnionType != null)
                     {
                         var keyType = inferredElementType.KeyUnionType.EffectiveType.DisplayName;
-                        if (!string.IsNullOrEmpty(keyType) && keyType != "Variant")
+                        if (!string.IsNullOrEmpty(keyType) && !GDSemanticType.FromRuntimeTypeName(keyType).IsVariant)
                             return keyType;
                     }
                     // For Array, element type is used
                     if (!inferredElementType.ElementUnionType.IsEmpty)
                     {
                         var elementType = inferredElementType.ElementUnionType.EffectiveType.DisplayName;
-                        if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+                        if (!string.IsNullOrEmpty(elementType) && !GDSemanticType.FromRuntimeTypeName(elementType).IsVariant)
                             return elementType;
                     }
                 }
@@ -1547,7 +1547,7 @@ internal class GDFlowAnalyzer : GDVisitor
         foreach (var value in values)
         {
             var elementType = GDLiteralTypeResolver.GetLiteralType(value) ?? ResolveTypeWithFallback(value);
-            if (string.IsNullOrEmpty(elementType) || elementType == "Unknown")
+            if (string.IsNullOrEmpty(elementType) || GDSemanticType.FromRuntimeTypeName(elementType).IsType("Unknown"))
                 continue;
 
             if (commonType == null)
@@ -1586,7 +1586,7 @@ internal class GDFlowAnalyzer : GDVisitor
         foreach (var kv in keyValues)
         {
             var keyType = GDLiteralTypeResolver.GetLiteralType(kv.Key) ?? ResolveTypeWithFallback(kv.Key);
-            if (string.IsNullOrEmpty(keyType) || keyType == "Unknown")
+            if (string.IsNullOrEmpty(keyType) || GDSemanticType.FromRuntimeTypeName(keyType).IsType("Unknown"))
                 continue;
 
             if (commonKeyType == null)

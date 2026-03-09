@@ -26,6 +26,7 @@ public class GDContainerSemanticType : GDSemanticType
 
     public override bool IsArray => !IsDictionary;
     public override bool IsContainer => true;
+    public override bool IsValueType => true;
 
     public override string DisplayName
     {

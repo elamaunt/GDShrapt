@@ -74,8 +74,8 @@ public class MethodReturnTypeInferenceTests
         // Assert
         Assert.AreNotEqual("void", returnType,
             "create_error returns a Dictionary literal - type should NOT be 'void'");
-        Assert.AreEqual("Dictionary", returnType,
-            "create_error should return 'Dictionary'");
+        Assert.IsTrue(returnType != null && GDShrapt.Abstractions.GDGenericTypeHelper.IsDictionaryType(returnType),
+            $"create_error should return Dictionary type, got '{returnType}'");
     }
 
     /// <summary>

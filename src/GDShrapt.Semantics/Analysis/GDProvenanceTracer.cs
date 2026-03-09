@@ -208,7 +208,7 @@ public static class GDProvenanceTracer
                     ?? file;
                 var model = projectModel.GetSemanticModel(script) ?? script.SemanticModel;
                 var flowType = model?.GetFlowVariableType(containerVarName, null);
-                if (flowType?.DeclaredType != null && flowType.DeclaredType.DisplayName?.Contains("[") == true)
+                if (flowType?.DeclaredType != null && flowType.DeclaredType.IsContainer)
                 {
                     var declLine = FindVariableDeclarationLine(script, containerVarName);
                     chain.Add(new GDCallSiteProvenanceEntry(

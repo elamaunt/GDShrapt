@@ -42,14 +42,14 @@ internal class GDDuckTypeResolver
             return true;
 
         // Check excluded types
-        if (duckType.ExcludedTypes.Any(t => t.DisplayName == typeName))
+        if (duckType.ExcludedTypes.Any(t => t.IsType(typeName)))
             return false;
 
         // Check if type is in possible types (if any defined)
         if (duckType.PossibleTypes.Count > 0)
         {
             var matchesPossible = duckType.PossibleTypes.Any(pt =>
-                pt.DisplayName == typeName || _runtimeProvider.IsAssignableTo(typeName, pt.DisplayName));
+                pt.IsType(typeName) || _runtimeProvider.IsAssignableTo(typeName, pt.DisplayName));
             if (!matchesPossible)
                 return false;
         }

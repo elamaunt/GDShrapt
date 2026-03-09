@@ -17,6 +17,8 @@ public sealed class GDNullSemanticType : GDSemanticType
 
     public override string DisplayName => "null";
 
+    public override bool IsNull => true;
+
     public override bool IsNullable => true;
 
     public override bool IsAssignableTo(GDSemanticType other, IGDRuntimeProvider? provider)
@@ -43,4 +45,8 @@ public sealed class GDNullSemanticType : GDSemanticType
 
         return false;
     }
+
+    public override bool Equals(object? obj) => obj is GDNullSemanticType;
+
+    public override int GetHashCode() => "null".GetHashCode();
 }

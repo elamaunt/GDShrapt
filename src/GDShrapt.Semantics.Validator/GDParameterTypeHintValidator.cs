@@ -61,7 +61,7 @@ public class GDParameterTypeHintValidator : GDValidationVisitor
                 continue;
 
             var inferredTypeName = inferredType.DisplayName;
-            if (inferredTypeName == "Variant")
+            if (inferredType.IsVariant)
                 continue;
 
             ReportDiagnostic(

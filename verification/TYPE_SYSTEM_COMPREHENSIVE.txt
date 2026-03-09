@@ -3267,7 +3267,7 @@ test_scripts/cyclic_inference.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Dictionary] (homogeneous)
+    container:    Dictionary[String, Dictionary[String, Variant]] (homogeneous)
 
 --- 207:0 Variable generator_state ---
   Type Info:
@@ -6771,8 +6771,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 114:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     TestEnum
-    effective:    TestEnum
+    inferred:     int
+    effective:    int
     confidence:   High
     nullable:     no
 
@@ -6787,8 +6787,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 120:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     TestEnum
-    effective:    TestEnum
+    inferred:     int
+    effective:    int
     confidence:   High
     nullable:     no
 
@@ -6803,8 +6803,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 127:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     TestEnum
-    effective:    TestEnum
+    inferred:     int
+    effective:    int
     confidence:   High
     nullable:     no
 
@@ -11414,9 +11414,9 @@ test_scripts/ecs_like_system.gd
 --- 227:4 Variable context ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, Variant]
+    effective:    Dictionary[String, Variant]
+    confidence:   Medium
     nullable:     no
 
 --- 233:4 Variable new_state ---
@@ -12745,7 +12745,7 @@ test_scripts/formatting_issues.gd
     effective:    Array
     confidence:   High
     nullable:     no
-    container:    Array[Dictionary] (homogeneous)
+    container:    Array[Dictionary[String, int]] (homogeneous)
 
 --- 59:0 Method function_call_spacing ---
   Type Info:
@@ -12948,8 +12948,8 @@ test_scripts/formatting_issues.gd
 --- 97:1 Iterator key ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
+    inferred:     String
+    effective:    String
     confidence:   Certain
     nullable:     no
 
@@ -14118,7 +14118,7 @@ test_scripts/game_patterns.gd
     effective:    Array
     confidence:   High
     nullable:     no
-    container:    Array[Dictionary] (homogeneous)
+    container:    Array[Dictionary[String, Dictionary]] (homogeneous)
 
 --- 349:1 Iterator target ---
   Type Info:
@@ -18248,7 +18248,7 @@ test_scripts/polymorphic_interfaces.gd
     effective:    Array
     confidence:   High
     nullable:     no
-    container:    Array[Dictionary] (homogeneous)
+    container:    Array[Dictionary[String, Array]] (homogeneous)
 
 --- 171:2 Iterator child ---
   Type Info:
@@ -22682,9 +22682,9 @@ test_scripts/signal_callback_chains.gd
 --- 242:2 Variable subscription ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, bool | Variant]
+    effective:    Dictionary[String, bool | Variant]
+    confidence:   Medium
     nullable:     no
 
 --- 251:1 Method unsubscribe ---
@@ -22698,9 +22698,9 @@ test_scripts/signal_callback_chains.gd
 --- 251:18 Parameter subscription ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, bool | Variant]
+    effective:    Dictionary[String, bool | Variant]
+    confidence:   Medium
     nullable:     no
   Parameter Inference:
     inferred:     Array
@@ -25158,9 +25158,9 @@ test_scripts/standard_methods.gd
 --- 61:1 Variable find_key ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Medium
+    inferred:     String
+    effective:    String
+    confidence:   High
     nullable:     no
 
 --- 64:1 Variable duplicated ---
@@ -27175,9 +27175,9 @@ test_scripts/type_inference.gd
 --- 13:0 Variable inferred_dict ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, String]
+    effective:    Dictionary[String, String]
+    confidence:   Medium
     nullable:     no
 
 --- 14:0 Variable inferred_vector ---
@@ -27239,9 +27239,9 @@ test_scripts/type_inference.gd
 --- 25:0 Variable nested_dict ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, Dictionary[String, int]]
+    effective:    Dictionary[String, Dictionary[String, int]]
+    confidence:   Medium
     nullable:     no
 
 --- 28:0 Method _ready ---
@@ -27560,8 +27560,8 @@ test_scripts/type_inference.gd
 --- 120:1 Iterator key ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
+    inferred:     String
+    effective:    String
     confidence:   Certain
     nullable:     no
 
@@ -28956,7 +28956,7 @@ test_scripts/union_types_complex.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Dictionary] (homogeneous)
+    container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
   Parameter Inference:
     inferred:     Array
     confidence:   Medium
@@ -28993,11 +28993,10 @@ test_scripts/union_types_complex.gd
 --- 128:0 Variable mixed_array ---
   Type Info:
     declared:     (none)
-    inferred:     Array[Array[int] | Dictionary | float | int | String]
-    effective:    Array[Array[int] | Dictionary | float | int | String]
+    inferred:     Array[Array[int] | Dictionary[String, int] | float | int | String]
+    effective:    Array[Array[int] | Dictionary[String, int] | float | int | String]
     confidence:   Medium
     nullable:     no
-    union:        Array[Array[int]|Dictionary|float|int|String]
 
 --- 131:0 Method get_mixed_element ---
   Type Info:
@@ -29037,9 +29036,9 @@ test_scripts/union_types_complex.gd
 --- 140:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Array[int]
+    effective:    Array[int]
+    confidence:   Certain
     nullable:     no
 
 --- 142:2 Variable processed ---
@@ -29061,9 +29060,9 @@ test_scripts/union_types_complex.gd
 --- 147:25 Parameter item ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Array[int]
+    effective:    Array[int]
+    confidence:   Certain
     nullable:     no
   Parameter Inference:
     inferred:     Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
@@ -29077,9 +29076,9 @@ test_scripts/union_types_complex.gd
 --- 164:0 Variable config ---
   Type Info:
     declared:     (none)
-    inferred:     Dictionary
-    effective:    Dictionary
-    confidence:   High
+    inferred:     Dictionary[String, Array[String] | bool | Dictionary[String, String] | float | int | String]
+    effective:    Dictionary[String, Array[String] | bool | Dictionary[String, String] | float | int | String]
+    confidence:   Medium
     nullable:     no
 
 --- 174:0 Method get_config ---
@@ -29149,7 +29148,7 @@ test_scripts/union_types_complex.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Dictionary] (homogeneous)
+    container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
   Parameter Inference:
     inferred:     Array[<Derivable>] | Dictionary[int, <Derivable>]
     confidence:   High
@@ -29203,7 +29202,7 @@ test_scripts/union_types_complex.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Dictionary] (homogeneous)
+    container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
 
 --- 205:1 Variable name ---
   Type Info:
@@ -29350,9 +29349,9 @@ test_scripts/union_types_complex.gd
 --- 243:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Array[int]
+    effective:    Array[int]
+    confidence:   Certain
     nullable:     no
 
 --- 244:2 Variable transformed ---
@@ -29424,9 +29423,9 @@ test_scripts/union_types_complex.gd
 --- 257:1 Iterator item ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Array[int]
+    effective:    Array[int]
+    confidence:   Certain
     nullable:     no
 
 --- 263:0 Method reduce_or_default ---
@@ -29718,7 +29717,7 @@ test_scripts/union_types_complex.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Dictionary] (homogeneous)
+    container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
   Parameter Inference:
     inferred:     AIController.AIState | AIState | Array | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence:   High
@@ -29751,7 +29750,7 @@ test_scripts/union_types_complex.gd
     effective:    Dictionary
     confidence:   High
     nullable:     no
-    container:    Dictionary[String, Dictionary] (homogeneous)
+    container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
   Parameter Inference:
     inferred:     Dictionary[String, Variant] | Object
     confidence:   High
@@ -29811,9 +29810,9 @@ test_scripts/union_types_complex.gd
 --- 387:2 Variable item ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Array[int]
+    effective:    Array[int]
+    confidence:   Certain
     nullable:     no
 
 --- 389:2 Variable count ---
@@ -29852,13 +29851,13 @@ test_scripts/union_types_complex.gd
       149:4 item -> int (base: Variant)
       150:9 item -> int (base: Variant)
       151:4 item -> String (base: Variant)
-      152:9 item -> String (base: Variant)
+      152:9 item -> String (base: Array[int])
       153:4 item -> float (base: Variant)
       154:13 item -> float (base: Variant)
       155:4 item -> Array (base: Variant)
-      156:9 item -> Array (base: Variant)
+      156:9 item -> Array (base: Array[int])
       157:4 item -> Dictionary (base: Variant)
-      158:9 item -> Dictionary (base: Variant)
+      158:9 item -> Dictionary (base: Array[int])
     safe_get_nested():
       190:5 current -> null (base: Variant)
       192:5 current -> Dictionary (base: Variant)

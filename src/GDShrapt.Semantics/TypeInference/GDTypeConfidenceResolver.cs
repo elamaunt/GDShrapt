@@ -510,17 +510,24 @@ internal class GDTypeConfidenceResolver
         if (string.IsNullOrEmpty(role))
             return null;
 
+        var semanticType = GDSemanticType.FromRuntimeTypeName(callerType);
+        var containerType = semanticType as GDContainerSemanticType;
+
         return role switch
         {
-            "element" => GDGenericTypeHelper.ExtractArrayElementType(callerType)
-                         ?? GDGenericTypeHelper.ExtractDictionaryTypes(callerType).valueType,
-            "key" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).keyType,
-            "value" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).valueType,
+            "element" => containerType switch
+            {
+                { IsArray: true } => containerType.ElementType.DisplayName,
+                { IsDictionary: true } => containerType.ElementType.DisplayName,
+                _ => null
+            },
+            "key" => containerType is { IsDictionary: true } ? containerType.KeyType?.DisplayName : null,
+            "value" => containerType is { IsDictionary: true } ? containerType.ElementType.DisplayName : null,
             "self" => callerType,
-            "keys_array" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).keyType is { } k
-                ? GDGenericTypeHelper.CreateArrayType(k) : null,
-            "values_array" => GDGenericTypeHelper.ExtractDictionaryTypes(callerType).valueType is { } v
-                ? GDGenericTypeHelper.CreateArrayType(v) : null,
+            "keys_array" => containerType is { IsDictionary: true } && containerType.KeyType is { } keyType
+                ? new GDContainerSemanticType(isDictionary: false, elementType: keyType).DisplayName : null,
+            "values_array" => containerType is { IsDictionary: true } && containerType.ElementType is { } valType
+                ? new GDContainerSemanticType(isDictionary: false, elementType: valType).DisplayName : null,
             _ => null
         };
     }

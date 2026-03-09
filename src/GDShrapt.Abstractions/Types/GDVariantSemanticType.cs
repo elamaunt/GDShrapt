@@ -24,4 +24,8 @@ public sealed class GDVariantSemanticType : GDSemanticType
 
         return true;
     }
+
+    public override bool Equals(object? obj) => obj is GDVariantSemanticType;
+
+    public override int GetHashCode() => "Variant".GetHashCode();
 }

@@ -5,7 +5,7 @@ class_name UnionReturns  # 2:11-GDL222-OK
 ## Each return statement contributes to the function's return type.
 
 
-func get_or_error(key: String):
+func get_or_error(key: String):  # 8:0-GD3023-OK
 	# Returns String | Dictionary
 	var data = {"name": "Test", "value": 42}
 	if not data.has(key):

@@ -125,7 +125,7 @@ public class GDDynamicCallValidator : GDValidationVisitor
         var callerType = callerTypeInfo.DisplayName;
 
         // Skip Dictionary - it can have any keys dynamically
-        if (GDGenericTypeHelper.IsDictionaryType(callerType))
+        if (callerTypeInfo.IsDictionary)
             return;
 
         // Check if the property exists on the type
@@ -175,7 +175,7 @@ public class GDDynamicCallValidator : GDValidationVisitor
         var callerType = callerTypeInfo.DisplayName;
 
         // Skip Dictionary - it can have any keys dynamically
-        if (GDGenericTypeHelper.IsDictionaryType(callerType))
+        if (callerTypeInfo.IsDictionary)
             return;
 
         // Check if the property exists on the type
@@ -230,8 +230,10 @@ public class GDDynamicCallValidator : GDValidationVisitor
         if (_runtimeProvider == null)
             return null;
 
-        // Extract base type for generics
-        var baseTypeName = ExtractBaseTypeName(typeName);
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+        var baseTypeName = semanticType is GDContainerSemanticType ct
+            ? (ct.IsDictionary ? "Dictionary" : "Array")
+            : typeName;
 
         // Check direct member
         var memberInfo = _runtimeProvider.GetMember(baseTypeName, memberName);
@@ -251,7 +253,4 @@ public class GDDynamicCallValidator : GDValidationVisitor
 
         return null;
     }
-
-    private static string ExtractBaseTypeName(string typeName)
-        => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 }

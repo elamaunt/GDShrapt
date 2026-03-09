@@ -294,7 +294,7 @@ internal class GDConfidenceService
                 ? _getExpressionType?.Invoke(memberOp.CallerExpression)
                 : null;
 
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
+            if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant)
                 return $"Caller type is '{callerType}'";
 
             var varName = memberOp.CallerExpression != null
@@ -339,8 +339,10 @@ internal class GDConfidenceService
     /// </summary>
     private static bool IsConcreteType(string? typeName)
     {
-        return !string.IsNullOrEmpty(typeName)
-            && typeName != "Variant"
-            && !typeName.StartsWith("Unknown");
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+        return !semType.IsVariant && !semType.IsType("Unknown");
     }
 }

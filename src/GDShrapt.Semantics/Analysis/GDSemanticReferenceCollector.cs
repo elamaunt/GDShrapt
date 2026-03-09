@@ -836,7 +836,15 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     private static string GetBaseTypeName(string typeName)
     {
-        return GDGenericTypeHelper.ExtractBaseTypeName(typeName);
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+        return semType switch
+        {
+            GDContainerSemanticType { IsDictionary: true } => "Dictionary",
+            GDContainerSemanticType { IsArray: true } => "Array",
+            GDSimpleSemanticType { IsCallable: true } => "Callable",
+            GDSimpleSemanticType simple => simple.TypeName,
+            _ => typeName
+        };
     }
 
     #endregion
@@ -900,7 +908,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (callerType == GDWellKnownTypes.Self)
             callerType = _scriptFile.TypeName;
 
-        if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" && !callerType.StartsWith("Unknown"))
+        var callerSemType = GDSemanticType.FromRuntimeTypeName(callerType);
+        if (!string.IsNullOrEmpty(callerType) && !callerSemType.IsVariant && !callerSemType.IsType("Unknown"))
         {
             var symbolInfo = ResolveMemberOnType(callerType, memberName);
             if (symbolInfo != null)
@@ -1064,7 +1073,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 if (!string.IsNullOrEmpty(methodName))
                 {
                     var callerType = NormalizeTypeName(_typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName);
-                    if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
+                    if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant)
                     {
                         var symbolInfo = ResolveMemberOnType(callerType, methodName);
                         if (symbolInfo != null)
@@ -1266,7 +1275,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
     /// </summary>
     private string? NormalizeTypeName(string? typeName)
     {
-        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+        if (string.IsNullOrEmpty(typeName) || GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
             return typeName;
         if (_runtimeProvider != null)
         {
@@ -1671,7 +1680,24 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var typeNode = _typeEngine.InferTypeNode(expression);
             if (typeNode != null)
             {
-                _model!.SetNodeType(expression, typeNode.BuildName(), typeNode);
+                var typeName = typeNode.BuildName();
+
+                // For container literals with union elements, prefer the full union string
+                // over the GDTypeNode's BuildName (which substitutes Variant for unions)
+                if (expression is GDArrayInitializerExpression arrayInit)
+                {
+                    var elementUnion = _typeEngine.ExtractArrayElementTypes(arrayInit);
+                    if (!string.IsNullOrEmpty(elementUnion))
+                        typeName = GDGenericTypeHelper.CreateArrayType(elementUnion);
+                }
+                else if (expression is GDDictionaryInitializerExpression dictInit)
+                {
+                    var keyUnion = _typeEngine.ExtractDictionaryKeyTypes(dictInit);
+                    var valueUnion = _typeEngine.ExtractDictionaryValueTypes(dictInit);
+                    typeName = GDGenericTypeHelper.CreateDictionaryType(keyUnion, valueUnion);
+                }
+
+                _model!.SetNodeType(expression, typeName, typeNode);
             }
         }
         finally

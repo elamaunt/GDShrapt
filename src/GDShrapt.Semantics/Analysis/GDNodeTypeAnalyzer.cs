@@ -249,7 +249,7 @@ internal sealed class GDNodeTypeAnalyzer
 
         // Get caller type
         var callerType = _semanticModel.GetExpressionType(memberExpr.CallerExpression);
-        if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" && _runtimeProvider != null)
+        if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant && _runtimeProvider != null)
         {
             // Look up member in the type
             var memberInfo = _runtimeProvider.GetMember(callerType, memberName);
@@ -285,7 +285,7 @@ internal sealed class GDNodeTypeAnalyzer
             methodName = memberOp.Identifier?.Sequence;
             var callerType = _semanticModel.GetExpressionType(memberOp.CallerExpression);
 
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
+            if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant &&
                 !string.IsNullOrEmpty(methodName) && _runtimeProvider != null)
             {
                 var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
@@ -338,7 +338,7 @@ internal sealed class GDNodeTypeAnalyzer
             if (!string.IsNullOrEmpty(elementType))
             {
                 // High confidence for typed collections, low for untyped
-                var isHighConfidence = elementType != "Variant";
+                var isHighConfidence = !GDSemanticType.FromRuntimeTypeName(elementType).IsVariant;
                 expectedUnion.AddTypeName(elementType, isHighConfidence);
             }
         }

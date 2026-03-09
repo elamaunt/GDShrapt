@@ -27,6 +27,7 @@ public class GDCallableSemanticType : GDSemanticType
     public bool IsVarArgs { get; }
 
     public override bool IsCallable => true;
+    public override bool IsValueType => true;
 
     /// <summary>
     /// Gets the type parameters for generic callable signatures.

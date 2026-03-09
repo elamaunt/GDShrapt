@@ -17,31 +17,21 @@ internal static class GDTypeInferenceUtilities
         if (string.IsNullOrEmpty(typeName))
             return null;
 
-        // Check for generic types like Array[T] or Dictionary[K, V]
-        var bracketIdx = typeName.IndexOf('[');
-        if (bracketIdx > 0 && typeName.EndsWith("]"))
+        if (GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType { IsArray: true } arrayCt)
         {
-            var baseName = typeName.Substring(0, bracketIdx);
-            var innerContent = typeName.Substring(bracketIdx + 1, typeName.Length - bracketIdx - 2);
+            var innerType = CreateSimpleType(arrayCt.ElementType.DisplayName);
+            return new GDArrayTypeNode { InnerType = innerType };
+        }
 
-            // Handle Array[T]
-            if (baseName == "Array")
+        if (GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType { IsDictionary: true } dictCt)
+        {
+            var keyTypeName = dictCt.KeyType?.DisplayName;
+            var valueTypeName = dictCt.ElementType.DisplayName;
+            if (keyTypeName != null && valueTypeName != null)
             {
-                var innerType = CreateSimpleType(innerContent);
-                return new GDArrayTypeNode { InnerType = innerType };
-            }
-
-            // Handle Dictionary[K, V]
-            if (baseName == "Dictionary")
-            {
-                // Split by comma, respecting nested generics
-                var parts = SplitGenericArgs(innerContent);
-                if (parts.Length == 2)
-                {
-                    var keyType = CreateSimpleType(parts[0].Trim());
-                    var valueType = CreateSimpleType(parts[1].Trim());
-                    return new GDDictionaryTypeNode { KeyType = keyType, ValueType = valueType };
-                }
+                var keyType = CreateSimpleType(keyTypeName);
+                var valueType = CreateSimpleType(valueTypeName);
+                return new GDDictionaryTypeNode { KeyType = keyType, ValueType = valueType };
             }
         }
 

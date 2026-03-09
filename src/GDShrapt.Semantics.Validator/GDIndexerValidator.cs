@@ -63,11 +63,8 @@ public class GDIndexerValidator : GDValidationVisitor
             return;
         var callerType = callerTypeInfo.DisplayName;
 
-        // Extract base type for generics (Array[int] -> Array)
-        var baseType = ExtractBaseTypeName(callerType);
-
-        // Check if type is indexable
-        if (NonIndexableTypes.Contains(baseType))
+        // Check if type is non-indexable via structural properties
+        if (callerTypeInfo.IsNumeric || callerTypeInfo.IsBool || callerTypeInfo.IsType("void") || callerTypeInfo.IsType("null"))
         {
             ReportError(
                 GDDiagnosticCode.NotIndexable,
@@ -77,26 +74,29 @@ public class GDIndexerValidator : GDValidationVisitor
         }
 
         // For typed expressions, check key type
-        if (!string.IsNullOrEmpty(baseType) && baseType != "Variant")
+        var baseType = callerTypeInfo is GDContainerSemanticType ct
+            ? (ct.IsDictionary ? "Dictionary" : "Array")
+            : callerType;
+        if (!string.IsNullOrEmpty(baseType))
         {
-            ValidateKeyType(indexer, callerType, baseType, keyExpr);
+            ValidateKeyType(indexer, callerType, baseType, keyExpr, callerTypeInfo);
         }
     }
 
-    private void ValidateKeyType(GDIndexerExpression indexer, string callerType, string baseType, GDExpression keyExpr)
+    private void ValidateKeyType(GDIndexerExpression indexer, string callerType, string baseType, GDExpression keyExpr, GDSemanticType callerTypeInfo)
     {
         // Get the type of the key expression
         var keyTypeInfo = _semanticModel.TypeSystem.GetType(keyExpr);
         if (keyTypeInfo.IsVariant)
             return;
         var keyType = keyTypeInfo.DisplayName;
-        if (keyType == "Unknown")
+        if (keyTypeInfo.IsType("Unknown"))
             return;
 
         // Integer-indexed types (Array, String, Packed*Array)
         if (IntegerIndexableTypes.Contains(baseType))
         {
-            if (keyType != "int" && keyType != "float") // float is auto-converted to int
+            if (!keyTypeInfo.IsType("int") && !keyTypeInfo.IsType("float")) // float is auto-converted to int
             {
                 ReportWarning(
                     GDDiagnosticCode.IndexerKeyTypeMismatch,
@@ -107,10 +107,10 @@ public class GDIndexerValidator : GDValidationVisitor
         }
 
         // Dictionary with typed keys: Dictionary[KeyType, ValueType]
-        if (baseType == "Dictionary" && callerType.Contains("["))
+        if (callerTypeInfo is GDContainerSemanticType dictContainer && dictContainer.IsDictionary)
         {
-            var expectedKeyType = ExtractDictionaryKeyType(callerType);
-            if (!string.IsNullOrEmpty(expectedKeyType) && expectedKeyType != "Variant")
+            var expectedKeyType = dictContainer.KeyType?.DisplayName;
+            if (!string.IsNullOrEmpty(expectedKeyType) && !dictContainer.KeyType.IsVariant)
             {
                 if (!AreTypesCompatible(keyType, expectedKeyType))
                 {
@@ -124,10 +124,10 @@ public class GDIndexerValidator : GDValidationVisitor
         }
 
         // Typed Array: Array[ElementType]
-        if (baseType == "Array" && callerType.Contains("["))
+        if (callerTypeInfo is GDContainerSemanticType arrayContainer && arrayContainer.IsArray)
         {
             // Typed arrays still use integer indices
-            if (keyType != "int" && keyType != "float")
+            if (!keyTypeInfo.IsType("int") && !keyTypeInfo.IsType("float"))
             {
                 ReportWarning(
                     GDDiagnosticCode.IndexerKeyTypeMismatch,
@@ -191,15 +191,6 @@ public class GDIndexerValidator : GDValidationVisitor
         return false;
     }
 
-    private static string? ExtractDictionaryKeyType(string typeName)
-    {
-        var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
-        return keyType;
-    }
-
-    private static string ExtractBaseTypeName(string typeName)
-        => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
-
     private bool AreTypesCompatible(string sourceType, string targetType)
     {
         if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
@@ -208,7 +199,7 @@ public class GDIndexerValidator : GDValidationVisitor
         if (sourceType == targetType)
             return true;
 
-        if (targetType == "Variant")
+        if (GDSemanticType.FromRuntimeTypeName(targetType).IsVariant)
             return true;
 
         // Use semantic model for detailed check

@@ -1266,13 +1266,13 @@ public class GDRenameService
                     var arg = cs.GetArgument(paramIndex);
                     if (arg == null) continue;
                     var argType = arg.InferredType?.DisplayName;
-                    if (string.IsNullOrEmpty(argType) || argType == "Variant") continue;
+                    if (string.IsNullOrEmpty(argType) || GDSemanticType.FromRuntimeTypeName(argType).IsVariant) continue;
 
                     string evidenceType = argType;
                     string reason = $"arg at {enclosingTypeName}.{methodName}()";
 
                     // For containers: extract element type
-                    if (argType.Contains('['))
+                    if (GDSemanticType.FromRuntimeTypeName(argType).IsContainer)
                     {
                         var el = GDFlowNarrowingHelper.ExtractElementTypeFromTypeName(argType);
                         if (!string.IsNullOrEmpty(el))
@@ -1321,7 +1321,7 @@ public class GDRenameService
                         if (signalParams != null && paramIndex < signalParams.Count)
                         {
                             var paramType = signalParams[paramIndex];
-                            if (!string.IsNullOrEmpty(paramType) && paramType != "Variant")
+                            if (!string.IsNullOrEmpty(paramType) && !GDSemanticType.FromRuntimeTypeName(paramType).IsVariant)
                             {
                                 var signalCallSite = new GDCallSiteProvenanceEntry(
                                     conn.SourceFilePath ?? file.FullPath ?? "",
@@ -1356,13 +1356,13 @@ public class GDRenameService
                     if (flowType?.DeclaredType != null)
                     {
                         var typeName = flowType.DeclaredType.DisplayName;
-                        if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
+                        if (!string.IsNullOrEmpty(typeName) && !GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
                             result.Add(new GDTypeProvenanceEntry(typeName, "type annotation"));
                     }
                     else if (flowType?.CurrentType != null)
                     {
                         var effectiveType = flowType.CurrentType.EffectiveType?.DisplayName;
-                        if (!string.IsNullOrEmpty(effectiveType) && effectiveType != "Variant")
+                        if (!string.IsNullOrEmpty(effectiveType) && !GDSemanticType.FromRuntimeTypeName(effectiveType).IsVariant)
                             result.Add(new GDTypeProvenanceEntry(effectiveType, "flow-inferred type"));
                     }
                 }
@@ -1396,7 +1396,7 @@ public class GDRenameService
                         if (elementType?.HasElementTypes == true)
                         {
                             var elType = elementType.EffectiveElementType?.DisplayName;
-                            if (!string.IsNullOrEmpty(elType) && elType != "Variant")
+                            if (!string.IsNullOrEmpty(elType) && !GDSemanticType.FromRuntimeTypeName(elType).IsVariant)
                                 result.Add(new GDTypeProvenanceEntry(elType, $"element of {containerVarName}"));
                         }
 
@@ -1558,7 +1558,7 @@ public class GDRenameService
                     if (signalParams != null && paramIdx < signalParams.Count)
                     {
                         var paramType = signalParams[paramIdx];
-                        if (!string.IsNullOrEmpty(paramType) && paramType != "Variant")
+                        if (!string.IsNullOrEmpty(paramType) && !GDSemanticType.FromRuntimeTypeName(paramType).IsVariant)
                         {
                             var usageLine = (usage.Node.AllTokens.FirstOrDefault()?.StartLine ?? 0) + 1;
                             var appendCallSite = new GDCallSiteProvenanceEntry(
@@ -1595,7 +1595,7 @@ public class GDRenameService
                         var arg = cs.GetArgument(paramIdx);
                         if (arg == null) continue;
                         var argType = arg.InferredType?.DisplayName;
-                        if (string.IsNullOrEmpty(argType) || argType == "Variant") continue;
+                        if (string.IsNullOrEmpty(argType) || GDSemanticType.FromRuntimeTypeName(argType).IsVariant) continue;
 
                         var innerChain = TraceArgumentOrigin(cs.SourceScript, arg.ExpressionText, arg.Expression);
                         var callSiteEntry = new GDCallSiteProvenanceEntry(

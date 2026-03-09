@@ -179,7 +179,7 @@ internal class GDSignalConnectionCollector
                     if (string.IsNullOrEmpty(cbMethodName))
                         return;
 
-                    var gdScript4Confidence = isDynCb || string.IsNullOrEmpty(gdScript4EmitterType) || gdScript4EmitterType == "Variant"
+                    var gdScript4Confidence = isDynCb || string.IsNullOrEmpty(gdScript4EmitterType) || GDSemanticType.FromRuntimeTypeName(gdScript4EmitterType).IsVariant
                         ? GDReferenceConfidence.Potential
                         : GDReferenceConfidence.Strict;
 
@@ -229,7 +229,7 @@ internal class GDSignalConnectionCollector
             var confidence = GDReferenceConfidence.Strict;
             if (isDynamicSignal || isDynamicCallback)
                 confidence = GDReferenceConfidence.Potential;
-            else if (string.IsNullOrEmpty(emitterType) || emitterType == "Variant")
+            else if (string.IsNullOrEmpty(emitterType) || GDSemanticType.FromRuntimeTypeName(emitterType).IsVariant)
                 confidence = GDReferenceConfidence.Potential;
 
             // Get line/column

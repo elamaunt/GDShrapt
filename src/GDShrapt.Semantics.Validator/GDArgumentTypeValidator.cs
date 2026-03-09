@@ -117,16 +117,18 @@ namespace GDShrapt.Semantics.Validator
                     expectedType = expectedUnion.EffectiveType.DisplayName;
                 }
 
-                if (string.IsNullOrEmpty(expectedType) || expectedType == "Variant")
+                var expectedSemType = GDSemanticType.FromRuntimeTypeName(expectedType);
+                if (string.IsNullOrEmpty(expectedType) || expectedSemType.IsVariant)
                     continue;
 
                 // Parameter with null type (inferred from default = null) accepts any value
-                if (expectedType == "null")
+                if (expectedSemType.IsNull)
                     continue;
 
                 // Get actual type of argument
                 var actualType = InferArgumentType(arg);
-                if (string.IsNullOrEmpty(actualType) || actualType == "Unknown" || actualType == "Variant")
+                var actualSemType = GDSemanticType.FromRuntimeTypeName(actualType);
+                if (string.IsNullOrEmpty(actualType) || actualSemType.IsType("Unknown") || actualSemType.IsVariant)
                     continue;
 
                 // Check type compatibility
@@ -156,16 +158,19 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private bool IsTypeCompatible(string actualType, string expectedType, GDUnionType expectedUnion)
         {
+            var actualSemType = GDSemanticType.FromRuntimeTypeName(actualType);
+            var expectedSemType = GDSemanticType.FromRuntimeTypeName(expectedType);
+
             // Exact match
             if (actualType == expectedType)
                 return true;
 
             // null is compatible with anything (nullable type)
-            if (actualType == "null")
+            if (actualSemType.IsNull)
                 return true;
 
             // Variant accepts anything
-            if (expectedType == "Variant")
+            if (expectedSemType.IsVariant)
                 return true;
 
             // Handle 'self' - resolve to actual class type
@@ -226,7 +231,9 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private static bool IsNumericCompatible(string actualType, string expectedType)
         {
-            if (actualType == "int" && expectedType == "float")
+            var actualSemType = GDSemanticType.FromRuntimeTypeName(actualType);
+            var expectedSemType = GDSemanticType.FromRuntimeTypeName(expectedType);
+            if (actualSemType.IsType("int") && expectedSemType.IsType("float"))
                 return true;
 
             return false;

@@ -177,7 +177,7 @@ public class GDNullableAccessValidator : GDValidationVisitor
 
         // Skip Signal and Callable types - they're never null
         var exprTypeInfo = _semanticModel.TypeSystem.GetType(callerExpr);
-        if (exprTypeInfo.DisplayName == "Signal" || exprTypeInfo.DisplayName == "Callable" || exprTypeInfo.DisplayName.StartsWith("Callable("))
+        if (exprTypeInfo.IsType("Signal") || exprTypeInfo.IsCallable)
             return null;
 
         // Skip method references used as Callable (e.g., start.call_deferred(), _on_event.bind())

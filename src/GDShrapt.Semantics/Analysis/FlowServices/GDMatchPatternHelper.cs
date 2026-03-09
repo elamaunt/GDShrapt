@@ -77,9 +77,8 @@ internal static class GDMatchPatternHelper
 
     private static string? InferArrayElementType(string subjectType)
     {
-        var elementType = GDGenericTypeHelper.ExtractArrayElementType(subjectType);
-        if (elementType != null)
-            return elementType;
+        if (GDSemanticType.FromRuntimeTypeName(subjectType) is GDContainerSemanticType { IsArray: true } ct)
+            return ct.ElementType.DisplayName;
 
         var packedElement = GDPackedArrayTypes.GetElementType(subjectType);
         if (packedElement != null)
@@ -90,7 +89,7 @@ internal static class GDMatchPatternHelper
 
     private static string? InferDictValueType(string subjectType)
     {
-        var (_, valueType) = GDGenericTypeHelper.ExtractDictionaryTypes(subjectType);
-        return valueType ?? GDWellKnownTypes.Variant;
+        var dictValueType = GDSemanticType.FromRuntimeTypeName(subjectType) is GDContainerSemanticType { IsDictionary: true } dct ? dct.ElementType.DisplayName : null;
+        return dictValueType ?? GDWellKnownTypes.Variant;
     }
 }

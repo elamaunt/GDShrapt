@@ -77,9 +77,9 @@ internal static class GDLoopFlowHelper
             return "Variant";
 
         // Handle typed arrays: Array[Type] -> Type
-        var arrayElementType = GDGenericTypeHelper.ExtractArrayElementType(collectionType);
-        if (arrayElementType != null)
-            return arrayElementType;
+        var collSemType = GDSemanticType.FromRuntimeTypeName(collectionType);
+        if (collSemType is GDContainerSemanticType { IsArray: true } arrayCt)
+            return arrayCt.ElementType.DisplayName;
 
         // Handle range() -> int
         if (collectionType == GDWellKnownTypes.Other.Range || collectionType == GDWellKnownTypes.Numeric.Int)
@@ -90,10 +90,10 @@ internal static class GDLoopFlowHelper
             return GDWellKnownTypes.Strings.String;
 
         // Handle Dictionary -> key type (iterating keys)
-        if (GDGenericTypeHelper.IsDictionaryType(collectionType))
+        if (collSemType.IsDictionary)
         {
-            var (keyType, _) = GDGenericTypeHelper.ExtractDictionaryTypes(collectionType);
-            return keyType ?? GDWellKnownTypes.Variant;
+            var dictKeyType = collSemType is GDContainerSemanticType { IsDictionary: true } dictCt ? dictCt.KeyType?.DisplayName : null;
+            return dictKeyType ?? GDWellKnownTypes.Variant;
         }
 
         // Handle PackedArray types

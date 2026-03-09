@@ -596,8 +596,7 @@ func process(items):
 func test():
     var data = {}
     data[""key""] = 1
-    var val = data[""key""]
-    val.to_string()
+    data[""key""].to_string()
 ";
         var options = new GDSemanticValidatorOptions
         {
@@ -1955,15 +1954,12 @@ func test():
 
     private static IEnumerable<GDDiagnostic> ValidateCodeWithOptions(string code, GDSemanticValidatorOptions options)
     {
-        var reader = new GDScriptReader();
-        var classDecl = reader.ParseFileContent(code);
-
-        if (classDecl == null)
-            return Enumerable.Empty<GDDiagnostic>();
-
         var reference = new GDScriptReference("test://virtual/test_script.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
+
+        if (scriptFile.Class == null)
+            return Enumerable.Empty<GDDiagnostic>();
 
         var runtimeProvider = new GDCompositeRuntimeProvider(
             new GDGodotTypesProvider(),
@@ -1972,7 +1968,7 @@ func test():
         var semanticModel = scriptFile.SemanticModel!;
 
         var validator = new GDSemanticValidator(semanticModel, options);
-        var result = validator.Validate(classDecl);
+        var result = validator.Validate(scriptFile.Class);
 
         return result.Diagnostics;
     }

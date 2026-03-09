@@ -130,10 +130,11 @@ internal static class GDWellKnownTypes
         typeName is Vectors.Vector2 or Vectors.Vector3 or Vectors.Vector4
                or Vectors.Vector2i or Vectors.Vector3i or Vectors.Vector4i;
 
-    public static bool IsContainerType(string typeName) => typeName is Containers.Array or Containers.Dictionary;
+    public static bool IsContainerType(string typeName) =>
+        GDSemanticType.FromRuntimeTypeName(typeName).IsArray || GDSemanticType.FromRuntimeTypeName(typeName).IsDictionary;
 
     public static bool IsCallableType(string? typeName) =>
-        typeName != null && (typeName == Other.Callable || typeName.StartsWith("Callable("));
+        GDSemanticType.FromRuntimeTypeName(typeName).IsCallable;
 
     public static bool IsPrimitiveType(string typeName) =>
         typeName is Numeric.Int or Numeric.Float or Numeric.Bool or Strings.String or Void;

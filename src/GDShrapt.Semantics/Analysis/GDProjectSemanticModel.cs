@@ -685,6 +685,11 @@ public class GDProjectSemanticModel : IDisposable
     /// </summary>
     internal string? GetTypeForNode(GDNode node)
     {
+        return GetSemanticTypeForNode(node)?.DisplayName;
+    }
+
+    internal GDSemanticType? GetSemanticTypeForNode(GDNode node)
+    {
         if (node == null)
             return null;
 
@@ -693,19 +698,21 @@ public class GDProjectSemanticModel : IDisposable
             return null;
 
         var model = GetSemanticModel(file);
-        return model?.GetTypeForNode(node);
+        return model?.GetSemanticTypeForNode(node);
     }
 
-    /// <summary>
-    /// Gets the inferred type for any AST node in a specific file.
-    /// </summary>
     internal string? GetTypeForNode(GDScriptFile file, GDNode node)
+    {
+        return GetSemanticTypeForNode(file, node)?.DisplayName;
+    }
+
+    internal GDSemanticType? GetSemanticTypeForNode(GDScriptFile file, GDNode node)
     {
         if (file == null || node == null)
             return null;
 
         var model = GetSemanticModel(file);
-        return model?.GetTypeForNode(node);
+        return model?.GetSemanticTypeForNode(node);
     }
 
     /// <summary>

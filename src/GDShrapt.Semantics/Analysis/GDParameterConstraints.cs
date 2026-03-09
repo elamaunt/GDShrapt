@@ -397,7 +397,7 @@ internal class GDTypeSpecificConstraints
     /// </summary>
     public string FormatFullType()
     {
-        if (Type.DisplayName == GDWellKnownTypes.Containers.Array)
+        if (Type.IsArray)
         {
             var elem = GetElementTypeString();
             if (elem != GDWellKnownTypes.Variant || ValueIsDerivable)
@@ -405,7 +405,7 @@ internal class GDTypeSpecificConstraints
             return GDWellKnownTypes.Containers.Array;
         }
 
-        if (Type.DisplayName == GDWellKnownTypes.Containers.Dictionary)
+        if (Type.IsDictionary)
         {
             var key = GetKeyTypeString();
             var val = GetElementTypeString();

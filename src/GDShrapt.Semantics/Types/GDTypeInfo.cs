@@ -160,7 +160,7 @@ public class GDTypeInfo
             return;
         }
 
-        if (InferredType.DisplayName == observedType.DisplayName)
+        if (InferredType.Equals(observedType))
             return;
 
         // Create/expand union

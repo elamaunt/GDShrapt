@@ -70,6 +70,28 @@ internal class GDContainerTypeAnalyzer
     }
 
     /// <summary>
+    /// Extracts the union type of keys from a Dictionary initializer expression.
+    /// </summary>
+    public string ExtractDictionaryKeyTypes(GDDictionaryInitializerExpression dictInit)
+    {
+        if (dictInit?.KeyValues == null || !dictInit.KeyValues.Any())
+            return null;
+
+        var keyTypes = new HashSet<string>();
+        foreach (var kv in dictInit.KeyValues)
+        {
+            if (kv.Key != null)
+            {
+                var type = _inferType(kv.Key);
+                if (!string.IsNullOrEmpty(type))
+                    keyTypes.Add(type);
+            }
+        }
+
+        return UnifyTypes(keyTypes);
+    }
+
+    /// <summary>
     /// Tries to infer the value type of a Dictionary by analyzing its initializer.
     /// Returns union type if multiple value types, single type if uniform, or null if unknown.
     /// </summary>

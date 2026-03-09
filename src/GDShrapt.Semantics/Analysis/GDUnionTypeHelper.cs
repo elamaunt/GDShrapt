@@ -27,7 +27,7 @@ internal static class GDUnionTypeHelper
         if (type1 == type2)
             return type1;
 
-        if (type1 == "Variant" || type2 == "Variant")
+        if (GDSemanticType.FromRuntimeTypeName(type1).IsVariant || GDSemanticType.FromRuntimeTypeName(type2).IsVariant)
             return "Variant";
 
         var types1 = ParseUnionString(type1);
@@ -51,7 +51,7 @@ internal static class GDUnionTypeHelper
             if (string.IsNullOrEmpty(type))
                 continue;
 
-            if (type == "Variant")
+            if (GDSemanticType.FromRuntimeTypeName(type).IsVariant)
                 return "Variant";
 
             foreach (var subType in ParseUnionString(type))
@@ -76,10 +76,10 @@ internal static class GDUnionTypeHelper
         if (string.IsNullOrEmpty(type))
             return new[] { "Variant" };
 
-        if (!type.Contains("|"))
+        if (!GDSemanticType.FromRuntimeTypeName(type).IsUnion)
             return new[] { type };
 
-        return type.Split('|').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToList();
+        return GDGenericTypeHelper.SplitUnionTypes(type).Where(t => !string.IsNullOrEmpty(t)).ToList();
     }
 
     /// <summary>
@@ -94,7 +94,7 @@ internal static class GDUnionTypeHelper
         if (targetType == sourceType)
             return true;
 
-        if (targetType == "Variant")
+        if (GDSemanticType.FromRuntimeTypeName(targetType).IsVariant)
             return true;
 
         var targetTypes = ParseUnionString(targetType);
@@ -109,7 +109,7 @@ internal static class GDUnionTypeHelper
     /// </summary>
     public static bool IsUnionTypeString(string type)
     {
-        return !string.IsNullOrEmpty(type) && type.Contains("|");
+        return GDSemanticType.FromRuntimeTypeName(type).IsUnion;
     }
 
     /// <summary>
@@ -118,8 +118,8 @@ internal static class GDUnionTypeHelper
     /// </summary>
     public static string MergeArrayTypes(string array1, string array2)
     {
-        var elem1 = GDGenericTypeHelper.ExtractArrayElementType(array1);
-        var elem2 = GDGenericTypeHelper.ExtractArrayElementType(array2);
+        var elem1 = GDSemanticType.FromRuntimeTypeName(array1) is GDContainerSemanticType { IsArray: true } ct1 ? ct1.ElementType.DisplayName : null;
+        var elem2 = GDSemanticType.FromRuntimeTypeName(array2) is GDContainerSemanticType { IsArray: true } ct2 ? ct2.ElementType.DisplayName : null;
 
         if (elem1 == null)
             return array2 ?? "Array";
@@ -136,8 +136,10 @@ internal static class GDUnionTypeHelper
     /// </summary>
     public static string MergeDictionaryTypes(string dict1, string dict2)
     {
-        var (key1, val1) = GDGenericTypeHelper.ExtractDictionaryTypes(dict1);
-        var (key2, val2) = GDGenericTypeHelper.ExtractDictionaryTypes(dict2);
+        var dictSem1 = GDSemanticType.FromRuntimeTypeName(dict1) as GDContainerSemanticType;
+        var dictSem2 = GDSemanticType.FromRuntimeTypeName(dict2) as GDContainerSemanticType;
+        var (key1, val1) = dictSem1 is { IsDictionary: true } ? (dictSem1.KeyType?.DisplayName, dictSem1.ElementType.DisplayName) : ((string?)null, (string?)null);
+        var (key2, val2) = dictSem2 is { IsDictionary: true } ? (dictSem2.KeyType?.DisplayName, dictSem2.ElementType.DisplayName) : ((string?)null, (string?)null);
 
         if (key1 == null || val1 == null)
             return dict2 ?? "Dictionary";

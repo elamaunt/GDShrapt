@@ -288,9 +288,8 @@ internal class GDParameterTypeResolver
             };
         }
 
-        // Try to get per-type constraints (look up by DisplayName)
         GDTypeSpecificConstraints? typeSpecific = null;
-        var semanticKey = constraints.TypeConstraints.Keys.FirstOrDefault(k => k.DisplayName == baseType);
+        var semanticKey = constraints.TypeConstraints.Keys.FirstOrDefault(k => k.IsType(baseType));
         if (semanticKey != null)
             constraints.TypeConstraints.TryGetValue(semanticKey, out typeSpecific);
 
@@ -401,8 +400,7 @@ internal class GDParameterTypeResolver
         if (constraints == null)
             return baseType;
 
-        // Try to use per-type constraints first (look up by DisplayName)
-        var semanticKey = constraints.TypeConstraints.Keys.FirstOrDefault(k => k.DisplayName == baseType);
+        var semanticKey = constraints.TypeConstraints.Keys.FirstOrDefault(k => k.IsType(baseType));
         if (semanticKey != null && constraints.TypeConstraints.TryGetValue(semanticKey, out var typeSpecific))
         {
             return typeSpecific.FormatFullType();
@@ -607,7 +605,7 @@ internal class GDParameterTypeResolver
         {
             if (firstParamType != GDWellKnownTypes.Variant && firstParamType != GDWellKnownTypes.Strings.String && firstParamType != GDWellKnownTypes.Strings.StringName)
             {
-                if (constraints.RequiredProperties.Count > 0 || constraints.KeyTypes.Any(kt => kt.DisplayName == GDWellKnownTypes.Strings.String))
+                if (constraints.RequiredProperties.Count > 0 || constraints.KeyTypes.Any(kt => kt.IsString))
                     return false;
             }
         }

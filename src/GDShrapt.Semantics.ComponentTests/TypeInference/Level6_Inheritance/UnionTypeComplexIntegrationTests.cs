@@ -318,7 +318,7 @@ public class UnionTypeComplexIntegrationTests
         var union = collector.ComputeReturnUnionType();
 
         // Assert: create_success returns a Dictionary with tag and value
-        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")), "Union should contain 'Dictionary'");
+        Assert.IsTrue(union.Types.Any(t => GDGenericTypeHelper.IsDictionaryType(t.DisplayName)), "Union should contain Dictionary type");
     }
 
     #endregion
@@ -416,9 +416,10 @@ public class UnionTypeComplexIntegrationTests
         var actualTypes = string.Join(", ", union.Types);
 
         // Assert: Returns create_error (Dictionary) or create_success (Dictionary)
+        // With typed dict inference, may be Dictionary[String, String] instead of plain Dictionary
         Assert.IsNotNull(union, "Union should not be null");
-        Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Dictionary")),
-            $"Union should contain 'Dictionary'. Actual types: [{actualTypes}]");
+        Assert.IsTrue(union.Types.Any(t => t.DisplayName.StartsWith("Dictionary")),
+            $"Union should contain a Dictionary type. Actual types: [{actualTypes}]");
     }
 
     #endregion

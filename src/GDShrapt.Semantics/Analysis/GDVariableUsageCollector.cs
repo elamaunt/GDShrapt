@@ -132,13 +132,13 @@ internal class GDVariableUsageCollector : GDVisitor
             if (!string.IsNullOrEmpty(identName))
             {
                 var symbol = _scopes?.Lookup(identName);
-                if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName) && symbol.TypeName != "Variant")
+                if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName) && !GDSemanticType.FromRuntimeTypeName(symbol.TypeName).IsVariant)
                     return true;
             }
         }
 
         // If we got a concrete type, treat as high confidence
-        if (!inferredType.IsVariant && !inferredType.DisplayName.StartsWith("Unknown"))
+        if (!inferredType.IsVariant && !inferredType.IsType("Unknown"))
             return true;
 
         return false;

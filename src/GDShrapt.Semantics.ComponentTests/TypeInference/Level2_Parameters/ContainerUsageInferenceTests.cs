@@ -1,4 +1,5 @@
 using FluentAssertions;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -173,6 +174,73 @@ func test():
 
     #endregion
 
+    #region Dictionary Literal Inference
+
+    [TestMethod]
+    public void UntypedDictionary_StringIntLiteral_ReturnsDictionaryType()
+    {
+        var code = @"
+extends Node
+func test():
+    var dict = {""a"": 1, ""b"": 2}
+";
+        var model = CreateSemanticModel(code);
+        var dictType = GetVariableType(model, "dict");
+
+        // Symbol-level inference returns comma without space (via BuildName)
+        AssertDictionaryType(dictType, "String", "int");
+    }
+
+    [TestMethod]
+    public void UntypedDictionary_MixedValueTypes_ReturnsUnionType()
+    {
+        var code = @"
+extends Node
+func test():
+    var dict = {""a"": 1, ""b"": ""hello""}
+";
+        var model = CreateSemanticModel(code);
+
+        // Mixed value types produce a union which can't be represented as GDTypeNode.
+        // The symbol-level inference handles this via the variable declaration path.
+        var varDecl = model.ScriptFile.Class?.AllNodes
+            .OfType<GDVariableDeclarationStatement>()
+            .FirstOrDefault(v => v.Identifier?.Sequence == "dict");
+
+        var dictType = model.GetTypeForNode(varDecl);
+        AssertDictionaryType(dictType, "String", "String", "int");
+    }
+
+    [TestMethod]
+    public void UntypedDictionary_EmptyLiteral_ReturnsDictionary()
+    {
+        var code = @"
+extends Node
+func test():
+    var dict = {}
+";
+        var model = CreateSemanticModel(code);
+        var dictType = GetVariableType(model, "dict");
+
+        dictType.Should().Be("Dictionary");
+    }
+
+    [TestMethod]
+    public void UntypedDictionary_IntKeys_ReturnsDictionaryType()
+    {
+        var code = @"
+extends Node
+func test():
+    var dict = {1: ""a"", 2: ""b""}
+";
+        var model = CreateSemanticModel(code);
+        var dictType = GetVariableType(model, "dict");
+
+        AssertDictionaryType(dictType, "int", "String");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static GDSemanticModel CreateSemanticModel(string code)
@@ -219,22 +287,53 @@ func test():
 
     private static void AssertUnionTypeEquals(string actual, string expected)
     {
-        // Parse container types like "Array[String|bool|int]" and compare union contents ignoring order
-        var actualMatch = System.Text.RegularExpressions.Regex.Match(actual ?? "", @"^(\w+)\[(.+)\]$");
-        var expectedMatch = System.Text.RegularExpressions.Regex.Match(expected ?? "", @"^(\w+)\[(.+)\]$");
+        // Compare container types with union elements, ignoring order
+        var actualBase = GDGenericTypeHelper.ExtractBaseTypeName(actual ?? "");
+        var expectedBase = GDGenericTypeHelper.ExtractBaseTypeName(expected ?? "");
 
-        if (!actualMatch.Success || !expectedMatch.Success)
+        if (!GDGenericTypeHelper.IsGenericType(actual) || !GDGenericTypeHelper.IsGenericType(expected))
         {
             actual.Should().Be(expected);
             return;
         }
 
-        actualMatch.Groups[1].Value.Should().Be(expectedMatch.Groups[1].Value, "container type should match");
+        actualBase.Should().Be(expectedBase, "container type should match");
 
-        var actualTypes = actualMatch.Groups[2].Value.Split('|').OrderBy(t => t).ToArray();
-        var expectedTypes = expectedMatch.Groups[2].Value.Split('|').OrderBy(t => t).ToArray();
+        var actualElement = GDGenericTypeHelper.ExtractArrayElementType(actual);
+        var expectedElement = GDGenericTypeHelper.ExtractArrayElementType(expected);
+
+        if (actualElement == null || expectedElement == null)
+        {
+            actual.Should().Be(expected);
+            return;
+        }
+
+        var actualTypes = GDGenericTypeHelper.SplitUnionTypes(actualElement).OrderBy(t => t).ToArray();
+        var expectedTypes = GDGenericTypeHelper.SplitUnionTypes(expectedElement).OrderBy(t => t).ToArray();
 
         actualTypes.Should().BeEquivalentTo(expectedTypes, "union types should contain same elements");
+    }
+
+    /// <summary>
+    /// Asserts dictionary type with expected key type and value type(s).
+    /// Handles formatting differences (comma spacing, union pipe spacing).
+    /// </summary>
+    private static void AssertDictionaryType(string actual, string expectedKeyType, params string[] expectedValueTypes)
+    {
+        actual.Should().NotBeNull("dictionary type should not be null");
+
+        // Parse "Dictionary[Key,Value]" or "Dictionary[Key, Value]" or "Dictionary[Key, V1 | V2]"
+        var match = System.Text.RegularExpressions.Regex.Match(actual, @"^Dictionary\[(.+?),\s*(.+)\]$");
+        match.Success.Should().BeTrue($"'{actual}' should be a Dictionary[K,V] type");
+
+        var actualKey = match.Groups[1].Value.Trim();
+        actualKey.Should().Be(expectedKeyType, "key type should match");
+
+        var actualValueParts = match.Groups[2].Value.Split(new[] { '|', ' ' }, System.StringSplitOptions.RemoveEmptyEntries)
+            .OrderBy(t => t).ToArray();
+        var expectedValueParts = expectedValueTypes.OrderBy(t => t).ToArray();
+
+        actualValueParts.Should().BeEquivalentTo(expectedValueParts, "value types should match");
     }
 
     #endregion

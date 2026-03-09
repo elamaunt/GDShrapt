@@ -45,6 +45,12 @@ internal class GDTypeRegistry
         return _nodeTypes.TryGetValue(node, out var type) ? type : null;
     }
 
+    public GDSemanticType? GetSemanticTypeForNode(GDNode node)
+    {
+        var typeName = GetTypeForNode(node);
+        return typeName != null ? GDSemanticType.FromRuntimeTypeName(typeName) : null;
+    }
+
     /// <summary>
     /// Gets the type node for a node.
     /// </summary>

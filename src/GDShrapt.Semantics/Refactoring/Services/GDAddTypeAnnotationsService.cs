@@ -453,7 +453,7 @@ public class GDAddTypeAnnotationsService
         var returnType = nonNullTypes[0];
         var typeName = returnType.DisplayName;
 
-        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+        if (string.IsNullOrEmpty(typeName) || returnType.IsVariant)
             return;
 
         var confidence = returnUnion.AllHighConfidence

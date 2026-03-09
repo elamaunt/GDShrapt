@@ -727,23 +727,32 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     internal string? GetTypeForNode(GDNode node)
     {
+        return GetSemanticTypeForNode(node)?.DisplayName;
+    }
+
+    internal GDSemanticType? GetSemanticTypeForNode(GDNode node)
+    {
         if (node == null)
             return null;
 
         if (_nodeTypes.TryGetValue(node, out var cachedType))
-            return cachedType;
+            return GDSemanticType.FromRuntimeTypeName(cachedType);
 
         if (node is GDExpression expr)
-            return GetExpressionType(expr);
+        {
+            var exprType = GetExpressionType(expr);
+            if (!string.IsNullOrEmpty(exprType))
+                return GDSemanticType.FromRuntimeTypeName(exprType);
+        }
 
         if (node is GDParameterDeclaration paramDecl)
         {
             var inferred = InferParameterType(paramDecl);
             if (inferred.Confidence != GDTypeConfidence.Unknown)
-                return inferred.TypeName.DisplayName;
+                return inferred.TypeName;
         }
 
-        return _typeEngine?.GetTypeForNode(node);
+        return _typeEngine?.GetSemanticTypeForNode(node);
     }
 
     /// <summary>

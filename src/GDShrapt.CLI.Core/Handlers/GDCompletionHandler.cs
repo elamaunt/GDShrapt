@@ -485,17 +485,15 @@ public class GDCompletionHandler : IGDCompletionHandler
             var typeInfo = semanticModel.TypeSystem.GetType(varDecl.Initializer);
             if (!typeInfo.IsVariant)
             {
-                var typeName = typeInfo.DisplayName;
-
                 // Enrich plain container types with usage-based generic parameters
-                if (typeName == "Dictionary" || typeName == "Array")
+                if (typeInfo.IsContainer)
                 {
                     var containerType = semanticModel.TypeSystem.GetContainerElementType(symbol.Name);
                     if (containerType != null && containerType.HasElementTypes)
                         return containerType.ToString();
                 }
 
-                return typeName;
+                return typeInfo.DisplayName;
             }
         }
 

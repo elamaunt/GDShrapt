@@ -73,7 +73,7 @@ public class GDTypeCoverageService
         else if (varSymbol.DeclarationNode is GDVariableDeclaration varDecl && varDecl.Initializer != null)
         {
             var initType = InferInitializerType(varDecl.Initializer);
-            if (!string.IsNullOrEmpty(initType) && initType != "Variant")
+            if (!string.IsNullOrEmpty(initType) && !GDSemanticType.FromRuntimeTypeName(initType).IsVariant)
             {
                 report.InferredVariables++;
             }
@@ -263,7 +263,7 @@ public class GDTypeCoverageService
             else if (varDecl.Initializer != null)
             {
                 var initType = InferType(varDecl.Initializer);
-                if (!string.IsNullOrEmpty(initType) && initType != "Variant")
+                if (!string.IsNullOrEmpty(initType) && !GDSemanticType.FromRuntimeTypeName(initType).IsVariant)
                 {
                     InferredVariables++;
                 }
@@ -312,7 +312,7 @@ public class GDTypeCoverageService
             {
                 HasValueReturn = true;
                 var returnType = InferExpressionType(returnExpr.Expression);
-                if (string.IsNullOrEmpty(returnType) || returnType == "Variant")
+                if (string.IsNullOrEmpty(returnType) || GDSemanticType.FromRuntimeTypeName(returnType).IsVariant)
                 {
                     AllReturnsTyped = false;
                 }

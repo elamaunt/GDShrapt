@@ -82,10 +82,8 @@ public class GDUnionSemanticType : GDSemanticType
         if (_types.Count != other._types.Count)
             return false;
 
-        var thisNames = _types.Select(t => t.DisplayName).OrderBy(n => n).ToList();
-        var otherNames = other._types.Select(t => t.DisplayName).OrderBy(n => n).ToList();
-
-        return thisNames.SequenceEqual(otherNames);
+        var thisSet = new HashSet<GDSemanticType>(_types);
+        return other._types.All(t => thisSet.Contains(t));
     }
 
     public override int GetHashCode()
@@ -93,8 +91,8 @@ public class GDUnionSemanticType : GDSemanticType
         unchecked
         {
             int hash = 17;
-            foreach (var name in _types.Select(t => t.DisplayName).OrderBy(n => n))
-                hash = hash * 31 + (name?.GetHashCode() ?? 0);
+            foreach (var t in _types)
+                hash += t.GetHashCode();
             return hash;
         }
     }

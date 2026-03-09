@@ -832,13 +832,8 @@ namespace GDShrapt.Reader
 
         public GDExpression GetConstantInitializer(string typeName, string constantName) => null;
 
-        private static string ExtractBaseTypeName(string typeName)
-        {
-            if (string.IsNullOrEmpty(typeName))
-                return typeName;
-            var bracketIndex = typeName.IndexOf('[');
-            return bracketIndex > 0 ? typeName.Substring(0, bracketIndex) : typeName;
-        }
+        private static string ExtractBaseTypeName(string typeName) =>
+            GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 
         #endregion
     }

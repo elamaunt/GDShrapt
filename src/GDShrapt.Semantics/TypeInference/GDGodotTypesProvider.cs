@@ -464,7 +464,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 td.Traits is { IsPackedArray: true, PackedElementType: var elemType } &&
                 elemType != null)
             {
-                var sourceElem = GDGenericTypeHelper.ExtractArrayElementType(sourceType);
+                var sourceElem = GDSemanticType.FromRuntimeTypeName(sourceType) is GDContainerSemanticType { IsArray: true } ct ? ct.ElementType.DisplayName : null;
                 if (sourceElem == elemType)
                     return true;
             }
@@ -508,7 +508,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     /// </summary>
     private static string ExtractBaseTypeName(string typeName)
     {
-        return GDGenericTypeHelper.ExtractBaseTypeName(typeName);
+        return GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType baseCt ? (baseCt.IsDictionary ? "Dictionary" : "Array") : typeName;
     }
 
     public GDRuntimeFunctionInfo? GetGlobalFunction(string name)

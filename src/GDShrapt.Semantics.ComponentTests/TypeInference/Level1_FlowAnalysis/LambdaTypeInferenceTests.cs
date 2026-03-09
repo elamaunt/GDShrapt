@@ -128,9 +128,9 @@ var callback = func(): return {""key"": ""value""}
         // Act - use InferLambdaReturnType to get the return type of the lambda body
         var returnType = engine.InferLambdaReturnType(lambda);
 
-        // Assert
-        Assert.AreEqual("Dictionary", returnType,
-            $"Lambda returning dictionary literal should have type 'Dictionary'. Got: {returnType}");
+        // Assert - dictionary literal with uniform types returns typed Dictionary
+        Assert.IsTrue(returnType != null && returnType.StartsWith("Dictionary"),
+            $"Lambda returning dictionary literal should have type starting with 'Dictionary'. Got: {returnType}");
     }
 
     /// <summary>

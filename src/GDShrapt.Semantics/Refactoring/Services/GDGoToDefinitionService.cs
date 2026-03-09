@@ -1,4 +1,5 @@
 using System.Linq;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Semantics;
@@ -604,10 +605,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             return GDGoToDefinitionResult.Failed("Type name is empty");
 
         // Extract base type for generics: Array[Battler] -> Array
-        var baseTypeName = typeName;
-        var bracketIdx = typeName.IndexOf('[');
-        if (bracketIdx > 0)
-            baseTypeName = typeName.Substring(0, bracketIdx);
+        var baseTypeName = GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType ct ? (ct.IsDictionary ? "Dictionary" : "Array") : typeName;
 
         // Check if it's a built-in Godot type
         if (IsBuiltInType(baseTypeName))

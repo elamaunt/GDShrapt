@@ -476,9 +476,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (typeName.StartsWith("typedarray::"))
             return "Array";
 
-        var bracketIdx = typeName.IndexOf('[');
-        if (bracketIdx > 0)
-            typeName = typeName.Substring(0, bracketIdx);
+        typeName = GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 
         if (typeName.Length == 0 || !IsValidTypeIdentifier(typeName))
             return "Variant";

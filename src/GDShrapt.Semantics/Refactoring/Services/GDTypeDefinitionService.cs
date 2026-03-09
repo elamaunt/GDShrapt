@@ -36,7 +36,7 @@ public class GDTypeDefinitionService : GDRefactoringServiceBase
             return null;
 
         var typeName = ResolveTypeName(symbol, semanticModel);
-        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+        if (string.IsNullOrEmpty(typeName) || GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
             return null;
 
         return new GDTypeDefinitionResult

@@ -132,7 +132,7 @@ internal class GDMemberResolver
     /// </summary>
     public static string ExtractBaseTypeName(string? typeName)
     {
-        return GDGenericTypeHelper.ExtractBaseTypeName(typeName ?? string.Empty);
+        return GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType ct ? (ct.IsDictionary ? "Dictionary" : "Array") : (typeName ?? string.Empty);
     }
 
     /// <summary>

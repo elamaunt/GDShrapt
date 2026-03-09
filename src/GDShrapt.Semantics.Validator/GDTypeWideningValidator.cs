@@ -49,7 +49,7 @@ public class GDTypeWideningValidator : GDValidationVisitor
         var declaredTypeName = flowVar.DeclaredType.DisplayName;
 
         // Skip Variant — no widening possible
-        if (declaredTypeName == "Variant" || flowVar.DeclaredType.IsVariant)
+        if (flowVar.DeclaredType.IsVariant)
             return;
 
         // Get RHS type
@@ -64,7 +64,7 @@ public class GDTypeWideningValidator : GDValidationVisitor
             return;
 
         // Skip numeric conversions (int ↔ float is implicit in GDScript)
-        if (IsNumericType(declaredTypeName) && IsNumericType(rhsTypeName))
+        if (flowVar.DeclaredType.IsNumeric && rhsType.IsNumeric)
             return;
 
         // Check if declared type is assignable from RHS (RHS is wider/parent type)
@@ -94,11 +94,6 @@ public class GDTypeWideningValidator : GDValidationVisitor
         }
 
         return $"Assignment widens '{declaredTypeName}' to '{rhsTypeName}'";
-    }
-
-    private static bool IsNumericType(string typeName)
-    {
-        return typeName is "int" or "float";
     }
 
     private static string? GetVariableName(GDExpression? expr)

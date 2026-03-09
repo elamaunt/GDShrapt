@@ -158,7 +158,7 @@ internal class GDExpressionTypeService
                     if (unionType != null && unionType.IsSingleType)
                     {
                         var effectiveType = unionType.EffectiveType;
-                        if (!effectiveType.IsVariant && effectiveType.DisplayName != "null")
+                        if (!effectiveType.IsVariant && !effectiveType.IsNull)
                             return effectiveType.DisplayName;
                     }
                 }
@@ -234,7 +234,7 @@ internal class GDExpressionTypeService
                 if (unionType != null && unionType.IsSingleType)
                 {
                     var effectiveType = unionType.EffectiveType;
-                    if (!effectiveType.IsVariant && effectiveType.DisplayName != "null")
+                    if (!effectiveType.IsVariant && !effectiveType.IsNull)
                         return effectiveType.DisplayName;
                 }
 
@@ -245,7 +245,7 @@ internal class GDExpressionTypeService
                 // For class members with explicit type annotation, return the declared type
                 if (symbol != null && symbol.Kind != GDSymbolKind.Method
                     && !string.IsNullOrEmpty(symbol.TypeName)
-                    && symbol.TypeName != "Variant")
+                    && !GDSemanticType.FromRuntimeTypeName(symbol.TypeName).IsVariant)
                 {
                     return symbol.TypeName;
                 }
@@ -258,7 +258,7 @@ internal class GDExpressionTypeService
                         !(GetOrCreateFlowAnalyzer(scope)?.HasReassignment(varName) ?? false))
                     {
                         var initType = GetExpressionType(localVarDecl.Initializer);
-                        if (!string.IsNullOrEmpty(initType) && initType != "Variant")
+                        if (!string.IsNullOrEmpty(initType) && !GDSemanticType.FromRuntimeTypeName(initType).IsVariant)
                             return initType;
                     }
                 }
@@ -271,7 +271,7 @@ internal class GDExpressionTypeService
             var callerType = GetExpressionType(memberExpr.CallerExpression);
             var memberName = memberExpr.Identifier?.Sequence;
 
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant" &&
+            if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant &&
                 !string.IsNullOrEmpty(memberName))
             {
                 // Check if this is a local enum value access (e.g., AIState.IDLE)
@@ -366,7 +366,7 @@ internal class GDExpressionTypeService
             if (typeNode != null)
             {
                 var typeName = typeNode.BuildName();
-                if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
+                if (!string.IsNullOrEmpty(typeName) && !GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
                     return typeName;
             }
 
@@ -435,7 +435,7 @@ internal class GDExpressionTypeService
                 if (unionType != null && unionType.IsSingleType)
                 {
                     var effectiveType = unionType.EffectiveType;
-                    if (!effectiveType.IsVariant && effectiveType.DisplayName != "null")
+                    if (!effectiveType.IsVariant && !effectiveType.IsNull)
                     {
                         return effectiveType.DisplayName;
                     }
@@ -667,7 +667,7 @@ internal class GDExpressionTypeService
         foreach (var element in arrayInit.Values)
         {
             var elementType = GetExpressionType(element);
-            if (!string.IsNullOrEmpty(elementType) && elementType != "Variant")
+            if (!string.IsNullOrEmpty(elementType) && !GDSemanticType.FromRuntimeTypeName(elementType).IsVariant)
             {
                 elementTypes.Add(elementType);
             }

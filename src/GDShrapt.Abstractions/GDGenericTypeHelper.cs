@@ -67,7 +67,73 @@ public static class GDGenericTypeHelper
         return typeName == "Dictionary" || IsGenericDictionaryType(typeName);
     }
 
+    /// <summary>
+    /// Checks if the type name is any Callable type (plain "Callable" or "Callable(args)").
+    /// </summary>
+    public static bool IsCallableType(string? typeName)
+    {
+        return typeName == "Callable" || (!string.IsNullOrEmpty(typeName) && typeName.StartsWith("Callable("));
+    }
+
+    /// <summary>
+    /// Checks if the type name is a generic type (has brackets, e.g., "Array[int]", "Dictionary[K,V]").
+    /// </summary>
+    public static bool IsGenericType(string? typeName)
+    {
+        return !string.IsNullOrEmpty(typeName) && typeName.IndexOf('[') > 0 && typeName.EndsWith("]");
+    }
+
+    /// <summary>
+    /// Checks if the type string contains a union (pipe-separated types).
+    /// </summary>
+    public static bool IsUnionType(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        int depth = 0;
+        for (int i = 0; i < typeName.Length; i++)
+        {
+            var c = typeName[i];
+            if (c == '[') depth++;
+            else if (c == ']') depth--;
+            else if (c == '|' && depth == 0) return true;
+        }
+        return false;
+    }
+
     // --- Parse ---
+
+    /// <summary>
+    /// Splits a union type string into individual type parts, trimmed.
+    /// "int | String" → ["int", "String"], "int" → ["int"].
+    /// </summary>
+    public static string[] SplitUnionTypes(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return System.Array.Empty<string>();
+
+        if (!IsUnionType(typeName))
+            return new[] { typeName };
+
+        var parts = new System.Collections.Generic.List<string>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < typeName.Length; i++)
+        {
+            var c = typeName[i];
+            if (c == '[') depth++;
+            else if (c == ']') depth--;
+            else if (c == '|' && depth == 0)
+            {
+                parts.Add(typeName.Substring(start, i - start).Trim());
+                start = i + 1;
+            }
+        }
+        parts.Add(typeName.Substring(start).Trim());
+        return parts.ToArray();
+    }
+
 
     /// <summary>
     /// Extracts the element type from an Array type string.
@@ -102,8 +168,9 @@ public static class GDGenericTypeHelper
     }
 
     /// <summary>
-    /// Extracts the base type name from a generic type string.
-    /// "Array[int]" → "Array", "Dictionary[String, int]" → "Dictionary", "Node" → "Node".
+    /// Extracts the base type name from a generic or callable type string.
+    /// "Array[int]" → "Array", "Dictionary[String, int]" → "Dictionary",
+    /// "Callable(int, String)" → "Callable", "Node" → "Node".
     /// </summary>
     public static string ExtractBaseTypeName(string typeName)
     {
@@ -111,7 +178,14 @@ public static class GDGenericTypeHelper
             return typeName ?? string.Empty;
 
         var bracketIdx = typeName.IndexOf('[');
-        return bracketIdx > 0 ? typeName.Substring(0, bracketIdx) : typeName;
+        if (bracketIdx > 0)
+            return typeName.Substring(0, bracketIdx);
+
+        var parenIdx = typeName.IndexOf('(');
+        if (parenIdx > 0)
+            return typeName.Substring(0, parenIdx);
+
+        return typeName;
     }
 
     /// <summary>

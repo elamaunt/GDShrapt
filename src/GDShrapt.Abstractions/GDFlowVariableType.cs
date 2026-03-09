@@ -102,7 +102,9 @@ public class GDFlowVariableType
                 if (DeclaredType != null && currentEffective is GDNullSemanticType)
                     return DeclaredType;
 
-                if (DeclaredType != null && IsGenericVersionOf(DeclaredType.DisplayName, currentEffective.DisplayName))
+                if (DeclaredType is GDContainerSemanticType declContainer
+                    && (currentEffective.IsArray || currentEffective.IsDictionary)
+                    && declContainer.IsDictionary == currentEffective.IsDictionary)
                     return DeclaredType;
 
                 return currentEffective;

@@ -166,12 +166,14 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+
         // Variant can have any properties (duck typing)
-        if (typeName == "Variant")
+        if (semanticType.IsVariant)
             return;
 
         // Dictionary supports dot access for key lookup (dict.key == dict["key"])
-        if (GDGenericTypeHelper.IsDictionaryType(typeName))
+        if (semanticType.IsDictionary)
             return;
 
         // Check if this is a local enum value access (e.g., AIState.IDLE)
@@ -216,8 +218,10 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+
         // Variant can have any methods (duck typing)
-        if (typeName == "Variant")
+        if (semanticType.IsVariant)
             return;
 
         GDRuntimeMemberInfo? memberInfo;
@@ -335,8 +339,10 @@ public class GDMemberAccessValidator : GDValidationVisitor
 
     private GDRuntimeMemberInfo? FindMember(string typeName, string memberName)
     {
-        // Extract base type for generics (Array[int] -> Array)
-        var baseTypeName = ExtractBaseTypeName(typeName);
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+        var baseTypeName = semanticType is GDContainerSemanticType ct
+            ? (ct.IsDictionary ? "Dictionary" : "Array")
+            : typeName;
 
         // Check direct member on base type
         var memberInfo = _runtimeProvider.GetMember(baseTypeName, memberName);
@@ -355,22 +361,6 @@ public class GDMemberAccessValidator : GDValidationVisitor
         }
 
         return null;
-    }
-
-    /// <summary>
-    /// Extracts the base type name from a generic type.
-    /// For example: "Array[int]" -> "Array", "Dictionary[String, int]" -> "Dictionary"
-    /// </summary>
-    private static string ExtractBaseTypeName(string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
     }
 
     private string? GetRootVariableName(GDExpression? expr)

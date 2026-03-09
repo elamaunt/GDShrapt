@@ -60,6 +60,38 @@ public abstract class GDSemanticType
     public virtual bool IsUnion => false;
 
     /// <summary>
+    /// Gets whether this type is a numeric type (int or float).
+    /// </summary>
+    public virtual bool IsNumeric => false;
+
+    /// <summary>
+    /// Gets whether this type is a string-like type (String, StringName, NodePath).
+    /// </summary>
+    public virtual bool IsString => false;
+
+    /// <summary>
+    /// Gets whether this type is a bool type.
+    /// </summary>
+    public virtual bool IsBool => false;
+
+    /// <summary>
+    /// Gets whether this type is the null type.
+    /// </summary>
+    public virtual bool IsNull => false;
+
+    /// <summary>
+    /// Gets whether this type is a GDScript value type (never null).
+    /// Includes all built-in types: numeric, string, bool, containers, vectors, etc.
+    /// Object subclasses return false (they can be null).
+    /// </summary>
+    public virtual bool IsValueType => false;
+
+    /// <summary>
+    /// Checks whether this type matches a given type name.
+    /// </summary>
+    public virtual bool IsType(string typeName) => DisplayName == typeName;
+
+    /// <summary>
     /// Creates a GDTypeNode representation of this type, if possible.
     /// Returns null for types that cannot be represented as AST nodes (unions).
     /// </summary>
@@ -112,32 +144,29 @@ public abstract class GDSemanticType
         if (typeName == "null")
             return GDNullSemanticType.Instance;
 
-        // Check for union types (e.g., "int|String")
-        if (typeName.Contains('|'))
+        // Check for union types (e.g., "int | String")
+        if (GDGenericTypeHelper.IsUnionType(typeName))
         {
-            var parts = typeName.Split('|');
+            var parts = GDGenericTypeHelper.SplitUnionTypes(typeName);
             var types = parts
-                .Select(p => FromRuntimeTypeName(p.Trim()))
+                .Select(p => FromRuntimeTypeName(p))
                 .ToList();
             return new GDUnionSemanticType(types);
         }
 
         // Parse container types structurally
-        if (typeName.StartsWith("Array[") && typeName.EndsWith("]"))
+        if (GDGenericTypeHelper.IsGenericArrayType(typeName))
         {
-            var inner = typeName.Substring(6, typeName.Length - 7);
+            var inner = GDGenericTypeHelper.ExtractArrayElementType(typeName);
             return new GDContainerSemanticType(isDictionary: false,
                 elementType: FromRuntimeTypeName(inner));
         }
 
-        if (typeName.StartsWith("Dictionary[") && typeName.EndsWith("]"))
+        if (GDGenericTypeHelper.IsGenericDictionaryType(typeName))
         {
-            var inner = typeName.Substring(11, typeName.Length - 12);
-            var commaIndex = GDGenericTypeHelper.FindTopLevelComma(inner);
-            if (commaIndex > 0)
+            var (key, val) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+            if (!string.IsNullOrEmpty(key))
             {
-                var key = inner.Substring(0, commaIndex).Trim();
-                var val = inner.Substring(commaIndex + 1).Trim();
                 return new GDContainerSemanticType(isDictionary: true,
                     elementType: FromRuntimeTypeName(val),
                     keyType: FromRuntimeTypeName(key));
@@ -191,7 +220,7 @@ public abstract class GDSemanticType
     /// </summary>
     public static GDSemanticType CreateUnion(GDSemanticType type1, GDSemanticType type2)
     {
-        if (type1.DisplayName == type2.DisplayName)
+        if (type1.Equals(type2))
             return type1;
 
         // If either is Variant, result is Variant
@@ -211,9 +240,8 @@ public abstract class GDSemanticType
         else
             types.Add(type2);
 
-        // Remove duplicates by display name
         var distinct = types
-            .GroupBy(t => t.DisplayName)
+            .GroupBy(t => t)
             .Select(g => g.First())
             .ToList();
 

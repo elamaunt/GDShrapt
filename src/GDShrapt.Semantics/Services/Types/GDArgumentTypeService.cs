@@ -123,7 +123,7 @@ internal class GDArgumentTypeService
                 return GDArgumentTypeDiff.Skip(argumentIndex, parameterInfo.Name);
             }
 
-            if (string.IsNullOrEmpty(expectedType) || expectedType == "Variant")
+            if (string.IsNullOrEmpty(expectedType) || GDSemanticType.FromRuntimeTypeName(expectedType).IsVariant)
             {
                 return GDArgumentTypeDiff.Skip(argumentIndex, parameterInfo.Name);
             }
@@ -277,13 +277,14 @@ internal class GDArgumentTypeService
 
         foreach (var expected in expectedTypes)
         {
-            if (string.IsNullOrEmpty(expected) || expected == "Variant")
+            var expectedSemantic = GDSemanticType.FromRuntimeTypeName(expected);
+            if (expectedSemantic.IsVariant)
                 return true;
 
             if (actualType == expected)
                 return true;
 
-            if (actualType == "null")
+            if (GDSemanticType.FromRuntimeTypeName(actualType).IsNull)
                 return true;
 
             if (_runtimeProvider?.IsAssignableTo(actualType, expected) == true)

@@ -242,7 +242,7 @@ public class GDRedundantGuardValidator : GDValidationVisitor
 
         // Check if type cannot be falsy (non-nullable reference types with no zero value)
         // For GDScript, most reference types can be falsy (null), but if we know it's non-null...
-        if (flowVarType.IsGuaranteedNonNull && IsNonZeroType(flowVarType.EffectiveType.DisplayName))
+        if (flowVarType.IsGuaranteedNonNull && IsNonZeroType(flowVarType.EffectiveType))
         {
             ReportDiagnostic(
                 GDDiagnosticCode.RedundantTruthinessCheck,
@@ -292,7 +292,7 @@ public class GDRedundantGuardValidator : GDValidationVisitor
             effectiveType = callerTypeInfo.IsVariant ? null : callerTypeInfo.DisplayName;
         }
 
-        if (string.IsNullOrEmpty(effectiveType) || effectiveType == "Variant")
+        if (string.IsNullOrEmpty(effectiveType) || (effectiveSemanticType != null && effectiveSemanticType.IsVariant))
             return;
 
         // Check if type is known to have this member
@@ -407,8 +407,12 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         if (declaredType == checkedType)
             return true;
 
-        // Handle generics: Array[int] matches Array
-        if (declaredType.StartsWith(checkedType + "["))
+        // Handle generics: Array[int] matches Array, Dictionary[K,V] matches Dictionary
+        var declaredSemantic = GDSemanticType.FromRuntimeTypeName(declaredType);
+        var checkedSemantic = GDSemanticType.FromRuntimeTypeName(checkedType);
+        if (declaredSemantic is GDContainerSemanticType && (
+            (declaredSemantic.IsArray && checkedSemantic.IsArray) ||
+            (declaredSemantic.IsDictionary && checkedSemantic.IsDictionary)))
             return true;
 
         return false;
@@ -425,22 +429,35 @@ public class GDRedundantGuardValidator : GDValidationVisitor
 
     private static bool IsNeverNullType(string? typeName)
     {
-        return typeName is "int" or "float" or "bool" or "String" or "Vector2"
-            or "Vector3" or "Vector4" or "Color" or "Rect2" or "Rect2i"
-            or "Transform2D" or "Transform3D" or "Basis" or "Quaternion"
-            or "AABB" or "Plane" or "RID" or "StringName";
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+        if (semType.IsNumeric || semType.IsBool || semType.IsString)
+            return true;
+
+        return semType.IsType("Vector2") || semType.IsType("Vector3") || semType.IsType("Vector4")
+            || semType.IsType("Color") || semType.IsType("Rect2") || semType.IsType("Rect2i")
+            || semType.IsType("Transform2D") || semType.IsType("Transform3D") || semType.IsType("Basis")
+            || semType.IsType("Quaternion") || semType.IsType("AABB") || semType.IsType("Plane")
+            || semType.IsType("RID");
     }
 
-    private static bool IsNonZeroType(string? typeName)
+    private static bool IsNonZeroType(GDSemanticType? semType)
     {
+        if (semType == null || semType.IsVariant)
+            return false;
+
         // Types that can have a zero/empty value are not "non-zero types"
         // For reference types that are non-null, they are considered non-zero
-        return typeName is not null and not (
-            "int" or "float" or "bool" or "String" or "Array" or "Dictionary"
-            or "PackedByteArray" or "PackedInt32Array" or "PackedInt64Array"
-            or "PackedFloat32Array" or "PackedFloat64Array" or "PackedStringArray"
-            or "PackedVector2Array" or "PackedVector3Array" or "PackedColorArray"
-        );
+        if (semType.IsNumeric || semType.IsBool || semType.IsString || semType.IsArray || semType.IsDictionary)
+            return false;
+
+        return !semType.IsType("PackedByteArray") && !semType.IsType("PackedInt32Array")
+            && !semType.IsType("PackedInt64Array") && !semType.IsType("PackedFloat32Array")
+            && !semType.IsType("PackedFloat64Array") && !semType.IsType("PackedStringArray")
+            && !semType.IsType("PackedVector2Array") && !semType.IsType("PackedVector3Array")
+            && !semType.IsType("PackedColorArray");
     }
 
     private static string? GetTypeNameFromExpression(GDExpression? expr)
@@ -515,8 +532,10 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         if (_runtimeProvider == null)
             return null;
 
-        // Extract base type for generics
-        var baseTypeName = ExtractBaseTypeName(typeName);
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+        var baseTypeName = semanticType is GDContainerSemanticType ct
+            ? (ct.IsDictionary ? "Dictionary" : "Array")
+            : typeName;
 
         // Check direct member
         var memberInfo = _runtimeProvider.GetMember(baseTypeName, memberName);
@@ -535,17 +554,5 @@ public class GDRedundantGuardValidator : GDValidationVisitor
         }
 
         return null;
-    }
-
-    private static string ExtractBaseTypeName(string typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return typeName;
-
-        var bracketIndex = typeName.IndexOf('[');
-        if (bracketIndex > 0)
-            return typeName.Substring(0, bracketIndex);
-
-        return typeName;
     }
 }

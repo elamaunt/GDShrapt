@@ -147,30 +147,29 @@ public class GDGenericTypeValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        // Extract base type for generics (Array[int] -> Array)
-        var baseType = ExtractBaseTypeName(typeName);
-
-        // Check built-in types
-        if (_runtimeProvider.IsKnownType(baseType))
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+        if (semanticType.IsVariant)
+            return true;
+        if (semanticType.IsContainer)
             return true;
 
-        // Check global classes (class_name)
-        if (_runtimeProvider.GetGlobalClass(baseType) != null)
+        var lookupName = semanticType is GDSimpleSemanticType simple ? simple.TypeName : typeName;
+
+        if (_runtimeProvider.IsKnownType(lookupName))
+            return true;
+
+        if (_runtimeProvider.GetGlobalClass(lookupName) != null)
             return true;
 
         // Check nested types (e.g., BaseMaterial3D.ShadingMode)
-        var dotIndex = baseType.IndexOf('.');
-        if (dotIndex > 0 && dotIndex < baseType.Length - 1)
+        var dotIndex = lookupName.IndexOf('.');
+        if (dotIndex > 0 && dotIndex < lookupName.Length - 1)
         {
-            var parentType = baseType.Substring(0, dotIndex);
-            var memberName = baseType.Substring(dotIndex + 1);
+            var parentType = lookupName.Substring(0, dotIndex);
+            var memberName = lookupName.Substring(dotIndex + 1);
             if (_runtimeProvider.GetMember(parentType, memberName) != null)
                 return true;
         }
-
-        // Variant is always valid
-        if (baseType == "Variant")
-            return true;
 
         return false;
     }
@@ -178,35 +177,28 @@ public class GDGenericTypeValidator : GDValidationVisitor
     private bool IsHashableType(string typeName)
     {
         if (string.IsNullOrEmpty(typeName))
-            return true; // Assume hashable if unknown
+            return true;
 
-        // Extract base type
-        var baseType = ExtractBaseTypeName(typeName);
-
-        // Explicitly non-hashable
-        if (NonHashableTypes.Contains(baseType))
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+        if (semanticType.IsVariant)
+            return true;
+        if (semanticType.IsContainer)
             return false;
 
-        // Explicitly hashable
-        if (HashableTypes.Contains(baseType))
+        var lookupName = semanticType is GDSimpleSemanticType simple ? simple.TypeName : typeName;
+
+        if (NonHashableTypes.Contains(lookupName))
+            return false;
+
+        if (HashableTypes.Contains(lookupName))
             return true;
 
-        // Variant can be anything, allow it
-        if (baseType == "Variant")
+        if (_runtimeProvider.IsKnownType(lookupName))
             return true;
 
-        // Objects are hashable by identity (except containers above)
-        // Custom classes, Nodes, Resources, etc. are hashable
-        if (_runtimeProvider.IsKnownType(baseType))
+        if (_runtimeProvider.GetGlobalClass(lookupName) != null)
             return true;
 
-        if (_runtimeProvider.GetGlobalClass(baseType) != null)
-            return true;
-
-        // Unknown type - assume hashable (might be user-defined class)
         return true;
     }
-
-    private static string ExtractBaseTypeName(string typeName)
-        => GDGenericTypeHelper.ExtractBaseTypeName(typeName);
 }

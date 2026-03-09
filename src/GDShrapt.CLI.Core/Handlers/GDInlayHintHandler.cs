@@ -89,23 +89,44 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
             // Try declared type first, then infer from initializer
             var typeName = variable.TypeName;
-            if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            var declaredSemType = !string.IsNullOrEmpty(typeName)
+                ? GDSemanticType.FromRuntimeTypeName(typeName) : null;
+
+            if (declaredSemType == null || declaredSemType.IsVariant)
             {
                 if (variable.DeclarationNode is GDVariableDeclaration varDecl && varDecl.Initializer != null)
                 {
                     var typeInfo = semanticModel.TypeSystem.GetType(varDecl.Initializer);
-                    typeName = typeInfo.IsVariant ? null : typeInfo.DisplayName;
-
-                    // Enrich plain container types with usage-based generic parameters
-                    if (typeName == "Dictionary" || typeName == "Array")
+                    if (!typeInfo.IsVariant)
                     {
-                        var containerType = semanticModel.TypeSystem.GetContainerElementType(variable.Name);
-                        if (containerType != null && containerType.HasElementTypes)
-                            typeName = containerType.ToString();
+                        // Enrich plain container types with usage-based generic parameters
+                        if (typeInfo.IsContainer)
+                        {
+                            var containerType = semanticModel.TypeSystem.GetContainerElementType(variable.Name);
+                            if (containerType != null && containerType.HasElementTypes)
+                            {
+                                typeName = containerType.ToString();
+                            }
+                            else
+                            {
+                                typeName = typeInfo.DisplayName;
+                            }
+                        }
+                        else
+                        {
+                            typeName = typeInfo.DisplayName;
+                        }
+                    }
+                    else
+                    {
+                        typeName = null;
                     }
                 }
             }
-            if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            if (string.IsNullOrEmpty(typeName))
+                continue;
+            // Re-check: if after all inference the type is still Variant, skip
+            if (GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
                 continue;
 
             // Find position to insert hint (after variable name)
@@ -167,7 +188,7 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     var typeInfo = semanticModel.TypeSystem.GetType(varStmt.Initializer);
                     typeName = typeInfo.IsVariant ? null : typeInfo.DisplayName;
                 }
-                if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+                if (string.IsNullOrEmpty(typeName))
                     continue;
 
                 var position = GetHintPositionAfterIdentifier(varStmt.Identifier);
@@ -196,14 +217,14 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                 var typeNameSemantic = !string.IsNullOrEmpty(iteratorName)
                     ? semanticModel.GetFlowVariableType(iteratorName, forStmt)?.EffectiveType
                     : null;
-                var typeName = typeNameSemantic?.DisplayName;
 
-                if (!string.IsNullOrEmpty(typeName) && typeName != "Variant")
+                if (typeNameSemantic != null && !typeNameSemantic.IsVariant)
                 {
                     var position = GetHintPositionAfterIdentifier(forStmt.Variable);
                     if (position != null)
                     {
-                        var label = $": {typeName}";
+                        var iterTypeName = typeNameSemantic.DisplayName;
+                        var label = $": {iterTypeName}";
                         hints.Add(new GDInlayHint
                         {
                             Line = position.Value.Line,
@@ -212,7 +233,7 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                             Kind = GDInlayHintKind.Type,
                             PaddingLeft = false,
                             PaddingRight = true,
-                            Tooltip = $"Iterator type: {typeName}",
+                            Tooltip = $"Iterator type: {iterTypeName}",
                             TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
                         });
                     }
@@ -287,8 +308,11 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                 if (inferred.IsUnknown)
                     continue;
 
+                if (inferred.TypeName.IsVariant)
+                    continue;
+
                 var typeName = inferred.TypeName.DisplayName;
-                if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+                if (string.IsNullOrEmpty(typeName))
                     continue;
 
                 var position = GetHintPositionAfterIdentifier(param.Identifier);

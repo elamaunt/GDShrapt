@@ -593,13 +593,13 @@ test_scripts/union_types_complex.gd
     149:4 item -> int (base: Variant) # OK
     150:9 item -> int (base: Variant) # OK
     151:4 item -> String (base: Variant) # OK
-    152:9 item -> String (base: Variant) # OK
+    152:9 item -> String (base: Array[int]) # OK
     153:4 item -> float (base: Variant) # OK
     154:13 item -> float (base: Variant) # OK
     155:4 item -> Array (base: Variant) # OK
-    156:9 item -> Array (base: Variant) # OK
+    156:9 item -> Array (base: Array[int]) # OK
     157:4 item -> Dictionary (base: Variant) # OK
-    158:9 item -> Dictionary (base: Variant) # OK
+    158:9 item -> Dictionary (base: Array[int]) # OK
 
   safe_get_nested()
     190:5 current -> null (base: Variant) # OK

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
@@ -677,9 +678,10 @@ func test():
 
         var typeNode = engine.InferTypeNode(callExpr);
 
-        // Assert - Should be Dictionary (the nested dict)
+        // Assert - Should be Dictionary type (the nested dict)
         typeNode.Should().NotBeNull();
-        typeNode.BuildName().Should().Be("Dictionary");
+        GDGenericTypeHelper.IsDictionaryType(typeNode.BuildName()).Should().BeTrue(
+            because: $"nested dict should be Dictionary type, got '{typeNode.BuildName()}'");
     }
 
     [TestMethod]
