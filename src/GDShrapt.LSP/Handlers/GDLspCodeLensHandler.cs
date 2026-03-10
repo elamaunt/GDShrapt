@@ -60,7 +60,7 @@ public class GDLspCodeLensHandler
             {
                 Title = lens.Label,
                 Command = lens.CommandName ?? "",
-                Arguments = [uri, line, character]
+                Arguments = [uri, line, character, lens.CommandArgument ?? ""]
             }
         };
     }

@@ -131,6 +131,7 @@ public class SignalConnectionTests
         var entry = GDSignalConnectionEntry.FromScene(
             "main.tscn",
             15,
+            0,
             "Button",
             "pressed",
             "MainScene",

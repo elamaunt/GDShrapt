@@ -269,13 +269,13 @@ public class GDSymbolReferenceCollector
         // Step 3: Signal connections from SignalConnectionRegistry
         if (_projectModel != null && isClassMember)
         {
-            CollectSignalConnectionReferences(symbol.Name, refs, seen);
+            CollectSignalConnectionReferences(symbol.Name, declaringScript, refs, seen);
         }
 
         // Step 4: Contract string references (has_method, emit_signal, call, etc.)
         if (_projectModel != null && isClassMember)
         {
-            CollectContractStringReferences(symbol.Name, refs, seen);
+            CollectContractStringReferences(symbol.Name, declaringScript, refs, seen);
         }
 
         // Step 5: Reflection pattern references (get_method_list() + call(method.name))
@@ -554,6 +554,7 @@ public class GDSymbolReferenceCollector
 
     private void CollectSignalConnectionReferences(
         string symbolName,
+        GDScriptFile? declaringScript,
         List<GDSymbolReference> refs,
         HashSet<(string?, int, int)> seen)
     {
@@ -583,8 +584,22 @@ public class GDSymbolReferenceCollector
             }
         }
 
+        // Build the set of types in the declaring symbol's hierarchy for filtering
+        var hierarchyTypes = BuildHierarchyTypeSet(declaringScript);
+
         foreach (var conn in connections)
         {
+            // For self-connections (CallbackClassName=null), verify the source script's type
+            // is in the same hierarchy as the declaring type. Without this check,
+            // connect(open) in Window subclass would match Door.open.
+            if (conn.CallbackClassName == null && hierarchyTypes != null)
+            {
+                var sourceScript = _project.GetScript(conn.SourceFilePath);
+                var sourceType = sourceScript?.TypeName;
+                if (sourceType != null && !hierarchyTypes.Contains(sourceType))
+                    continue;
+            }
+
             // Scene connections use 1-based line numbers; code connections use 0-based
             var connLine = conn.IsSceneConnection ? conn.Line - 1 : conn.Line;
             var connCol = conn.Column;
@@ -628,12 +643,25 @@ public class GDSymbolReferenceCollector
 
     private void CollectContractStringReferences(
         string symbolName,
+        GDScriptFile? declaringScript,
         List<GDSymbolReference> refs,
         HashSet<(string?, int, int)> seen)
     {
+        var declaringType = declaringScript?.TypeName;
+
         foreach (var (file, reference) in _projectModel!.GetAllMemberAccessesForMemberInProject(symbolName))
         {
             if (file.FullPath == null) continue;
+
+            // Filter out member accesses on unrelated types.
+            // E.g. when collecting refs for Door.open(), skip FileAccess.open().
+            var callerType = reference.CallerTypeName;
+            if (!string.IsNullOrEmpty(callerType) && !string.IsNullOrEmpty(declaringType))
+            {
+                if (!_projectModel.TypeSystem.IsAssignableTo(callerType, declaringType) &&
+                    !_projectModel.TypeSystem.IsAssignableTo(declaringType, callerType))
+                    continue;
+            }
 
             var identToken = reference.IdentifierToken;
             if (identToken == null) continue;
@@ -808,6 +836,32 @@ public class GDSymbolReferenceCollector
     // ========================================
     // Helpers
     // ========================================
+
+    /// <summary>
+    /// Builds a set of type names in the declaring script's inheritance hierarchy
+    /// (ancestors + descendants). Used to filter self-connections by type.
+    /// </summary>
+    private HashSet<string>? BuildHierarchyTypeSet(GDScriptFile? declaringScript)
+    {
+        if (declaringScript == null || _projectModel?.TypeSystem == null)
+            return null;
+
+        var declaringType = declaringScript.TypeName;
+        if (string.IsNullOrEmpty(declaringType))
+            return null;
+
+        var set = new HashSet<string>(StringComparer.Ordinal) { declaringType };
+
+        foreach (var script in _project.ScriptFiles)
+        {
+            if (script.TypeName == null) continue;
+            if (_projectModel.TypeSystem.IsAssignableTo(script.TypeName, declaringType) ||
+                _projectModel.TypeSystem.IsAssignableTo(declaringType, script.TypeName))
+                set.Add(script.TypeName);
+        }
+
+        return set;
+    }
 
     private static bool IsClassMemberSymbol(GDSymbolInfo symbol)
     {

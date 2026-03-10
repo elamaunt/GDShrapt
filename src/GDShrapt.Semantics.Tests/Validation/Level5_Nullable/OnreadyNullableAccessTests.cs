@@ -1554,7 +1554,7 @@ func update_label():
         // Inject scene signal connection (callback class matches script TypeName)
         var typeName = scriptFile.TypeName ?? "test_script";
         var sceneConnection = GDSignalConnectionEntry.FromScene(
-            "test://scene.tscn", 1, "Button", "pressed", typeName, callbackMethod);
+            "test://scene.tscn", 1, 0, "Button", "pressed", typeName, callbackMethod);
         semanticModel.InjectExternalSignalConnections(new[] { sceneConnection });
 
         // Check safety

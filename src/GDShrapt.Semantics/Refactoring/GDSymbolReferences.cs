@@ -135,6 +135,9 @@ public class GDSymbolReferences
     public IEnumerable<GDSymbolReference> StrictReferences =>
         References.Where(r => r.Confidence == GDReferenceConfidence.Strict);
 
+    public IEnumerable<GDSymbolReference> UnionReferences =>
+        References.Where(r => r.Confidence == GDReferenceConfidence.Union);
+
     public IEnumerable<GDSymbolReference> PotentialReferences =>
         References.Where(r => r.Confidence == GDReferenceConfidence.Potential);
 

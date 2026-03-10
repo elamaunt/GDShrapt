@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -107,6 +108,9 @@ public class GDLanguageServer : IGDLanguageServer
         // Type definition and implementation
         _transport.OnRequest<GDDefinitionParams, GDLspLocationLink[]?>("textDocument/typeDefinition", HandleTypeDefinitionAsync);
         _transport.OnRequest<GDDefinitionParams, GDLspLocation[]?>("textDocument/implementation", HandleImplementationAsync);
+
+        // Custom requests
+        _transport.OnRequest<GDCodeLensReferencesParams, GDLspLocation[]?>("gdshrapt/codeLensReferences", HandleCodeLensReferencesAsync);
     }
 
     #region Lifecycle Handlers
@@ -155,7 +159,9 @@ public class GDLanguageServer : IGDLanguageServer
                     try
                     {
                         _registry.LoadModules(project, new GDBaseModule());
-                        _documentManager.SetProjectModel(_registry.GetService<GDProjectSemanticModel>());
+                        var projectModel = _registry.GetService<GDProjectSemanticModel>();
+                        _documentManager.SetProjectModel(projectModel);
+                        _diagnosticPublisher.SetProjectModel(projectModel);
                         _ = _logger?.InfoAsync($"[initialize] registry initialized successfully");
                     }
                     catch (Exception moduleEx)
@@ -366,6 +372,11 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task HandleDidChangeAsync(GDDidChangeTextDocumentParams @params)
     {
+        var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        GDLspPerformanceTrace.Log("didChange", $"START {filename} v{@params.TextDocument.Version}");
+
         if (@params.ContentChanges.Length > 0)
         {
             // For full sync, take the last change
@@ -376,8 +387,12 @@ public class GDLanguageServer : IGDLanguageServer
                 @params.TextDocument.Version);
         }
 
+        var updateMs = sw.ElapsedMilliseconds;
+
         // Schedule diagnostics update with debouncing
         _diagnosticPublisher?.ScheduleUpdate(@params.TextDocument.Uri, @params.TextDocument.Version);
+
+        GDLspPerformanceTrace.Log("didChange", $"END {filename} update={updateMs}ms total={sw.ElapsedMilliseconds}ms");
 
         return Task.CompletedTask;
     }
@@ -573,20 +588,26 @@ public class GDLanguageServer : IGDLanguageServer
         return handler.HandleAsync(@params, ct);
     }
 
-    private Task<GDLspHover?> HandleHoverAsync(GDHoverParams @params, CancellationToken ct)
+    private async Task<GDLspHover?> HandleHoverAsync(GDHoverParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/hover", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+        var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
+        GDLspPerformanceTrace.Log("hover", $"START {filename} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
-            return Task.FromResult<GDLspHover?>(null);
+            return null;
 
         var coreHandler = _registry.GetService<IGDHoverHandler>();
         if (coreHandler == null)
-            return Task.FromResult<GDLspHover?>(null);
+            return null;
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var handler = new GDLspHoverHandler(coreHandler);
-        return handler.HandleAsync(@params, ct);
+        var result = await handler.HandleAsync(@params, ct).ConfigureAwait(false);
+        sw.Stop();
+
+        GDLspPerformanceTrace.Log("hover", $"END {filename} {sw.ElapsedMilliseconds}ms L{@params.Position.Line}:{@params.Position.Character} hasResult={result != null}");
+
+        return result;
     }
 
     private Task<GDLspDocumentSymbol[]?> HandleDocumentSymbolAsync(GDDocumentSymbolParams @params, CancellationToken ct)
@@ -674,15 +695,15 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDDocumentHighlight[]?> HandleDocumentHighlightAsync(GDDocumentHighlightParams @params, CancellationToken ct)
     {
-        if (_registry == null)
+        if (_registry == null || _project == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
         var goToDefHandler = _registry.GetService<IGDGoToDefHandler>();
-        var findRefsHandler = _registry.GetService<IGDFindRefsHandler>();
-        if (goToDefHandler == null || findRefsHandler == null)
+        if (goToDefHandler == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
-        var handler = new GDDocumentHighlightHandler(findRefsHandler, goToDefHandler);
+        var projectModel = _registry.GetService<GDProjectSemanticModel>();
+        var handler = new GDDocumentHighlightHandler(_project, projectModel, goToDefHandler);
         return handler.HandleAsync(@params, ct);
     }
 
@@ -750,58 +771,89 @@ public class GDLanguageServer : IGDLanguageServer
         return handler.HandleAsync(@params, ct);
     }
 
-    private Task<GDLspInlayHint[]?> HandleInlayHintAsync(GDInlayHintParams @params, CancellationToken ct)
+    private async Task<GDLspInlayHint[]?> HandleInlayHintAsync(GDInlayHintParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/inlayHint", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
+        GDLspPerformanceTrace.Log("inlayHint", $"START {filename}");
 
         if (_registry == null)
-            return Task.FromResult<GDLspInlayHint[]?>(null);
+            return null;
 
         var coreHandler = _registry.GetService<IGDInlayHintHandler>();
         if (coreHandler == null)
-            return Task.FromResult<GDLspInlayHint[]?>(null);
+            return null;
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var handler = new GDLspInlayHintHandler(coreHandler);
-        return handler.HandleAsync(@params, ct);
+        var result = await handler.HandleAsync(@params, ct).ConfigureAwait(false);
+        sw.Stop();
+
+        GDLspPerformanceTrace.Log("inlayHint", $"END {filename} {sw.ElapsedMilliseconds}ms");
+
+        return result;
     }
 
-    private Task<GDLspCodeLens[]?> HandleCodeLensAsync(GDCodeLensParams @params, CancellationToken ct)
+    private async Task<GDLspCodeLens[]?> HandleCodeLensAsync(GDCodeLensParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/codeLens", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
+        GDLspPerformanceTrace.Log("codeLens", $"START {filename}");
 
         // Return null before analysis completes — CodeLens will refresh after analysis via workspace/codeLens/refresh
         if (_analysisComplete != null && !_analysisComplete.Task.IsCompleted)
-            return Task.FromResult<GDLspCodeLens[]?>(null);
+        {
+            GDLspPerformanceTrace.Log("codeLens", $"SKIP {filename} (analysis not complete)");
+            return null;
+        }
 
         if (_registry == null)
-            return Task.FromResult<GDLspCodeLens[]?>(null);
+            return null;
 
         var coreHandler = _registry.GetService<IGDCodeLensHandler>();
         if (coreHandler == null)
-            return Task.FromResult<GDLspCodeLens[]?>(null);
+            return null;
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var handler = new GDLspCodeLensHandler(coreHandler);
+        var result = await handler.HandleAsync(@params, ct).ConfigureAwait(false);
+        sw.Stop();
+
+        GDLspPerformanceTrace.Log("codeLens", $"END {filename} {sw.ElapsedMilliseconds}ms count={result?.Length ?? 0}");
+
+        return result;
+    }
+
+    private Task<GDLspLocation[]?> HandleCodeLensReferencesAsync(GDCodeLensReferencesParams @params, CancellationToken ct)
+    {
+        if (_traceLevel >= GDLspTraceLevel.Messages)
+            _ = TraceAsync("gdshrapt/codeLensReferences", _traceLevel == GDLspTraceLevel.Verbose ? $"symbol={@params.SymbolName}" : null);
+
+        if (_registry == null)
+            return Task.FromResult<GDLspLocation[]?>(null);
+
+        var codeLensHandler = _registry.GetService<IGDCodeLensHandler>();
+        var findRefsHandler = _registry.GetService<IGDFindRefsHandler>();
+        if (codeLensHandler == null || findRefsHandler == null)
+            return Task.FromResult<GDLspLocation[]?>(null);
+
+        var handler = new GDCodeLensReferencesHandler(codeLensHandler, findRefsHandler);
         return handler.HandleAsync(@params, ct);
     }
 
     private async Task<GDSemanticTokens?> HandleSemanticTokensFullAsync(GDSemanticTokensParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/semanticTokens/full",
-                _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
+        GDLspPerformanceTrace.Log("semTokens", $"START {filename}");
 
         if (_project == null)
             return null;
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var projectModel = _registry?.GetService<GDProjectSemanticModel>();
         var handler = new GDSemanticTokensHandler(_project, projectModel);
         var result = await handler.HandleAsync(@params, ct);
+        sw.Stop();
 
-        if (_traceLevel >= GDLspTraceLevel.Verbose && result != null)
-            _ = TraceAsync("semanticTokens/full response",
-                $"tokens={result.Data.Length / 5}, data.length={result.Data.Length}");
+        GDLspPerformanceTrace.Log("semTokens", $"END {filename} {sw.ElapsedMilliseconds}ms");
 
         return result;
     }

@@ -45,7 +45,7 @@ public class GDCrossFileReferenceFinder
 
             foreach (var r in refs)
             {
-                if (r.Confidence == GDReferenceConfidence.Strict)
+                if (r.Confidence == GDReferenceConfidence.Strict || r.Confidence == GDReferenceConfidence.Union)
                     strict.Add(r);
                 else if (r.Confidence == GDReferenceConfidence.Potential)
                     potential.Add(r);
@@ -116,7 +116,23 @@ public class GDCrossFileReferenceFinder
                     if (!string.IsNullOrEmpty(callerType)
                         && callerType != GDWellKnownTypes.Self
                         && !IsTypeCompatible(callerType, declaringTypeName))
-                        continue;
+                    {
+                        // Check if caller has union type where one part is compatible
+                        var varName = GetRootVariableName(memberAccess.CallerExpression);
+                        if (!string.IsNullOrEmpty(varName))
+                        {
+                            var unionType = semanticModel.GetUnionType(varName);
+                            if (unionType != null && unionType.IsUnion &&
+                                unionType.Types.Any(t => IsTypeCompatible(t.DisplayName, declaringTypeName)))
+                            {
+                                confidence = GDReferenceConfidence.Union;
+                            }
+                            else
+                                continue;
+                        }
+                        else
+                            continue;
+                    }
                 }
 
                 yield return new GDCrossFileReference(

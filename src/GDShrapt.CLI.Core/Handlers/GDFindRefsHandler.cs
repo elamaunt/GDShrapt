@@ -124,7 +124,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
             var isOverride = fileGroup.Any(r => r.IsOverride);
             var isInherited = fileGroup.Any(r => r.IsInherited);
             var isCrossFile = !hasDeclaration && !isOverride && !isInherited && !isSignalConnection
-                && fileGroup.Any(r => r.Confidence != GDReferenceConfidence.Strict || r.IsContractString);
+                && fileGroup.Any(r => (r.Confidence != GDReferenceConfidence.Strict && r.Confidence != GDReferenceConfidence.Union) || r.IsContractString);
 
             // Build locations
             var locations = new List<GDCliReferenceLocation>();
@@ -160,7 +160,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                     SignalName = sref.SignalName,
                     IsSceneSignal = sref.IsSceneSignal,
                     ReceiverTypeName = sref.IsSignalConnection ? sref.CallerTypeName : null,
-                    Confidence = sref.IsContractString || sref.IsSignalConnection || isCrossFile
+                    Confidence = sref.IsContractString || sref.IsSignalConnection || isCrossFile || sref.Confidence == GDReferenceConfidence.Union
                         ? sref.Confidence : (GDReferenceConfidence?)null,
                     Reason = reason,
                     Context = GetSourceLine(sref.FilePath!, line1)

@@ -44,9 +44,9 @@ public class GDReferencesHandler
             return Task.FromResult<GDLspLocation[]?>(null);
 
         // Flatten groups (including nested overrides) into a single list
-        // Filter to Strict confidence only (null = declaration-based, Strict = type-resolved)
+        // Filter to Strict and Union confidence (null = declaration-based, Strict = type-resolved, Union = proven union member)
         var allRefs = FlattenLocations(groups)
-            .Where(r => r.Confidence == null || r.Confidence == GDReferenceConfidence.Strict);
+            .Where(r => r.Confidence == null || r.Confidence == GDReferenceConfidence.Strict || r.Confidence == GDReferenceConfidence.Union);
 
         // Filter results based on IncludeDeclaration
         if (!@params.Context.IncludeDeclaration)

@@ -12,6 +12,52 @@ namespace GDShrapt.LSP.Tests;
 [TestClass]
 public class GDJsonRpcTransportTests
 {
+    private static string BuildJsonRpcMessage(string json)
+    {
+        var bytes = Encoding.UTF8.GetBytes(json);
+        return $"Content-Length: {bytes.Length}\r\n\r\n{json}";
+    }
+
+    [TestMethod]
+    [Timeout(10000)]
+    public async Task Transport_CancelRequest_CancelsRunningHandler()
+    {
+        var serializer = new GDSystemTextJsonSerializer();
+        var output = new StringWriter();
+
+        var request = BuildJsonRpcMessage("{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"test/slow\",\"params\":{}}");
+        var cancelNotification = BuildJsonRpcMessage("{\"jsonrpc\":\"2.0\",\"method\":\"$/cancelRequest\",\"params\":{\"id\":1}}");
+        var input = new StringReader(request + cancelNotification);
+
+        await using var transport = new GDStdioJsonRpcTransport(serializer, input, output);
+
+        var handlerCancelled = new TaskCompletionSource<bool>();
+
+        transport.OnRequest<object, object>("test/slow", async (_, ct) =>
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), ct);
+                handlerCancelled.TrySetResult(false);
+                return null;
+            }
+            catch (OperationCanceledException)
+            {
+                handlerCancelled.TrySetResult(true);
+                throw;
+            }
+        });
+
+        await transport.StartAsync(CancellationToken.None);
+
+        var wasCancelled = await handlerCancelled.Task;
+        wasCancelled.Should().BeTrue("handler should have been cancelled by $/cancelRequest");
+
+        await Task.Delay(100);
+        var written = output.ToString();
+        written.Should().Contain("-32800", "response should contain RequestCancelled error code");
+    }
+
     [TestMethod]
     public void Serialize_InitializeResult_ProducesValidJson()
     {

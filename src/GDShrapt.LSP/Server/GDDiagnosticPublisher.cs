@@ -22,6 +22,7 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     private readonly Task? _analysisReady;
     private GDDiagnosticsService _diagnosticsService;
     private GDProjectConfig? _config;
+    private GDProjectSemanticModel? _projectModel;
     private bool _disposed;
 
     /// <summary>
@@ -47,6 +48,14 @@ public class GDDiagnosticPublisher : IAsyncDisposable
         _diagnosticsService = config != null
             ? GDDiagnosticsService.FromConfig(config)
             : new GDDiagnosticsService();
+    }
+
+    /// <summary>
+    /// Sets the project semantic model for rebuilding analysis after edits.
+    /// </summary>
+    public void SetProjectModel(GDProjectSemanticModel? projectModel)
+    {
+        _projectModel = projectModel;
     }
 
     /// <summary>
@@ -111,10 +120,13 @@ public class GDDiagnosticPublisher : IAsyncDisposable
         if (_disposed)
             return;
 
+        var filename = System.IO.Path.GetFileName(GDDocumentManager.UriToPath(uri));
+
         // Wait for initial analysis to complete before publishing diagnostics.
         // This prevents false positives from missing runtime provider (GD2001, GD3005, GD3006).
         if (_analysisReady != null && !_analysisReady.IsCompleted)
         {
+            GDLspPerformanceTrace.Log("diagnostics", $"WAIT-ANALYSIS {filename}");
             try
             {
                 await _analysisReady.ConfigureAwait(false);
@@ -123,10 +135,23 @@ public class GDDiagnosticPublisher : IAsyncDisposable
             {
                 // Analysis may have failed, but we should still publish with whatever state we have
             }
+            GDLspPerformanceTrace.Log("diagnostics", $"ANALYSIS-READY {filename}");
         }
 
+        GDLspPerformanceTrace.Log("diagnostics", $"START {filename}");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var filePath = GDDocumentManager.UriToPath(uri);
         var script = _project.GetScript(filePath);
+
+        // Rebuild semantic model if it was cleared by Reload (e.g. after didChange)
+        if (script != null && script.SemanticModel == null && _projectModel != null)
+        {
+            GDLspPerformanceTrace.Log("diagnostics", $"REBUILD-MODEL {filename}");
+            var rebuildSw = System.Diagnostics.Stopwatch.StartNew();
+            _projectModel.GetSemanticModel(script);
+            rebuildSw.Stop();
+            GDLspPerformanceTrace.Log("diagnostics", $"REBUILD-DONE {filename} {rebuildSw.ElapsedMilliseconds}ms hasModel={script.SemanticModel != null}");
+        }
 
         GDLspDiagnostic[] diagnostics;
 
@@ -142,6 +167,8 @@ public class GDDiagnosticPublisher : IAsyncDisposable
             diagnostics = [];
         }
 
+        var diagnoseMs = sw.ElapsedMilliseconds;
+
         var @params = new GDPublishDiagnosticsParams
         {
             Uri = uri,
@@ -151,6 +178,9 @@ public class GDDiagnosticPublisher : IAsyncDisposable
 
         await _transport.SendNotificationAsync("textDocument/publishDiagnostics", @params)
             .ConfigureAwait(false);
+
+        sw.Stop();
+        GDLspPerformanceTrace.Log("diagnostics", $"END {filename} diagnose={diagnoseMs}ms total={sw.ElapsedMilliseconds}ms hasModel={script?.SemanticModel != null} count={diagnostics.Length}");
     }
 
     /// <summary>

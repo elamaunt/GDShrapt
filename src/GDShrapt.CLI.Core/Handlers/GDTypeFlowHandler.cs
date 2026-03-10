@@ -1029,7 +1029,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
                 Label = $"{symbol.Name}() call",
                 Type = usageType,
                 Kind = GDTypeFlowNodeKind.MethodCall,
-                Confidence = reference.Confidence == GDReferenceConfidence.Strict ? 0.9f : 0.6f,
+                Confidence = reference.Confidence == GDReferenceConfidence.Strict ? 0.9f
+                    : reference.Confidence == GDReferenceConfidence.Union ? 0.85f : 0.6f,
                 Description = "Call site",
                 Level = 1,
                 SourceScript = script,

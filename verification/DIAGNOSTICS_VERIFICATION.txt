@@ -1,22 +1,14 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-09 20:30:24
+Generated: 2026-03-10 03:37:48
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           888
+Total:           885
 Verified (OK):   885
 Unverified:      0
 False Positives: 0
-Skipped:         3
+Skipped:         0
 Orphaned Markers:0
-
-================================================================================
-SKIPPED (NEEDS ANALYSIS)
-================================================================================
-
-  test_scripts/completion_test.gd:107:1 [GD7019]
-  test_scripts/completion_test.gd:108:1 [GD7019]
-  test_scripts/completion_test.gd:109:1 [GD7019]
 

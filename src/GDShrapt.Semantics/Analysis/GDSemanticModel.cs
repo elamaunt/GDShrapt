@@ -383,6 +383,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             }
         }
 
+        // Handle type annotation nodes (e.g., "Gamepiece" in "var x: Gamepiece = null")
+        if (node is GDTypeNode typeNode)
+        {
+            var typeName = typeNode.BuildName();
+            if (!string.IsNullOrEmpty(typeName))
+            {
+                var typeSymbol = TryResolveTypeName(typeName);
+                if (typeSymbol != null)
+                    return typeSymbol;
+            }
+        }
+
         // Handle member access expression (the whole "stats.speed" node)
         if (node is GDMemberOperatorExpression memberAccess)
         {

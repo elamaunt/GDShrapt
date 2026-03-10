@@ -11,6 +11,12 @@ public enum GDReferenceConfidence
     Strict,
 
     /// <summary>
+    /// Union confidence - proven reference but variable has union type sharing with other types.
+    /// Member exists in some but not all types of the union.
+    /// </summary>
+    Union,
+
+    /// <summary>
     /// Potential confidence - duck-typed or type narrowed.
     /// </summary>
     Potential,

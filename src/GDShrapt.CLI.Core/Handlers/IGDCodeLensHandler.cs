@@ -14,6 +14,12 @@ public interface IGDCodeLensHandler
     /// <param name="filePath">Path to the GDScript file.</param>
     /// <returns>List of code lenses, or empty list if none available.</returns>
     IReadOnlyList<GDCodeLens> GetCodeLenses(string filePath);
+
+    /// <summary>
+    /// Returns cached reference locations for a symbol from the last CodeLens computation.
+    /// Returns null if no cached data is available.
+    /// </summary>
+    IReadOnlyList<GDCodeLensReference>? GetCachedReferences(string symbolName, string filePath);
 }
 
 /// <summary>
@@ -50,4 +56,17 @@ public class GDCodeLens
     /// The argument for the command (e.g., symbol name).
     /// </summary>
     public string? CommandArgument { get; init; }
+}
+
+/// <summary>
+/// A cached reference location from CodeLens computation.
+/// All coordinates are 1-based.
+/// </summary>
+public class GDCodeLensReference
+{
+    public required string FilePath { get; init; }
+    public int Line { get; init; }
+    public int Column { get; init; }
+    public int EndColumn { get; init; }
+    public bool IsDeclaration { get; init; }
 }

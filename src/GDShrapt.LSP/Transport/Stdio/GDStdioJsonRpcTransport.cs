@@ -21,6 +21,7 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
     private readonly ConcurrentDictionary<string, RequestHandler> _requestHandlers = new();
     private readonly ConcurrentDictionary<string, NotificationHandler> _notificationHandlers = new();
     private readonly ConcurrentDictionary<object, TaskCompletionSource<JsonElement?>> _pendingRequests = new();
+    private readonly ConcurrentDictionary<string, CancellationTokenSource> _pendingRequestCts = new();
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private CancellationTokenSource? _cts;
     private Task? _readTask;
@@ -252,6 +253,13 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
             var method = methodElement.GetString() ?? string.Empty;
             JsonElement? paramsElement = root.TryGetProperty("params", out var pe) ? pe : null;
 
+            // Handle $/cancelRequest — cancel the running request
+            if (method == "$/cancelRequest" && paramsElement != null)
+            {
+                HandleCancelRequest(paramsElement.Value);
+                return;
+            }
+
             // Check if it's a request (has id) or notification (no id)
             if (root.TryGetProperty("id", out idElement))
             {
@@ -311,14 +319,47 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
             return;
         }
 
+        var idStr = id.ToString()!;
+        using var requestCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _pendingRequestCts[idStr] = requestCts;
+
+        GDLspPerformanceTrace.Log("request", $">>> {method} id={id}");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         try
         {
-            var result = await handler.Handler(paramsElement, cancellationToken).ConfigureAwait(false);
+            var result = await handler.Handler(paramsElement, requestCts.Token).ConfigureAwait(false);
             await SendResponseAsync(id, result).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (requestCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            await SendErrorAsync(id, GDJsonRpcError.RequestCancelled, "Request cancelled").ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             await SendErrorAsync(id, GDJsonRpcError.InternalError, ex.Message).ConfigureAwait(false);
+        }
+        finally
+        {
+            _pendingRequestCts.TryRemove(idStr, out _);
+            sw.Stop();
+            GDLspPerformanceTrace.Log("request", $"<<< {method} id={id} {sw.ElapsedMilliseconds}ms");
+        }
+    }
+
+    private void HandleCancelRequest(JsonElement paramsElement)
+    {
+        string? idStr = null;
+        if (paramsElement.TryGetProperty("id", out var idElement))
+        {
+            idStr = idElement.ValueKind == JsonValueKind.Number
+                ? idElement.GetInt32().ToString()
+                : idElement.GetString();
+        }
+
+        if (idStr != null && _pendingRequestCts.TryGetValue(idStr, out var cts))
+        {
+            GDLspPerformanceTrace.Log("cancel", $"Cancelling request id={idStr}");
+            try { cts.Cancel(); } catch (ObjectDisposedException) { }
         }
     }
 
@@ -327,6 +368,8 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         if (!_notificationHandlers.TryGetValue(method, out var handler))
             return;
 
+        GDLspPerformanceTrace.Log("notification", $">>> {method}");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         try
         {
             await handler.Handler(paramsElement).ConfigureAwait(false);
@@ -334,6 +377,11 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         catch (Exception)
         {
             // Notifications don't get responses, just log the error
+        }
+        finally
+        {
+            sw.Stop();
+            GDLspPerformanceTrace.Log("notification", $"<<< {method} {sw.ElapsedMilliseconds}ms");
         }
     }
 

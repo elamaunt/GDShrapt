@@ -3607,16 +3607,11 @@ test_scripts/cyclic_inference.gd
       235:4 current -> String (base: Variant)
       236:9 current -> String (base: Variant)
     parse_expr():
-      246:4 result -> null (base: null)
-      258:5 right -> null (base: null)
       261:5 op -> String (base: Variant)
     parse_term():
-      273:4 result -> null (base: null)
-      285:5 right -> null (base: null)
       288:5 op -> String (base: Variant)
     parse_factor():
       304:4 token -> String (base: Variant)
-      306:5 inner -> null (base: null)
 
 
 test_scripts/diagnostics_issues.gd
@@ -6771,8 +6766,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 114:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     TestEnum
+    effective:    TestEnum
     confidence:   High
     nullable:     no
 
@@ -6787,8 +6782,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 120:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     TestEnum
+    effective:    TestEnum
     confidence:   High
     nullable:     no
 
@@ -6803,8 +6798,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 --- 127:1 Variable val ---
   Type Info:
     declared:     (none)
-    inferred:     int
-    effective:    int
+    inferred:     TestEnum
+    effective:    TestEnum
     confidence:   High
     nullable:     no
 
@@ -8485,7 +8480,6 @@ test_scripts/duck_typing_advanced.gd
       211:5 value -> String (base: Variant)
       212:28 value -> String (base: Variant)
     _step_validate():
-      217:4 value -> null (base: Variant)
       219:4 value -> int (base: Variant)
       219:21 value -> int (base: Variant)
       221:4 value -> Array (base: Variant)
@@ -10361,7 +10355,6 @@ test_scripts/dynamic_dispatch.gd
 
   Flow Narrowing:
     _serialize_value():
-      139:4 value -> null (base: Variant)
       143:4 value -> Vector2 (base: Variant)
       144:35 value -> Vector2 (base: Variant)
       144:49 value -> Vector2 (base: Variant)
@@ -10382,7 +10375,6 @@ test_scripts/dynamic_dispatch.gd
       159:4 value -> Object (base: Variant)
       160:26 value -> Object (base: Variant)
     _deserialize_value():
-      173:4 data -> null (base: Variant)
       177:4 data -> Array (base: Variant)
       179:14 data -> Array (base: Variant)
       182:4 data -> Dictionary (base: Variant)
@@ -14771,12 +14763,7 @@ test_scripts/game_patterns.gd
       100:34 dialog_data -> String (base: Variant)
       101:6 dialog_data -> Dictionary (base: Variant)
       102:16 dialog_data -> Dictionary (base: Variant)
-    get_dialog_text():
-      117:4 current_node -> null (base: null)
-    get_dialog_choices():
-      130:4 current_node -> null (base: null)
     _check_choice_condition():
-      145:4 condition -> null (base: Variant)
       148:4 condition -> String (base: Variant)
       149:30 condition -> String (base: Variant)
       150:4 condition -> Callable (base: Variant)
@@ -14805,7 +14792,6 @@ test_scripts/game_patterns.gd
       449:4 item_filter -> Callable (base: Variant)
       450:9 item_filter -> Callable (base: Variant)
     craft():
-      469:6 item -> null (base: Variant)
       482:4 result -> Callable (base: Variant)
       483:2 result -> Callable (base: Variant)
       483:11 result -> Callable (base: Variant)
@@ -16713,14 +16699,9 @@ test_scripts/local_variables.gd
     process_2():
       23:4 data -> int (base: Variant)
       24:9 data -> int (base: Variant)
-    early_return_flow():
-      98:4 input -> null (base: Variant)
     process_input():
       110:4 input -> int (base: Variant)
       111:9 input -> int (base: Variant)
-    variable_with_default():
-      131:4 local -> null (base: Variant)
-      132:2 local -> null (base: Variant)
     type_narrowing_local():
       154:4 result -> Dictionary (base: Variant)
       156:13 result -> Dictionary (base: Variant)
@@ -17132,13 +17113,7 @@ test_scripts/method_chains.gd
     properties:   filter, size, to_upper
 
   Flow Narrowing:
-    optional_chain_pattern():
-      47:4 data -> null (base: Variant)
-      51:4 level1 -> null (base: Variant)
-      55:4 level2 -> null (base: Variant)
     node_chain():
-      92:4 parent -> null (base: Node)
-      96:4 grandparent -> null (base: Node)
       99:4 grandparent -> Node2D (base: Node)
       100:9 grandparent -> Node2D (base: Node)
     mixed_chain():
@@ -20646,8 +20621,6 @@ test_scripts/scene_nodes.gd
       152:3 child -> Node2D (base: Node)
       153:7 child -> Control (base: Node)
       154:3 child -> Control (base: Node)
-    access_sibling():
-      185:4 parent -> null (base: Node)
 
 
 test_scripts/scene_references.gd
@@ -26431,10 +26404,6 @@ test_scripts/todo_examples.gd
     confidence:   Certain
     reason:       explicit type annotation
 
-  Flow Narrowing:
-    validate_data():
-      63:5 item -> null (base: Variant)
-
 
 test_scripts/type_guards.gd
 ================================================================================
@@ -27057,7 +27026,6 @@ test_scripts/type_guards.gd
 
   Flow Narrowing:
     process_value():
-      10:4 value -> null (base: Variant)
       13:4 value -> int (base: Variant)
       14:9 value -> int (base: Variant)
       16:4 value -> String (base: Variant)
@@ -27067,7 +27035,6 @@ test_scripts/type_guards.gd
       22:4 value -> Dictionary (base: Variant)
       23:9 value -> Dictionary (base: Variant)
     nested_type_guards():
-      29:4 data -> null (base: Variant)
       32:4 data -> Dictionary (base: Variant)
       34:5 data -> Dictionary (base: Variant)
       35:18 data -> Dictionary (base: Variant)
@@ -27084,7 +27051,6 @@ test_scripts/type_guards.gd
       54:28 value -> Dictionary (base: Variant)
       56:9 value -> Dictionary (base: Variant)
     early_return_guard():
-      76:4 data -> null (base: Variant)
       85:12 data -> Dictionary (base: Variant)
     assignment_after_guard():
       92:4 value -> int (base: Variant)
@@ -28640,11 +28606,8 @@ test_scripts/union_returns.gd
 
   Flow Narrowing:
     success_or_error():
-      40:4 input -> null (base: Variant)
       42:4 input -> int (base: Variant)
       42:21 input -> int (base: Variant)
-    load_resource():
-      67:4 resource -> null (base: Resource)
     process_input():
       75:4 input -> int (base: Variant)
       76:9 input -> int (base: Variant)
@@ -28657,7 +28620,6 @@ test_scripts/union_returns.gd
       83:4 input -> Dictionary (base: Variant)
       84:9 input -> Dictionary (base: Variant)
     early_returns():
-      90:4 value -> null (base: Variant)
       93:4 value -> bool (base: Variant)
       94:9 value -> bool (base: Variant)
       96:4 value -> int (base: Variant)
@@ -28674,19 +28636,13 @@ test_scripts/union_returns.gd
     recursive_return():
       126:4 child -> String (base: String)
       127:35 child -> String (base: String)
-    callback_return():
-      134:4 result -> null (base: Variant)
     exception_pattern():
       143:6 data -> Dictionary (base: Variant)
       144:11 data -> Dictionary (base: Variant)
     result_monad():
-      156:4 value -> null (base: Variant)
       158:4 value -> int (base: Variant)
       158:21 value -> int (base: Variant)
-    maybe_monad():
-      166:4 value -> null (base: Variant)
     validate_input():
-      206:4 input -> null (base: Variant)
       209:4 input -> Dictionary (base: Variant)
       210:9 input -> Dictionary (base: Variant)
       212:5 input -> Dictionary (base: Variant)
@@ -29825,7 +29781,6 @@ test_scripts/union_types_complex.gd
 
   Flow Narrowing:
     try_operation():
-      26:4 input -> null (base: Variant)
       28:4 input -> int (base: Variant)
       29:5 input -> int (base: Variant)
       31:9 input -> int (base: Variant)
@@ -29859,7 +29814,6 @@ test_scripts/union_types_complex.gd
       157:4 item -> Dictionary (base: Variant)
       158:9 item -> Dictionary (base: Array[int])
     safe_get_nested():
-      190:5 current -> null (base: Variant)
       192:5 current -> Dictionary (base: Variant)
       193:3 current -> Dictionary (base: Variant)
       193:13 current -> Dictionary (base: Variant)
@@ -29871,8 +29825,6 @@ test_scripts/union_types_complex.gd
       197:3 current -> Array (base: Variant)
       197:13 current -> Array (base: Variant)
       197:21 key -> int (base: Variant)
-    map_with_fallback():
-      245:5 transformed -> null (base: Variant)
     _compute_result():
       302:4 params -> String (base: Variant)
       303:9 params -> String (base: Variant)
@@ -29885,11 +29837,9 @@ test_scripts/union_types_complex.gd
       334:6 value -> Array (base: Variant)
       336:9 value -> Array (base: Variant)
     validate_and_process():
-      342:4 data -> null (base: Variant)
       348:8 data -> Dictionary (base: Variant)
       356:49 type_field -> String (base: Variant)
     type_flow_test_method():
-      379:4 local -> null (base: Variant)
       383:4 local -> Dictionary (base: Variant)
       385:14 local -> Dictionary (base: Variant)
       387:13 local -> Dictionary (base: Variant)

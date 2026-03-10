@@ -236,6 +236,7 @@ public class GDProjectSemanticModel : IDisposable
                     registry.Register(GDSignalConnectionEntry.FromScene(
                         sceneInfo.FullPath,
                         conn.LineNumber,
+                        conn.MethodColumn,
                         ResolveSceneNodeTypeName(fromNode) ?? conn.SourceNodeType ?? "",
                         conn.SignalName,
                         ResolveSceneNodeTypeName(toNode) ?? "",
@@ -596,7 +597,8 @@ public class GDProjectSemanticModel : IDisposable
 
     /// <summary>
     /// Gets or creates the semantic model for a script file.
-    /// Thread-safe via ConcurrentDictionary.
+    /// Thread-safe via ConcurrentDictionary. Analysis runs outside GetOrAdd
+    /// to avoid blocking concurrent readers during slow Analyze() calls.
     /// </summary>
     public GDSemanticModel? GetSemanticModel(GDScriptFile scriptFile)
     {
@@ -607,22 +609,35 @@ public class GDProjectSemanticModel : IDisposable
         if (string.IsNullOrEmpty(path))
             return null;
 
-        var model = _fileModels.GetOrAdd(path, _ =>
+        // Fast path: check cache
+        if (_fileModels.TryGetValue(path, out var cached))
         {
-            if (scriptFile.SemanticModel == null)
+            // Detect stale cache: if the script was re-analyzed externally,
+            // its SemanticModel differs from what we cached.
+            if (scriptFile.SemanticModel != null && !ReferenceEquals(cached, scriptFile.SemanticModel))
             {
-                scriptFile.Analyze(RuntimeProvider, _project.CreateNodeTypeInjector(), _project.CallSiteRegistry);
+                cached = scriptFile.SemanticModel;
+                _fileModels[path] = cached;
             }
-            return scriptFile.SemanticModel!;
-        });
-
-        // Detect stale cache: if the script was re-analyzed externally,
-        // its SemanticModel differs from what we cached.
-        if (scriptFile.SemanticModel != null && !ReferenceEquals(model, scriptFile.SemanticModel))
-        {
-            model = scriptFile.SemanticModel;
-            _fileModels[path] = model;
+            return cached;
         }
+
+        // Slow path: analyze outside of GetOrAdd to avoid blocking other threads
+        if (scriptFile.SemanticModel == null)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            scriptFile.Analyze(RuntimeProvider, _project.CreateNodeTypeInjector(), _project.CallSiteRegistry);
+            sw.Stop();
+            if (sw.ElapsedMilliseconds > 100)
+            {
+                System.Console.Error.WriteLine(
+                    $"[ANALYZE/SLOW] {System.IO.Path.GetFileName(path)}: {sw.ElapsedMilliseconds}ms");
+            }
+        }
+
+        var model = scriptFile.SemanticModel;
+        if (model != null)
+            _fileModels[path] = model;
 
         return model;
     }
@@ -1282,6 +1297,8 @@ public class GDProjectSemanticModel : IDisposable
     {
         if (!string.IsNullOrEmpty(filePath))
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
             _fileModels.TryRemove(filePath, out _);
 
             if (_signalRegistry.IsValueCreated)
@@ -1297,8 +1314,17 @@ public class GDProjectSemanticModel : IDisposable
                 }
             }
 
+            var signalMs = sw.ElapsedMilliseconds;
+
             if (_containerRegistry.IsValueCreated)
                 _containerRegistry.Value.InvalidateFile(filePath);
+
+            sw.Stop();
+            if (sw.ElapsedMilliseconds > 50)
+            {
+                System.Console.Error.WriteLine(
+                    $"[INVALIDATE/SLOW] {System.IO.Path.GetFileName(filePath)}: signals={signalMs}ms total={sw.ElapsedMilliseconds}ms");
+            }
         }
     }
 

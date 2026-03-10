@@ -43,6 +43,7 @@ public static class GDProjectInitializer
                 list.Add(GDSignalConnectionEntry.FromScene(
                     sceneInfo.FullPath,
                     conn.LineNumber,
+                    conn.MethodColumn,
                     fromNode?.ScriptTypeName ?? fromNode?.NodeType ?? conn.SourceNodeType ?? "",
                     conn.SignalName,
                     callbackType,

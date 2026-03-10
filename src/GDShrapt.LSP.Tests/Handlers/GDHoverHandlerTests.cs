@@ -339,4 +339,41 @@ public class GDHoverHandlerTests
 
         await act.Should().CompleteWithinAsync(TimeSpan.FromSeconds(5));
     }
+
+    [TestMethod]
+    public void SignalNames_AreNormalized_ToSnakeCase()
+    {
+        var assemblyData = GDShrapt.TypesMap.GDTypeHelper.ExtractTypeDatasFromManifest();
+
+        // AnimationMixer (parent of AnimationPlayer) defines animation_finished
+        var typesToCheck = new[] { "AnimationMixer", "AnimationPlayer" };
+        var foundSignal = false;
+
+        foreach (var typeName in typesToCheck)
+        {
+            if (!assemblyData.TypeDatas.TryGetValue(typeName, out var types))
+                continue;
+
+            foreach (var typeData in types.Values)
+            {
+                if (typeData.SignalDatas == null)
+                    continue;
+
+                foreach (var kvp in typeData.SignalDatas)
+                {
+                    kvp.Value.GDScriptName.Should().Be(kvp.Key,
+                        $"Signal '{kvp.Key}' in {typeName} should have GDScriptName matching the dictionary key (snake_case)");
+
+                    if (kvp.Key == "animation_finished")
+                    {
+                        foundSignal = true;
+                        kvp.Value.GDScriptName.Should().Be("animation_finished",
+                            "animation_finished signal should use snake_case name, not PascalCase");
+                    }
+                }
+            }
+        }
+
+        foundSignal.Should().BeTrue("should find animation_finished signal in AnimationMixer or AnimationPlayer");
+    }
 }

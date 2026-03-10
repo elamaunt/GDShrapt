@@ -105,6 +105,7 @@ public class GDSignalConnectionEntry
     public static GDSignalConnectionEntry FromScene(
         string sceneFilePath,
         int line,
+        int column,
         string emitterType,
         string signalName,
         string callbackClassName,
@@ -114,7 +115,7 @@ public class GDSignalConnectionEntry
             sceneFilePath,
             null,
             line,
-            0,
+            column,
             emitterType,
             signalName,
             callbackClassName,

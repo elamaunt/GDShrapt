@@ -1,90 +1,149 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
+using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP;
 
 public class GDDocumentHighlightHandler
 {
-    private readonly IGDFindRefsHandler _findRefsHandler;
+    private static readonly TimeSpan FindDefTimeout = TimeSpan.FromMilliseconds(500);
+
+    private readonly GDScriptProject _project;
+    private readonly GDProjectSemanticModel? _projectModel;
     private readonly IGDGoToDefHandler _goToDefHandler;
 
-    public GDDocumentHighlightHandler(IGDFindRefsHandler findRefsHandler, IGDGoToDefHandler goToDefHandler)
+    public GDDocumentHighlightHandler(GDScriptProject project, GDProjectSemanticModel? projectModel, IGDGoToDefHandler goToDefHandler)
     {
-        _findRefsHandler = findRefsHandler;
+        _project = project;
+        _projectModel = projectModel;
         _goToDefHandler = goToDefHandler;
     }
 
-    public Task<GDDocumentHighlight[]?> HandleAsync(GDDocumentHighlightParams @params, CancellationToken cancellationToken)
+    public async Task<GDDocumentHighlight[]?> HandleAsync(GDDocumentHighlightParams @params, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return null;
+
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
-        var normalizedFilePath = NormalizePath(filePath);
+        var filename = System.IO.Path.GetFileName(filePath);
 
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
 
-        var definition = _goToDefHandler.FindDefinition(filePath, line, column);
+        GDLspPerformanceTrace.Log("highlight", $"START {filename} L{line}:{column}");
+
+        // FindDefinition can hang on broken AST — run with combined timeout + cancellation
+        GDDefinitionLocation? definition = null;
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(FindDefTimeout);
+
+        try
+        {
+            definition = await Task.Run(
+                () => _goToDefHandler.FindDefinition(filePath, line, column),
+                timeoutCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            GDLspPerformanceTrace.Log("highlight", $"FIND-DEF-TIMEOUT {filename}");
+            return null;
+        }
+        catch (OperationCanceledException)
+        {
+            GDLspPerformanceTrace.Log("highlight", $"FIND-DEF-CANCELLED {filename}");
+            return null;
+        }
+        catch (Exception ex)
+        {
+            GDLspPerformanceTrace.Log("highlight", $"FIND-DEF-ERROR {filename} {ex.GetType().Name}");
+            return null;
+        }
+
+        GDLspPerformanceTrace.Log("highlight", $"FIND-DEF-DONE {filename} symbol={definition?.SymbolName} isInfo={definition?.IsInfoOnly}");
+
         if (definition == null || string.IsNullOrEmpty(definition.SymbolName))
-            return Task.FromResult<GDDocumentHighlight[]?>(null);
+        {
+            GDLspPerformanceTrace.Log("highlight", $"END {filename} (no definition)");
+            return null;
+        }
 
         if (definition.IsInfoOnly)
-            return Task.FromResult<GDDocumentHighlight[]?>(null);
+        {
+            GDLspPerformanceTrace.Log("highlight", $"END {filename} (info only)");
+            return null;
+        }
 
         var symbolName = definition.SymbolName;
 
-        var groups = _findRefsHandler.FindReferences(symbolName, filePath);
+        // Use per-file semantic model instead of project-wide FindReferences
+        var script = _project.GetScript(filePath);
+        if (script == null)
+        {
+            GDLspPerformanceTrace.Log("highlight", $"END {filename} (no script)");
+            return null;
+        }
 
+        var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
+        if (model == null)
+        {
+            GDLspPerformanceTrace.Log("highlight", $"END {filename} (no model)");
+            return null;
+        }
+
+        var refs = model.GetReferencesTo(symbolName);
         var highlights = new List<GDDocumentHighlight>();
 
-        if (groups != null && groups.Count > 0)
+        // Add declaration
+        var symbol = model.FindSymbol(symbolName);
+        if (symbol?.DeclarationNode != null)
         {
-            foreach (var reference in FlattenLocations(groups))
+            var declNode = symbol.DeclarationNode;
+            var declLine = declNode.StartLine;
+            var declCol = declNode.StartColumn;
+            highlights.Add(new GDDocumentHighlight
             {
-                if (!NormalizePath(reference.FilePath).Equals(normalizedFilePath, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                if (reference.Confidence != null && reference.Confidence != GDReferenceConfidence.Strict)
-                    continue;
-
-                var kind = reference.IsWrite || reference.IsDeclaration
-                    ? GDDocumentHighlightKind.Write
-                    : GDDocumentHighlightKind.Read;
-
-                var col0 = reference.Column - 1;
-                highlights.Add(new GDDocumentHighlight
-                {
-                    Range = GDLocationAdapter.ToLspRange(
-                        reference.Line,
-                        col0,
-                        reference.Line,
-                        col0 + symbolName.Length),
-                    Kind = kind
-                });
-            }
+                Range = GDLocationAdapter.ToLspRange(
+                    declLine + 1,
+                    declCol,
+                    declLine + 1,
+                    declCol + symbolName.Length),
+                Kind = GDDocumentHighlightKind.Write
+            });
         }
+
+        // Add references
+        foreach (var r in refs)
+        {
+            if (r.ReferenceNode == null)
+                continue;
+
+            var refLine = r.IdentifierToken?.StartLine ?? r.ReferenceNode.StartLine;
+            var refCol = r.IdentifierToken?.StartColumn ?? r.ReferenceNode.StartColumn;
+
+            var kind = r.IsWrite
+                ? GDDocumentHighlightKind.Write
+                : GDDocumentHighlightKind.Read;
+
+            highlights.Add(new GDDocumentHighlight
+            {
+                Range = GDLocationAdapter.ToLspRange(
+                    refLine + 1,
+                    refCol,
+                    refLine + 1,
+                    refCol + symbolName.Length),
+                Kind = kind
+            });
+        }
+
+        GDLspPerformanceTrace.Log("highlight", $"END {filename} count={highlights.Count}");
 
         if (highlights.Count == 0)
-            return Task.FromResult<GDDocumentHighlight[]?>(null);
+            return null;
 
-        return Task.FromResult<GDDocumentHighlight[]?>(highlights.ToArray());
-    }
-
-    private static string NormalizePath(string path) =>
-        path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar);
-
-    private static IEnumerable<GDCliReferenceLocation> FlattenLocations(IEnumerable<GDReferenceGroup> groups)
-    {
-        foreach (var group in groups)
-        {
-            foreach (var loc in group.Locations)
-                yield return loc;
-
-            foreach (var loc in FlattenLocations(group.Overrides))
-                yield return loc;
-        }
+        return highlights.ToArray();
     }
 }

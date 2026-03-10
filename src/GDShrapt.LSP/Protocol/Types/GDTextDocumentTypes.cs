@@ -246,3 +246,15 @@ public class GDUnionReferencesParams
     [JsonPropertyName("symbolName")]
     public string SymbolName { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// Custom request parameters for gdshrapt/codeLensReferences.
+/// </summary>
+public class GDCodeLensReferencesParams
+{
+    [JsonPropertyName("uri")]
+    public string Uri { get; set; } = string.Empty;
+
+    [JsonPropertyName("symbolName")]
+    public string SymbolName { get; set; } = string.Empty;
+}

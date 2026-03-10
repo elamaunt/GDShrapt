@@ -593,6 +593,11 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             var lineNumber = content.Substring(0, match.Index).Count(c => c == '\n') + 1;
             var fromNode = match.Groups[2].Value;
 
+            // Compute method name column within the line
+            var methodGroup = match.Groups[4];
+            var lineStart = content.LastIndexOf('\n', match.Index) + 1;
+            var methodColumn = methodGroup.Index - lineStart;
+
             // Resolve source node type
             string? sourceNodeType = null;
             var sourceNode = nodes.FirstOrDefault(n =>
@@ -612,6 +617,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
                 ToNode = match.Groups[3].Value,
                 Method = match.Groups[4].Value,
                 LineNumber = lineNumber,
+                MethodColumn = methodColumn,
                 SourceNodeType = sourceNodeType
             });
         }
@@ -1427,6 +1433,11 @@ public class GDSignalConnectionInfo
     /// Line number (1-based) in the .tscn file.
     /// </summary>
     public int LineNumber { get; set; }
+
+    /// <summary>
+    /// Column (0-based) of the method name inside the line.
+    /// </summary>
+    public int MethodColumn { get; set; }
 
     /// <summary>
     /// Type of the node emitting the signal (resolved from scene nodes).

@@ -58,11 +58,17 @@ public class GDDocumentManager
             doc.Content = content;
             doc.Version = version;
 
+            var filename = System.IO.Path.GetFileName(doc.FilePath);
+
             // Reload the script with new content
             var script = _project.GetScript(doc.FilePath);
             if (script != null)
             {
+                GDLspPerformanceTrace.Log("reload", $"START {filename} v{version}");
+                var sw = System.Diagnostics.Stopwatch.StartNew();
                 script.Reload(content);
+                sw.Stop();
+                GDLspPerformanceTrace.Log("reload", $"END {filename} {sw.ElapsedMilliseconds}ms");
                 InvalidateSemanticModel(script);
             }
         }
@@ -77,19 +83,21 @@ public class GDDocumentManager
         if (string.IsNullOrEmpty(filePath))
             return;
 
+        var filename = System.IO.Path.GetFileName(filePath);
+
         if (_projectModel != null)
         {
+            GDLspPerformanceTrace.Log("invalidate", $"START {filename} hasModel={_projectModel != null}");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             _projectModel.InvalidateFile(filePath);
-
-            // Only eagerly rebuild after initial analysis is complete.
-            // During startup, AnalyzeAll() handles analysis — eager rebuild here
-            // would race with it and produce stale semantic models.
-            if (_initialAnalysisComplete)
-                _projectModel.GetSemanticModel(script);
+            sw.Stop();
+            GDLspPerformanceTrace.Log("invalidate", $"END {filename} {sw.ElapsedMilliseconds}ms");
         }
         else if (_initialAnalysisComplete)
         {
             // Fallback: rebuild per-file model directly
+            GDLspPerformanceTrace.Log("invalidate", $"FALLBACK-ANALYZE {filename}");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
                 script.Analyze(_project.CreateRuntimeProvider(), _project.CreateNodeTypeInjector());
@@ -98,6 +106,8 @@ public class GDDocumentManager
             {
                 // Best effort
             }
+            sw.Stop();
+            GDLspPerformanceTrace.Log("invalidate", $"FALLBACK-DONE {filename} {sw.ElapsedMilliseconds}ms");
         }
     }
 
