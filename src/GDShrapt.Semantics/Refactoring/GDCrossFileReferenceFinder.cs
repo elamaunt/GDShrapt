@@ -292,13 +292,45 @@ public class GDCrossFileReferenceFinder
         if (sourceType == targetType)
             return true;
 
+        // Resolve autoload names to their class_name for comparison.
+        // E.g., autoload "Camera" → class_name "FieldCamera"
+        var resolvedSource = ResolveAutoloadToClassName(sourceType) ?? sourceType;
+        var resolvedTarget = ResolveAutoloadToClassName(targetType) ?? targetType;
+
+        if (resolvedSource == resolvedTarget)
+            return true;
+
         // Check inheritance via runtime provider
         if (_runtimeProvider != null)
         {
-            return _runtimeProvider.IsAssignableTo(sourceType, targetType);
+            if (_runtimeProvider.IsAssignableTo(resolvedSource, resolvedTarget))
+                return true;
+            // Also check with original names in case the provider handles autoloads
+            if (resolvedSource != sourceType && _runtimeProvider.IsAssignableTo(sourceType, targetType))
+                return true;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Resolves an autoload singleton name to its class_name.
+    /// E.g., "Camera" autoload → script field_camera.gd → class_name "FieldCamera".
+    /// Returns null if not an autoload or no class_name.
+    /// </summary>
+    private string? ResolveAutoloadToClassName(string typeName)
+    {
+        foreach (var autoload in _project.AutoloadEntries)
+        {
+            if (!autoload.Enabled) continue;
+            if (autoload.Name != typeName) continue;
+
+            var script = _project.GetScriptByResourcePath(autoload.Path);
+            if (script?.TypeName != null && script.TypeName != typeName)
+                return script.TypeName;
+        }
+
+        return null;
     }
 
     /// <summary>

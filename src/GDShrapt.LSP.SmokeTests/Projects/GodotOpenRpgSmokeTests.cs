@@ -325,7 +325,7 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
     }
 
     [TestMethod]
-    public void References_FieldCamera_ResetPosition_DoesNotCrash()
+    public void References_FieldCamera_ResetPosition_IncludesCrossFileUsage()
     {
         var script = FindScript("field_camera.gd");
         script.Should().NotBeNull("field_camera.gd should exist in godot-open-rpg");
@@ -340,12 +340,22 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
         var lspHandler = new GDReferencesHandler(findRefsHandler, goToDefHandler);
         var uri = GDDocumentManager.PathToUri(script!.FullPath!);
 
-        // FindReferences on declaration should not crash, even if cross-file results vary
-        lspHandler.HandleAsync(new GDReferencesParams
+        var result = lspHandler.HandleAsync(new GDReferencesParams
         {
             TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
-            Position = new GDLspPosition(line, col)
+            Position = new GDLspPosition(line, col),
+            Context = new GDReferenceContext { IncludeDeclaration = true }
         }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("FindReferences should return results");
+        result!.Length.Should().BeGreaterThanOrEqualTo(2,
+            "reset_position should have at least 2 references (declaration + usage in field.gd)");
+
+        var uris = result.Select(r => r.Uri).ToList();
+        uris.Should().Contain(u => u.Contains("field_camera"),
+            "references should include field_camera.gd (declaration)");
+        uris.Should().Contain(u => u.Contains("field/field.gd") || u.Contains("field\\field.gd"),
+            "references should include field.gd (cross-file usage via Camera autoload)");
     }
 
     [TestMethod]

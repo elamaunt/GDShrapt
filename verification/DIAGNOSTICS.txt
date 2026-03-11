@@ -1,23 +1,23 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-11 05:12:21
+Generated: 2026-03-11 12:21:35
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 731
+Total diagnostics: 734
 Scripts analyzed:  61
 
 By Severity:
   Error     :    30
   Hint      :    94
   Info      :    36
-  Warning   :   571
+  Warning   :   574
 
 By Source:
   Linter              :   304
-  SemanticValidator   :   393
+  SemanticValidator   :   396
   Validator           :    34
 
 By Code (Top 30):
@@ -49,8 +49,8 @@ By Code (Top 30):
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
   GD4009    :    4  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
+  GD7019    :    4  (Assignment widens 'TestEnum' to 'int')
   GD3006    :    3  (Unknown type: 'CompletelyUnknownType')
-  GD3010    :    3  (Argument type mismatch for 'x' in call to '_take_int': ex...)
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -68,7 +68,7 @@ DIAGNOSTICS BY FILE
      5:5   [GDL201] Warning - Local variable 'level' is declared but never used
      7:5   [GDL201] Warning - Local variable 'count' is declared but never used
 
---- test_scripts/completion_test.gd (9 diagnostics) ---
+--- test_scripts/completion_test.gd (12 diagnostics) ---
 
     80:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'texture'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
     81:1   [GD7005] Hint - Variable 'child_sprite' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'flip_h'. Accessed in completion_test.gd:78:0 test_node_completion (no in-file callers)
@@ -79,6 +79,9 @@ DIAGNOSTICS BY FILE
     99:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'wait_time'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
    100:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'one_shot'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
    101:17  [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'time_left'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
+   107:1   [GD7019] Warning - Assignment widens 'TestEnum' to 'int'
+   108:1   [GD7019] Warning - Assignment widens 'TestEnum' to 'int'
+   109:1   [GD7019] Warning - Assignment widens 'TestEnum' to 'int'
 
 --- test_scripts/cross_file_inference.gd (66 diagnostics) ---
 

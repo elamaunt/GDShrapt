@@ -1,15 +1,15 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-11 05:14:40
+Generated: 2026-03-11 12:22:40
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           894
+Total:           897
 Verified (OK):   884
 Unverified:      10
 False Positives: 0
-Skipped:         0
+Skipped:         3
 Orphaned Markers:1
 
 ================================================================================
@@ -45,6 +45,14 @@ UNVERIFIED DIAGNOSTICS
     Add: # 10:17-GD7022-OK
   14:5 [GDL201] Local variable 'connected_area' is declared but never used
     Add: # 14:5-GDL201-OK
+
+================================================================================
+SKIPPED (NEEDS ANALYSIS)
+================================================================================
+
+  test_scripts/completion_test.gd:107:1 [GD7019]
+  test_scripts/completion_test.gd:108:1 [GD7019]
+  test_scripts/completion_test.gd:109:1 [GD7019]
 
 ================================================================================
 ORPHANED MARKERS (MARKERS WITHOUT DIAGNOSTICS)
