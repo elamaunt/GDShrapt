@@ -140,8 +140,8 @@ public class GDSymbol
     public static GDSymbol Enum(string name, GDNode declaration)
         => new GDSymbol(name, GDSymbolKind.Enum, declaration);
 
-    public static GDSymbol EnumValue(string name, GDNode declaration)
-        => new GDSymbol(name, GDSymbolKind.EnumValue, declaration);
+    public static GDSymbol EnumValue(string name, GDNode declaration, string? enumTypeName = null)
+        => new GDSymbol(name, GDSymbolKind.EnumValue, declaration, typeName: enumTypeName ?? "int");
 
     /// <summary>
     /// For-loop iterator variable.

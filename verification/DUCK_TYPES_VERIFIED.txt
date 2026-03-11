@@ -1,5 +1,5 @@
-# DUCK_TYPES_OUTPUT.txt
-# Auto-generated - do not edit manually
+# DUCK_TYPES_VERIFIED.txt
+# Copy entries from DUCK_TYPES_OUTPUT.txt and add # OK marker
 # Format: block per parameter with inference + duck type details
 
 test_scripts/ai_controller.gd
@@ -235,7 +235,7 @@ test_scripts/cross_file_inference.gd
     confidence: Unknown
 
   237:37 Parameter params in create_game_object # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -278,7 +278,7 @@ test_scripts/cross_file_inference.gd
 
 test_scripts/cycles_test.gd
   22:15 Parameter input in transform # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -336,7 +336,7 @@ test_scripts/cyclic_inference.gd
     duck-typed: yes
 
   30:23 Parameter data in transform_stage_1 # OK
-    inferred-type: String | int | Array[<Derivable>]
+    inferred-type: Array[<Derivable>] | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -363,7 +363,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   75:16 Parameter context in state_idle # OK
-    inferred-type: PackedStringArray | Dictionary | Array
+    inferred-type: AIController.AIState | AIState | Array | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | Dictionary | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -374,7 +374,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   82:18 Parameter context in state_active # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -428,7 +428,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   121:27 Parameter func_ref in accumulate_left # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -449,7 +449,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   131:28 Parameter func_ref in accumulate_right # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -488,7 +488,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   180:16 Parameter node in visit_node # OK
-    inferred-type: PackedStringArray | Dictionary[String, Variant] | Array
+    inferred-type: AIController.AIState | AIState | Array | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | Dictionary[String, Variant] | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -507,7 +507,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   192:28 Parameter root in traverse_and_transform # OK
-    inferred-type: PackedStringArray | Dictionary[String, Variant] | Array
+    inferred-type: AIController.AIState | AIState | Array | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | Dictionary[String, Variant] | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -536,14 +536,14 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   226:24 Parameter state in _advance_generator # OK
-    inferred-type: Array | int | float | String
+    inferred-type: Array | float | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   243:16 Parameter tokens in parse_expr # OK
-    inferred-type: Dictionary | Array
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | Array | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -558,7 +558,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   270:16 Parameter tokens in parse_term # OK
-    inferred-type: Dictionary | Array
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | Array | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -573,7 +573,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   297:18 Parameter tokens in parse_factor # OK
-    inferred-type: Dictionary | Array | int | float
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | Array | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | float | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | int | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -834,7 +834,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   21:28 Parameter target in process_attack # OK
-    inferred-type: InheritanceTest | BaseEntity | EnemyEntity | SimpleClass | PlayerEntity | ExtendedClass
+    inferred-type: BaseEntity | EnemyEntity | ExtendedClass | InheritanceTest | PlayerEntity | SimpleClass | UnrelatedClass
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -877,7 +877,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   78:18 Parameter position in find_nearest # OK
-    inferred-type: Vector3 | Vector2i | Vector4i | Vector3i | Vector4 | Vector2
+    inferred-type: Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -904,7 +904,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   152:21 Parameter action in _execute_action # OK
-    inferred-type: Object | Callable | String | Dictionary[Variant, <Derivable>]
+    inferred-type: Callable | Dictionary[Variant, <Derivable>] | Object | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -915,7 +915,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   167:26 Parameter action_dict in _execute_dict_action # OK
-    inferred-type: PackedStringArray | Dictionary[String, Variant] | Array
+    inferred-type: AIController.AIState | AIState | Array | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | Dictionary[String, Variant] | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -933,7 +933,7 @@ test_scripts/duck_typing_advanced.gd
     union: yes
 
   175:26 Parameter transformer in transform_data # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -954,7 +954,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   216:20 Parameter value in _step_validate # OK
-    inferred-type: String | StringName | Dictionary | Array[<Derivable>] | int
+    inferred-type: Array[<Derivable>] | Dictionary | int | String | StringName
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -965,7 +965,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   226:21 Parameter value in _step_transform # OK
-    inferred-type: Array[<Derivable>] | Observable | SignalCallbackChains.Observable | int | float
+    inferred-type: Array[<Derivable>] | float | int | Observable | SignalCallbackChains.Observable
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1072,7 +1072,7 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   50:18 Parameter obj in get_property # OK
-    inferred-type: Object | Dictionary
+    inferred-type: Dictionary | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1113,14 +1113,14 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   63:21 Parameter source in copy_properties # OK
-    inferred-type: Object | Dictionary
+    inferred-type: Dictionary | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
-  63:29 Parameter target in copy_properties # FP
-    inferred-type: PackedColorArray | PackedFloat64Array | Object | PackedByteArray | PackedFloat32Array | PackedInt32Array | PackedStringArray | PackedInt64Array | PackedVector4Array | PackedVector3Array | PackedVector2Array
+  63:29 Parameter target in copy_properties # OK
+    inferred-type: Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1137,7 +1137,7 @@ test_scripts/dynamic_dispatch.gd
     duck-typed: yes
 
   69:21 Parameter obj in sync_properties # OK
-    inferred-type: Object | Dictionary
+    inferred-type: Dictionary | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1147,8 +1147,8 @@ test_scripts/dynamic_dispatch.gd
       properties: duplicate, clone
       signals: (none)
 
-  76:22 Parameter obj in apply_properties # FP
-    inferred-type: PackedColorArray | PackedFloat64Array | Object | PackedByteArray | PackedFloat32Array | PackedInt32Array | PackedStringArray | PackedInt64Array | PackedVector4Array | PackedVector3Array | PackedVector2Array
+  76:22 Parameter obj in apply_properties # OK
+    inferred-type: Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1175,7 +1175,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   92:26 Parameter message in send_message # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1202,7 +1202,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   138:22 Parameter value in _serialize_value # OK
-    inferred-type: Vector3 | int | float | bool | String | Vector2 | Color | Array[<Derivable>] | Dictionary[Variant, <Derivable>] | Object
+    inferred-type: Array[<Derivable>] | bool | Color | Dictionary[Variant, <Derivable>] | float | int | Object | String | Vector2 | Vector3
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1212,8 +1212,8 @@ test_scripts/dynamic_dispatch.gd
       properties: x, y, z, r, g, b, a
       signals: (none)
 
-  165:27 Parameter obj in deserialize_to_object # FP
-    inferred-type: PackedColorArray | PackedFloat64Array | Object | PackedByteArray | PackedFloat32Array | PackedInt32Array | PackedStringArray | PackedInt64Array | PackedVector4Array | PackedVector3Array | PackedVector2Array
+  165:27 Parameter obj in deserialize_to_object # OK
+    inferred-type: Object | PackedByteArray | PackedColorArray | PackedFloat32Array | PackedFloat64Array | PackedInt32Array | PackedInt64Array | PackedStringArray | PackedVector2Array | PackedVector3Array | PackedVector4Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1234,7 +1234,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   172:24 Parameter data in _deserialize_value # OK
-    inferred-type: PackedStringArray | Dictionary[Variant, <Derivable>] | Array[<Derivable>] | int | float | bool | String
+    inferred-type: AIController.AIState | AIState | Array[<Derivable>] | bool | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | Dictionary[Variant, <Derivable>] | float | GameState | int | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | String | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1359,14 +1359,14 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   306:14 Parameter event in dispatch # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   318:25 Parameter event in dispatch_to_handler # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1431,7 +1431,7 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   369:33 Parameter logger in _create_logging_interceptor # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1462,7 +1462,7 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   400:18 Parameter obj in advised_call # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1565,7 +1565,7 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   131:24 Parameter predicate in query_by_predicate # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1694,7 +1694,7 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   247:43 Parameter overrides in create_from_archetype # OK
-    inferred-type: Dictionary | Array
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | Array | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1717,7 +1717,7 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   286:20 Parameter handler in process_events # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1750,7 +1750,7 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   368:23 Parameter data in deserialize_world # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1833,6 +1833,11 @@ test_scripts/extended_class.gd
     confidence: Certain
     reason: explicit type annotation
 
+  51:29 Parameter pos in create_from_base # OK
+    inferred-type: Vector2
+    confidence: Certain
+    reason: explicit type annotation
+
 
 test_scripts/formatting_issues.gd
   23:17 Parameter x in bad_spacing # OK
@@ -1901,21 +1906,21 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   26:15 Parameter predicate in find_item # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   35:20 Parameter predicate in find_all_items # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   43:23 Parameter item in get_item_property # OK
-    inferred-type: Object | Dictionary[Variant, <Derivable>]
+    inferred-type: Dictionary[Variant, <Derivable>] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1930,7 +1935,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   52:23 Parameter item in set_item_property # OK
-    inferred-type: Object | Dictionary[Variant, <Derivable>]
+    inferred-type: Dictionary[Variant, <Derivable>] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1973,7 +1978,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   97:17 Parameter dialog_data in load_dialog # OK
-    inferred-type: String | Dictionary[Variant, <Derivable>]
+    inferred-type: Dictionary[Variant, <Derivable>] | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1984,7 +1989,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   143:29 Parameter choice in _check_choice_condition # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1999,7 +2004,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   208:18 Parameter quest_data in accept_quest # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2107,7 +2112,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   446:27 Parameter item_filter in _matches_filter # OK
-    inferred-type: Object | Callable | String
+    inferred-type: Callable | Object | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2118,7 +2123,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   506:21 Parameter data in load_game_state # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2137,7 +2142,7 @@ test_scripts/game_patterns.gd
     duck-typed: yes
 
   530:22 Parameter value in _serialize_value # OK
-    inferred-type: Vector3 | bool | int | float | String | Vector2 | Array[<Derivable>] | Dictionary[Variant, <Derivable>]
+    inferred-type: Array[<Derivable>] | bool | Dictionary[Variant, <Derivable>] | float | int | String | Vector2 | Vector3
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2160,7 +2165,7 @@ test_scripts/game_patterns.gd
     duck-typed: yes
 
   558:24 Parameter value in _deserialize_value # OK
-    inferred-type: PackedStringArray | Dictionary[String, <Derivable>] | Array[<Derivable>]
+    inferred-type: AIController.AIState | AIState | Array[<Derivable>] | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | Dictionary[String, <Derivable>] | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2333,7 +2338,7 @@ test_scripts/local_variables.gd
     confidence: Unknown
 
   150:26 Parameter value in type_narrowing_local # OK
-    inferred-type: Dictionary[Variant, <Derivable>] | Array[<Derivable>]
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | Array[<Derivable>] | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary[Variant, <Derivable>] | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2379,7 +2384,7 @@ test_scripts/method_chains.gd
       signals: (none)
 
   45:28 Parameter data in optional_chain_pattern # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2401,7 +2406,7 @@ test_scripts/method_chains.gd
     reason: explicit type annotation
 
   105:17 Parameter input in mixed_chain # OK
-    inferred-type: Dictionary[String, <Derivable>] | Array[<Derivable>] | String
+    inferred-type: Array[<Derivable>] | Dictionary[String, <Derivable>] | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2409,6 +2414,19 @@ test_scripts/method_chains.gd
     duck-constraints:
       methods: filter(-1), size(-1), to_upper(-1)
       properties: filter, size, to_upper
+      signals: (none)
+
+
+test_scripts/neutral_ui_caller.gd
+  16:19 Parameter panel in update_single # OK
+    inferred-type: UIPanelA | UIPanelB
+    confidence: Medium
+    reason: union from type checks
+    duck-typed: yes
+    union: yes
+    duck-constraints:
+      methods: refresh_ui(-1)
+      properties: refresh_ui
       signals: (none)
 
 
@@ -2507,7 +2525,7 @@ test_scripts/polymorphic_interfaces.gd
     confidence: Unknown
 
   88:19 Parameter available_targets in select_target # OK
-    inferred-type: String | StringName | Dictionary[int, Variant] | Array
+    inferred-type: Array | Dictionary[int, Variant] | String | StringName
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -2573,7 +2591,7 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   177:29 Parameter predicate in find_in_tree # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2590,7 +2608,7 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   191:34 Parameter collector in collect_from_tree # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2633,7 +2651,7 @@ test_scripts/polymorphic_interfaces.gd
     confidence: Unknown
 
   271:20 Parameter value in _get_type_name # OK
-    inferred-type: int | float | String | Array[<Derivable>] | Dictionary[Variant, <Derivable>] | Vector2 | Vector3
+    inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String | Vector2 | Vector3
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2656,7 +2674,7 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   303:38 Parameter transform in iterate_with_transform # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2671,7 +2689,7 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   312:29 Parameter predicate in iterate_until # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3047,7 +3065,7 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   129:15 Parameter task_func in _run_task # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3163,14 +3181,14 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   272:10 Parameter transform in map # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   281:13 Parameter predicate in filter # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3220,7 +3238,7 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   338:26 Parameter callback in throttle # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3235,14 +3253,14 @@ test_scripts/signal_callback_chains.gd
       signals: (none)
 
   358:22 Parameter on_success in async_fetch # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   358:34 Parameter on_failure in async_fetch # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3283,7 +3301,7 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   373:57 Parameter on_complete in _run_chain_step # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3557,7 +3575,7 @@ test_scripts/todo_examples.gd
 
 test_scripts/type_guards.gd
   8:19 Parameter value in process_value # OK
-    inferred-type: int | String | Array[<Derivable>] | Dictionary[Variant, <Derivable>]
+    inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3578,7 +3596,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   44:25 Parameter value in type_guard_with_and # OK
-    inferred-type: Dictionary[int | String, <Derivable>] | Array[<Derivable>] | String
+    inferred-type: Array[<Derivable>] | Dictionary[int | String, <Derivable>] | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3589,7 +3607,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   61:24 Parameter value in type_guard_with_or # OK
-    inferred-type: Vector3 | Quaternion | String | Vector2i | Vector4i | Vector3i | StringName | Vector4 | Vector2 | int | float
+    inferred-type: float | int | Quaternion | String | StringName | Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3600,15 +3618,18 @@ test_scripts/type_guards.gd
       signals: (none)
 
   74:24 Parameter data in early_return_guard # OK
-    inferred-type: Variant
-    confidence: Unknown
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
+    confidence: Medium
+    reason: union from type checks
+    duck-typed: yes
+    union: yes
     duck-constraints:
       methods: has(-1), keys(-1)
       properties: has, keys
       signals: (none)
 
   89:28 Parameter value in assignment_after_guard # OK
-    inferred-type: String | StringName | int
+    inferred-type: int | String | StringName
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3642,7 +3663,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   137:24 Parameter value in using_custom_guard # OK
-    inferred-type: Object | Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, <Derivable>] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3662,8 +3683,11 @@ test_scripts/type_guards.gd
       signals: (none)
 
   172:19 Parameter value in negated_guard # OK
-    inferred-type: Variant
-    confidence: Unknown
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
+    confidence: Medium
+    reason: union from type checks
+    duck-typed: yes
+    union: yes
     duck-constraints:
       methods: length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
       properties: length, size, keys, is_empty, has, to_upper, front
@@ -3719,17 +3743,18 @@ test_scripts/type_guards.gd
       signals: (none)
 
   249:23 Parameter value in assert_type_guard # OK
-    inferred-type: Dictionary[Variant, <Derivable>]
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary[Variant, <Derivable>] | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: High
-    reason: single type from constraints
+    reason: union from type checks
     duck-typed: yes
+    union: yes
     duck-constraints:
       methods: length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
   256:24 Parameter value in ternary_with_guard # OK
-    inferred-type: Vector3 | Quaternion | String | Vector2i | Vector4i | Vector3i | StringName | Vector4 | Vector2
+    inferred-type: Quaternion | String | StringName | Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3740,10 +3765,11 @@ test_scripts/type_guards.gd
       signals: (none)
 
   262:23 Parameter outer in guard_propagation # OK
-    inferred-type: Dictionary[Variant, <Derivable>]
+    inferred-type: Access | AccessEnum | AccessibilityAction | AccessibilityFlags | AccessibilityLiveMode | AccessibilityPopupType | AccessibilityRole | AccessibilityScrollHint | AccessibilityScrollUnit | ActionMode | ActionModeEnum | ActionType | ActionTypeEnum | AdvanceMode | AdvanceModeEnum | AIController.AIState | AIState | AlignmentMode | AlphaAntiAliasing | AlphaCutMode | AlphaMode | AmbientMode | AmbientModeEnum | AmbientSource | Anchor | AnchorMode | AnchorModeEnum | AnimationCallbackModeDiscrete | AnimationCallbackModeMethod | AnimationCallbackModeProcess | AnimationMethodCallMode | AnimationProcessCallback | AnisotropicFiltering | ApiType | APIType | AprilTagDict | AreaBodyStatus | AreaParameter | AreaSpaceOverrideMode | ArrayCustomFormat | ArrayFormat | ArrayType | ArucoDict | ArucoDictEnum | AstcFormat | ASTCFormat | AttenuationModel | AttenuationModelEnum | AudioStreamGeneratorMixRate | AutoAdvanceMode | AutoTranslateMode | AutoTranslateModeEnum | AutowrapMode | Axis | AxisFlag | AxisStretchMode | BakeChannels | BakeError | BakeMode | BakeQuality | BarrierMask | BGMode | BillboardMode | BillboardModeEnum | BillboardType | BillboardTypeEnum | BlendFactor | BlendMode | BlendModeEnum | BlendOperation | BlendShapeEntry | BlendShapeMode | BodyAxis | BodyDampMode | BodyFlags | BodyFlagsEnum | BodyMode | BodyParameter | BodyState | BodyUpdate | BodyUpdateEnum | BoneAxis | BoneDirection | BoneUpdate | BoneUpdateEnum | BreadcrumbMarker | BufferCreationBits | BuildMode | BuildModeEnum | CacheMode | Camera2DProcessCallback | CanvasGroupMode | CanvasItemTextureFilter | CanvasItemTextureRepeat | CanvasLightBlendMode | CanvasLightMode | CanvasLightShadowFilter | CanvasOccluderPolygonCullMode | CanvasTextureChannel | Capabilities | Capability | CaretType | CaretTypeEnum | CcdMode | CCDMode | CellNeighbor | CellShape | CellShapeEnum | CellularDistanceFunction | CellularDistanceFunctionEnum | CellularReturnType | CellularReturnTypeEnum | CenterFrom | CenterOfMassMode | CenterOfMassModeEnum | ChannelState | ClearMode | ClipChildrenMode | ClockDirection | CloseButtonDisplayPolicy | CodeCompletionKind | CodeCompletionLocation | CollisionMode | CollisionModeEnum | ColorDefault | ColorDefaultEnum | ColorModeType | ColorSpace | CompareOperator | ComparisonType | CompletionTest.TestEnum | ComponentType | CompositorEffectCallbackType | CompositorEffectFlags | CompressionLevel | CompressionLevelEnum | CompressionMode | CompressMode | CompressSource | Condition | ConditionEnum | ConeTwistJointParam | ConnectFlags | ConnectionState | ConnectionStatus | ContentScaleAspect | ContentScaleAspectEnum | ContentScaleMode | ContentScaleModeEnum | ContentScaleStretch | ContentScaleStretchEnum | ContourPointTag | CopyMode | CopyModeEnum | Corner | CubeMapLayer | CullMode | CullModeEnum | CursorShape | CustomFormat | Customization | DampedSpringParam | DampMode | DataFormat | DataType | DebugDraw | DebugDrawEnum | DebugVisibilityMode | DecalFilter | DecalTexture | DeepDuplicateMode | DefaultCanvasItemTextureFilter | DefaultCanvasItemTextureRepeat | DepthDrawMode | DepthDrawModeEnum | DepthTest | DepthTestEnum | DetailUV | DeviceType | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | DiagonalMode | DiagonalModeEnum | Dictionary[Variant, <Derivable>] | DiffuseMode | DiffuseModeEnum | Direction | DisableMode | DisableModeEnum | DisperseMode | DisplayMode | DisplayModeEnum | DistanceFadeMode | DistanceFadeModeEnum | DofBlurQuality | DOFBlurQuality | DofBokehShape | DOFBokehShape | DomainWarpFractalType | DomainWarpFractalTypeEnum | DomainWarpType | DomainWarpTypeEnum | DopplerTracking | DopplerTrackingEnum | DraggerVisibility | DraggerVisibilityEnum | DrawFlags | DrawMode | DrawOrder | DrawOrderEnum | DriverResource | DropModeFlags | DropModeFlagsEnum | DuplicateFlags | EaseType | EditAction | EffectCallbackType | EffectCallbackTypeEnum | EmissionOperator | EmissionOperatorEnum | EmissionShape | EmissionShapeEnum | EmitFlags | EnableMode | EnableModeEnum | EntityTrackingState | EnvironmentAmbientSource | EnvironmentBG | EnvironmentBlendMode | EnvironmentBlendModeEnum | EnvironmentFogMode | EnvironmentGlowBlendMode | EnvironmentMode | EnvironmentModeEnum | EnvironmentReflectionSource | EnvironmentSdfgiFramesToConverge | EnvironmentSDFGIFramesToConverge | EnvironmentSdfgiFramesToUpdateLight | EnvironmentSDFGIFramesToUpdateLight | EnvironmentSdfgiRayCount | EnvironmentSDFGIRayCount | EnvironmentSdfgiyScale | EnvironmentSDFGIYScale | EnvironmentSsaoQuality | EnvironmentSSAOQuality | EnvironmentSsilQuality | EnvironmentSSILQuality | EnvironmentSsrRoughnessQuality | EnvironmentSSRRoughnessQuality | EnvironmentToneMapper | Error | ErrorCode | ErrorType | EulerOrder | EventType | ExpandMode | ExpandModeEnum | FadeMode | Feature | Features | FeedDataType | FeedImage | FeedPosition | FFTSize | FftSizeEnum | FileDialogMode | FileMode | FileModeEnum | Fill | FillEnum | FillMode | FillModeEnum | Filter | FilterAction | FilterDB | FinalAction | FindMode | FixedSizeScaleMode | Flag | Flags | FocusBehaviorRecursive | FocusBehaviorRecursiveEnum | FocusMode | FocusModeEnum | FogMode | FogModeEnum | FogVolumeShape | FontAntialiasing | FontLcdSubpixelLayout | FontLCDSubpixelLayout | FontStyle | Format | FormatEnum | FractalType | FractalTypeEnum | FreezeMode | FreezeModeEnum | Function | FunctionEnum | G6DofJointAxisFlag | G6DOFJointAxisFlag | G6DofJointAxisParam | G6DOFJointAxisParam | GameState | GatheringState | GenEditState | GenerateProbes | GIMode | GIModeEnum | GlobalShaderParameterType | GlowBlendMode | GlowBlendModeEnum | GltfAccessorType | GLTFAccessorType | GltfComponentType | GLTFComponentType | GltfObjectModelType | GLTFObjectModelType | godot_bool | godot_error_handler_type | godot_variant_call_error_error | GraphemeFlag | GridPattern | GridPatternEnum | GroupCallFlags | GrowDirection | GutterType | Hand | HandJoint | HandJointFlags | HandJoints | HandleBinaryImageMode | HandleBinaryImageModeEnum | HandleType | HandMotionRange | Hands | HandTrackedSource | HandTrackingSource | HandTrackingSourceEnum | HashType | Heuristic | HingeJointFlag | HingeJointParam | Hint | HintEnum | Hinting | HorizontalAlignment | HostStatistic | IconMode | IconModeEnum | IGDStatus | IgdStatusEnum | ImageUpdateMask | ImportOrder | IndexBufferFormat | InitialAction | InitializationLevel | InlineAlignment | InstanceFlags | InstanceType | InternalMode | Interpolation | InterpolationMode | InterpolationModeEnum | InterpolationType | invalid_enum | InvalidEnumValues | Joint | JointFlags | JointParam | JointType | JointTypeEnum | JoyAxis | JoyButton | JustificationFlag | KeepAspect | KeepAspectEnum | Key | KeyLocation | KeyModifierMask | LastWrapAlignmentMode | LayeredType | LayoutDirection | LayoutDirectionEnum | LayoutPreset | LayoutPresetMode | LightBakeMode | LightDirectionalShadowMode | LightDirectionalSkyMode | LightmapScale | LightMode | LightModeEnum | LightOmniShadowMode | LightParam | LightProjectorFilter | LightType | Limit | LineBreakFlag | LineCapMode | LineJointMode | LineTextureMode | LineWrappingMode | ListType | LoaderFlags | LoadStatus | LogicOperation | LookupResultType | LoopedFlag | LoopMode | LoopModeEnum | MagnitudeMode | MarkerType | MemoryType | MenuItems | MergeMode | MetaUnderline | Method | MethodFlags | MidiMessage | MipmapMode | MixMode | MixModeEnum | MixTarget | MixTargetEnum | Mode | ModeEnum | ModeFlags | ModifierCallbackModeProcess | ModifierCallbackModeProcessEnum | Monitor | MonitorType | Month | MotionMode | MotionModeEnum | MotionRange | MotionRangeEnum | MouseBehaviorRecursive | MouseBehaviorRecursiveEnum | MouseButton | MouseButtonMask | MouseFilter | MouseFilterEnum | MouseMode | MouseModeEnum | Msaa | MSAA | MultimeshPhysicsInterpolationQuality | MultimeshTransformFormat | NinePatchAxisMode | NodeType | NoiseType | NoiseTypeEnum | OneShotRequest | OpenXRAlphaBlendModeSupport | Operation | OperationEnum | Operator | OperatorEnum | OpType | OpTypeEnum | Orientation | OrientationEnum | OriginFrom | OriginFromEnum | OverrunBehavior | PanningScheme | PanningSchemeEnum | Param | Parameter | ParsedGeometryType | ParsedGeometryTypeEnum | ParticleFlags | ParticlesCollisionHeightfieldResolution | ParticlesCollisionType | ParticlesDrawOrder | ParticlesMode | ParticlesTransformAlign | PathfindingAlgorithm | PathfindingAlgorithmEnum | PathIntervalType | PathIntervalTypeEnum | PathMetadataFlags | PathPostProcessing | PathRotation | PathRotationEnum | PathSegmentType | PeerState | PeerStatistic | PerfSettingsLevel | PerfSettingsNotificationLevel | PerfSettingsSubDomain | PersistenceScope | PhysicsInterpolationMode | PhysicsInterpolationModeEnum | PhysicsInterpolationQuality | PhysicsInterpolationQualityEnum | PickerShapeType | PinJointFlag | PinJointParam | PipelineDynamicStateFlags | PipelineSource | PipelineSpecializationConstantType | PlaneAlignment | Planes | PlaneSemanticLabel | PlatformOnLeave | PlatformOnLeaveEnum | PlayAreaMode | PlaybackMode | PlaybackModeEnum | PlaybackType | PlayMode | PlayModeEnum | PolyBooleanOperation | PolyEndType | PolygonCullMode | PolygonFrontFace | PolyJoinType | PortType | PositionalShadowAtlasQuadrantSubdiv | Precision | PrecisionEnum | PrimitiveType | Priority | ProcessInfo | ProcessMode | ProcessModeEnum | ProcessThreadGroup | ProcessThreadGroupEnum | ProcessThreadMessages | ProcessThreadMessagesEnum | ProjectionType | PropertyHint | PropertyUsageFlags | Qualifier | QualifierEnum | RadianceSize | RadianceSizeEnum | ReferenceType | ReflectionProbeAmbientMode | ReflectionProbeUpdateMode | ReflectionSource | RenderInfo | RenderInfoType | RenderingDriver | RenderingInfo | RenderModelTracker | RenderPrimitive | Repeat | RepeatEnum | ReplicationMode | Resolution | ResolutionEnum | ResolverStatus | ResponseCode | Result | ResultStatus | RootNodeMode | RootNodeModeEnum | RotationAxis | RotationEditMode | RotationEditModeEnum | RotationMode | RotationModeEnum | RpcMode | RPCMode | SamplePartitionType | SamplePartitionTypeEnum | SamplerBorderColor | SamplerFilter | SamplerRepeatMode | SaverFlags | Scaling3DMode | Scaling3DModeEnum | ScreenOrientation | ScreenSpaceAA | ScreenSpaceAAEnum | ScriptNameCasing | ScrollHintMode | ScrollHintModeEnum | ScrollMode | SdfgiyScale | SDFGIYScale | SDFOversize | SdfOversizeEnum | SDFScale | SdfScaleEnum | SearchFlags | SecondaryDirection | SelectionMode | SelectMode | SelectModeEnum | SessionState | ShaderLanguage | ShaderMode | ShaderStage | ShadingMode | ShadingModeEnum | ShadowCastingSetting | ShadowFilter | ShadowFilterEnum | ShadowmaskMode | ShadowMode | ShadowQuality | Shape | ShapeEnum | ShapeType | SHOUTING_ENUM | Side | SignalingState | SizeFlags | SkeletonRig | SkeletonRigEnum | SkinWeightCount | SkyMode | SkyModeEnum | SliderJointParam | Source | SourceEnum | SourceGeometryMode | SourceGeometryModeEnum | SpaceOverride | SpaceParameter | SpacingType | SpeakerMode | SpecularMode | SpecularModeEnum | SplashStretchMode | State | StateMachineType | StateMachineTypeEnum | Status | StdHandleType | StencilCompare | StencilCompareEnum | StencilFlags | StencilFlagsEnum | StencilMode | StencilModeEnum | StencilOperation | StorageBufferUsage | StretchMode | StretchModeEnum | StructuredTextParser | Subdiv | SubdivEnum | SubEmitterMode | SubEmitterModeEnum | SubpixelPositioning | SubSurfaceScatteringQuality | suppressed_bad_enum | SuppressedEnumValues | SwitchMode | SwitchModeEnum | Swizzle | SystemDir | SystemMenus | TabPosition | TailDirection | TangentMode | TargetRayMode | TerrainMode | TestEnum | TextDirection | TextOverrunFlag | TextureChannel | TextureFilter | TextureFilterEnum | TextureLayeredType | TextureMode | TextureModeEnum | TextureParam | TextureRepeat | TextureRepeatEnum | TextureSamples | TextureSliceType | TextureSource | TextureSourceEnum | TextureSwizzle | TextureType | TextureTypeEnum | TextureUsageBits | ThreadLoadStatus | ThreadType | TickPosition | TileAnimationMode | TileLayout | TileLayoutEnum | TileOffsetAxis | TileOffsetAxisEnum | TileShape | TileShapeEnum | TimerProcessCallback | TitlePosition | TitlePositionEnum | ToneMapper | TrackerHand | TrackerType | TrackingConfidence | TrackingConfidenceEnum | TrackingStatus | TrackType | TransferMode | TransferModeEnum | TransformAlign | TransformAlignEnum | TransformFlag | TransformFormat | TransformFormatEnum | TransformMode | TransitionFromTime | TransitionToTime | TransitionType | Transparency | TransparencyEnum | TreeCellMode | TtsUtteranceEvent | TTSUtteranceEvent | TweenPauseMode | TweenProcessMode | Type | UnderlineMode | UniformType | UnixPermissionFlags | UpdateMode | UpdateModeEnum | UpnpResult | UPNPResult | UsedChannels | ValidEnum | ValidEnumValues | VaryingMode | VaryingType | VertexFrequency | VerticalAlignment | ViewportAnisotropicFiltering | ViewportClearMode | ViewportDebugDraw | ViewportEnvironmentMode | ViewportMsaa | ViewportMSAA | ViewportOcclusionCullingBuildQuality | ViewportRenderInfo | ViewportRenderInfoType | ViewportScaling3DMode | ViewportScreenSpaceAA | ViewportSdfOversize | ViewportSDFOversize | ViewportSdfScale | ViewportSDFScale | ViewportUpdateMode | ViewportVrsMode | ViewportVRSMode | ViewportVrsUpdateMode | ViewportVRSUpdateMode | VirtualKeyboardType | VirtualKeyboardTypeEnum | VisibilityMode | VisibilityModeEnum | VisibilityRangeFadeMode | VisibilityRangeFadeModeEnum | VisibilityUpdateMode | VisibilityUpdateModeEnum | VisibleCharactersBehavior | VoxelGIQuality | VRSMode | VrsModeEnum | VrsTextureFormat | VRSTextureFormat | VRSUpdateMode | VrsUpdateModeEnum | VSyncMode | Weekday | WindowEvent | WindowFlags | WindowInitialPosition | WindowMode | WindowResizeEdge | Wrap | WriteMode | WriteModeEnum | ZipAppend
     confidence: High
-    reason: single type from constraints
+    reason: union from type checks
     duck-typed: yes
+    union: yes
     duck-constraints:
       methods: keys(-1)
       properties: keys
@@ -3808,7 +3834,7 @@ test_scripts/union_returns.gd
     reason: explicit type annotation
 
   73:19 Parameter input in process_input # OK
-    inferred-type: int | float | String | Array[<Derivable>] | Dictionary[Variant, <Derivable>]
+    inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3855,7 +3881,7 @@ test_scripts/union_returns.gd
     reason: explicit type annotation
 
   139:42 Parameter data in exception_pattern # OK
-    inferred-type: Object | Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, <Derivable>] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3929,7 +3955,7 @@ test_scripts/union_returns.gd
 
 test_scripts/union_types_complex.gd
   24:19 Parameter input in try_operation # OK
-    inferred-type: String | StringName | int
+    inferred-type: int | String | StringName
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3948,7 +3974,7 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   58:21 Parameter value in process_by_type # OK
-    inferred-type: int | float | String | Array[<Derivable>] | Dictionary[Variant, <Derivable>]
+    inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3993,7 +4019,7 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   147:25 Parameter item in _process_mixed_item # OK
-    inferred-type: int | String | float | Array[<Derivable>] | Dictionary[Variant, <Derivable>]
+    inferred-type: Array[<Derivable>] | Dictionary[Variant, <Derivable>] | float | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4020,7 +4046,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   186:21 Parameter data in safe_get_nested # OK
-    inferred-type: Dictionary[int, <Derivable>] | Array[<Derivable>]
+    inferred-type: Array[<Derivable>] | Dictionary[int, <Derivable>]
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4049,7 +4075,7 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   224:19 Parameter result in handle_result # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4066,7 +4092,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   239:30 Parameter transform in map_with_fallback # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4087,21 +4113,21 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   252:23 Parameter predicate in filter_map # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   252:34 Parameter transform in filter_map # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
     union: yes
 
   263:23 Parameter array in reduce_or_default # OK
-    inferred-type: Dictionary[int, Variant] | Array
+    inferred-type: Array | Dictionary[int, Variant]
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -4112,7 +4138,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   263:30 Parameter reducer in reduce_or_default # OK
-    inferred-type: Object | Callable
+    inferred-type: Callable | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4143,7 +4169,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   300:21 Parameter params in _compute_result # OK
-    inferred-type: String | int | Array[<Derivable>]
+    inferred-type: Array[<Derivable>] | int | String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4158,7 +4184,7 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   318:16 Parameter value in is_numeric # OK
-    inferred-type: int | float
+    inferred-type: float | int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4190,7 +4216,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   340:26 Parameter data in validate_and_process # OK
-    inferred-type: PackedStringArray | Array
+    inferred-type: AIController.AIState | AIState | Array | CompletionTest.TestEnum | DiagnosticsTest_NamingRules.GameState | DiagnosticsTest_NamingRules.invalid_enum | DiagnosticsTest_NamingRules.InvalidEnumValues | DiagnosticsTest_NamingRules.SHOUTING_ENUM | DiagnosticsTest_NamingRules.suppressed_bad_enum | DiagnosticsTest_NamingRules.SuppressedEnumValues | DiagnosticsTest_NamingRules.ValidEnum | DiagnosticsTest_NamingRules.ValidEnumValues | DiagnosticsTest_ScopeErrors.TestEnum | GameState | invalid_enum | InvalidEnumValues | PackedStringArray | SHOUTING_ENUM | suppressed_bad_enum | SuppressedEnumValues | TestEnum | ValidEnum | ValidEnumValues
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4201,7 +4227,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   359:25 Parameter data in _process_typed_data # OK
-    inferred-type: Object | Dictionary[String, Variant]
+    inferred-type: Dictionary[String, Variant] | Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4244,15 +4270,4 @@ test_scripts/validation_edge_cases.gd
     confidence: Unknown
 
 
-# Summary: 697 parameters in 40 files (248 duck-typed)
-
-test_scripts/neutral_ui_caller.gd
-  16:19 Parameter panel in update_single # OK
-    inferred-type: UIPanelA | UIPanelB # OK
-    confidence: Medium # OK
-    reason: union from type checks # OK
-    duck-typed: yes # OK
-    methods: refresh_ui(-1) # OK
-    properties: refresh_ui # OK
-
-
+# Summary: 708 parameters in 43 files (249 duck-typed)

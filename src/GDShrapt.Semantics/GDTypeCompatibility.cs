@@ -1,3 +1,5 @@
+using System;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -8,9 +10,9 @@ internal static class GDTypeCompatibility
 {
     /// <summary>
     /// Checks if a source type can be implicitly converted to a target type in GDScript.
-    /// Covers: int→float promotion, String↔StringName interoperability.
+    /// Covers: int→float promotion, String↔StringName interoperability, enum↔int.
     /// </summary>
-    public static bool IsImplicitlyConvertible(string source, string target)
+    public static bool IsImplicitlyConvertible(string source, string target, Func<string, bool>? isEnumType = null)
     {
         if (source == GDWellKnownTypes.Numeric.Int && target == GDWellKnownTypes.Numeric.Float)
             return true;
@@ -18,6 +20,14 @@ internal static class GDTypeCompatibility
         if ((source == GDWellKnownTypes.Strings.String && target == GDWellKnownTypes.Strings.StringName) ||
             (source == GDWellKnownTypes.Strings.StringName && target == GDWellKnownTypes.Strings.String))
             return true;
+
+        if (isEnumType != null)
+        {
+            if (target == GDWellKnownTypes.Numeric.Int && isEnumType(source))
+                return true;
+            if (source == GDWellKnownTypes.Numeric.Int && isEnumType(target))
+                return true;
+        }
 
         return false;
     }

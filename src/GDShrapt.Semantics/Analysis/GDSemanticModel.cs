@@ -789,6 +789,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 return inferred.TypeName;
         }
 
+        if (node is GDEnumValueDeclaration enumValueDecl)
+        {
+            var parentEnum = enumValueDecl.Parent?.Parent as GDEnumDeclaration;
+            var enumTypeName = parentEnum?.Identifier?.Sequence ?? "int";
+            return new GDSimpleSemanticType(enumTypeName);
+        }
+
         return _typeEngine?.GetSemanticTypeForNode(node);
     }
 

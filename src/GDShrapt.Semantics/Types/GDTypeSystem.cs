@@ -218,6 +218,17 @@ public class GDTypeSystem : IGDTypeSystem
                 };
             }
 
+            // EnumValue — always has enum type name or fallback to int
+            if (symbol.Kind == GDSymbolKind.EnumValue)
+            {
+                var enumType = symbol.TypeName ?? "int";
+                return new GDTypeInfo
+                {
+                    InferredType = GDSemanticType.FromRuntimeTypeName(enumType),
+                    Confidence = GDTypeConfidence.Certain
+                };
+            }
+
             // Try infer from initializer expression
             var initializer = GetInitializerExpression(symbol);
             if (initializer != null)

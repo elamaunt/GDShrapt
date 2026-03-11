@@ -763,6 +763,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (semanticModel != null)
         {
             var callerType = semanticModel.GetExpressionType(expr.CallerExpression);
+
             if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
             {
                 var symbolInfo = semanticModel.ResolveMember(callerType, memberName);
@@ -779,6 +780,60 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
                         return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
 
                     return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
+                }
+
+                // Member not found on callerType — if it's a project type,
+                // walk the extends chain to find the member on a built-in base type
+                var baseType = ResolveBaseTypeForProjectType(context, callerType);
+                if (!string.IsNullOrEmpty(baseType))
+                {
+                    symbolInfo = semanticModel.ResolveMember(baseType, memberName);
+                    if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
+                        && symbolInfo.DeclaringTypeName != "Unknown")
+                    {
+                        return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
+                    }
+                }
+
+                // callerType may be an autoload name — resolve via autoload script
+                if (context.Project != null)
+                {
+                    var autoload = context.Project.AutoloadEntries
+                        .FirstOrDefault(a => a.Name == callerType);
+
+                    if (autoload != null)
+                    {
+                        var autoloadScript = context.Project.GetScriptByResourcePath(autoload.Path);
+                        if (autoloadScript?.Class != null)
+                        {
+                            // Try class_name first (for project-defined members)
+                            var className = autoloadScript.Class.ClassName?.Identifier?.Sequence;
+                            if (!string.IsNullOrEmpty(className))
+                            {
+                                symbolInfo = semanticModel.ResolveMember(className, memberName);
+                                if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
+                                    && symbolInfo.DeclaringTypeName != "Unknown")
+                                {
+                                    if (context.Project.GetScriptByTypeName(symbolInfo.DeclaringTypeName) != null)
+                                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+
+                                    return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
+                                }
+                            }
+
+                            // Try extends type (for inherited built-in members)
+                            var extendsType = autoloadScript.Class.Extends?.Type?.BuildName();
+                            if (!string.IsNullOrEmpty(extendsType))
+                            {
+                                symbolInfo = semanticModel.ResolveMember(extendsType, memberName);
+                                if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
+                                    && symbolInfo.DeclaringTypeName != "Unknown")
+                                {
+                                    return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -823,6 +878,33 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         }
 
         return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+    }
+
+    /// <summary>
+    /// Walks the extends chain for a project type to find the first built-in base type.
+    /// E.g., FieldCamera → Camera2D (built-in).
+    /// </summary>
+    private static string? ResolveBaseTypeForProjectType(GDRefactoringContext context, string typeName)
+    {
+        var currentType = typeName;
+        for (int i = 0; i < 20; i++) // depth limit
+        {
+            var script = context.Project?.GetScriptByTypeName(currentType);
+            if (script?.Class == null)
+                break;
+
+            var extendsType = script.Class.Extends?.Type?.BuildName();
+            if (string.IsNullOrEmpty(extendsType))
+                break;
+
+            // If extends type is NOT a project type, it's a built-in
+            if (context.Project?.GetScriptByTypeName(extendsType) == null)
+                return extendsType;
+
+            currentType = extendsType;
+        }
+
+        return null;
     }
 
     /// <summary>

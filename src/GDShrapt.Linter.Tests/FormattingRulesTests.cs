@@ -85,6 +85,62 @@ namespace GDShrapt.Reader.Tests.Linting
             issue.StartColumn.Should().Be(1); // 1-based
         }
 
+        [TestMethod]
+        public void IndentationConsistency_InsideTripleQuotedString_NoFalsePositive()
+        {
+            // Line inside triple-quoted string has mixed whitespace — should NOT trigger GDL501
+            var code = "func foo():\n\tvar x = \"\"\"\n\t Hello world\n\t\tMixed indent inside string\n\t\"\"\"\n";
+
+            var result = _linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL501").Should().BeEmpty();
+        }
+
+        [TestMethod]
+        public void IndentationConsistency_AfterStringCloses_StillReports()
+        {
+            // After triple-quoted string closes, mixed indentation should still be reported
+            var code = "func foo():\n\tvar x = \"\"\"\n\t content\n\t\"\"\"\n\t pass\n"; // line 5: tab + space = mixed
+            var options = new GDLinterOptions { IndentationStyle = GDIndentationStyle.Tabs };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            // Line 3 is inside string — should NOT trigger
+            // Line 5 ("\t pass") is after string — SHOULD trigger (mixed tabs and spaces)
+            var issues = result.Issues.Where(i => i.RuleId == "GDL501").ToList();
+            issues.Should().HaveCount(1);
+            issues[0].StartLine.Should().Be(5);
+            issues[0].Message.Should().Contain("Mixed tabs and spaces");
+        }
+
+        [TestMethod]
+        public void IndentationConsistency_RegularStringOnSameLine_StillReports()
+        {
+            // Mixed indentation on a line with a regular string should still report
+            var code = "func foo():\n\t var x = \"hello\"\n"; // tab + space before var
+            var options = new GDLinterOptions { IndentationStyle = GDIndentationStyle.Tabs };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Should().Contain(i => i.RuleId == "GDL501" &&
+                i.Message.Contains("Mixed tabs and spaces"));
+        }
+
+        [TestMethod]
+        public void IndentationConsistency_InsideMultilineRegularString_NoFalsePositive()
+        {
+            // Regular string spanning two lines — continuation line should NOT trigger GDL501
+            var code = "func foo():\n\tassert(x, \"The game requires a valid\n\t\t\t\t PlayerController set in the editor!\")\n";
+            var options = new GDLinterOptions { IndentationStyle = GDIndentationStyle.Tabs };
+            var linter = new GDLinter(options);
+
+            var result = linter.LintCode(code);
+
+            result.Issues.Where(i => i.RuleId == "GDL501").Should().BeEmpty();
+        }
+
         #endregion
 
         #region GDTrailingWhitespaceRule (GDL502)

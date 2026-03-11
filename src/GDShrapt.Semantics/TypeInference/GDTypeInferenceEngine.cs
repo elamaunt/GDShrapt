@@ -2196,7 +2196,20 @@ namespace GDShrapt.Semantics
                 return true;
 
             // Use RuntimeProvider for detailed compatibility check
-            return _runtimeProvider.IsAssignableTo(sourceType, targetType);
+            if (_runtimeProvider.IsAssignableTo(sourceType, targetType))
+                return true;
+
+            // Enum ↔ int bidirectional conversion
+            if (GDTypeCompatibility.IsImplicitlyConvertible(sourceType, targetType, IsEnumType))
+                return true;
+
+            return false;
+        }
+
+        private bool IsEnumType(string typeName)
+        {
+            var symbol = _scopes.Lookup(typeName);
+            return symbol != null && symbol.Kind == GDSymbolKind.Enum;
         }
 
         /// <summary>
@@ -2408,9 +2421,11 @@ namespace GDShrapt.Semantics
             {
                 result = new GDSimpleSemanticType(enumDecl.Identifier?.Sequence ?? "int");
             }
-            else if (node is GDEnumValueDeclaration)
+            else if (node is GDEnumValueDeclaration enumValueDecl)
             {
-                result = new GDSimpleSemanticType("int");
+                var parentEnum = enumValueDecl.Parent?.Parent as GDEnumDeclaration;
+                var enumTypeName = parentEnum?.Identifier?.Sequence ?? "int";
+                result = new GDSimpleSemanticType(enumTypeName);
             }
             else if (node is GDInnerClassDeclaration innerClass)
             {

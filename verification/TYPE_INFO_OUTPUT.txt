@@ -19,37 +19,37 @@ test_scripts/ai_controller.gd
 
   11:15 EnumValue IDLE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AIState
+    effective: AIState
+    confidence: Certain
     nullable: no
 
   11:21 EnumValue PATROL
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AIState
+    effective: AIState
+    confidence: Certain
     nullable: no
 
   11:29 EnumValue CHASE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AIState
+    effective: AIState
+    confidence: Certain
     nullable: no
 
   11:36 EnumValue ATTACK
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AIState
+    effective: AIState
+    confidence: Certain
     nullable: no
 
   11:44 EnumValue FLEE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: AIState
+    effective: AIState
+    confidence: Certain
     nullable: no
 
   13:8 Variable patrol_points
@@ -643,23 +643,23 @@ test_scripts/completion_test.gd
 
   7:16 EnumValue VALUE_ONE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: TestEnum
+    effective: TestEnum
+    confidence: Certain
     nullable: no
 
   7:27 EnumValue VALUE_TWO
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: TestEnum
+    effective: TestEnum
+    confidence: Certain
     nullable: no
 
   7:38 EnumValue VALUE_THREE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: TestEnum
+    effective: TestEnum
+    confidence: Certain
     nullable: no
 
   9:0 Constant MY_CONSTANT
@@ -4247,16 +4247,16 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   123:17 EnumValue VALUE_A
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ValidEnum
+    effective: ValidEnum
+    confidence: Certain
     nullable: no
 
   123:26 EnumValue VALUE_B
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ValidEnum
+    effective: ValidEnum
+    confidence: Certain
     nullable: no
 
   124:0 Enum GameState
@@ -4268,23 +4268,23 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   124:17 EnumValue PLAYING
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: GameState
+    effective: GameState
+    confidence: Certain
     nullable: no
 
   124:26 EnumValue PAUSED
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: GameState
+    effective: GameState
+    confidence: Certain
     nullable: no
 
   124:34 EnumValue GAME_OVER
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: GameState
+    effective: GameState
+    confidence: Certain
     nullable: no
 
   128:0 Enum invalid_enum
@@ -4296,9 +4296,9 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   128:20 EnumValue VALUE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: invalid_enum
+    effective: invalid_enum
+    confidence: Certain
     nullable: no
 
   129:0 Enum SHOUTING_ENUM
@@ -4310,9 +4310,9 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   129:21 EnumValue VALUE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: invalid_enum
+    effective: invalid_enum
+    confidence: Certain
     nullable: no
 
   134:0 Enum suppressed_bad_enum
@@ -4324,9 +4324,9 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   134:27 EnumValue VALUE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: invalid_enum
+    effective: invalid_enum
+    confidence: Certain
     nullable: no
 
   142:0 Enum ValidEnumValues
@@ -4338,23 +4338,23 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   142:23 EnumValue FIRST_VALUE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ValidEnumValues
+    effective: ValidEnumValues
+    confidence: Certain
     nullable: no
 
   142:36 EnumValue SECOND_VALUE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ValidEnumValues
+    effective: ValidEnumValues
+    confidence: Certain
     nullable: no
 
   142:50 EnumValue THIRD
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: ValidEnumValues
+    effective: ValidEnumValues
+    confidence: Certain
     nullable: no
 
   146:0 Enum InvalidEnumValues
@@ -4366,23 +4366,23 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   147:1 EnumValue lowercase_value
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: InvalidEnumValues
+    effective: InvalidEnumValues
+    confidence: Certain
     nullable: no
 
   148:1 EnumValue PascalValue
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: InvalidEnumValues
+    effective: InvalidEnumValues
+    confidence: Certain
     nullable: no
 
   149:1 EnumValue VALID_ONE
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: InvalidEnumValues
+    effective: InvalidEnumValues
+    confidence: Certain
     nullable: no
 
   155:0 Enum SuppressedEnumValues
@@ -4394,9 +4394,9 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
   155:28 EnumValue badValue
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: SuppressedEnumValues
+    effective: SuppressedEnumValues
+    confidence: Certain
     nullable: no
 
   163:0 Class ValidInnerClass
@@ -5530,23 +5530,23 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   16:16 EnumValue VALUE_A
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: TestEnum
+    effective: TestEnum
+    confidence: Certain
     nullable: no
 
   16:25 EnumValue VALUE_B
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: TestEnum
+    effective: TestEnum
+    confidence: Certain
     nullable: no
 
   16:34 EnumValue VALUE_C
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: TestEnum
+    effective: TestEnum
+    confidence: Certain
     nullable: no
 
   24:0 Method test_gd2001_valid

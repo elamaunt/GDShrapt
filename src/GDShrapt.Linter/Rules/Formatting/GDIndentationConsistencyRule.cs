@@ -25,12 +25,17 @@ namespace GDShrapt.Linter
         protected override void AnalyzeContent(string content)
         {
             var lines = SplitLines(content);
+            var insideStrings = GetLinesInsideStrings(lines);
             var preferTabs = Options?.IndentationStyle == GDIndentationStyle.Tabs;
             var tabWidth = Options?.TabWidth ?? 4;
 
             for (int i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
+
+                // Skip lines inside multiline string literals
+                if (insideStrings.Contains(i))
+                    continue;
 
                 // Skip empty lines
                 if (string.IsNullOrWhiteSpace(line))

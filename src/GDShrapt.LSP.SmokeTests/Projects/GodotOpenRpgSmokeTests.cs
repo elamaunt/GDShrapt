@@ -301,7 +301,7 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
     }
 
     [TestMethod]
-    public void GoToDef_FieldGd_CameraMakeCurrent_DoesNotCrash()
+    public void GoToDef_FieldGd_CameraMakeCurrent_NavigatesToBuiltIn()
     {
         var script = FindScript("field/field.gd");
         script.Should().NotBeNull("field.gd should exist in godot-open-rpg");
@@ -315,13 +315,23 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
         var lspHandler = new GDDefinitionHandler(handler);
         var uri = GDDocumentManager.PathToUri(script!.FullPath!);
 
-        // make_current is inherited from Camera2D via FieldCamera autoload.
-        // At minimum, this should not crash.
-        lspHandler.HandleAsync(new GDDefinitionParams
+        var (links, infoMessage) = lspHandler.HandleAsync(new GDDefinitionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
             Position = new GDLspPosition(line, col)
         }, CancellationToken.None).GetAwaiter().GetResult();
+
+        // make_current is inherited from Camera2D via FieldCamera autoload.
+        // Should navigate to generated built-in file OR return info message.
+        var hasResult = (links != null && links.Length > 0) || !string.IsNullOrEmpty(infoMessage);
+        hasResult.Should().BeTrue(
+            "GoToDef on Camera.make_current should return either a location link or info message");
+
+        if (links != null && links.Length > 0)
+        {
+            links[0].TargetUri.Should().Contain("Camera2D",
+                "make_current definition should be in Camera2D built-in type file");
+        }
     }
 
     [TestMethod]

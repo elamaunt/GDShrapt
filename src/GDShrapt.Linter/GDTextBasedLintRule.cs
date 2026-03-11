@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GDShrapt.Reader;
 
 namespace GDShrapt.Linter
@@ -164,6 +165,62 @@ namespace GDShrapt.Linter
         {
             var trimmed = line.TrimStart();
             return !string.IsNullOrEmpty(trimmed) && !trimmed.StartsWith("#");
+        }
+
+        /// <summary>
+        /// Computes a set of line indices (0-based) that start inside a multiline string literal.
+        /// Covers triple-quoted strings (""") and regular strings that span lines when left unclosed.
+        /// </summary>
+        protected static HashSet<int> GetLinesInsideStrings(string[] lines)
+        {
+            var result = new HashSet<int>();
+            bool inTripleQuote = false;
+            bool inRegularString = false;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (inTripleQuote || inRegularString)
+                    result.Add(i);
+
+                var line = lines[i];
+
+                for (int j = 0; j < line.Length; j++)
+                {
+                    char c = line[j];
+
+                    if (c == '\\' && (inRegularString || inTripleQuote))
+                    {
+                        j++;
+                        continue;
+                    }
+
+                    if (c == '#' && !inRegularString && !inTripleQuote)
+                        break;
+
+                    if (c == '"')
+                    {
+                        if (j + 2 < line.Length && line[j + 1] == '"' && line[j + 2] == '"')
+                        {
+                            if (inTripleQuote)
+                            {
+                                inTripleQuote = false;
+                                j += 2;
+                            }
+                            else if (!inRegularString)
+                            {
+                                inTripleQuote = true;
+                                j += 2;
+                            }
+                        }
+                        else if (!inTripleQuote)
+                        {
+                            inRegularString = !inRegularString;
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }

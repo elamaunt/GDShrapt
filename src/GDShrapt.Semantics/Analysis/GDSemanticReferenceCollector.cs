@@ -321,7 +321,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 if (string.IsNullOrEmpty(valueName))
                     continue;
 
-                var valueSymbol = GDSymbol.EnumValue(valueName, value);
+                var valueSymbol = GDSymbol.EnumValue(valueName, value, enumTypeName: name);
                 _model!.RegisterSymbol(GDSymbolInfo.Local(valueSymbol, _scriptFile, declaringScopeNode: enumDecl));
             }
         }

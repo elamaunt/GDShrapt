@@ -71,6 +71,9 @@ public class GDListHandler : IGDListHandler
                     if (innerSymbol.IsInherited)
                         continue;
 
+                    if (innerSymbol.DeclarationNode is not GDInnerClassDeclaration)
+                        continue;
+
                     var innerName = innerSymbol.Name;
                     if (string.IsNullOrEmpty(innerName))
                         continue;

@@ -264,6 +264,10 @@ internal class GDExpressionTypeService
                 if (symbol?.Kind == GDSymbolKind.Method)
                     return "Callable";
 
+                // Enum type reference (e.g., AIState in AIState.PATROL)
+                if (symbol?.Kind == GDSymbolKind.Enum)
+                    return symbol.Name;
+
                 // For class members with explicit type annotation, return the declared type
                 if (symbol != null && symbol.Kind != GDSymbolKind.Method
                     && !string.IsNullOrEmpty(symbol.TypeName)
@@ -300,7 +304,7 @@ internal class GDExpressionTypeService
                 if (_localTypeService != null && _localTypeService.IsLocalEnum(callerType))
                 {
                     if (_localTypeService.IsLocalEnumValue(callerType, memberName))
-                        return "int"; // Enum values are always int in GDScript
+                        return callerType;
                 }
 
                 // Fall back to runtime provider for other member access
