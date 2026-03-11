@@ -217,4 +217,188 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
         VerifyCompletionAfterEdit(script);
         VerifyHoverAfterEdit(script);
     }
+
+    // ========================================================================
+    // field.gd + field_camera.gd explicit tests
+    // ========================================================================
+
+    [TestMethod]
+    public void Hover_FieldGd_CameraResetPosition()
+    {
+        var script = FindScript("field/field.gd");
+        script.Should().NotBeNull("field.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "reset_position");
+        line.Should().BeGreaterThanOrEqualTo(0, "field.gd should contain reset_position");
+
+        var col = GetColumnOf(script!, line, "reset_position");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on Camera.reset_position should return info");
+        result!.Contents.Value.Should().Contain("reset_position",
+            "hover content should mention reset_position");
+    }
+
+    [TestMethod]
+    public void Hover_FieldGd_CameraMakeCurrent()
+    {
+        var script = FindScript("field/field.gd");
+        script.Should().NotBeNull("field.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "make_current");
+        line.Should().BeGreaterThanOrEqualTo(0, "field.gd should contain make_current");
+
+        var col = GetColumnOf(script!, line, "make_current");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on Camera.make_current should return info");
+        result!.Contents.Value.Should().Contain("make_current",
+            "hover content should mention make_current");
+    }
+
+    [TestMethod]
+    public void GoToDef_FieldGd_CameraResetPosition_NavigatesToFieldCamera()
+    {
+        var script = FindScript("field/field.gd");
+        script.Should().NotBeNull("field.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "reset_position");
+        line.Should().BeGreaterThanOrEqualTo(0, "field.gd should contain reset_position");
+
+        var col = GetColumnOf(script!, line, "reset_position");
+
+        var handler = Registry.GetService<IGDGoToDefHandler>()!;
+        var lspHandler = new GDDefinitionHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var (links, _) = lspHandler.HandleAsync(new GDDefinitionParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        links.Should().NotBeNullOrEmpty("GoToDef on reset_position should return a location");
+        links![0].TargetUri.Should().Contain("field_camera",
+            "reset_position definition should be in field_camera.gd");
+    }
+
+    [TestMethod]
+    public void GoToDef_FieldGd_CameraMakeCurrent_DoesNotCrash()
+    {
+        var script = FindScript("field/field.gd");
+        script.Should().NotBeNull("field.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "make_current");
+        line.Should().BeGreaterThanOrEqualTo(0, "field.gd should contain make_current");
+
+        var col = GetColumnOf(script!, line, "make_current");
+
+        var handler = Registry.GetService<IGDGoToDefHandler>()!;
+        var lspHandler = new GDDefinitionHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        // make_current is inherited from Camera2D via FieldCamera autoload.
+        // At minimum, this should not crash.
+        lspHandler.HandleAsync(new GDDefinitionParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    [TestMethod]
+    public void References_FieldCamera_ResetPosition_DoesNotCrash()
+    {
+        var script = FindScript("field_camera.gd");
+        script.Should().NotBeNull("field_camera.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "func reset_position");
+        line.Should().BeGreaterThanOrEqualTo(0, "field_camera.gd should contain func reset_position");
+
+        var col = GetColumnOf(script!, line, "reset_position");
+
+        var goToDefHandler = Registry.GetService<IGDGoToDefHandler>()!;
+        var findRefsHandler = Registry.GetService<IGDFindRefsHandler>()!;
+        var lspHandler = new GDReferencesHandler(findRefsHandler, goToDefHandler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        // FindReferences on declaration should not crash, even if cross-file results vary
+        lspHandler.HandleAsync(new GDReferencesParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+    }
+
+    [TestMethod]
+    public void Hover_FieldCameraGd_Extends_ShowsCamera2D()
+    {
+        var script = FindScript("field_camera.gd");
+        script.Should().NotBeNull("field_camera.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "extends Camera2D");
+        line.Should().BeGreaterThanOrEqualTo(0, "field_camera.gd should contain extends Camera2D");
+
+        var col = GetColumnOf(script!, line, "Camera2D");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on extends Camera2D should return info");
+        result!.Contents.Value.Should().Contain("Camera2D",
+            "hover on extends should show Camera2D, not FieldCamera");
+        result.Contents.Value.Should().NotContain("FieldCamera",
+            "hover on extends should NOT show FieldCamera class info");
+    }
+
+    [TestMethod]
+    public void Hover_FieldCameraGd_ClassName_ShowsFieldCamera()
+    {
+        var script = FindScript("field_camera.gd");
+        script.Should().NotBeNull("field_camera.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "class_name FieldCamera");
+        line.Should().BeGreaterThanOrEqualTo(0, "field_camera.gd should contain class_name FieldCamera");
+
+        var col = GetColumnOf(script!, line, "FieldCamera");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on class_name FieldCamera should return info");
+        result!.Contents.Value.Should().Contain("FieldCamera",
+            "hover on class_name should show FieldCamera");
+    }
 }

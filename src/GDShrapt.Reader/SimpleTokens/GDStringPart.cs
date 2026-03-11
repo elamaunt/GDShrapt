@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Linq;
+using System.Text;
 
 namespace GDShrapt.Reader
 {
@@ -10,6 +11,8 @@ namespace GDShrapt.Reader
             get => _sequence;
             set => _sequence = value;
         }
+
+        public override int NewLinesCount => _sequence?.Count(c => c == '\n') ?? 0;
 
         public string EscapedSequence
         {

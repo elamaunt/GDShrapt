@@ -1833,6 +1833,11 @@ test_scripts/extended_class.gd
     confidence: Certain
     reason: explicit type annotation
 
+  51:29 Parameter pos in create_from_base
+    inferred-type: Vector2
+    confidence: Certain
+    reason: explicit type annotation
+
 
 test_scripts/formatting_issues.gd
   23:17 Parameter x in bad_spacing
@@ -4265,4 +4270,4 @@ test_scripts/validation_edge_cases.gd
     confidence: Unknown
 
 
-# Summary: 707 parameters in 43 files (249 duck-typed)
+# Summary: 708 parameters in 43 files (249 duck-typed)

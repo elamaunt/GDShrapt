@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP;
@@ -89,6 +90,21 @@ public class GDSemanticTokensHandler
                 var modifiers = ComputeModifiers(symbol, isDeclaration: true, isWrite: false);
                 rawTokens.Add((declToken.StartLine, declToken.StartColumn, nameLen, tokenType, modifiers));
                 debugLines.Add($"  DECL: '{symbol.Name}' kind={symbol.Kind} L{declToken.StartLine}:C{declToken.StartColumn} len={nameLen} tokenText='{declToken}'");
+            }
+
+            // Emit signal parameter tokens directly from the AST
+            if (symbol.Kind == GDSymbolKind.Signal && symbol.Symbol?.Declaration is GDSignalDeclaration signalDecl)
+            {
+                foreach (var param in signalDecl.Parameters)
+                {
+                    var paramId = param.Identifier;
+                    if (paramId != null)
+                    {
+                        var paramMods = ModDeclaration;
+                        rawTokens.Add((paramId.StartLine, paramId.StartColumn, paramId.Sequence.Length, TokenParameter, paramMods));
+                        debugLines.Add($"  SIGPARAM: '{paramId.Sequence}' L{paramId.StartLine}:C{paramId.StartColumn} len={paramId.Sequence.Length}");
+                    }
+                }
             }
 
             // Emit reference tokens

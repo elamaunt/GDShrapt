@@ -304,6 +304,14 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         var filePath = context.Script?.Reference?.FullPath;
         var symbolName = identifier.Sequence;
 
+        if (symbolName == "super")
+        {
+            var parentType = context.Script?.Class?.Extends?.Type?.BuildName();
+            if (!string.IsNullOrEmpty(parentType))
+                return ResolveType(context, parentType);
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalType, "super");
+        }
+
         // 1. Walk up scope chain — search methods and lambdas (innermost first)
         GDNode? current = identifier.Parent;
         while (current != null)
@@ -745,6 +753,12 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (expr.CallerExpression == null)
             return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
 
+        var isSuperCall = expr.CallerExpression is GDIdentifierExpression superExpr
+            && superExpr.Identifier?.Sequence == "super";
+
+        if (isSuperCall)
+            return ResolveSuperMember(context, memberName);
+
         var semanticModel = context.GetSemanticModel();
         if (semanticModel != null)
         {
@@ -767,6 +781,45 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
                     return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
                 }
             }
+        }
+
+        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+    }
+
+    /// <summary>
+    /// Resolves a member accessed via super (e.g. super.take_damage()).
+    /// Searches the parent class script for the member, falling back to built-in type lookup.
+    /// </summary>
+    private GDGoToDefinitionResult ResolveSuperMember(GDRefactoringContext context, string memberName)
+    {
+        var parentType = context.Script?.Class?.Extends?.Type?.BuildName();
+        if (!string.IsNullOrEmpty(parentType))
+        {
+            var parentScript = context.Project?.GetScriptByTypeName(parentType);
+            if (parentScript != null)
+            {
+                var parentModel = parentScript.SemanticModel;
+                if (parentModel != null)
+                {
+                    var parentSymbol = parentModel.FindSymbol(memberName);
+                    if (parentSymbol?.DeclarationNode != null)
+                    {
+                        var posToken = parentSymbol.PositionToken;
+                        return GDGoToDefinitionResult.Found(
+                            GDDefinitionType.ClassMember,
+                            parentScript.Reference?.FullPath,
+                            posToken?.StartLine ?? parentSymbol.DeclarationNode.StartLine,
+                            posToken?.StartColumn ?? parentSymbol.DeclarationNode.StartColumn,
+                            posToken?.EndColumn ?? parentSymbol.DeclarationNode.EndColumn,
+                            memberName,
+                            parentSymbol.DeclarationNode);
+                    }
+                }
+            }
+
+            var semanticModel = context.GetSemanticModel();
+            if (semanticModel?.RuntimeProvider?.IsKnownType(parentType) == true)
+                return GDGoToDefinitionResult.BuiltInMember(parentType, memberName);
         }
 
         return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);

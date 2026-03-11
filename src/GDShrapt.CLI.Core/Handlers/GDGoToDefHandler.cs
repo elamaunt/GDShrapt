@@ -80,6 +80,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         {
             return ResolveExternalType(result.SymbolName)
                 ?? FindDefinitionByName(result.SymbolName, filePath)
+                ?? ResolveAutoload(result.SymbolName)
                 ?? GenerateBuiltInTypeDefinition(result.SymbolName);
         }
 
@@ -91,6 +92,10 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             var projectLocation = FindMemberInProjectType(result.TypeName, result.SymbolName);
             if (projectLocation != null)
                 return projectLocation;
+
+            var autoloadMemberLocation = FindMemberInAutoload(result.TypeName, result.SymbolName);
+            if (autoloadMemberLocation != null)
+                return autoloadMemberLocation;
 
             return FindDefinitionInBuiltInType(result.TypeName, result.SymbolName);
         }
@@ -260,6 +265,66 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         };
     }
 
+    private GDDefinitionLocation? ResolveAutoload(string name)
+    {
+        var autoload = _project.AutoloadEntries.FirstOrDefault(a => a.Name == name);
+        if (autoload == null)
+            return null;
+
+        var script = _project.GetScriptByResourcePath(autoload.Path);
+        if (script?.Class == null)
+            return null;
+
+        var targetToken = script.Class.ClassName?.Identifier
+            ?? (GDSyntaxToken?)script.Class.Extends?.Type;
+        var line = targetToken?.StartLine ?? 0;
+        var col = targetToken?.StartColumn ?? 0;
+
+        return new GDDefinitionLocation
+        {
+            FilePath = script.Reference.FullPath,
+            Line = line + 1,
+            Column = col,
+            SymbolName = name,
+            Kind = GDSymbolKind.Class
+        };
+    }
+
+    private GDDefinitionLocation? FindMemberInAutoload(string autoloadName, string memberName)
+    {
+        var autoload = _project.AutoloadEntries.FirstOrDefault(a => a.Name == autoloadName);
+        if (autoload == null)
+            return null;
+
+        var script = _project.GetScriptByResourcePath(autoload.Path);
+        if (script?.Class == null)
+            return null;
+
+        foreach (var member in script.Class.Members.OfType<GDIdentifiableClassMember>())
+        {
+            if (member.Identifier?.Sequence == memberName)
+            {
+                return new GDDefinitionLocation
+                {
+                    FilePath = script.Reference.FullPath,
+                    Line = member.Identifier.StartLine + 1,
+                    Column = member.Identifier.StartColumn,
+                    SymbolName = memberName,
+                    Kind = member switch
+                    {
+                        GDMethodDeclaration => GDSymbolKind.Method,
+                        GDSignalDeclaration => GDSymbolKind.Signal,
+                        GDVariableDeclaration v when v.ConstKeyword != null => GDSymbolKind.Constant,
+                        GDVariableDeclaration => GDSymbolKind.Variable,
+                        _ => null
+                    }
+                };
+            }
+        }
+
+        return null;
+    }
+
     private GDDefinitionLocation? GenerateBuiltInTypeDefinition(string typeName)
     {
         if (_runtimeProvider == null)
@@ -273,11 +338,24 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return GenerateBuiltInEnumDefinition(typeName, typeInfo);
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# Built-in Godot type: {typeInfo.Name}");
+        sb.AppendLine("# This file is auto-generated from Godot metadata.");
+        sb.AppendLine("# Actual implementation may differ from what is shown here.");
+        sb.AppendLine();
+
+        // Type documentation
+        AppendDocComment(sb, typeInfo.BriefDescription);
+        if (!string.IsNullOrWhiteSpace(typeInfo.Description) && typeInfo.Description != typeInfo.BriefDescription)
+        {
+            if (!string.IsNullOrWhiteSpace(typeInfo.BriefDescription))
+                sb.AppendLine("##");
+            AppendDocComment(sb, typeInfo.Description);
+        }
 
         if (typeInfo.BaseType != null)
             sb.AppendLine($"extends {typeInfo.BaseType}");
 
+        // Track class_name line (1-based)
+        var classNameLine = sb.ToString().Split('\n').Length;
         sb.AppendLine($"class_name {typeInfo.Name}");
 
         if (typeInfo.Members != null && typeInfo.Members.Count > 0)
@@ -288,6 +366,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
                 sb.AppendLine();
                 foreach (var m in constants)
                 {
+                    AppendDocComment(sb, m.Description);
                     var constValue = m.ConstantValue;
                     if (string.IsNullOrEmpty(constValue) || constValue == m.Name)
                         constValue = $"{typeInfo.Name}.{m.Name}";
@@ -300,8 +379,12 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             if (signals.Count > 0)
             {
                 sb.AppendLine();
+                var first = true;
                 foreach (var m in signals)
                 {
+                    if (m.Description != null && !first) sb.AppendLine();
+                    first = false;
+                    AppendDocComment(sb, m.Description);
                     if (m.Parameters != null && m.Parameters.Count > 0)
                     {
                         var parms = string.Join(", ", m.Parameters.Select(p =>
@@ -322,16 +405,31 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             if (properties.Count > 0)
             {
                 sb.AppendLine();
+                var first = true;
                 foreach (var m in properties)
+                {
+                    if (m.Description != null && !first) sb.AppendLine();
+                    first = false;
+                    AppendDocComment(sb, m.Description);
                     sb.AppendLine($"var {m.Name}: {NormalizeTypeName(m.Type) ?? "Variant"}");
+                }
             }
 
-            var methods = typeInfo.Members.Where(m => m.Kind == GDRuntimeMemberKind.Method).ToList();
+            var methods = typeInfo.Members
+                .Where(m => m.Kind == GDRuntimeMemberKind.Method)
+                .Where(m => m.Description != null)
+                .ToList();
             if (methods.Count > 0)
             {
                 sb.AppendLine();
+                var first = true;
                 foreach (var m in methods)
+                {
+                    if (!first) sb.AppendLine();
+                    first = false;
+                    AppendDocComment(sb, m.Description);
                     sb.AppendLine(BuildMethodString(m));
+                }
             }
         }
         else
@@ -346,9 +444,6 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         var filePath = Path.Combine(dir, $"{typeName}.gd");
         File.WriteAllText(filePath, code);
 
-        // class_name is on line 3 if extends present, line 2 otherwise
-        var classNameLine = typeInfo.BaseType != null ? 3 : 2;
-
         return new GDDefinitionLocation
         {
             FilePath = filePath,
@@ -362,7 +457,19 @@ public class GDGoToDefHandler : IGDGoToDefHandler
     private GDDefinitionLocation? GenerateBuiltInEnumDefinition(string typeName, GDRuntimeTypeInfo typeInfo)
     {
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"# Built-in Godot type: {typeInfo.Name}");
+        sb.AppendLine("# This file is auto-generated from Godot metadata.");
+        sb.AppendLine("# Actual implementation may differ from what is shown here.");
+        sb.AppendLine();
+
+        AppendDocComment(sb, typeInfo.BriefDescription);
+        if (!string.IsNullOrWhiteSpace(typeInfo.Description) && typeInfo.Description != typeInfo.BriefDescription)
+        {
+            if (!string.IsNullOrWhiteSpace(typeInfo.BriefDescription))
+                sb.AppendLine("##");
+            AppendDocComment(sb, typeInfo.Description);
+        }
+
+        var enumLine = sb.ToString().Split('\n').Length;
         sb.AppendLine($"enum {typeInfo.Name} {{");
 
         if (typeInfo.EnumValues != null && typeInfo.EnumValues.Count > 0)
@@ -393,7 +500,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         return new GDDefinitionLocation
         {
             FilePath = filePath,
-            Line = 2,
+            Line = enumLine,
             Column = "enum ".Length,
             SymbolName = typeName,
             Kind = GDSymbolKind.Enum
@@ -499,6 +606,93 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         return true;
     }
 
+    private static string? FormatDocComment(string? description, string prefix = "## ")
+    {
+        if (string.IsNullOrWhiteSpace(description))
+            return null;
+
+        var text = description;
+
+        // Remove [csharp]...[/csharp] blocks entirely (keep [gdscript] content)
+        text = System.Text.RegularExpressions.Regex.Replace(text,
+            @"\[csharp\].*?\[/csharp\]", "", System.Text.RegularExpressions.RegexOptions.Singleline);
+
+        // Remove [codeblocks]/[/codeblocks] wrappers
+        text = text.Replace("[codeblocks]", "").Replace("[/codeblocks]", "");
+
+        // Extract [gdscript]...[/gdscript] content (remove tags, keep content)
+        text = System.Text.RegularExpressions.Regex.Replace(text,
+            @"\[gdscript\](.*?)\[/gdscript\]",
+            m =>
+            {
+                var code = m.Groups[1].Value.Trim();
+                var lines = code.Split('\n');
+                var sb2 = new System.Text.StringBuilder();
+                sb2.AppendLine();
+                foreach (var l in lines)
+                    sb2.AppendLine("    " + l.TrimEnd());
+                return sb2.ToString();
+            },
+            System.Text.RegularExpressions.RegexOptions.Singleline);
+
+        // Convert BBCode tags to readable text
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[param\s+(\w+)\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[code\](.*?)\[/code\]", "`$1`");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[b\](.*?)\[/b\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[i\](.*?)\[/i\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[url=.*?\](.*?)\[/url\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[method\s+(\w+)\]", "$1()");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[member\s+(\w+)\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[signal\s+(\w+)\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[constant\s+([\w.]+)\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[enum\s+([\w.]+)\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[theme_item\s+([\w.]+)\]", "$1");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[annotation\s+(@[\w.]+)\]", "$1");
+
+        // Type references like [Node], [Vector2], etc.
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[([A-Z]\w*)\]", "$1");
+
+        // Clean up any remaining BBCode-like tags
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\[/?\w+\]", "");
+
+        // Clean up multiple blank lines
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\n{3,}", "\n\n");
+
+        var lines2 = text.Split('\n');
+        var result = new System.Text.StringBuilder();
+
+        foreach (var line in lines2)
+        {
+            var trimmed = line.TrimEnd();
+            if (string.IsNullOrEmpty(trimmed))
+                result.AppendLine(prefix.TrimEnd());
+            else
+                result.AppendLine(prefix + trimmed);
+        }
+
+        // Remove trailing empty comment lines
+        var resultStr = result.ToString().TrimEnd('\r', '\n');
+        while (resultStr.EndsWith("\n" + prefix.TrimEnd()) || resultStr.EndsWith("\r\n" + prefix.TrimEnd()))
+        {
+            var idx = resultStr.LastIndexOf('\n');
+            if (idx >= 0)
+                resultStr = resultStr.Substring(0, idx).TrimEnd('\r', '\n');
+            else
+                break;
+        }
+
+        return string.IsNullOrWhiteSpace(resultStr) ? null : resultStr;
+    }
+
+    private static void AppendDocComment(System.Text.StringBuilder sb, string? description)
+    {
+        var comment = FormatDocComment(description);
+        if (comment != null)
+        {
+            sb.AppendLine(comment);
+        }
+    }
+
     private GDDefinitionLocation? GenerateBuiltInFunctionDefinition(string functionName)
     {
         if (_runtimeProvider == null)
@@ -509,11 +703,15 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return GDDefinitionLocation.WithInfo($"'{functionName}' is a built-in function (definition not available)");
 
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine("# Built-in GDScript global functions");
+        sb.AppendLine("# This file is auto-generated from Godot metadata.");
+        sb.AppendLine("# Actual implementation may differ from what is shown here.");
+        sb.AppendLine();
         sb.AppendLine("class_name @GDScript");
         sb.AppendLine();
 
         // Build function signature
+        AppendDocComment(sb, funcInfo.Description);
+
         var parms = "";
         if (funcInfo.Parameters != null && funcInfo.Parameters.Count > 0)
         {
@@ -521,6 +719,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
                 p.Type != null ? $"{p.Name}: {NormalizeTypeName(p.Type)}" : p.Name));
         }
 
+        var funcLine = sb.ToString().Split('\n').Length;
         var returnType = NormalizeTypeName(funcInfo.ReturnType);
         if (returnType != null)
             sb.AppendLine($"func {funcInfo.Name}({parms}) -> {returnType}: pass");
@@ -537,7 +736,7 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         return new GDDefinitionLocation
         {
             FilePath = filePath,
-            Line = 4,
+            Line = funcLine,
             Column = "func ".Length,
             SymbolName = functionName,
             Kind = GDSymbolKind.Method

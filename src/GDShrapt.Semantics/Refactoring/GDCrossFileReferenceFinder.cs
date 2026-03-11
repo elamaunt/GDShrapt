@@ -71,6 +71,7 @@ public class GDCrossFileReferenceFinder
             yield break;
 
         var isInherited = IsInheritedFile(script, declaringTypeName);
+        var seen = new HashSet<(int line, int col)>();
 
         var references = semanticModel.GetReferencesTo(memberName);
         foreach (var gdRef in references)
@@ -135,6 +136,7 @@ public class GDCrossFileReferenceFinder
                     }
                 }
 
+                seen.Add((gdRef.ReferenceNode.StartLine, gdRef.ReferenceNode.StartColumn));
                 yield return new GDCrossFileReference(
                     script,
                     gdRef.ReferenceNode,
@@ -146,6 +148,7 @@ public class GDCrossFileReferenceFinder
                 // Direct identifier usage in a derived class:
                 // - `current_health += 10` (no member access parent)
                 // - `health_changed.emit()` (caller of a member access, i.e., signal/var used with dot)
+                seen.Add((gdRef.ReferenceNode.StartLine, gdRef.ReferenceNode.StartColumn));
                 yield return new GDCrossFileReference(
                     script,
                     gdRef.ReferenceNode,
@@ -155,11 +158,41 @@ public class GDCrossFileReferenceFinder
             else if (gdRef.ReferenceNode is GDStringExpression or GDStringNameExpression)
             {
                 // Contract string: has_method("member"), call("member"), emit_signal("member"), etc.
+                seen.Add((gdRef.ReferenceNode.StartLine, gdRef.ReferenceNode.StartColumn));
                 yield return new GDCrossFileReference(
                     script,
                     gdRef.ReferenceNode,
                     gdRef.Confidence,
                     gdRef.ConfidenceReason);
+            }
+        }
+
+        // Member access references (e.g., Global.current_level, SimpleClass.create_at)
+        // stored separately in the semantic model's member access index
+        foreach (var (callerType, memberRefs) in semanticModel.GetAllMemberAccessesForMember(memberName))
+        {
+            if (!IsTypeCompatible(callerType, declaringTypeName))
+                continue;
+
+            foreach (var maRef in memberRefs)
+            {
+                if (maRef.ReferenceNode == null)
+                    continue;
+
+                var identToken = maRef.IdentifierToken;
+                var line = identToken?.StartLine ?? maRef.ReferenceNode.StartLine;
+                var col = identToken?.StartColumn ?? maRef.ReferenceNode.StartColumn;
+
+                if (!seen.Add((line, col)))
+                    continue;
+
+                yield return new GDCrossFileReference(
+                    script,
+                    maRef.ReferenceNode,
+                    line,
+                    col,
+                    GDReferenceConfidence.Strict,
+                    $"Member access via '{callerType}.{memberName}'");
             }
         }
 
@@ -278,8 +311,31 @@ public class GDCrossFileReferenceFinder
         if (!string.IsNullOrEmpty(className))
             return className;
 
+        // Check if script is an autoload — autoload name is used as type in expressions
+        var autoloadName = GetAutoloadName(script);
+        if (!string.IsNullOrEmpty(autoloadName))
+            return autoloadName;
+
         // Fall back to script's TypeName (from class_name or filename)
         return script.TypeName ?? script.Reference?.FullPath ?? "Unknown";
+    }
+
+    /// <summary>
+    /// Gets the autoload name for a script, if it's registered as an autoload singleton.
+    /// </summary>
+    private string? GetAutoloadName(GDScriptFile script)
+    {
+        var resPath = script.ResPath;
+        if (string.IsNullOrEmpty(resPath))
+            return null;
+
+        foreach (var autoload in _project.AutoloadEntries)
+        {
+            if (autoload.Path.Equals(resPath, System.StringComparison.OrdinalIgnoreCase))
+                return autoload.Name;
+        }
+
+        return null;
     }
 
     /// <summary>

@@ -346,6 +346,15 @@ public class GDSymbolInfo
         if (node is GDMatchCaseVariableExpression matchVar && matchVar.Identifier?.Sequence == name)
             return matchVar.Identifier;
 
+        if (node is GDVariableDeclarationStatement varStmt && varStmt.Identifier?.Sequence == name)
+            return varStmt.Identifier;
+
+        if (node is GDForStatement forStmt && forStmt.Variable?.Sequence == name)
+            return forStmt.Variable;
+
+        if (node is GDClassNameAttribute classNameAttr && classNameAttr.Identifier?.Sequence == name)
+            return classNameAttr.Identifier;
+
         return null;
     }
 }

@@ -3,6 +3,13 @@
 # Format: block per declaration with type details
 
 test_scripts/ai_controller.gd
+  2:0 Class AIController
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   11:0 Enum AIState
     declared: (none)
     inferred: Variant
@@ -277,7 +284,81 @@ test_scripts/ai_controller.gd
     nullable: no
 
 
+test_scripts/attribute_doc_test.gd
+  3:0 Class AttributeDocTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  6:8 Variable speed
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  9:8 Variable health
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  12:9 Variable health_bar
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  14:8 Variable no_doc_var
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+
+test_scripts/autoload_usage.gd
+  2:0 Class AutoloadUsageTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  4:0 Method use_autoload
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  5:1 Variable level
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: High
+    nullable: no
+
+  7:1 Variable count
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: High
+    nullable: no
+
+
 test_scripts/base_entity.gd
+  2:0 Class BaseEntity
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   10:0 Signal health_changed
     declared: (none)
     inferred: Variant
@@ -511,6 +592,13 @@ test_scripts/base_entity.gd
 
 
 test_scripts/completion_test.gd
+  2:0 Class CompletionTest
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   7:0 Enum TestEnum
     declared: (none)
     inferred: Variant
@@ -947,6 +1035,13 @@ test_scripts/completion_test.gd
 
 
 test_scripts/cross_file_inference.gd
+  2:0 Class CrossFileInference
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Variable entity_manager
     declared: (none)
     inferred: Variant
@@ -1664,6 +1759,13 @@ test_scripts/cross_file_inference.gd
 
 
 test_scripts/cycles_test.gd
+  2:0 Class CyclesTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   7:0 Variable state_machine_state
     declared: (none)
     inferred: String
@@ -1994,6 +2096,13 @@ test_scripts/cycles_test.gd
 
 
 test_scripts/cyclic_inference.gd
+  2:0 Class CyclicInference
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Variable cycle_value_a
     declared: (none)
     inferred: Variant
@@ -2725,6 +2834,13 @@ test_scripts/cyclic_inference.gd
 
 
 test_scripts/diagnostics_issues.gd
+  2:0 Class DiagnosticsTest
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   8:0 Variable unused_variable
     declared: (none)
     inferred: int
@@ -3008,6 +3124,13 @@ test_scripts/diagnostics_issues.gd
 
 
 test_scripts/diagnostics/linter/best_practices_rules.gd
+  2:0 Class DiagnosticsTest_BestPractices
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   17:0 Variable class_level_var
     declared: (none)
     inferred: int
@@ -3318,6 +3441,13 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 
 
 test_scripts/diagnostics/linter/complexity_rules.gd
+  2:0 Class DiagnosticsTest_ComplexityRules
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   20:0 Method test_gdl225_valid
     declared: (none)
     inferred: Variant
@@ -3726,6 +3856,13 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 
 
 test_scripts/diagnostics/linter/formatting_rules.gd
+  2:0 Class DiagnosticsTest_FormattingRules
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   19:0 Method test_gdl101_valid
     declared: (none)
     inferred: Variant
@@ -3870,6 +4007,13 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 
 
 test_scripts/diagnostics/linter/naming_rules.gd
+  23:0 Class DiagnosticsTest_NamingRules
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   31:0 Method valid_function_name
     declared: (none)
     inferred: Variant
@@ -4152,6 +4296,13 @@ test_scripts/diagnostics/linter/naming_rules.gd
 
 
 test_scripts/diagnostics/suppression/linter_suppression.gd
+  4:0 Class DiagnosticsTest_LinterSuppression
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   24:0 Variable SuppressedBadVar1
     declared: (none)
     inferred: int
@@ -4308,6 +4459,13 @@ test_scripts/diagnostics/suppression/linter_suppression.gd
 
 
 test_scripts/diagnostics/suppression/validator_suppression.gd
+  2:0 Class DiagnosticsTest_ValidatorSuppression
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   19:0 Method test_ignore_next_line
     declared: (none)
     inferred: Variant
@@ -4359,6 +4517,13 @@ test_scripts/diagnostics/suppression/validator_suppression.gd
 
 
 test_scripts/diagnostics/validator/abstract_errors.gd
+  2:0 Class DiagnosticsTest_AbstractErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   20:0 Class ValidAbstractClass
     declared: (none)
     inferred: Variant
@@ -4529,6 +4694,13 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 
 
 test_scripts/diagnostics/validator/call_errors.gd
+  2:0 Class DiagnosticsTest_CallErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   15:0 Signal typed_signal
     declared: (none)
     inferred: Variant
@@ -4762,6 +4934,13 @@ test_scripts/diagnostics/validator/call_errors.gd
 
 
 test_scripts/diagnostics/validator/control_flow_errors.gd
+  2:0 Class DiagnosticsTest_ControlFlowErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   19:0 Method test_gd5001_valid
     declared: (none)
     inferred: Variant
@@ -4897,6 +5076,13 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 
 
 test_scripts/diagnostics/validator/duck_typing_errors.gd
+  2:0 Class DiagnosticsTest_DuckTypingErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   18:0 Method test_gd7002_valid_typed
     declared: (none)
     inferred: Variant
@@ -5167,6 +5353,13 @@ test_scripts/diagnostics/validator/scene_validation_errors.gd
 
 
 test_scripts/diagnostics/validator/scope_errors.gd
+  2:0 Class DiagnosticsTest_ScopeErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   16:0 Enum TestEnum
     declared: (none)
     inferred: Variant
@@ -5323,8 +5516,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   114:1 Variable val
     declared: (none)
-    inferred: TestEnum
-    effective: TestEnum
+    inferred: int
+    effective: int
     confidence: High
     nullable: no
 
@@ -5337,8 +5530,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   120:1 Variable val
     declared: (none)
-    inferred: TestEnum
-    effective: TestEnum
+    inferred: int
+    effective: int
     confidence: High
     nullable: no
 
@@ -5351,13 +5544,20 @@ test_scripts/diagnostics/validator/scope_errors.gd
 
   127:1 Variable val
     declared: (none)
-    inferred: TestEnum
-    effective: TestEnum
+    inferred: int
+    effective: int
     confidence: High
     nullable: no
 
 
 test_scripts/diagnostics/validator/type_annotation_errors.gd
+  2:0 Class DiagnosticsTest_TypeAnnotationErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   13:0 Method test_gd3023_valid_same_type
     declared: (none)
     inferred: Variant
@@ -5570,6 +5770,13 @@ test_scripts/diagnostics/validator/type_annotation_errors.gd
 
 
 test_scripts/diagnostics/validator/type_errors.gd
+  2:0 Class DiagnosticsTest_TypeErrors
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   24:0 Method test_gd3001_valid
     declared: (none)
     inferred: Variant
@@ -6069,6 +6276,13 @@ test_scripts/diagnostics/validator/type_errors.gd
 
 
 test_scripts/duck_caller.gd
+  2:0 Class DuckCaller
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   7:0 Variable entities
     declared: (none)
     inferred: Array
@@ -6092,6 +6306,13 @@ test_scripts/duck_caller.gd
 
 
 test_scripts/duck_typing_advanced.gd
+  2:0 Class DuckTypingAdvanced
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   10:0 Variable attacker
     declared: (none)
     inferred: Variant
@@ -6669,6 +6890,13 @@ test_scripts/duck_typing_advanced.gd
 
 
 test_scripts/dynamic_dispatch.gd
+  2:0 Class DynamicDispatch
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Variable handler_object
     declared: (none)
     inferred: Variant
@@ -7966,6 +8194,13 @@ test_scripts/dynamic_dispatch.gd
 
 
 test_scripts/ecs_like_system.gd
+  2:0 Class ECSLikeSystem
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Variable entities
     declared: (none)
     inferred: Dictionary
@@ -9211,6 +9446,13 @@ test_scripts/ecs_like_system.gd
 
 
 test_scripts/enemy_entity.gd
+  2:0 Class EnemyEntity
+    declared: (none)
+    inferred: BaseEntity
+    effective: BaseEntity
+    confidence: Certain
+    nullable: no
+
   10:0 Signal attack_performed
     declared: (none)
     inferred: Variant
@@ -9458,6 +9700,13 @@ test_scripts/enemy_entity.gd
 
 
 test_scripts/extended_class.gd
+  3:0 Class ExtendedClass
+    declared: (none)
+    inferred: SimpleClass
+    effective: SimpleClass
+    confidence: Certain
+    nullable: no
+
   12:8 Variable armor
     declared: (none)
     inferred: int
@@ -9550,28 +9799,42 @@ test_scripts/extended_class.gd
     confidence: Certain
     nullable: no
 
-  51:0 Class InnerClass
+  51:0 Method create_from_base
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  52:1 Variable value
+  51:29 Parameter pos
+    declared: (none)
+    inferred: Vector2
+    effective: Vector2
+    confidence: Certain
+    nullable: no
+
+  55:0 Class InnerClass
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  56:1 Variable value
     declared: (none)
     inferred: int
     effective: int
     confidence: Certain
     nullable: no
 
-  54:1 Method increment
+  58:1 Method increment
     declared: (none)
     inferred: Variant
     effective: Variant
     confidence: Unknown
     nullable: no
 
-  57:1 Method get_value
+  61:1 Method get_value
     declared: (none)
     inferred: Variant
     effective: Variant
@@ -9580,6 +9843,13 @@ test_scripts/extended_class.gd
 
 
 test_scripts/formatting_issues.gd
+  2:0 Class FormattingTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   8:0 Variable a
     declared: (none)
     inferred: int
@@ -9965,6 +10235,13 @@ test_scripts/formatting_issues.gd
 
 
 test_scripts/game_patterns.gd
+  2:0 Class GamePatterns
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Variable inventory
     declared: (none)
     inferred: Array
@@ -11320,6 +11597,13 @@ test_scripts/game_patterns.gd
 
 
 test_scripts/getters_setters.gd
+  2:0 Class GettersSetters
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   7:0 Variable _health
     declared: (none)
     inferred: int
@@ -11857,6 +12141,13 @@ test_scripts/global.gd
 
 
 test_scripts/inheritance_test.gd
+  2:0 Class InheritanceTest
+    declared: (none)
+    inferred: CharacterBody2D
+    effective: CharacterBody2D
+    confidence: Certain
+    nullable: no
+
   9:0 Variable custom_speed
     declared: (none)
     inferred: float
@@ -12293,6 +12584,13 @@ test_scripts/inheritance_test.gd
 
 
 test_scripts/local_variables.gd
+  2:0 Class LocalVariables
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   8:0 Method test_local_flow
     declared: (none)
     inferred: Variant
@@ -12820,6 +13118,13 @@ test_scripts/local_variables.gd
 
 
 test_scripts/method_chains.gd
+  2:0 Class MethodChains
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   7:0 Variable data_store
     declared: (none)
     inferred: Dictionary
@@ -13132,6 +13437,13 @@ test_scripts/method_chains.gd
 
 
 test_scripts/navigation_test.gd
+  2:0 Class NavigationTest
+    declared: (none)
+    inferred: TextureRect
+    effective: TextureRect
+    confidence: Certain
+    nullable: no
+
   6:0 Constant SCENE
     declared: (none)
     inferred: PackedScene
@@ -13218,6 +13530,13 @@ test_scripts/navigation_test.gd
 
 
 test_scripts/neutral_ui_caller.gd
+  2:0 Class NeutralUICaller
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   8:0 Variable panels
     declared: (none)
     inferred: Array
@@ -13255,6 +13574,13 @@ test_scripts/neutral_ui_caller.gd
 
 
 test_scripts/path_extends_test.gd
+  4:0 Class PathExtendsTest
+    declared: (none)
+    inferred: res://test_scripts/base_entity.gd
+    effective: res://test_scripts/base_entity.gd
+    confidence: Certain
+    nullable: no
+
   8:0 Method test_inherited_member_via_path
     declared: (none)
     inferred: Variant
@@ -13278,6 +13604,13 @@ test_scripts/path_extends_test.gd
 
 
 test_scripts/player_entity.gd
+  2:0 Class PlayerEntity
+    declared: (none)
+    inferred: BaseEntity
+    effective: BaseEntity
+    confidence: Certain
+    nullable: no
+
   10:0 Signal armor_changed
     declared: (none)
     inferred: Variant
@@ -13504,6 +13837,13 @@ test_scripts/player_entity.gd
 
 
 test_scripts/polymorphic_interfaces.gd
+  2:0 Class PolymorphicInterfaces
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   15:0 Variable damageable_entities
     declared: (none)
     inferred: Array
@@ -14677,6 +15017,13 @@ test_scripts/polymorphic_interfaces.gd
 
 
 test_scripts/refactoring_targets.gd
+  2:0 Class RefactoringTargets
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   7:0 Constant MAGIC_NUMBER
     declared: (none)
     inferred: int
@@ -14973,6 +15320,13 @@ test_scripts/refactoring_targets.gd
 
 
 test_scripts/reflection_test.gd
+  1:0 Class ReflectionTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   4:0 Signal game_started
     declared: (none)
     inferred: Variant
@@ -15059,6 +15413,13 @@ test_scripts/reflection_test.gd
 
 
 test_scripts/rename_test.gd
+  2:0 Class RenameTest
+    declared: (none)
+    inferred: RefactoringTargets
+    effective: RefactoringTargets
+    confidence: Certain
+    nullable: no
+
   7:0 Variable local_speed
     declared: (none)
     inferred: float
@@ -15286,6 +15647,13 @@ test_scripts/rename_test.gd
 
 
 test_scripts/scene_nodes.gd
+  2:0 Class SceneNodes
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   9:9 Variable player
     declared: (none)
     inferred: CharacterBody2D
@@ -15996,7 +16364,72 @@ test_scripts/scene_references.gd
     nullable: no
 
 
+test_scripts/semantic_tokens_test.gd
+  2:0 Class SemanticTokensTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
+  4:0 Signal triggered
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  6:8 Property is_active
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  7:5 Parameter value
+    declared: (none)
+    inferred: bool
+    effective: bool
+    confidence: Certain
+    nullable: no
+
+  10:0 Variable combo_count
+    declared: (none)
+    inferred: int
+    effective: int
+    confidence: Certain
+    nullable: no
+
+  12:0 Method _get_configuration_warnings
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  13:1 Variable warnings
+    declared: (none)
+    inferred: PackedStringArray
+    effective: PackedStringArray
+    confidence: Certain
+    nullable: no
+
+  14:1 Variable connected_area
+    declared: (none)
+    inferred: Area2D
+    effective: Area2D
+    confidence: Certain
+    nullable: no
+
+
 test_scripts/semantic_validation_demo.gd
+  2:0 Class SemanticValidationDemo
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   8:0 Signal player_scored
     declared: (none)
     inferred: Variant
@@ -16671,6 +17104,13 @@ test_scripts/semantic_validation_demo.gd
 
 
 test_scripts/signal_callback_chains.gd
+  2:0 Class SignalCallbackChains
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Signal data_loaded
     declared: (none)
     inferred: Variant
@@ -18425,6 +18865,13 @@ test_scripts/signal_callback_chains.gd
 
 
 test_scripts/signals_test.gd
+  2:0 Class SignalsTest
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   9:0 Signal simple_signal
     declared: (none)
     inferred: Variant
@@ -18959,6 +19406,13 @@ test_scripts/signals_test.gd
 
 
 test_scripts/simple_class.gd
+  3:0 Class SimpleClass
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   12:8 Variable speed
     declared: (none)
     inferred: float
@@ -19080,6 +19534,13 @@ test_scripts/simple_class.gd
 
 
 test_scripts/standard_methods.gd
+  2:0 Class StandardMethods
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   10:0 Method test_array_methods
     declared: (none)
     inferred: Variant
@@ -20309,6 +20770,13 @@ test_scripts/standard_methods.gd
 
 
 test_scripts/todo_examples.gd
+  2:0 Class TodoExamples
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   14:0 Variable data
     declared: (none)
     inferred: Array
@@ -20423,6 +20891,13 @@ test_scripts/todo_examples.gd
 
 
 test_scripts/type_guards.gd
+  2:0 Class TypeGuards
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   8:0 Method process_value
     declared: (none)
     inferred: Variant
@@ -20832,6 +21307,13 @@ test_scripts/type_guards.gd
 
 
 test_scripts/type_inference.gd
+  2:0 Class TypeInferenceTest
+    declared: (none)
+    inferred: Node2D
+    effective: Node2D
+    confidence: Certain
+    nullable: no
+
   8:0 Variable inferred_int
     declared: (none)
     inferred: int
@@ -21550,6 +22032,13 @@ test_scripts/type_inference.gd
 
 
 test_scripts/ui_panel_a.gd
+  2:0 Class UIPanelA
+    declared: (none)
+    inferred: Control
+    effective: Control
+    confidence: Certain
+    nullable: no
+
   4:0 Variable _data
     declared: (none)
     inferred: int
@@ -21573,6 +22062,13 @@ test_scripts/ui_panel_a.gd
 
 
 test_scripts/ui_panel_b.gd
+  2:0 Class UIPanelB
+    declared: (none)
+    inferred: Control
+    effective: Control
+    confidence: Certain
+    nullable: no
+
   4:0 Variable _counter
     declared: (none)
     inferred: int
@@ -21596,6 +22092,13 @@ test_scripts/ui_panel_b.gd
 
 
 test_scripts/union_returns.gd
+  2:0 Class UnionReturns
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   8:0 Method get_or_error
     declared: (none)
     inferred: Variant
@@ -22030,6 +22533,13 @@ test_scripts/union_returns.gd
 
 
 test_scripts/union_types_complex.gd
+  2:0 Class UnionTypesComplex
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   10:0 Variable operation_result
     declared: (none)
     inferred: Variant
@@ -22828,6 +23338,13 @@ test_scripts/union_types_complex.gd
 
 
 test_scripts/unrelated_class.gd
+  2:0 Class UnrelatedClass
+    declared: (none)
+    inferred: Node
+    effective: Node
+    confidence: Certain
+    nullable: no
+
   7:0 Variable damage_log
     declared: (none)
     inferred: Array
@@ -23028,4 +23545,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 3266 entries in 58 files
+# Summary: 3339 entries in 61 files

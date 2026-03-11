@@ -69,7 +69,7 @@ public class GDHoverHandler : IGDHoverHandler
             Documentation = documentation,
             StartLine = posToken != null ? posToken.StartLine + 1 : null,
             StartColumn = posToken?.StartColumn,
-            EndLine = posToken != null ? posToken.StartLine + 1 : null,
+            EndLine = posToken != null ? posToken.EndLine + 1 : null,
             EndColumn = posToken != null ? posToken.StartColumn + symbol.Name.Length : null
         };
     }
@@ -511,6 +511,7 @@ public class GDHoverHandler : IGDHoverHandler
             return null;
 
         var currentToken = firstToken.GlobalPreviousToken;
+        int consecutiveNewLines = 0;
         while (currentToken != null)
         {
             if (currentToken is GDComment comment)
@@ -520,15 +521,27 @@ public class GDHoverHandler : IGDHoverHandler
                 {
                     var docText = text.Substring(2).TrimStart();
                     docLines.Insert(0, docText);
+                    consecutiveNewLines = 0;
                 }
                 else
                 {
                     break;
                 }
             }
-            else if (currentToken is GDNewLine || currentToken is GDSpace)
+            else if (currentToken is GDNewLine)
             {
-                // Whitespace is allowed between doc comments
+                consecutiveNewLines++;
+                if (consecutiveNewLines >= 2)
+                    break;
+            }
+            else if (currentToken is GDSpace
+                     || currentToken is GDIntendation || currentToken is GDCarriageReturnToken)
+            {
+                // Non-newline whitespace is allowed between doc comments
+            }
+            else if (IsInsideAttribute(currentToken))
+            {
+                consecutiveNewLines = 0;
             }
             else
             {
@@ -539,5 +552,17 @@ public class GDHoverHandler : IGDHoverHandler
         }
 
         return docLines.Count > 0 ? string.Join("\n", docLines) : null;
+    }
+
+    private static bool IsInsideAttribute(GDSyntaxToken token)
+    {
+        var parent = token.Parent;
+        while (parent != null)
+        {
+            if (parent is GDClassAttribute)
+                return true;
+            parent = parent.Parent;
+        }
+        return false;
     }
 }

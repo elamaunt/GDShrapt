@@ -30,6 +30,7 @@ internal static class GDDocCommentExtractor
             return null;
 
         var currentToken = firstToken.GlobalPreviousToken;
+        int consecutiveNewLines = 0;
         while (currentToken != null)
         {
             if (currentToken is GDComment comment)
@@ -39,15 +40,27 @@ internal static class GDDocCommentExtractor
                 {
                     var docText = text.Substring(2).TrimStart();
                     docLines.Insert(0, docText);
+                    consecutiveNewLines = 0;
                 }
                 else
                 {
                     break;
                 }
             }
-            else if (currentToken is GDNewLine || currentToken is GDSpace)
+            else if (currentToken is GDNewLine)
             {
-                // Whitespace is allowed between doc comments
+                consecutiveNewLines++;
+                if (consecutiveNewLines >= 2)
+                    break;
+            }
+            else if (currentToken is GDSpace
+                     || currentToken is GDIntendation || currentToken is GDCarriageReturnToken)
+            {
+                // Non-newline whitespace is allowed between doc comments
+            }
+            else if (IsInsideAttribute(currentToken))
+            {
+                consecutiveNewLines = 0;
             }
             else
             {
@@ -58,5 +71,17 @@ internal static class GDDocCommentExtractor
         }
 
         return docLines.Count > 0 ? string.Join("\n", docLines) : null;
+    }
+
+    private static bool IsInsideAttribute(GDSyntaxToken token)
+    {
+        var parent = token.Parent;
+        while (parent != null)
+        {
+            if (parent is GDClassAttribute)
+                return true;
+            parent = parent.Parent;
+        }
+        return false;
     }
 }

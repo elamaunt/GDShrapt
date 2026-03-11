@@ -1,3 +1,226 @@
 # TYPE_INFERENCE_UNVERIFIED.txt
 # Copy entries to TYPE_INFERENCE_VERIFIED.txt and add # OK
 
+test_scripts/ai_controller.gd
+2:0 Class AIController -> Variant
+
+test_scripts/attribute_doc_test.gd
+3:0 Class AttributeDocTest -> Variant
+6:8 Variable speed -> float
+6:27 GDNumberExpression 100.0 -> float
+9:8 Variable health -> int
+9:26 GDNumberExpression 100 -> int
+12:9 Variable health_bar -> Node
+12:32 GDGetNodeExpression $HealthBar -> Node
+14:8 Variable no_doc_var -> int
+14:30 GDNumberExpression 42 -> int
+
+test_scripts/autoload_usage.gd
+2:0 Class AutoloadUsageTest -> Variant
+4:0 Method use_autoload -> void
+5:1 Variable level -> int
+5:13 GDMemberOperatorExpression Global.current_level -> int
+5:13 GDIdentifierExpression Global -> Global
+6:1 GDCallExpression Global.start_game() -> void
+6:1 GDMemberOperatorExpression Global.start_game -> void
+6:1 GDIdentifierExpression Global -> Global
+7:1 Variable count -> int
+7:13 GDCallExpression Global.get_player_count() -> int
+7:13 GDMemberOperatorExpression Global.get_player_count -> int
+7:13 GDIdentifierExpression Global -> Global
+
+test_scripts/base_entity.gd
+2:0 Class BaseEntity -> Variant
+
+test_scripts/completion_test.gd
+2:0 Class CompletionTest -> Variant
+
+test_scripts/cross_file_inference.gd
+2:0 Class CrossFileInference -> Variant
+
+test_scripts/cycles_test.gd
+2:0 Class CyclesTest -> Variant
+
+test_scripts/cyclic_inference.gd
+2:0 Class CyclicInference -> Variant
+
+test_scripts/diagnostics_issues.gd
+2:0 Class DiagnosticsTest -> Variant
+
+test_scripts/diagnostics/linter/best_practices_rules.gd
+2:0 Class DiagnosticsTest_BestPractices -> Variant
+
+test_scripts/diagnostics/linter/complexity_rules.gd
+2:0 Class DiagnosticsTest_ComplexityRules -> Variant
+
+test_scripts/diagnostics/linter/formatting_rules.gd
+2:0 Class DiagnosticsTest_FormattingRules -> Variant
+
+test_scripts/diagnostics/linter/naming_rules.gd
+23:0 Class DiagnosticsTest_NamingRules -> Variant
+
+test_scripts/diagnostics/suppression/linter_suppression.gd
+4:0 Class DiagnosticsTest_LinterSuppression -> Variant
+
+test_scripts/diagnostics/suppression/validator_suppression.gd
+2:0 Class DiagnosticsTest_ValidatorSuppression -> Variant
+
+test_scripts/diagnostics/validator/abstract_errors.gd
+2:0 Class DiagnosticsTest_AbstractErrors -> Variant
+
+test_scripts/diagnostics/validator/call_errors.gd
+2:0 Class DiagnosticsTest_CallErrors -> Variant
+
+test_scripts/diagnostics/validator/control_flow_errors.gd
+2:0 Class DiagnosticsTest_ControlFlowErrors -> Variant
+
+test_scripts/diagnostics/validator/duck_typing_errors.gd
+2:0 Class DiagnosticsTest_DuckTypingErrors -> Variant
+
+test_scripts/diagnostics/validator/scope_errors.gd
+2:0 Class DiagnosticsTest_ScopeErrors -> Variant
+
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+2:0 Class DiagnosticsTest_TypeAnnotationErrors -> Variant
+
+test_scripts/diagnostics/validator/type_errors.gd
+2:0 Class DiagnosticsTest_TypeErrors -> Variant
+
+test_scripts/duck_caller.gd
+2:0 Class DuckCaller -> Variant
+
+test_scripts/duck_typing_advanced.gd
+2:0 Class DuckTypingAdvanced -> Variant
+
+test_scripts/dynamic_dispatch.gd
+2:0 Class DynamicDispatch -> Variant
+
+test_scripts/ecs_like_system.gd
+2:0 Class ECSLikeSystem -> Variant
+
+test_scripts/enemy_entity.gd
+2:0 Class EnemyEntity -> Variant
+
+test_scripts/extended_class.gd
+3:0 Class ExtendedClass -> Variant
+51:0 Method create_from_base -> SimpleClass
+51:29 Parameter pos -> Vector2
+52:1 GDReturnExpression return SimpleClass.create_at() -> Variant
+52:8 GDCallExpression SimpleClass.create_at() -> SimpleClass
+52:8 GDMemberOperatorExpression SimpleClass.create_at -> SimpleClass
+52:8 GDIdentifierExpression SimpleClass -> SimpleClass
+52:30 GDIdentifierExpression pos -> Vector2
+55:0 Class InnerClass -> InnerClass
+56:1 Variable value -> int
+56:18 GDNumberExpression 0 -> int
+58:1 Method increment -> void
+59:2 GDDualOperatorExpression valueAddAndAssign1 -> int
+59:2 GDIdentifierExpression value -> int
+59:11 GDNumberExpression 1 -> int
+61:1 Method get_value -> int
+62:2 GDReturnExpression return value -> Variant
+62:9 GDIdentifierExpression value -> int
+
+test_scripts/formatting_issues.gd
+2:0 Class FormattingTest -> Variant
+
+test_scripts/game_patterns.gd
+2:0 Class GamePatterns -> Variant
+
+test_scripts/getters_setters.gd
+2:0 Class GettersSetters -> Variant
+
+test_scripts/inheritance_test.gd
+2:0 Class InheritanceTest -> Variant
+
+test_scripts/local_variables.gd
+2:0 Class LocalVariables -> Variant
+
+test_scripts/method_chains.gd
+2:0 Class MethodChains -> Variant
+
+test_scripts/navigation_test.gd
+2:0 Class NavigationTest -> Variant
+
+test_scripts/neutral_ui_caller.gd
+2:0 Class NeutralUICaller -> Variant
+
+test_scripts/path_extends_test.gd
+4:0 Class PathExtendsTest -> Variant
+
+test_scripts/player_entity.gd
+2:0 Class PlayerEntity -> Variant
+
+test_scripts/polymorphic_interfaces.gd
+2:0 Class PolymorphicInterfaces -> Variant
+
+test_scripts/refactoring_targets.gd
+2:0 Class RefactoringTargets -> Variant
+
+test_scripts/reflection_test.gd
+1:0 Class ReflectionTest -> Variant
+
+test_scripts/rename_test.gd
+2:0 Class RenameTest -> Variant
+
+test_scripts/scene_nodes.gd
+2:0 Class SceneNodes -> Variant
+
+test_scripts/semantic_tokens_test.gd
+2:0 Class SemanticTokensTest -> Variant
+4:0 Signal triggered -> Signal(gamepiece: Node)
+6:8 Property is_active -> bool
+6:30 GDBoolExpression true -> bool
+7:5 Parameter value -> Variant
+8:2 GDDualOperatorExpression is_activeAssignmentvalue -> bool
+8:2 GDIdentifierExpression is_active -> bool
+8:14 GDIdentifierExpression value -> bool
+10:0 Variable combo_count -> int
+10:23 GDNumberExpression 0 -> int
+12:0 Method _get_configuration_warnings -> PackedStringArray
+13:1 Variable warnings -> PackedStringArray
+13:35 GDArrayInitializerExpression [...] -> Array
+14:1 Variable connected_area -> Area2D
+14:30 GDIdentifierExpression null -> null
+15:1 GDReturnExpression return warnings -> Variant
+15:8 GDIdentifierExpression warnings -> PackedStringArray
+
+test_scripts/semantic_validation_demo.gd
+2:0 Class SemanticValidationDemo -> Variant
+
+test_scripts/signal_callback_chains.gd
+2:0 Class SignalCallbackChains -> Variant
+
+test_scripts/signals_test.gd
+2:0 Class SignalsTest -> Variant
+
+test_scripts/simple_class.gd
+3:0 Class SimpleClass -> Variant
+
+test_scripts/standard_methods.gd
+2:0 Class StandardMethods -> Variant
+
+test_scripts/todo_examples.gd
+2:0 Class TodoExamples -> Variant
+
+test_scripts/type_guards.gd
+2:0 Class TypeGuards -> Variant
+
+test_scripts/type_inference.gd
+2:0 Class TypeInferenceTest -> Variant
+
+test_scripts/ui_panel_a.gd
+2:0 Class UIPanelA -> Variant
+
+test_scripts/ui_panel_b.gd
+2:0 Class UIPanelB -> Variant
+
+test_scripts/union_returns.gd
+2:0 Class UnionReturns -> Variant
+
+test_scripts/union_types_complex.gd
+2:0 Class UnionTypesComplex -> Variant
+
+test_scripts/unrelated_class.gd
+2:0 Class UnrelatedClass -> Variant
+

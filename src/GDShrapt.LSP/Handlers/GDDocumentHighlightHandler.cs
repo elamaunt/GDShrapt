@@ -99,20 +99,21 @@ public class GDDocumentHighlightHandler
 
         // Add declaration
         var symbol = model.FindSymbol(symbolName);
-        if (symbol?.DeclarationNode != null)
+        if (symbol != null)
         {
-            var declNode = symbol.DeclarationNode;
-            var declLine = declNode.StartLine;
-            var declCol = declNode.StartColumn;
-            highlights.Add(new GDDocumentHighlight
+            var declId = symbol.DeclarationIdentifier;
+            if (declId != null)
             {
-                Range = GDLocationAdapter.ToLspRange(
-                    declLine + 1,
-                    declCol,
-                    declLine + 1,
-                    declCol + symbolName.Length),
-                Kind = GDDocumentHighlightKind.Write
-            });
+                highlights.Add(new GDDocumentHighlight
+                {
+                    Range = GDLocationAdapter.ToLspRange(
+                        declId.StartLine + 1,
+                        declId.StartColumn,
+                        declId.StartLine + 1,
+                        declId.StartColumn + symbolName.Length),
+                    Kind = GDDocumentHighlightKind.Write
+                });
+            }
         }
 
         // Add references

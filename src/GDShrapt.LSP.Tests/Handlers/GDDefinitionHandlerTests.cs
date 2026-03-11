@@ -532,4 +532,130 @@ public class GDDefinitionHandlerTests
         // Assert
         links.Should().BeNull();
     }
+
+    [TestMethod]
+    public void FindDefinition_SuperKeyword_NavigatesToParentClass()
+    {
+        var (project, _) = SetupProjectAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // extended_class.gd line 18 (1-based): "\tsuper._ready()"
+        // "super" starts at column 2 (1-based, after tab)
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "extended_class.gd"),
+            18, 2);
+
+        location.Should().NotBeNull("super should navigate to parent class");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("simple_class.gd",
+            "super should navigate to SimpleClass definition");
+    }
+
+    [TestMethod]
+    public void FindDefinition_SuperMethodCall_NavigatesToParentClassMethod()
+    {
+        var (project, _) = SetupProjectAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // extended_class.gd line 18 (1-based): "\tsuper._ready()"
+        // "_ready" starts at column 8 (1-based: tab=1, s=2, u=3, p=4, e=5, r=6, .=7, _=8)
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "extended_class.gd"),
+            18, 8);
+
+        location.Should().NotBeNull("super._ready() should resolve to parent class method");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("simple_class.gd",
+            "super._ready() should navigate to _ready in SimpleClass, not ExtendedClass");
+        location.Line.Should().Be(22, "_ready is declared on line 22 of simple_class.gd");
+    }
+
+    [TestMethod]
+    public void FindDefinition_SuperTakeDamageCall_NavigatesToParentClassMethod()
+    {
+        var (project, _) = SetupProjectAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // extended_class.gd line 24 (1-based): "\tsuper.take_damage(reduced_damage)"
+        // "take_damage" starts at column 8 (1-based, after "\tsuper.")
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "extended_class.gd"),
+            24, 8);
+
+        location.Should().NotBeNull("super.take_damage() should resolve to parent class method");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("simple_class.gd",
+            "super.take_damage() should navigate to take_damage in SimpleClass");
+        location.Line.Should().Be(36, "take_damage is declared on line 36 of simple_class.gd");
+    }
+
+    [TestMethod]
+    public void FindDefinition_AutoloadName_NavigatesToSourceFile()
+    {
+        var (project, _) = SetupProjectAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // autoload_usage.gd line 5 (1-based): var level = Global.current_level
+        // "Global" starts at column 14 (1-based)
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "autoload_usage.gd"),
+            5, 14);
+
+        location.Should().NotBeNull("GoToDefinition on autoload name 'Global' should return a result");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("global.gd",
+            "Should navigate to the autoload source file, not a generated stub");
+        location.FilePath.Should().NotContain("builtin_types",
+            "Should NOT navigate to a generated built-in type file");
+    }
+
+    [TestMethod]
+    public void FindDefinition_AutoloadMember_NavigatesToMemberInSourceFile()
+    {
+        var (project, _) = SetupProjectAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // autoload_usage.gd line 5 (1-based): var level = Global.current_level
+        // "current_level" starts at column 21 (1-based)
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "autoload_usage.gd"),
+            5, 21);
+
+        location.Should().NotBeNull("GoToDefinition on autoload member 'current_level' should return a result");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("global.gd",
+            "Should navigate to the autoload source file, not a generated stub");
+        location.FilePath.Should().NotContain("builtin_types");
+    }
+
+    [TestMethod]
+    public void FindDefinition_AutoloadMethod_NavigatesToMethodInSourceFile()
+    {
+        var (project, _) = SetupProjectAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // autoload_usage.gd line 6 (1-based): Global.start_game()
+        // "start_game" starts at column 9 (1-based, after "\tGlobal.")
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "autoload_usage.gd"),
+            6, 9);
+
+        location.Should().NotBeNull("GoToDefinition on autoload method 'start_game' should return a result");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("global.gd",
+            "Should navigate to the autoload source file, not a generated stub");
+        location.FilePath.Should().NotContain("builtin_types");
+    }
 }

@@ -376,4 +376,65 @@ public class GDHoverHandlerTests
 
         foundSignal.Should().BeTrue("should find animation_finished signal in AnimationMixer or AnimationPlayer");
     }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnExportVarWithDocComment_ShowsDocComment()
+    {
+        // attribute_doc_test.gd:
+        // line 5: "## Speed of the character."
+        // line 6: "@export var speed: float = 100.0"
+        // "speed" at column 13 (1-based), LSP 0-based: line=5, char=12
+        var (_, handler) = SetupProjectAndHandler();
+        var @params = CreateParams("attribute_doc_test.gd", 5, 12);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Contents.Should().NotBeNull();
+        result.Contents.Value.Should().Contain("Speed of the character",
+            "doc comment above @export should be visible in hover");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnOnreadyVarWithDocComment_ShowsDocComment()
+    {
+        // attribute_doc_test.gd:
+        // line 11: "## Reference to the health bar node."
+        // line 12: "@onready var health_bar: Node = $HealthBar"
+        // "health_bar" at column 14 (1-based), LSP 0-based: line=11, char=13
+        var (_, handler) = SetupProjectAndHandler();
+        var @params = CreateParams("attribute_doc_test.gd", 11, 13);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Contents.Should().NotBeNull();
+        result.Contents.Value.Should().Contain("Reference to the health bar node",
+            "doc comment above @onready should be visible in hover");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnExportVarWithoutDocComment_DoesNotShowClassDoc()
+    {
+        // attribute_doc_test.gd:
+        // line 1: "## A test class for attribute doc comments."
+        // ...empty line...
+        // line 12: "@onready var health_bar: Node = $HealthBar"
+        // line 13: (empty)
+        // line 14: "@export var no_doc_var: int = 42"
+        // "no_doc_var" at column 13 (1-based), LSP 0-based: line=13, char=12
+        var (_, handler) = SetupProjectAndHandler();
+        var @params = CreateParams("attribute_doc_test.gd", 13, 12);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result!.Contents.Should().NotBeNull();
+
+        var content = result.Contents.Value;
+        content.Should().NotContain("test class for attribute doc comments",
+            "should not pick up class-level doc comment across empty line");
+        content.Should().NotContain("Reference to the health bar node",
+            "should not pick up doc comment from another variable");
+    }
 }

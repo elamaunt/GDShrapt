@@ -156,6 +156,18 @@ internal class GDSemanticReferenceCollector : GDVisitor
     {
         context.EnterScope(GDScopeType.Global, classDecl);
         CollectClassMembers(classDecl, context, _scriptFile.TypeName ?? "Unknown");
+
+        var classNameAttr = classDecl.ClassName;
+        var classNameId = classNameAttr?.Identifier?.Sequence;
+        if (!string.IsNullOrEmpty(classNameId))
+        {
+            var extendsName = classDecl.Extends?.Type?.BuildName();
+            var symbol = new GDSymbol(classNameId, GDSymbolKind.Class, classNameAttr, typeName: extendsName);
+            var symbolInfo = GDSymbolInfo.ClassMember(symbol, classNameId, _scriptFile);
+            symbolInfo.Documentation = GDDocCommentExtractor.Extract(classNameAttr);
+            _model!.RegisterSymbol(symbolInfo);
+        }
+
         context.ExitScope();
     }
 

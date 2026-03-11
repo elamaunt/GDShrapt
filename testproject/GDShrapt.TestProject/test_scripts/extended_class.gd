@@ -48,6 +48,10 @@ func _physics_process(delta: float) -> void:
 	pass
 
 
+static func create_from_base(pos: Vector2) -> SimpleClass:
+	return SimpleClass.create_at(pos)
+
+
 class InnerClass:
 	var value: int = 0  # 52:12-GD7022-OK
 

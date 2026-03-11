@@ -10,19 +10,19 @@ Result: Success
 
 Strict edits (11):
   test_scripts/base_entity.gd:
-    2:12 BaseEntity -> BaseEntity_renamed [Strict] (class_name declaration)
+    2:12 BaseEntity -> BaseEntity_renamed [Strict]
   test_scripts/enemy_entity.gd:
-    1:1 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (Extends) in enemy_entity.gd)
-    1:9 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
-    11:32 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
-    20:13 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
-    39:29 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
-    81:34 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in enemy_entity.gd)
-    103:18 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeCheck) in enemy_entity.gd)
+    1:1 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (Extends))
+    1:9 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
+    11:32 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
+    20:13 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
+    39:29 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
+    81:34 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
+    103:18 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeCheck))
   test_scripts/player_entity.gd:
-    1:1 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (Extends) in player_entity.gd)
-    1:9 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in player_entity.gd)
-    92:29 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation) in player_entity.gd)
+    1:1 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (Extends))
+    1:9 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
+    92:29 BaseEntity -> BaseEntity_renamed [Strict] (Type usage (TypeAnnotation))
 
 ---
 
@@ -68,27 +68,22 @@ Strict edits (8):
   test_scripts/base_entity.gd:
     28:6 take_damage -> take_damage_renamed [Strict]
   test_scripts/enemy_entity.gd:
-    60:9 take_damage -> take_damage_renamed [Strict] (Member of BaseEntity)
+    60:9 take_damage -> take_damage_renamed [Strict] (Member access via 'BaseEntity.take_damage')
     99:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
     100:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
   test_scripts/player_entity.gd:
     30:6 take_damage -> take_damage_renamed [Strict] (Method override in derived class)
     40:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class)
-    98:9 take_damage -> take_damage_renamed [Strict] (Member of BaseEntity)
+    98:9 take_damage -> take_damage_renamed [Strict] (Member access via 'BaseEntity.take_damage')
 
-Potential edits (7):
+Potential edits (4):
   test_scripts/cross_file_inference.gd:
     92:22 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
   test_scripts/duck_caller.gd:
     12:25 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
-    13:11 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'entity')
-  test_scripts/duck_typing_advanced.gd:
-    26:22 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'target')
   test_scripts/extended_class.gd:
     30:24 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
     31:16 take_damage -> take_damage_renamed [Potential] (call("take_damage") string literal)
-  test_scripts/polymorphic_interfaces.gd:
-    41:5 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'e')
 
 ---
 
@@ -245,4 +240,4 @@ Potential edits (2):
 
 ---
 
-# Summary: 10 cases, 94 strict edits, 14 potential edits
+# Summary: 10 cases, 94 strict edits, 11 potential edits

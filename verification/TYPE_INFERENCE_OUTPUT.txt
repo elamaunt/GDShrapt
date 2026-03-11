@@ -3,6 +3,7 @@
 # Format: LINE:COL NODEKIND NAME -> TYPE
 
 test_scripts/ai_controller.gd
+2:0 Class AIController -> Variant
 11:0 Enum AIState -> AIState
 13:8 Variable patrol_points -> Array[Vector2]
 13:44 GDArrayInitializerExpression [...] -> Array
@@ -229,7 +230,33 @@ test_scripts/ai_controller.gd
 136:1 GDReturnExpression return closest -> Variant
 136:8 GDIdentifierExpression closest -> Vector2
 
+test_scripts/attribute_doc_test.gd
+3:0 Class AttributeDocTest -> Variant
+6:8 Variable speed -> float
+6:27 GDNumberExpression 100.0 -> float
+9:8 Variable health -> int
+9:26 GDNumberExpression 100 -> int
+12:9 Variable health_bar -> Node
+12:32 GDGetNodeExpression $HealthBar -> Node
+14:8 Variable no_doc_var -> int
+14:30 GDNumberExpression 42 -> int
+
+test_scripts/autoload_usage.gd
+2:0 Class AutoloadUsageTest -> Variant
+4:0 Method use_autoload -> void
+5:1 Variable level -> int
+5:13 GDMemberOperatorExpression Global.current_level -> int
+5:13 GDIdentifierExpression Global -> Global
+6:1 GDCallExpression Global.start_game() -> void
+6:1 GDMemberOperatorExpression Global.start_game -> void
+6:1 GDIdentifierExpression Global -> Global
+7:1 Variable count -> int
+7:13 GDCallExpression Global.get_player_count() -> int
+7:13 GDMemberOperatorExpression Global.get_player_count -> int
+7:13 GDIdentifierExpression Global -> Global
+
 test_scripts/base_entity.gd
+2:0 Class BaseEntity -> Variant
 10:0 Signal health_changed -> Signal(current: int, maximum: int)
 11:0 Signal entity_died -> Signal
 12:0 Signal damage_taken -> Signal(amount: int, source: Node)
@@ -439,6 +466,7 @@ test_scripts/base_entity.gd
 109:37 GDIdentifierExpression max_health -> int
 
 test_scripts/completion_test.gd
+2:0 Class CompletionTest -> Variant
 7:0 Enum TestEnum -> TestEnum
 9:0 Constant MY_CONSTANT -> int
 9:21 GDNumberExpression 42 -> int
@@ -463,7 +491,7 @@ test_scripts/completion_test.gd
 19:22 GDMemberOperatorExpression Color.WHITE -> Color
 19:22 GDIdentifierExpression Color -> Color
 20:0 Variable my_enum -> TestEnum
-20:24 GDMemberOperatorExpression TestEnum.VALUE_ONE -> int
+20:24 GDMemberOperatorExpression TestEnum.VALUE_ONE -> TestEnum
 20:24 GDIdentifierExpression TestEnum -> TestEnum
 22:9 Variable child_sprite -> Sprite2D
 22:38 GDGetNodeExpression $ChildSprite -> Sprite2D
@@ -673,15 +701,15 @@ test_scripts/completion_test.gd
 105:0 Method test_enum_completion -> void
 107:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_ONE -> TestEnum
 107:1 GDIdentifierExpression my_enum -> TestEnum
-107:11 GDMemberOperatorExpression TestEnum.VALUE_ONE -> int
+107:11 GDMemberOperatorExpression TestEnum.VALUE_ONE -> TestEnum
 107:11 GDIdentifierExpression TestEnum -> TestEnum
 108:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_TWO -> TestEnum
 108:1 GDIdentifierExpression my_enum -> TestEnum
-108:11 GDMemberOperatorExpression TestEnum.VALUE_TWO -> int
+108:11 GDMemberOperatorExpression TestEnum.VALUE_TWO -> TestEnum
 108:11 GDIdentifierExpression TestEnum -> TestEnum
 109:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_THREE -> TestEnum
 109:1 GDIdentifierExpression my_enum -> TestEnum
-109:11 GDMemberOperatorExpression TestEnum.VALUE_THREE -> int
+109:11 GDMemberOperatorExpression TestEnum.VALUE_THREE -> TestEnum
 109:11 GDIdentifierExpression TestEnum -> TestEnum
 112:1 Variable space_key -> Key
 112:22 GDIdentifierExpression KEY_SPACE -> Variant
@@ -773,6 +801,7 @@ test_scripts/completion_test.gd
 153:21 GDNumberExpression 5 -> int
 
 test_scripts/cross_file_inference.gd
+2:0 Class CrossFileInference -> Variant
 9:0 Variable entity_manager -> Variant
 10:0 Variable duck_handler -> Variant
 11:0 Variable cyclic_processor -> Variant
@@ -1532,6 +1561,7 @@ test_scripts/cross_file_inference.gd
 337:8 GDIdentifierExpression results -> Dictionary[String, Array]
 
 test_scripts/cycles_test.gd
+2:0 Class CyclesTest -> Variant
 7:0 Variable state_machine_state -> String
 7:34 GDStringExpression "idle" -> String
 10:0 Method process_with_cycle -> Dictionary[String, int]
@@ -1832,6 +1862,7 @@ test_scripts/cycles_test.gd
 143:8 GDIdentifierExpression counter -> Dictionary[String, Array]
 
 test_scripts/cyclic_inference.gd
+2:0 Class CyclicInference -> Variant
 9:0 Variable cycle_value_a -> Variant
 10:0 Variable cycle_value_b -> Variant
 13:0 Method process_a -> Variant
@@ -2552,6 +2583,7 @@ test_scripts/cyclic_inference.gd
 315:8 GDIdentifierExpression null -> null
 
 test_scripts/diagnostics_issues.gd
+2:0 Class DiagnosticsTest -> Variant
 8:0 Variable unused_variable -> int
 8:23 GDNumberExpression 10 -> int
 9:0 Variable another_unused -> String
@@ -2720,6 +2752,7 @@ test_scripts/diagnostics_issues.gd
 132:1 GDIdentifierExpression used_function -> Callable
 
 test_scripts/diagnostics/linter/best_practices_rules.gd
+2:0 Class DiagnosticsTest_BestPractices -> Variant
 17:0 Variable class_level_var -> int
 17:23 GDNumberExpression 100 -> int
 25:0 Method test_gdl201_valid -> void
@@ -2880,6 +2913,7 @@ test_scripts/diagnostics/linter/best_practices_rules.gd
 207:7 GDIdentifierExpression x -> int
 
 test_scripts/diagnostics/linter/complexity_rules.gd
+2:0 Class DiagnosticsTest_ComplexityRules -> Variant
 20:0 Method test_gdl225_valid -> void
 20:23 Parameter x -> int
 21:4 GDDualOperatorExpression xMoreThan0 -> bool
@@ -3311,6 +3345,7 @@ test_scripts/diagnostics/linter/complexity_rules.gd
 238:8 GDStringExpression "other" -> String
 
 test_scripts/diagnostics/linter/formatting_rules.gd
+2:0 Class DiagnosticsTest_FormattingRules -> Variant
 19:0 Method test_gdl101_valid -> void
 20:1 Variable short_line -> String
 20:19 GDStringExpression "This is a ..." -> String
@@ -3390,6 +3425,7 @@ test_scripts/diagnostics/linter/formatting_rules.gd
 90:13 GDIdentifierExpression z -> Array
 
 test_scripts/diagnostics/linter/naming_rules.gd
+23:0 Class DiagnosticsTest_NamingRules -> Variant
 31:0 Method valid_function_name -> void
 32:1 GDPassExpression pass -> void
 35:0 Method another_valid_name -> void
@@ -3453,6 +3489,7 @@ test_scripts/diagnostics/linter/naming_rules.gd
 183:0 Class suppressed_bad_class -> suppressed_bad_class
 
 test_scripts/diagnostics/suppression/linter_suppression.gd
+4:0 Class DiagnosticsTest_LinterSuppression -> Variant
 24:0 Variable SuppressedBadVar1 -> int
 24:25 GDNumberExpression 1 -> int
 26:0 Variable NotSuppressedBadVar1 -> int
@@ -3501,6 +3538,7 @@ test_scripts/diagnostics/suppression/linter_suppression.gd
 116:1 GDPassExpression pass -> void
 
 test_scripts/diagnostics/suppression/validator_suppression.gd
+2:0 Class DiagnosticsTest_ValidatorSuppression -> Variant
 19:0 Method test_ignore_next_line -> void
 21:1 GDCallExpression print() -> void
 21:1 GDIdentifierExpression print -> Callable(Array...) -> void
@@ -3557,6 +3595,7 @@ test_scripts/diagnostics/suppression/validator_suppression.gd
 93:7 GDIdentifierExpression control_undefined_3 -> Variant
 
 test_scripts/diagnostics/validator/abstract_errors.gd
+2:0 Class DiagnosticsTest_AbstractErrors -> Variant
 20:0 Class ValidAbstractClass -> ValidAbstractClass
 22:1 Method abstract_method -> void
 26:0 Class InvalidAbstractWithBody -> InvalidAbstractWithBody
@@ -3614,6 +3653,7 @@ test_scripts/diagnostics/validator/abstract_errors.gd
 106:7 GDIdentifierExpression obj -> CannotInstantiate
 
 test_scripts/diagnostics/validator/call_errors.gd
+2:0 Class DiagnosticsTest_CallErrors -> Variant
 15:0 Signal typed_signal -> Signal(value: int, name: String)
 16:0 Signal simple_signal -> Signal
 23:0 Method _func_two_args -> int
@@ -3746,6 +3786,7 @@ test_scripts/diagnostics/validator/call_errors.gd
 151:1 GDPassExpression pass -> void
 
 test_scripts/diagnostics/validator/control_flow_errors.gd
+2:0 Class DiagnosticsTest_ControlFlowErrors -> Variant
 19:0 Method test_gd5001_valid -> void
 20:1 Iterator i -> Variant
 20:10 GDCallExpression range() -> Array
@@ -3826,6 +3867,7 @@ test_scripts/diagnostics/validator/control_flow_errors.gd
 108:15 GDNumberExpression 200 -> int
 
 test_scripts/diagnostics/validator/duck_typing_errors.gd
+2:0 Class DiagnosticsTest_DuckTypingErrors -> Variant
 18:0 Method test_gd7002_valid_typed -> void
 19:1 Variable node -> Node
 19:18 GDCallExpression Node.new() -> Node
@@ -3949,6 +3991,7 @@ test_scripts/diagnostics/validator/scene_validation_errors.gd
 55:21 GDStringExpression "Panel" -> String
 
 test_scripts/diagnostics/validator/scope_errors.gd
+2:0 Class DiagnosticsTest_ScopeErrors -> Variant
 16:0 Enum TestEnum -> TestEnum
 24:0 Method test_gd2001_valid -> void
 25:1 Variable defined_var -> int
@@ -4015,28 +4058,29 @@ test_scripts/diagnostics/validator/scope_errors.gd
 105:1 GDIdentifierExpression emit_signal -> Error
 105:13 GDStringExpression "another_un..." -> String
 113:0 Method test_gd2006_valid -> void
-114:1 Variable val -> TestEnum
-114:12 GDMemberOperatorExpression TestEnum.VALUE_A -> TestEnum
+114:1 Variable val -> Variant
+114:12 GDMemberOperatorExpression TestEnum.VALUE_A -> int
 114:12 GDIdentifierExpression TestEnum -> TestEnum
 115:1 GDCallExpression print() -> void
 115:1 GDIdentifierExpression print -> Callable(Array...) -> void
-115:7 GDIdentifierExpression val -> TestEnum
+115:7 GDIdentifierExpression val -> int
 119:0 Method test_gd2006_invalid -> void
 120:1 Variable val -> Variant
 120:12 GDMemberOperatorExpression TestEnum.NONEXISTENT_VALUE -> Variant
 120:12 GDIdentifierExpression TestEnum -> TestEnum
 121:1 GDCallExpression print() -> void
 121:1 GDIdentifierExpression print -> Callable(Array...) -> void
-121:7 GDIdentifierExpression val -> TestEnum
+121:7 GDIdentifierExpression val -> int
 125:0 Method test_gd2006_suppressed -> void
 127:1 Variable val -> Variant
 127:12 GDMemberOperatorExpression TestEnum.ANOTHER_FAKE_VALUE -> Variant
 127:12 GDIdentifierExpression TestEnum -> TestEnum
 128:1 GDCallExpression print() -> void
 128:1 GDIdentifierExpression print -> Callable(Array...) -> void
-128:7 GDIdentifierExpression val -> TestEnum
+128:7 GDIdentifierExpression val -> int
 
 test_scripts/diagnostics/validator/type_annotation_errors.gd
+2:0 Class DiagnosticsTest_TypeAnnotationErrors -> Variant
 13:0 Method test_gd3023_valid_same_type -> int
 13:33 Parameter flag -> bool
 14:4 GDIdentifierExpression flag -> bool
@@ -4129,6 +4173,7 @@ test_scripts/diagnostics/validator/type_annotation_errors.gd
 127:2 GDIdentifierExpression enemy -> Node
 
 test_scripts/diagnostics/validator/type_errors.gd
+2:0 Class DiagnosticsTest_TypeErrors -> Variant
 24:0 Method test_gd3001_valid -> void
 25:1 Variable x -> int
 25:14 GDNumberExpression 42 -> int
@@ -4378,6 +4423,7 @@ test_scripts/diagnostics/validator/type_errors.gd
 257:7 GDIdentifierExpression dict -> Dictionary[Dictionary, int]
 
 test_scripts/duck_caller.gd
+2:0 Class DuckCaller -> Variant
 7:0 Variable entities -> Array
 7:15 GDArrayInitializerExpression [...] -> Array
 10:0 Method process_entities -> void
@@ -4393,6 +4439,7 @@ test_scripts/duck_caller.gd
 13:22 GDNumberExpression 5 -> int
 
 test_scripts/duck_typing_advanced.gd
+2:0 Class DuckTypingAdvanced -> Variant
 10:0 Variable attacker -> Variant
 11:0 Variable defender -> Variant
 14:0 Variable last_attack_result -> Variant
@@ -4855,6 +4902,7 @@ test_scripts/duck_typing_advanced.gd
 252:34 GDNumberExpression 25 -> int
 
 test_scripts/dynamic_dispatch.gd
+2:0 Class DynamicDispatch -> Variant
 9:0 Variable handler_object -> Variant
 10:0 Variable processor_chain -> Array
 10:22 GDArrayInitializerExpression [...] -> Array
@@ -5944,6 +5992,7 @@ test_scripts/dynamic_dispatch.gd
 426:8 GDIdentifierExpression result -> Variant
 
 test_scripts/ecs_like_system.gd
+2:0 Class ECSLikeSystem -> Variant
 9:0 Variable entities -> Dictionary[Variant, Variant]
 9:15 GDDictionaryInitializerExpression {...} -> Dictionary
 10:0 Variable next_entity_id -> int
@@ -6961,6 +7010,7 @@ test_scripts/ecs_like_system.gd
 418:8 GDIdentifierExpression stats -> Dictionary[String, int]
 
 test_scripts/enemy_entity.gd
+2:0 Class EnemyEntity -> Variant
 10:0 Signal attack_performed -> Signal(target: Node, damage: int)
 11:0 Signal target_acquired -> Signal(target: BaseEntity)
 12:0 Signal target_lost -> Signal
@@ -7192,6 +7242,7 @@ test_scripts/enemy_entity.gd
 126:15 GDIdentifierExpression experience_reward -> int
 
 test_scripts/extended_class.gd
+3:0 Class ExtendedClass -> Variant
 12:8 Variable armor -> int
 12:25 GDNumberExpression 0 -> int
 14:0 Variable combo_count -> int
@@ -7256,18 +7307,26 @@ test_scripts/extended_class.gd
 46:0 Method _physics_process -> void
 46:22 Parameter delta -> float
 48:1 GDPassExpression pass -> void
-51:0 Class InnerClass -> InnerClass
-52:1 Variable value -> int
-52:18 GDNumberExpression 0 -> int
-54:1 Method increment -> void
-55:2 GDDualOperatorExpression valueAddAndAssign1 -> int
-55:2 GDIdentifierExpression value -> int
-55:11 GDNumberExpression 1 -> int
-57:1 Method get_value -> int
-58:2 GDReturnExpression return value -> Variant
-58:9 GDIdentifierExpression value -> int
+51:0 Method create_from_base -> SimpleClass
+51:29 Parameter pos -> Vector2
+52:1 GDReturnExpression return SimpleClass.create_at() -> Variant
+52:8 GDCallExpression SimpleClass.create_at() -> SimpleClass
+52:8 GDMemberOperatorExpression SimpleClass.create_at -> SimpleClass
+52:8 GDIdentifierExpression SimpleClass -> SimpleClass
+52:30 GDIdentifierExpression pos -> Vector2
+55:0 Class InnerClass -> InnerClass
+56:1 Variable value -> int
+56:18 GDNumberExpression 0 -> int
+58:1 Method increment -> void
+59:2 GDDualOperatorExpression valueAddAndAssign1 -> int
+59:2 GDIdentifierExpression value -> int
+59:11 GDNumberExpression 1 -> int
+61:1 Method get_value -> int
+62:2 GDReturnExpression return value -> Variant
+62:9 GDIdentifierExpression value -> int
 
 test_scripts/formatting_issues.gd
+2:0 Class FormattingTest -> Variant
 8:0 Variable a -> int
 8:10 GDNumberExpression 10 -> int
 9:0 Variable b -> String
@@ -7544,6 +7603,7 @@ test_scripts/formatting_issues.gd
 108:13 GDIdentifierExpression msg2 -> String
 
 test_scripts/game_patterns.gd
+2:0 Class GamePatterns -> Variant
 9:0 Variable inventory -> Array
 9:16 GDArrayInitializerExpression [...] -> Array
 10:0 Variable equipped -> Dictionary[Variant, Variant]
@@ -9021,6 +9081,7 @@ test_scripts/game_patterns.gd
 569:8 GDIdentifierExpression value -> Variant
 
 test_scripts/getters_setters.gd
+2:0 Class GettersSetters -> Variant
 7:0 Variable _health -> int
 7:19 GDNumberExpression 100 -> int
 8:0 Variable _max_health -> int
@@ -9358,6 +9419,7 @@ test_scripts/global.gd
 26:8 GDIdentifierExpression player_data -> Dictionary
 
 test_scripts/inheritance_test.gd
+2:0 Class InheritanceTest -> Variant
 9:0 Variable custom_speed -> float
 9:26 GDNumberExpression 100.0 -> float
 10:0 Variable custom_health -> int
@@ -9671,6 +9733,7 @@ test_scripts/inheritance_test.gd
 208:8 GDStringExpression "Unknown" -> String
 
 test_scripts/local_variables.gd
+2:0 Class LocalVariables -> Variant
 8:0 Method test_local_flow -> Variant
 8:21 Parameter input -> Variant
 10:1 Variable local -> Variant
@@ -9991,6 +10054,7 @@ test_scripts/local_variables.gd
 182:8 GDIdentifierExpression step5 -> String
 
 test_scripts/method_chains.gd
+2:0 Class MethodChains -> Variant
 7:0 Variable data_store -> Dictionary
 7:29 GDDictionaryInitializerExpression {...} -> Dictionary
 10:0 Method process_chain -> float
@@ -10237,6 +10301,7 @@ test_scripts/method_chains.gd
 113:8 GDStringExpression "" -> String
 
 test_scripts/navigation_test.gd
+2:0 Class NavigationTest -> Variant
 6:0 Constant SCENE -> PackedScene
 6:14 GDCallExpression preload() -> PackedScene
 6:14 GDIdentifierExpression preload -> Callable(String) -> Resource
@@ -10299,6 +10364,7 @@ test_scripts/navigation_test.gd
 25:16 GDIdentifierExpression d -> String
 
 test_scripts/neutral_ui_caller.gd
+2:0 Class NeutralUICaller -> Variant
 8:0 Variable panels -> Array
 8:13 GDArrayInitializerExpression [...] -> Array
 11:0 Method update_all_panels -> void
@@ -10314,6 +10380,7 @@ test_scripts/neutral_ui_caller.gd
 17:1 GDIdentifierExpression panel -> Variant
 
 test_scripts/path_extends_test.gd
+4:0 Class PathExtendsTest -> Variant
 8:0 Method test_inherited_member_via_path -> void
 10:1 GDDualOperatorExpression max_healthAssignment200 -> int
 10:1 GDIdentifierExpression max_health -> int
@@ -10353,6 +10420,7 @@ test_scripts/path_extends_test.gd
 30:21 GDIdentifierExpression current_health -> int
 
 test_scripts/player_entity.gd
+2:0 Class PlayerEntity -> Variant
 10:0 Signal armor_changed -> Signal(new_armor: int)
 11:0 Signal experience_gained -> Signal(amount: int)
 12:0 Signal level_up -> Signal(new_level: int)
@@ -10542,6 +10610,7 @@ test_scripts/player_entity.gd
 120:11 GDIdentifierExpression combo_count -> int
 
 test_scripts/polymorphic_interfaces.gd
+2:0 Class PolymorphicInterfaces -> Variant
 15:0 Variable damageable_entities -> Array
 15:26 GDArrayInitializerExpression [...] -> Array
 16:0 Variable moveable_entities -> Array
@@ -11339,6 +11408,7 @@ test_scripts/polymorphic_interfaces.gd
 430:8 GDIdentifierExpression memento_stack -> Array
 
 test_scripts/refactoring_targets.gd
+2:0 Class RefactoringTargets -> Variant
 7:0 Constant MAGIC_NUMBER -> int
 7:21 GDNumberExpression 42 -> int
 8:0 Constant DEFAULT_SPEED -> float
@@ -11582,6 +11652,7 @@ test_scripts/refactoring_targets.gd
 135:12 GDIdentifierExpression is_game_active -> bool
 
 test_scripts/reflection_test.gd
+1:0 Class ReflectionTest -> Variant
 4:0 Signal game_started -> Signal
 5:0 Signal health_updated -> Signal(value: float)
 7:0 Constant SIGNAL_NAME -> String
@@ -11647,6 +11718,7 @@ test_scripts/reflection_test.gd
 37:13 GDStringExpression "art" -> String
 
 test_scripts/rename_test.gd
+2:0 Class RenameTest -> Variant
 7:0 Variable local_speed -> float
 7:19 GDIdentifierExpression player_speed -> float
 8:0 Variable cached_score -> int
@@ -11941,6 +12013,7 @@ test_scripts/rename_test.gd
 132:8 GDIdentifierExpression result -> float
 
 test_scripts/scene_nodes.gd
+2:0 Class SceneNodes -> Variant
 9:9 Variable player -> CharacterBody2D
 9:39 GDGetNodeExpression $Player -> Node
 10:9 Variable health_bar -> ProgressBar
@@ -12429,7 +12502,27 @@ test_scripts/scene_references.gd
 78:1 GDReturnExpression return null -> Variant
 78:8 GDIdentifierExpression null -> null
 
+test_scripts/semantic_tokens_test.gd
+2:0 Class SemanticTokensTest -> Variant
+4:0 Signal triggered -> Signal(gamepiece: Node)
+6:8 Property is_active -> bool
+6:30 GDBoolExpression true -> bool
+7:5 Parameter value -> Variant
+8:2 GDDualOperatorExpression is_activeAssignmentvalue -> bool
+8:2 GDIdentifierExpression is_active -> bool
+8:14 GDIdentifierExpression value -> bool
+10:0 Variable combo_count -> int
+10:23 GDNumberExpression 0 -> int
+12:0 Method _get_configuration_warnings -> PackedStringArray
+13:1 Variable warnings -> PackedStringArray
+13:35 GDArrayInitializerExpression [...] -> Array
+14:1 Variable connected_area -> Area2D
+14:30 GDIdentifierExpression null -> null
+15:1 GDReturnExpression return warnings -> Variant
+15:8 GDIdentifierExpression warnings -> PackedStringArray
+
 test_scripts/semantic_validation_demo.gd
+2:0 Class SemanticValidationDemo -> Variant
 8:0 Signal player_scored -> Signal(points: int, player_name: String)
 9:0 Signal health_changed -> Signal(new_health: float)
 10:0 Signal item_collected -> Signal(item_id: int)
@@ -12823,6 +12916,7 @@ test_scripts/semantic_validation_demo.gd
 334:7 GDIdentifierExpression dict -> Dictionary[String, float]
 
 test_scripts/signal_callback_chains.gd
+2:0 Class SignalCallbackChains -> Variant
 9:0 Signal data_loaded -> Signal(data: Variant)
 10:0 Signal entity_spawned -> Signal(entity: Variant, position: Variant)
 11:0 Signal state_transition -> Signal(from_state: Variant, to_state: Variant, context: Variant)
@@ -14031,6 +14125,7 @@ test_scripts/signal_callback_chains.gd
 558:8 GDIdentifierExpression retry -> RetryCallback
 
 test_scripts/signals_test.gd
+2:0 Class SignalsTest -> Variant
 9:0 Signal simple_signal -> Signal
 13:0 Signal health_changed -> Signal(old_value: int, new_value: int)
 14:0 Signal position_updated -> Signal(new_pos: Vector2)
@@ -14335,6 +14430,7 @@ test_scripts/signals_test.gd
 213:35 GDIdentifierExpression CONNECT_DEFERRED -> Variant
 
 test_scripts/simple_class.gd
+3:0 Class SimpleClass -> Variant
 12:8 Variable speed -> float
 12:27 GDNumberExpression 100.0 -> float
 13:8 Variable health -> int
@@ -14398,18 +14494,19 @@ test_scripts/simple_class.gd
 55:14 GDIdentifierExpression position -> Vector2
 59:0 Method create_at -> SimpleClass
 59:22 Parameter pos -> Vector2
-60:1 Variable instance -> SimpleClass
-60:17 GDCallExpression SimpleClass.new() -> SimpleClass
+60:1 Variable instance -> Node2D
+60:17 GDCallExpression SimpleClass.new() -> Node2D
 60:17 GDMemberOperatorExpression SimpleClass.new -> Variant
-60:17 GDIdentifierExpression SimpleClass -> SimpleClass
+60:17 GDIdentifierExpression SimpleClass -> Node2D
 61:1 GDDualOperatorExpression instance.positionAssignmentpos -> Vector2
 61:1 GDMemberOperatorExpression instance.position -> Vector2
-61:1 GDIdentifierExpression instance -> SimpleClass
+61:1 GDIdentifierExpression instance -> Node2D
 61:21 GDIdentifierExpression pos -> Vector2
 62:1 GDReturnExpression return instance -> Variant
-62:8 GDIdentifierExpression instance -> SimpleClass
+62:8 GDIdentifierExpression instance -> Node2D
 
 test_scripts/standard_methods.gd
+2:0 Class StandardMethods -> Variant
 10:0 Method test_array_methods -> Array[Array[int]]
 11:1 Variable arr -> Array[int]
 11:11 GDArrayInitializerExpression [...] -> Array[int]
@@ -15287,6 +15384,7 @@ test_scripts/standard_methods.gd
 306:40 GDIdentifierExpression sqrt_val -> float
 
 test_scripts/todo_examples.gd
+2:0 Class TodoExamples -> Variant
 14:0 Variable data -> Array
 14:12 GDArrayInitializerExpression [...] -> Array
 15:0 Variable processed_count -> int
@@ -15357,6 +15455,7 @@ test_scripts/todo_examples.gd
 77:1 GDPassExpression pass -> void
 
 test_scripts/type_guards.gd
+2:0 Class TypeGuards -> Variant
 8:0 Method process_value -> Array | float | int | null | Variant
 8:19 Parameter value -> Array[<Derivable>] | Dictionary[Variant, <Derivable>] | int | String
 10:4 GDDualOperatorExpression valueEqualnull -> bool
@@ -15887,6 +15986,7 @@ test_scripts/type_guards.gd
 272:8 GDArrayInitializerExpression [...] -> Array
 
 test_scripts/type_inference.gd
+2:0 Class TypeInferenceTest -> Variant
 8:0 Variable inferred_int -> int
 8:20 GDNumberExpression 42 -> int
 9:0 Variable inferred_float -> float
@@ -16378,6 +16478,7 @@ test_scripts/type_inference.gd
 230:13 GDIdentifierExpression dict_val -> int
 
 test_scripts/ui_panel_a.gd
+2:0 Class UIPanelA -> Variant
 4:0 Variable _data -> int
 4:17 GDNumberExpression 0 -> int
 7:0 Method refresh_ui -> void
@@ -16389,6 +16490,7 @@ test_scripts/ui_panel_a.gd
 12:1 GDIdentifierExpression refresh_ui -> Callable
 
 test_scripts/ui_panel_b.gd
+2:0 Class UIPanelB -> Variant
 4:0 Variable _counter -> int
 4:20 GDNumberExpression 0 -> int
 7:0 Method refresh_ui -> void
@@ -16400,6 +16502,7 @@ test_scripts/ui_panel_b.gd
 12:1 GDIdentifierExpression refresh_ui -> Callable
 
 test_scripts/union_returns.gd
+2:0 Class UnionReturns -> Variant
 8:0 Method get_or_error -> Dictionary[String, String] | int
 8:18 Parameter key -> String
 10:1 Variable data -> Dictionary[String, int | String]
@@ -16983,6 +17086,7 @@ test_scripts/union_returns.gd
 247:10 GDIdentifierExpression data -> Dictionary
 
 test_scripts/union_types_complex.gd
+2:0 Class UnionTypesComplex -> Variant
 10:0 Variable operation_result -> Variant
 13:0 Variable maybe_player -> Variant
 14:0 Variable maybe_position -> Variant
@@ -17744,6 +17848,7 @@ test_scripts/union_types_complex.gd
 406:8 GDStringExpression "fallback" -> String
 
 test_scripts/unrelated_class.gd
+2:0 Class UnrelatedClass -> Variant
 7:0 Variable damage_log -> Array
 7:24 GDArrayInitializerExpression [...] -> Array
 10:0 Method take_damage -> void
@@ -17861,4 +17966,4 @@ test_scripts/validation_edge_cases.gd
 69:1 GDReturnExpression return "hello" -> Variant
 69:8 GDStringExpression "hello" -> String
 
-# Summary: 17743 nodes in 58 files
+# Summary: 17842 nodes in 61 files
