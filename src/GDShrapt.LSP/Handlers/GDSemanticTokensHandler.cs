@@ -1,18 +1,17 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
-using GDShrapt.Reader;
-using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 
 namespace GDShrapt.LSP;
 
 /// <summary>
 /// Handles textDocument/semanticTokens/full requests.
-/// Walks the SemanticModel to classify every identifier by its symbol kind.
+/// Thin wrapper over IGDSemanticTokensHandler from CLI.Core.
+/// Adds LSP-specific delta encoding and legend mapping.
 /// </summary>
-public class GDSemanticTokensHandler
+public class GDLspSemanticTokensHandler
 {
     // Token type indices (must match legend order)
     private const int TokenVariable = 0;
@@ -54,113 +53,40 @@ public class GDSemanticTokensHandler
         "modification"   // bit 3
     ];
 
-    private readonly GDScriptProject _project;
-    private readonly GDProjectSemanticModel? _projectModel;
+    private readonly IGDSemanticTokensHandler _handler;
 
-    public GDSemanticTokensHandler(GDScriptProject project, GDProjectSemanticModel? projectModel = null)
+    public GDLspSemanticTokensHandler(IGDSemanticTokensHandler handler)
     {
-        _project = project;
-        _projectModel = projectModel;
+        _handler = handler;
     }
 
     public Task<GDSemanticTokens?> HandleAsync(GDSemanticTokensParams @params, CancellationToken ct)
     {
         var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
-        var script = _project.GetScript(filePath);
-        if (script == null)
+
+        var tokens = _handler.GetClassifiedTokens(filePath);
+        if (tokens.Count == 0)
             return Task.FromResult<GDSemanticTokens?>(null);
 
-        var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
-        if (model == null)
-            return Task.FromResult<GDSemanticTokens?>(null);
-
-        var rawTokens = new List<(int line, int col, int length, int type, int modifiers)>();
-
-        var debugLines = new List<string>();
-
-        foreach (var symbol in model.Symbols)
-        {
-            var tokenType = MapSymbolKind(symbol.Kind);
-            var nameLen = symbol.Name?.Length ?? 0;
-
-            // Emit declaration token
-            var declToken = symbol.DeclarationIdentifier;
-            if (declToken != null)
-            {
-                var modifiers = ComputeModifiers(symbol, isDeclaration: true, isWrite: false);
-                rawTokens.Add((declToken.StartLine, declToken.StartColumn, nameLen, tokenType, modifiers));
-                debugLines.Add($"  DECL: '{symbol.Name}' kind={symbol.Kind} L{declToken.StartLine}:C{declToken.StartColumn} len={nameLen} tokenText='{declToken}'");
-            }
-
-            // Emit signal parameter tokens directly from the AST
-            if (symbol.Kind == GDSymbolKind.Signal && symbol.Symbol?.Declaration is GDSignalDeclaration signalDecl)
-            {
-                foreach (var param in signalDecl.Parameters)
-                {
-                    var paramId = param.Identifier;
-                    if (paramId != null)
-                    {
-                        var paramMods = ModDeclaration;
-                        rawTokens.Add((paramId.StartLine, paramId.StartColumn, paramId.Sequence.Length, TokenParameter, paramMods));
-                        debugLines.Add($"  SIGPARAM: '{paramId.Sequence}' L{paramId.StartLine}:C{paramId.StartColumn} len={paramId.Sequence.Length}");
-                    }
-                }
-            }
-
-            // Emit reference tokens
-            var refs = model.GetReferencesTo(symbol);
-            foreach (var reference in refs)
-            {
-                var refToken = reference.IdentifierToken;
-                if (refToken == null) continue;
-
-                // Skip if same position as declaration (avoid duplicates)
-                if (declToken != null &&
-                    refToken.StartLine == declToken.StartLine &&
-                    refToken.StartColumn == declToken.StartColumn)
-                    continue;
-
-                var modifiers = ComputeModifiers(symbol, isDeclaration: false, isWrite: reference.IsWrite);
-                rawTokens.Add((refToken.StartLine, refToken.StartColumn, nameLen, tokenType, modifiers));
-                debugLines.Add($"  REF:  '{symbol.Name}' kind={symbol.Kind} L{refToken.StartLine}:C{refToken.StartColumn} len={nameLen} tokenText='{refToken}' isWrite={reference.IsWrite}");
-            }
-        }
-
-        // Write all debug info to stderr so it appears in Output channel
-        foreach (var line in debugLines)
-            Console.Error.WriteLine(line);
-
-        // Sort by position
-        rawTokens.Sort((a, b) =>
-        {
-            var cmp = a.line.CompareTo(b.line);
-            return cmp != 0 ? cmp : a.col.CompareTo(b.col);
-        });
-
-        // Deduplicate — keep first at each position
-        var deduped = new List<(int line, int col, int length, int type, int modifiers)>();
-        for (int i = 0; i < rawTokens.Count; i++)
-        {
-            if (i > 0 && rawTokens[i].line == rawTokens[i - 1].line && rawTokens[i].col == rawTokens[i - 1].col)
-                continue;
-            deduped.Add(rawTokens[i]);
-        }
-
-        // Encode as delta format
-        var data = new int[deduped.Count * 5];
+        // Encode as LSP delta format
+        var data = new int[tokens.Count * 5];
         int prevLine = 0, prevCol = 0;
-        for (int i = 0; i < deduped.Count; i++)
+
+        for (int i = 0; i < tokens.Count; i++)
         {
-            var (line, col, length, type, mods) = deduped[i];
-            var deltaLine = line - prevLine;
-            var deltaCol = deltaLine == 0 ? col - prevCol : col;
+            var t = tokens[i];
+            var tokenType = MapSymbolKind(t.Kind);
+            var modifiers = ComputeModifiers(t);
+
+            var deltaLine = t.Line - prevLine;
+            var deltaCol = deltaLine == 0 ? t.Column - prevCol : t.Column;
             data[i * 5 + 0] = deltaLine;
             data[i * 5 + 1] = deltaCol;
-            data[i * 5 + 2] = length;
-            data[i * 5 + 3] = type;
-            data[i * 5 + 4] = mods;
-            prevLine = line;
-            prevCol = col;
+            data[i * 5 + 2] = t.Length;
+            data[i * 5 + 3] = tokenType;
+            data[i * 5 + 4] = modifiers;
+            prevLine = t.Line;
+            prevCol = t.Column;
         }
 
         return Task.FromResult<GDSemanticTokens?>(new GDSemanticTokens { Data = data });
@@ -171,7 +97,7 @@ public class GDSemanticTokensHandler
         GDSymbolKind.Variable => TokenVariable,
         GDSymbolKind.Iterator => TokenVariable,
         GDSymbolKind.MatchCaseBinding => TokenVariable,
-        GDSymbolKind.Constant => TokenVariable, // + readonly modifier
+        GDSymbolKind.Constant => TokenVariable,
         GDSymbolKind.Parameter => TokenParameter,
         GDSymbolKind.Property => TokenProperty,
         GDSymbolKind.Method => TokenFunction,
@@ -182,13 +108,13 @@ public class GDSemanticTokensHandler
         _ => TokenVariable
     };
 
-    private static int ComputeModifiers(GDSymbolInfo symbol, bool isDeclaration, bool isWrite)
+    private static int ComputeModifiers(GDClassifiedToken t)
     {
         int modifiers = 0;
-        if (isDeclaration) modifiers |= ModDeclaration;
-        if (symbol.Kind == GDSymbolKind.Constant) modifiers |= ModReadonly;
-        if (symbol.Symbol is { IsStatic: true }) modifiers |= ModStatic;
-        if (isWrite) modifiers |= ModModification;
+        if (t.IsDeclaration) modifiers |= ModDeclaration;
+        if (t.IsReadonly) modifiers |= ModReadonly;
+        if (t.IsStatic) modifiers |= ModStatic;
+        if (t.IsWrite) modifiers |= ModModification;
         return modifiers;
     }
 }

@@ -951,6 +951,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     public IReadOnlyList<GDCollisionLayerInfo> GetCollisionLayerDetails() => Array.Empty<GDCollisionLayerInfo>();
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
+    public bool IsVirtualMethod(string typeName, string methodName) => false;
 
     private string GetPropertyType(GDProjectPropertyInfo property)
     {

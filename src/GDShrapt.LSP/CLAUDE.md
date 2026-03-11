@@ -21,6 +21,8 @@ They convert LSP protocol (0-based positions) to CLI.Core (1-based positions).
 | `GDLspCodeActionHandler` | `IGDCodeActionHandler` | textDocument/codeAction |
 | `GDLspSignatureHelpHandler` | `IGDSignatureHelpHandler` | textDocument/signatureHelp |
 | `GDLspInlayHintHandler` | `IGDInlayHintHandler` | textDocument/inlayHint |
+| `GDLspDocumentHighlightHandler` | `IGDHighlightHandler` + `IGDGoToDefHandler` | textDocument/documentHighlight |
+| `GDLspSemanticTokensHandler` | `IGDSemanticTokensHandler` | textDocument/semanticTokens/full |
 | `GDDiagnosticPublisher` | (uses GDScriptProject) | publishDiagnostics |
 
 ## Position Conversion
@@ -65,7 +67,9 @@ Handlers/
 ├── GDLspHoverHandler.cs
 ├── GDLspCodeActionHandler.cs
 ├── GDLspSignatureHelpHandler.cs
-└── GDLspInlayHintHandler.cs
+├── GDLspInlayHintHandler.cs
+├── GDLspDocumentHighlightHandler.cs
+└── GDLspSemanticTokensHandler.cs
 
 Core/
 ├── GDLanguageServer.cs

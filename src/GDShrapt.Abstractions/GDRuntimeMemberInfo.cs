@@ -53,6 +53,11 @@ public class GDRuntimeMemberInfo
     public bool IsAbstract { get; set; }
 
     /// <summary>
+    /// For methods: true if this is a virtual (overridable) method.
+    /// </summary>
+    public bool IsVirtual { get; set; }
+
+    /// <summary>
     /// For methods: role of return type relative to container for type inference.
     /// Values: "element", "key", "value", "self", "keys_array", "values_array", "callable_return_array"
     /// </summary>
@@ -89,7 +94,7 @@ public class GDRuntimeMemberInfo
     /// <summary>
     /// Creates a method member info.
     /// </summary>
-    public static GDRuntimeMemberInfo Method(string name, string? returnType, int minArgs, int maxArgs, bool isVarArgs = false, bool isStatic = false, bool isAbstract = false)
+    public static GDRuntimeMemberInfo Method(string name, string? returnType, int minArgs, int maxArgs, bool isVarArgs = false, bool isStatic = false, bool isAbstract = false, bool isVirtual = false)
     {
         return new GDRuntimeMemberInfo(name, GDRuntimeMemberKind.Method, returnType)
         {
@@ -97,7 +102,8 @@ public class GDRuntimeMemberInfo
             MaxArgs = maxArgs,
             IsVarArgs = isVarArgs,
             IsStatic = isStatic,
-            IsAbstract = isAbstract
+            IsAbstract = isAbstract,
+            IsVirtual = isVirtual
         };
     }
 

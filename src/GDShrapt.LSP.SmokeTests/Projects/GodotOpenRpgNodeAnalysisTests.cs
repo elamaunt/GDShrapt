@@ -791,7 +791,8 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
         var lspCodeLensHandler = new GDLspCodeLensHandler(codeLensHandler);
         var hoverHandler = Registry.GetService<IGDHoverHandler>()!;
         var lspHoverHandler = new GDLspHoverHandler(hoverHandler);
-        var semanticTokensHandler = new GDSemanticTokensHandler(Project, projectModel);
+        var tokensHandler = Registry.GetService<IGDSemanticTokensHandler>()!;
+        var semanticTokensHandler = new GDLspSemanticTokensHandler(tokensHandler);
 
         sw.Restart();
         Func<Task> concurrentAct = async () =>
@@ -838,7 +839,8 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
 
         var goToDefHandler = Registry.GetService<IGDGoToDefHandler>()!;
         var projectModel = new GDProjectSemanticModel(Project);
-        var handler = new GDDocumentHighlightHandler(Project, projectModel, goToDefHandler);
+        var highlightHandler = new GDHighlightHandler(Project, projectModel);
+        var handler = new GDLspDocumentHighlightHandler(highlightHandler, goToDefHandler);
 
         var uri = GDDocumentManager.PathToUri(script.FullPath!);
         var line = FindLineContaining(script, "animation_fi nished");
@@ -889,7 +891,8 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
 
         var goToDefHandler = Registry.GetService<IGDGoToDefHandler>()!;
         var projectModel = new GDProjectSemanticModel(Project);
-        var handler = new GDDocumentHighlightHandler(Project, projectModel, goToDefHandler);
+        var highlightHandler = new GDHighlightHandler(Project, projectModel);
+        var handler = new GDLspDocumentHighlightHandler(highlightHandler, goToDefHandler);
 
         var uri = GDDocumentManager.PathToUri(script.FullPath!);
         var line = FindLineContaining(script, "animation_fi nished");

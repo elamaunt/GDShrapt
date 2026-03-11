@@ -193,7 +193,7 @@ public class GDRenameService
 
             if (targetScript != null)
             {
-                var model = _projectModel?.GetSemanticModel(targetScript) ?? targetScript.SemanticModel;
+                var model = _projectModel.ResolveModel(targetScript);
                 var symbol = model?.FindSymbol(oldName);
 
                 if (symbol != null)
@@ -225,7 +225,7 @@ public class GDRenameService
             if (script.FullPath == null)
                 continue;
 
-            var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
+            var model = _projectModel.ResolveModel(script);
             if (model == null)
                 continue;
 
@@ -1349,7 +1349,7 @@ public class GDRenameService
             // Not a parameter — check flow-sensitive type (local variable or class member)
             try
             {
-                var model = _projectModel?.GetSemanticModel(file) ?? file.SemanticModel;
+                var model = _projectModel.ResolveModel(file);
                 if (model != null)
                 {
                     var flowType = model.GetFlowVariableType(varName, reference.ReferenceNode);

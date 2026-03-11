@@ -127,15 +127,13 @@ public class GDGoToDefHandler : IGDGoToDefHandler
     {
         if (!string.IsNullOrEmpty(fromFilePath))
         {
-            var loc = FindSymbolInFile(_project.GetScript(fromFilePath), symbolName)
-                   ?? FindEnumValueInFile(_project.GetScript(fromFilePath), symbolName);
+            var loc = FindSymbolInFile(_project.GetScript(fromFilePath), symbolName);
             if (loc != null) return loc;
         }
 
         foreach (var script in _project.ScriptFiles)
         {
-            var loc = FindSymbolInFile(script, symbolName)
-                   ?? FindEnumValueInFile(script, symbolName);
+            var loc = FindSymbolInFile(script, symbolName);
             if (loc != null) return loc;
         }
 
@@ -162,86 +160,42 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         };
     }
 
-    private GDDefinitionLocation? FindEnumValueInFile(GDScriptFile? script, string valueName)
-    {
-        if (script?.Class == null)
-            return null;
-
-        foreach (var enumDecl in script.Class.Members.OfType<GDEnumDeclaration>())
-        {
-            foreach (var enumValue in enumDecl.Values?.OfType<GDEnumValueDeclaration>() ?? Enumerable.Empty<GDEnumValueDeclaration>())
-            {
-                if (enumValue.Identifier?.Sequence == valueName)
-                {
-                    return new GDDefinitionLocation
-                    {
-                        FilePath = script.Reference.FullPath,
-                        Line = enumValue.Identifier.StartLine + 1,
-                        Column = enumValue.Identifier.StartColumn,
-                        SymbolName = valueName,
-                        Kind = GDSymbolKind.EnumValue
-                    };
-                }
-            }
-        }
-
-        return null;
-    }
-
     private GDDefinitionLocation? FindMemberInProjectType(string typeName, string memberName)
     {
-        // Try class_name lookup first
+        // Try class_name lookup first — use SemanticModel for member resolution
         var script = _project.GetScriptByTypeName(typeName);
-        if (script?.Class != null)
+        if (script != null)
         {
-            foreach (var member in script.Class.Members.OfType<GDIdentifiableClassMember>())
-            {
-                if (member.Identifier?.Sequence == memberName)
-                {
-                    return new GDDefinitionLocation
-                    {
-                        FilePath = script.Reference.FullPath,
-                        Line = member.Identifier.StartLine + 1,
-                        Column = member.Identifier.StartColumn,
-                        SymbolName = memberName,
-                        Kind = member switch
-                        {
-                            GDEnumDeclaration => GDSymbolKind.Enum,
-                            GDMethodDeclaration => GDSymbolKind.Method,
-                            GDSignalDeclaration => GDSymbolKind.Signal,
-                            GDVariableDeclaration v when v.ConstKeyword != null => GDSymbolKind.Constant,
-                            GDVariableDeclaration => GDSymbolKind.Variable,
-                            _ => null
-                        }
-                    };
-                }
-            }
+            var loc = FindSymbolInFile(script, memberName);
+            if (loc != null) return loc;
         }
 
-        // Fallback: search for enum value in enum declarations across project scripts
+        // Fallback: search for enum value by enum type name across project scripts
         foreach (var s in _project.ScriptFiles)
         {
-            if (s?.Class == null) continue;
-            foreach (var enumDecl in s.Class.Members.OfType<GDEnumDeclaration>())
+            var model = s.SemanticModel;
+            if (model == null) continue;
+
+            var enumSymbol = model.FindSymbol(typeName);
+            if (enumSymbol?.Kind != GDSymbolKind.Enum) continue;
+
+            var valueSymbol = model.GetSymbolsOfKind(GDSymbolKind.EnumValue)
+                .FirstOrDefault(ev => ev.Name == memberName && ev.DeclaringScopeNode == enumSymbol.DeclarationNode);
+
+            if (valueSymbol?.DeclarationNode != null)
             {
-                if (enumDecl.Identifier?.Sequence == typeName)
+                var posToken = valueSymbol.PositionToken;
+                var line = posToken?.StartLine ?? valueSymbol.DeclarationNode.StartLine;
+                var column = posToken?.StartColumn ?? valueSymbol.DeclarationNode.StartColumn;
+
+                return new GDDefinitionLocation
                 {
-                    foreach (var enumValue in enumDecl.Values?.OfType<GDEnumValueDeclaration>()
-                             ?? Enumerable.Empty<GDEnumValueDeclaration>())
-                    {
-                        if (enumValue.Identifier?.Sequence == memberName)
-                        {
-                            return new GDDefinitionLocation
-                            {
-                                FilePath = s.Reference.FullPath,
-                                Line = enumValue.Identifier.StartLine + 1,
-                                Column = enumValue.Identifier.StartColumn,
-                                SymbolName = memberName,
-                                Kind = GDSymbolKind.EnumValue
-                            };
-                        }
-                    }
-                }
+                    FilePath = s.Reference.FullPath,
+                    Line = line + 1,
+                    Column = column,
+                    SymbolName = memberName,
+                    Kind = GDSymbolKind.EnumValue
+                };
             }
         }
 
@@ -297,32 +251,10 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return null;
 
         var script = _project.GetScriptByResourcePath(autoload.Path);
-        if (script?.Class == null)
+        if (script == null)
             return null;
 
-        foreach (var member in script.Class.Members.OfType<GDIdentifiableClassMember>())
-        {
-            if (member.Identifier?.Sequence == memberName)
-            {
-                return new GDDefinitionLocation
-                {
-                    FilePath = script.Reference.FullPath,
-                    Line = member.Identifier.StartLine + 1,
-                    Column = member.Identifier.StartColumn,
-                    SymbolName = memberName,
-                    Kind = member switch
-                    {
-                        GDMethodDeclaration => GDSymbolKind.Method,
-                        GDSignalDeclaration => GDSymbolKind.Signal,
-                        GDVariableDeclaration v when v.ConstKeyword != null => GDSymbolKind.Constant,
-                        GDVariableDeclaration => GDSymbolKind.Variable,
-                        _ => null
-                    }
-                };
-            }
-        }
-
-        return null;
+        return FindSymbolInFile(script, memberName);
     }
 
     private GDDefinitionLocation? GenerateBuiltInTypeDefinition(string typeName)

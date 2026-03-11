@@ -18,7 +18,7 @@ Modular architecture for service registration and override.
 
 | Module | Priority | Location | Provides |
 |--------|----------|----------|----------|
-| `GDBaseModule` | 0 | CLI.Core | 12 handlers (all core functionality) |
+| `GDBaseModule` | 0 | CLI.Core | 14 handlers (all core functionality) |
 | `GDProModule` | 100 | Pro.CLI | ProRename (confidence), BatchAddTypes, BatchReorder |
 
 ### Usage
@@ -31,7 +31,7 @@ registry.LoadModules(project, new GDProModule(license));  // Pro overrides
 var handler = registry.GetService<IGDRenameHandler>();  // Returns Pro if loaded
 ```
 
-## Base Handlers (12)
+## Base Handlers (14)
 
 | Handler | Interface | Purpose |
 |---------|-----------|---------|
@@ -47,6 +47,8 @@ var handler = registry.GetService<IGDRenameHandler>();  // Returns Pro if loaded
 | `GDSignatureHelpHandler` | `IGDSignatureHelpHandler` | Signature help |
 | `GDInlayHintHandler` | `IGDInlayHintHandler` | Inlay hints |
 | `GDTypeFlowHandler` | `IGDTypeFlowHandler` | Type flow visualization |
+| `GDHighlightHandler` | `IGDHighlightHandler` | Document highlight |
+| `GDSemanticTokensHandler` | `IGDSemanticTokensHandler` | Semantic token classification |
 
 ## Pro Handlers (3)
 

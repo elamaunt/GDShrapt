@@ -583,6 +583,16 @@ namespace GDShrapt.Reader
             return null;
         }
 
+        public bool IsVirtualMethod(string typeName, string methodName)
+        {
+            foreach (var provider in _providers)
+            {
+                if (provider.IsVirtualMethod(typeName, methodName))
+                    return true;
+            }
+            return false;
+        }
+
         // IGDProjectRuntimeProvider implementation
 
         public GDScriptTypeInfo GetScriptType(string scriptPath)

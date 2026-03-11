@@ -234,8 +234,8 @@ public class GDLanguageServer : IGDLanguageServer
                 {
                     Legend = new GDSemanticTokensLegend
                     {
-                        TokenTypes = GDSemanticTokensHandler.TokenTypes,
-                        TokenModifiers = GDSemanticTokensHandler.TokenModifiers
+                        TokenTypes = GDLspSemanticTokensHandler.TokenTypes,
+                        TokenModifiers = GDLspSemanticTokensHandler.TokenModifiers
                     },
                     Full = true
                 },
@@ -695,15 +695,15 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDDocumentHighlight[]?> HandleDocumentHighlightAsync(GDDocumentHighlightParams @params, CancellationToken ct)
     {
-        if (_registry == null || _project == null)
+        if (_registry == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
+        var highlightHandler = _registry.GetService<IGDHighlightHandler>();
         var goToDefHandler = _registry.GetService<IGDGoToDefHandler>();
-        if (goToDefHandler == null)
+        if (highlightHandler == null || goToDefHandler == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
-        var projectModel = _registry.GetService<GDProjectSemanticModel>();
-        var handler = new GDDocumentHighlightHandler(_project, projectModel, goToDefHandler);
+        var handler = new GDLspDocumentHighlightHandler(highlightHandler, goToDefHandler);
         return handler.HandleAsync(@params, ct);
     }
 
@@ -844,12 +844,15 @@ public class GDLanguageServer : IGDLanguageServer
         var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
         GDLspPerformanceTrace.Log("semTokens", $"START {filename}");
 
-        if (_project == null)
+        if (_registry == null)
+            return null;
+
+        var tokensHandler = _registry.GetService<IGDSemanticTokensHandler>();
+        if (tokensHandler == null)
             return null;
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var projectModel = _registry?.GetService<GDProjectSemanticModel>();
-        var handler = new GDSemanticTokensHandler(_project, projectModel);
+        var handler = new GDLspSemanticTokensHandler(tokensHandler);
         var result = await handler.HandleAsync(@params, ct);
         sw.Stop();
 

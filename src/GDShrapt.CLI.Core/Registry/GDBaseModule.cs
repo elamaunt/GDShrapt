@@ -48,6 +48,10 @@ public sealed class GDBaseModule : IGDModule
         // CodeLens (reference counts)
         registry.Register<IGDCodeLensHandler>(new GDCodeLensHandler(project, projectModel));
 
+        // Document highlight and semantic tokens
+        registry.Register<IGDHighlightHandler>(new GDHighlightHandler(project, projectModel));
+        registry.Register<IGDSemanticTokensHandler>(new GDSemanticTokensHandler(project, projectModel));
+
         // TypeFlow visualization
         registry.Register<IGDTypeFlowHandler>(new GDTypeFlowHandler(project));
 

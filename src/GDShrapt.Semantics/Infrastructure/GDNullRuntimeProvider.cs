@@ -50,4 +50,5 @@ internal sealed class GDNullRuntimeProvider : IGDRuntimeProvider
         GDWellKnownTypes.IntVectorToFloatVector.TryGetValue(typeName, out var result) ? result : null;
     public string? GetPackedArrayElementType(string typeName) =>
         GDWellKnownTypes.PackedArrayElementTypes.TryGetValue(typeName, out var result) ? result : null;
+    public bool IsVirtualMethod(string typeName, string methodName) => false;
 }

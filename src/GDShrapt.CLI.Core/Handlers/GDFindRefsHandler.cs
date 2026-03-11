@@ -183,7 +183,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
                 ClassName = isSignalConnection && fileGroup.Any(r => r.IsSceneSignal)
                     ? Path.GetFileName(filePath)
                     : ResolveDisplayName(script),
-                ExtendsType = GetExtendsTypeName(script),
+                ExtendsType = _projectModel.ResolveModel(script)?.BaseTypeName,
                 FilePath = filePath,
                 DeclLine = declLine,
                 DeclColumn = declColumn,
@@ -291,7 +291,7 @@ public class GDFindRefsHandler : IGDFindRefsHandler
             var baseScript = _project.GetScriptByTypeName(current);
             if (baseScript != null)
             {
-                current = GetExtendsTypeName(baseScript);
+                current = _projectModel.ResolveModel(baseScript)?.BaseTypeName;
                 continue;
             }
 
@@ -299,12 +299,6 @@ public class GDFindRefsHandler : IGDFindRefsHandler
         }
 
         return null;
-    }
-
-    private string? GetExtendsTypeName(GDScriptFile script)
-    {
-        var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
-        return model?.BaseTypeName;
     }
 
     private string? EnrichReasonWithOrigin(GDSymbolReference sref, string? baseReason)

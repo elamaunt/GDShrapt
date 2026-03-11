@@ -252,6 +252,11 @@ namespace GDShrapt.Reader
             return _inner.GetConstantInitializer(typeName, constantName);
         }
 
+        public bool IsVirtualMethod(string typeName, string methodName)
+        {
+            return _inner.IsVirtualMethod(typeName, methodName);
+        }
+
         private static string NormalizeTypeName(string typeName)
         {
             if (typeName == "GodotObject") return "Object";

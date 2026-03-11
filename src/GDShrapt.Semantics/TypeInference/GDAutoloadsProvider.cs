@@ -263,4 +263,5 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
     public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+    public bool IsVirtualMethod(string typeName, string methodName) => false;
 }

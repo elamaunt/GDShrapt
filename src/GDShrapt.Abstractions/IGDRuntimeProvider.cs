@@ -211,4 +211,17 @@ public interface IGDRuntimeProvider
     /// <param name="operatorName">The operator name</param>
     /// <returns>List of type names that support the operator</returns>
     IReadOnlyList<string> GetTypesWithOperator(string operatorName);
+
+    // ========================================
+    // Virtual Method Detection (from TypesMap)
+    // ========================================
+
+    /// <summary>
+    /// Checks if a method is virtual (overridable) on a given type.
+    /// Used by dead code analysis to skip engine-called virtual methods.
+    /// </summary>
+    /// <param name="typeName">The type to check</param>
+    /// <param name="methodName">The method name to check</param>
+    /// <returns>True if the method is virtual on this type</returns>
+    bool IsVirtualMethod(string typeName, string methodName);
 }

@@ -5,6 +5,11 @@
 test_scripts/ai_controller.gd
 2:0 Class AIController -> Variant
 11:0 Enum AIState -> AIState
+11:15 EnumValue IDLE -> int
+11:21 EnumValue PATROL -> int
+11:29 EnumValue CHASE -> int
+11:36 EnumValue ATTACK -> int
+11:44 EnumValue FLEE -> int
 13:8 Variable patrol_points -> Array[Vector2]
 13:44 GDArrayInitializerExpression [...] -> Array
 14:8 Variable move_speed -> float
@@ -468,6 +473,9 @@ test_scripts/base_entity.gd
 test_scripts/completion_test.gd
 2:0 Class CompletionTest -> Variant
 7:0 Enum TestEnum -> TestEnum
+7:16 EnumValue VALUE_ONE -> int
+7:27 EnumValue VALUE_TWO -> int
+7:38 EnumValue VALUE_THREE -> int
 9:0 Constant MY_CONSTANT -> int
 9:21 GDNumberExpression 42 -> int
 10:0 Constant STRING_CONSTANT -> String
@@ -491,7 +499,7 @@ test_scripts/completion_test.gd
 19:22 GDMemberOperatorExpression Color.WHITE -> Color
 19:22 GDIdentifierExpression Color -> Color
 20:0 Variable my_enum -> TestEnum
-20:24 GDMemberOperatorExpression TestEnum.VALUE_ONE -> TestEnum
+20:24 GDMemberOperatorExpression TestEnum.VALUE_ONE -> int
 20:24 GDIdentifierExpression TestEnum -> TestEnum
 22:9 Variable child_sprite -> Sprite2D
 22:38 GDGetNodeExpression $ChildSprite -> Sprite2D
@@ -701,15 +709,15 @@ test_scripts/completion_test.gd
 105:0 Method test_enum_completion -> void
 107:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_ONE -> TestEnum
 107:1 GDIdentifierExpression my_enum -> TestEnum
-107:11 GDMemberOperatorExpression TestEnum.VALUE_ONE -> TestEnum
+107:11 GDMemberOperatorExpression TestEnum.VALUE_ONE -> int
 107:11 GDIdentifierExpression TestEnum -> TestEnum
 108:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_TWO -> TestEnum
 108:1 GDIdentifierExpression my_enum -> TestEnum
-108:11 GDMemberOperatorExpression TestEnum.VALUE_TWO -> TestEnum
+108:11 GDMemberOperatorExpression TestEnum.VALUE_TWO -> int
 108:11 GDIdentifierExpression TestEnum -> TestEnum
 109:1 GDDualOperatorExpression my_enumAssignmentTestEnum.VALUE_THREE -> TestEnum
 109:1 GDIdentifierExpression my_enum -> TestEnum
-109:11 GDMemberOperatorExpression TestEnum.VALUE_THREE -> TestEnum
+109:11 GDMemberOperatorExpression TestEnum.VALUE_THREE -> int
 109:11 GDIdentifierExpression TestEnum -> TestEnum
 112:1 Variable space_key -> Key
 112:22 GDIdentifierExpression KEY_SPACE -> Variant
@@ -3469,13 +3477,28 @@ test_scripts/diagnostics/linter/naming_rules.gd
 110:0 Signal camelCaseSignal -> Signal(value: int)
 115:0 Signal SuppressedBadSignal -> Signal
 123:0 Enum ValidEnum -> ValidEnum
+123:17 EnumValue VALUE_A -> int
+123:26 EnumValue VALUE_B -> int
 124:0 Enum GameState -> GameState
+124:17 EnumValue PLAYING -> int
+124:26 EnumValue PAUSED -> int
+124:34 EnumValue GAME_OVER -> int
 128:0 Enum invalid_enum -> invalid_enum
+128:20 EnumValue VALUE -> int
 129:0 Enum SHOUTING_ENUM -> SHOUTING_ENUM
+129:21 EnumValue VALUE -> int
 134:0 Enum suppressed_bad_enum -> suppressed_bad_enum
+134:27 EnumValue VALUE -> int
 142:0 Enum ValidEnumValues -> ValidEnumValues
+142:23 EnumValue FIRST_VALUE -> int
+142:36 EnumValue SECOND_VALUE -> int
+142:50 EnumValue THIRD -> int
 146:0 Enum InvalidEnumValues -> InvalidEnumValues
+147:1 EnumValue lowercase_value -> int
+148:1 EnumValue PascalValue -> int
+149:1 EnumValue VALID_ONE -> int
 155:0 Enum SuppressedEnumValues -> SuppressedEnumValues
+155:28 EnumValue badValue -> int
 163:0 Class ValidInnerClass -> ValidInnerClass
 164:1 Variable value -> int
 164:14 GDNumberExpression 0 -> int
@@ -3993,6 +4016,9 @@ test_scripts/diagnostics/validator/scene_validation_errors.gd
 test_scripts/diagnostics/validator/scope_errors.gd
 2:0 Class DiagnosticsTest_ScopeErrors -> Variant
 16:0 Enum TestEnum -> TestEnum
+16:16 EnumValue VALUE_A -> int
+16:25 EnumValue VALUE_B -> int
+16:34 EnumValue VALUE_C -> int
 24:0 Method test_gd2001_valid -> void
 25:1 Variable defined_var -> int
 25:20 GDNumberExpression 42 -> int
@@ -4058,26 +4084,26 @@ test_scripts/diagnostics/validator/scope_errors.gd
 105:1 GDIdentifierExpression emit_signal -> Error
 105:13 GDStringExpression "another_un..." -> String
 113:0 Method test_gd2006_valid -> void
-114:1 Variable val -> Variant
-114:12 GDMemberOperatorExpression TestEnum.VALUE_A -> int
+114:1 Variable val -> TestEnum
+114:12 GDMemberOperatorExpression TestEnum.VALUE_A -> TestEnum
 114:12 GDIdentifierExpression TestEnum -> TestEnum
 115:1 GDCallExpression print() -> void
 115:1 GDIdentifierExpression print -> Callable(Array...) -> void
-115:7 GDIdentifierExpression val -> int
+115:7 GDIdentifierExpression val -> TestEnum
 119:0 Method test_gd2006_invalid -> void
 120:1 Variable val -> Variant
 120:12 GDMemberOperatorExpression TestEnum.NONEXISTENT_VALUE -> Variant
 120:12 GDIdentifierExpression TestEnum -> TestEnum
 121:1 GDCallExpression print() -> void
 121:1 GDIdentifierExpression print -> Callable(Array...) -> void
-121:7 GDIdentifierExpression val -> int
+121:7 GDIdentifierExpression val -> TestEnum
 125:0 Method test_gd2006_suppressed -> void
 127:1 Variable val -> Variant
 127:12 GDMemberOperatorExpression TestEnum.ANOTHER_FAKE_VALUE -> Variant
 127:12 GDIdentifierExpression TestEnum -> TestEnum
 128:1 GDCallExpression print() -> void
 128:1 GDIdentifierExpression print -> Callable(Array...) -> void
-128:7 GDIdentifierExpression val -> int
+128:7 GDIdentifierExpression val -> TestEnum
 
 test_scripts/diagnostics/validator/type_annotation_errors.gd
 2:0 Class DiagnosticsTest_TypeAnnotationErrors -> Variant
@@ -17966,4 +17992,4 @@ test_scripts/validation_edge_cases.gd
 69:1 GDReturnExpression return "hello" -> Variant
 69:8 GDStringExpression "hello" -> String
 
-# Summary: 17842 nodes in 61 files
+# Summary: 17868 nodes in 61 files

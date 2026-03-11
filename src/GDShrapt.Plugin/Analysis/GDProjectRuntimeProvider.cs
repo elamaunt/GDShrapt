@@ -490,6 +490,7 @@ internal class GDProjectRuntimeProvider : IGDProjectRuntimeProvider
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => System.Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => System.Array.Empty<GDAvoidanceLayerInfo>();
     public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+    public bool IsVirtualMethod(string typeName, string methodName) => _builtInProvider.IsVirtualMethod(typeName, methodName);
 
     #endregion
 }

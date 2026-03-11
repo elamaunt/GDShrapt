@@ -2,24 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
-using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP;
 
-public class GDDocumentHighlightHandler
+/// <summary>
+/// Handles textDocument/documentHighlight requests.
+/// Thin wrapper over IGDHighlightHandler from CLI.Core.
+/// </summary>
+public class GDLspDocumentHighlightHandler
 {
     private static readonly TimeSpan FindDefTimeout = TimeSpan.FromMilliseconds(500);
 
-    private readonly GDScriptProject _project;
-    private readonly GDProjectSemanticModel? _projectModel;
+    private readonly IGDHighlightHandler _highlightHandler;
     private readonly IGDGoToDefHandler _goToDefHandler;
 
-    public GDDocumentHighlightHandler(GDScriptProject project, GDProjectSemanticModel? projectModel, IGDGoToDefHandler goToDefHandler)
+    public GDLspDocumentHighlightHandler(IGDHighlightHandler highlightHandler, IGDGoToDefHandler goToDefHandler)
     {
-        _project = project;
-        _projectModel = projectModel;
+        _highlightHandler = highlightHandler;
         _goToDefHandler = goToDefHandler;
     }
 
@@ -36,7 +36,6 @@ public class GDDocumentHighlightHandler
 
         GDLspPerformanceTrace.Log("highlight", $"START {filename} L{line}:{column}");
 
-        // FindDefinition can hang on broken AST — run with combined timeout + cancellation
         GDDefinitionLocation? definition = null;
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(FindDefTimeout);
@@ -79,72 +78,29 @@ public class GDDocumentHighlightHandler
 
         var symbolName = definition.SymbolName;
 
-        // Use per-file semantic model instead of project-wide FindReferences
-        var script = _project.GetScript(filePath);
-        if (script == null)
+        var highlights = _highlightHandler.GetHighlights(filePath, symbolName);
+        if (highlights.Count == 0)
         {
-            GDLspPerformanceTrace.Log("highlight", $"END {filename} (no script)");
+            GDLspPerformanceTrace.Log("highlight", $"END {filename} (no highlights)");
             return null;
         }
 
-        var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
-        if (model == null)
+        var result = new List<GDDocumentHighlight>(highlights.Count);
+        foreach (var h in highlights)
         {
-            GDLspPerformanceTrace.Log("highlight", $"END {filename} (no model)");
-            return null;
-        }
-
-        var refs = model.GetReferencesTo(symbolName);
-        var highlights = new List<GDDocumentHighlight>();
-
-        // Add declaration
-        var symbol = model.FindSymbol(symbolName);
-        if (symbol != null)
-        {
-            var declId = symbol.DeclarationIdentifier;
-            if (declId != null)
-            {
-                highlights.Add(new GDDocumentHighlight
-                {
-                    Range = GDLocationAdapter.ToLspRange(
-                        declId.StartLine + 1,
-                        declId.StartColumn,
-                        declId.StartLine + 1,
-                        declId.StartColumn + symbolName.Length),
-                    Kind = GDDocumentHighlightKind.Write
-                });
-            }
-        }
-
-        // Add references
-        foreach (var r in refs)
-        {
-            if (r.ReferenceNode == null)
-                continue;
-
-            var refLine = r.IdentifierToken?.StartLine ?? r.ReferenceNode.StartLine;
-            var refCol = r.IdentifierToken?.StartColumn ?? r.ReferenceNode.StartColumn;
-
-            var kind = r.IsWrite
-                ? GDDocumentHighlightKind.Write
-                : GDDocumentHighlightKind.Read;
-
-            highlights.Add(new GDDocumentHighlight
+            result.Add(new GDDocumentHighlight
             {
                 Range = GDLocationAdapter.ToLspRange(
-                    refLine + 1,
-                    refCol,
-                    refLine + 1,
-                    refCol + symbolName.Length),
-                Kind = kind
+                    h.Line,
+                    h.Column,
+                    h.Line,
+                    h.Column + h.Length),
+                Kind = h.IsWrite ? GDDocumentHighlightKind.Write : GDDocumentHighlightKind.Read
             });
         }
 
-        GDLspPerformanceTrace.Log("highlight", $"END {filename} count={highlights.Count}");
+        GDLspPerformanceTrace.Log("highlight", $"END {filename} count={result.Count}");
 
-        if (highlights.Count == 0)
-            return null;
-
-        return highlights.ToArray();
+        return result.ToArray();
     }
 }

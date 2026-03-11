@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
+using GDShrapt.CLI.Core;
 using GDShrapt.LSP;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentAssertions;
@@ -11,7 +12,7 @@ using FluentAssertions;
 namespace GDShrapt.LSP.Tests;
 
 [TestClass]
-public class GDSemanticTokensHandlerTests
+public class GDLspSemanticTokensHandlerTests
 {
     private static readonly string TestProjectPath = GetTestProjectPath();
 
@@ -22,14 +23,17 @@ public class GDSemanticTokensHandlerTests
         return System.IO.Path.Combine(projectRoot, "testproject", "GDShrapt.TestProject");
     }
 
-    private static (GDScriptProject project, GDSemanticTokensHandler handler) SetupProjectAndHandler()
+    private static (GDScriptProject project, GDLspSemanticTokensHandler handler) SetupProjectAndHandler()
     {
         var context = new GDDefaultProjectContext(TestProjectPath);
         var project = new GDScriptProject(context, new GDScriptProjectOptions());
         project.LoadScripts();
         project.AnalyzeAll();
 
-        var handler = new GDSemanticTokensHandler(project);
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var tokensHandler = registry.GetService<IGDSemanticTokensHandler>()!;
+        var handler = new GDLspSemanticTokensHandler(tokensHandler);
         return (project, handler);
     }
 
@@ -81,7 +85,7 @@ public class GDSemanticTokensHandlerTests
     }
 
     private async Task<List<(int line, int col, int length, int type, int mods)>> GetTokensForScript(
-        GDSemanticTokensHandler handler, string scriptName)
+        GDLspSemanticTokensHandler handler, string scriptName)
     {
         var @params = CreateParams(scriptName);
         var result = await handler.HandleAsync(@params, CancellationToken.None);
@@ -90,7 +94,7 @@ public class GDSemanticTokensHandlerTests
         return DecodeTokens(result.Data);
     }
 
-    // Token type constants (must match GDSemanticTokensHandler)
+    // Token type constants (must match GDLspSemanticTokensHandler)
     private const int TokenVariable = 0;
     private const int TokenParameter = 1;
     private const int TokenProperty = 2;

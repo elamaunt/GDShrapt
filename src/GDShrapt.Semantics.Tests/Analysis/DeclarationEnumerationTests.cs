@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using FluentAssertions;
 using GDShrapt.Reader;
@@ -98,6 +99,98 @@ func process():
         var enums = model.GetEnums().ToList();
 
         enums.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region EnumValues
+
+    [TestMethod]
+    public void FindSymbol_EnumValue_ReturnsByName()
+    {
+        var model = CreateModel(TestCode);
+
+        var symbol = model.FindSymbol("UP");
+
+        symbol.Should().NotBeNull();
+        symbol!.Kind.Should().Be(GDSymbolKind.EnumValue);
+        symbol.Name.Should().Be("UP");
+    }
+
+    [TestMethod]
+    public void FindSymbol_AllEnumValues_Found()
+    {
+        var model = CreateModel(TestCode);
+
+        model.FindSymbol("UP").Should().NotBeNull();
+        model.FindSymbol("DOWN").Should().NotBeNull();
+        model.FindSymbol("LEFT").Should().NotBeNull();
+        model.FindSymbol("RIGHT").Should().NotBeNull();
+        model.FindSymbol("IDLE").Should().NotBeNull();
+        model.FindSymbol("RUNNING").Should().NotBeNull();
+        model.FindSymbol("JUMPING").Should().NotBeNull();
+    }
+
+    [TestMethod]
+    public void GetSymbolsOfKind_EnumValue_ReturnsAll()
+    {
+        var model = CreateModel(TestCode);
+
+        var values = model.GetSymbolsOfKind(GDSymbolKind.EnumValue);
+
+        values.Should().HaveCount(7);
+    }
+
+    [TestMethod]
+    public void EnumValue_DeclaringScopeNode_IsEnumDeclaration()
+    {
+        var model = CreateModel(TestCode);
+
+        var upSymbol = model.FindSymbol("UP");
+        var directionSymbol = model.FindSymbol("Direction");
+
+        upSymbol.Should().NotBeNull();
+        directionSymbol.Should().NotBeNull();
+        upSymbol!.DeclaringScopeNode.Should().Be(directionSymbol!.DeclarationNode);
+    }
+
+    [TestMethod]
+    public void EnumValues_FilterByEnum_WorksCorrectly()
+    {
+        var model = CreateModel(TestCode);
+        var directionSymbol = model.FindSymbol("Direction");
+
+        var directionValues = model.GetSymbolsOfKind(GDSymbolKind.EnumValue)
+            .Where(ev => ev.DeclaringScopeNode == directionSymbol!.DeclarationNode)
+            .Select(ev => ev.Name)
+            .ToList();
+
+        directionValues.Should().BeEquivalentTo("UP", "DOWN", "LEFT", "RIGHT");
+    }
+
+    [TestMethod]
+    public void EnumValue_HasCorrectDeclarationNode()
+    {
+        var model = CreateModel(TestCode);
+
+        var upSymbol = model.FindSymbol("UP");
+
+        upSymbol.Should().NotBeNull();
+        upSymbol!.DeclarationNode.Should().NotBeNull();
+        upSymbol.DeclarationNode.Should().BeOfType<GDEnumValueDeclaration>();
+    }
+
+    [TestMethod]
+    public void GetSymbolsOfKind_EnumValue_EmptyScript_ReturnsEmpty()
+    {
+        var model = CreateModel(@"
+extends Node
+
+func process():
+    pass
+");
+
+        model.GetSymbolsOfKind(GDSymbolKind.EnumValue).Should().BeEmpty();
     }
 
     #endregion

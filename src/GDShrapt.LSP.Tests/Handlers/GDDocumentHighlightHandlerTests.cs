@@ -11,7 +11,7 @@ using FluentAssertions;
 namespace GDShrapt.LSP.Tests;
 
 [TestClass]
-public class GDDocumentHighlightHandlerTests
+public class GDLspDocumentHighlightHandlerTests
 {
     private static readonly string TestProjectPath = GetTestProjectPath();
 
@@ -22,7 +22,7 @@ public class GDDocumentHighlightHandlerTests
         return System.IO.Path.Combine(projectRoot, "testproject", "GDShrapt.TestProject");
     }
 
-    private static (GDScriptProject project, GDDocumentHighlightHandler handler) SetupProjectAndHandler()
+    private static (GDScriptProject project, GDLspDocumentHighlightHandler handler) SetupProjectAndHandler()
     {
         var context = new GDDefaultProjectContext(TestProjectPath);
         var project = new GDScriptProject(context, new GDScriptProjectOptions());
@@ -33,7 +33,8 @@ public class GDDocumentHighlightHandlerTests
         registry.LoadModules(project, new GDBaseModule());
         var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
 
-        var handler = new GDDocumentHighlightHandler(project, null, goToDefHandler);
+        var highlightHandler = registry.GetService<IGDHighlightHandler>()!;
+        var handler = new GDLspDocumentHighlightHandler(highlightHandler, goToDefHandler);
         return (project, handler);
     }
 

@@ -315,6 +315,7 @@ namespace GDShrapt.Reader.Tests.Helpers
         public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => _builtInProvider.GetTypesWithNonZeroAvoidanceLayers();
         public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => _builtInProvider.GetAvoidanceLayerDetails();
         public GDExpression GetConstantInitializer(string typeName, string constantName) => null;
+        public bool IsVirtualMethod(string typeName, string methodName) => _builtInProvider.IsVirtualMethod(typeName, methodName);
 
         #endregion
     }

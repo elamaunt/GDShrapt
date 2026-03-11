@@ -1334,6 +1334,7 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     }
 
     public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+    public bool IsVirtualMethod(string typeName, string methodName) => false;
 
     #endregion
 

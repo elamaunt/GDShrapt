@@ -449,6 +449,7 @@ public class UnionTypeResolverTests
         public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
         public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
         public GDShrapt.Reader.GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+        public bool IsVirtualMethod(string typeName, string methodName) => false;
 
         private class MockTypeInfo
         {

@@ -177,7 +177,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                         returnType,
                         minArgs,
                         maxArgs,
-                        isVarArgs);
+                        isVarArgs,
+                        isVirtual: method.IsVirtual || method.IsOverridable);
                     memberInfo.Parameters = CreateParameterList(method.Parameters);
                     memberInfo.Description = method.Description;
                     members.Add(memberInfo);
@@ -265,7 +266,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 returnType,
                 minArgs,
                 maxArgs,
-                isVarArgs);
+                isVarArgs,
+                isVirtual: method.IsVirtual || method.IsOverridable);
             // Assign parameters with callable metadata
             memberInfo.Parameters = CreateParameterList(method.Parameters);
             // Assign type inference metadata
@@ -368,7 +370,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                 returnType,
                 minArgs,
                 isVarArgs ? int.MaxValue : maxArgs,
-                isVarArgs);
+                isVarArgs,
+                isVirtual: method.IsVirtual || method.IsOverridable);
             memberInfo.Parameters = CreateParameterList(method.Parameters);
             // Assign type inference metadata
             memberInfo.ReturnTypeRole = method.ReturnTypeRole;
@@ -1209,6 +1212,15 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     public IReadOnlyList<string> GetTypesWithNonZeroAvoidanceLayers() => Array.Empty<string>();
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
     public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
+
+    public bool IsVirtualMethod(string typeName, string methodName)
+    {
+        if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(methodName))
+            return false;
+
+        var member = GetMember(typeName, methodName);
+        return member != null && member.Kind == GDRuntimeMemberKind.Method && member.IsVirtual;
+    }
 
     private static string NormalizeCSharpTypeName(string typeName)
     {

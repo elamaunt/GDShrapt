@@ -340,4 +340,12 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
             result.AddRange(provider.GetAvoidanceLayerDetails());
         return result;
     }
+
+    public bool IsVirtualMethod(string typeName, string methodName)
+    {
+        if (GodotTypesProvider != null)
+            return GodotTypesProvider.IsVirtualMethod(typeName, methodName);
+
+        return false;
+    }
 }

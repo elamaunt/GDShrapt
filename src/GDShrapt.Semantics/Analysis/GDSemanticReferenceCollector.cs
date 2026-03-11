@@ -312,6 +312,19 @@ internal class GDSemanticReferenceCollector : GDVisitor
             return;
 
         DeclareClassMember(GDSymbol.Enum(name, enumDecl), context, declaringTypeName);
+
+        if (enumDecl.Values != null)
+        {
+            foreach (var value in enumDecl.Values)
+            {
+                var valueName = value.Identifier?.Sequence;
+                if (string.IsNullOrEmpty(valueName))
+                    continue;
+
+                var valueSymbol = GDSymbol.EnumValue(valueName, value);
+                _model!.RegisterSymbol(GDSymbolInfo.Local(valueSymbol, _scriptFile, declaringScopeNode: enumDecl));
+            }
+        }
     }
 
     #endregion

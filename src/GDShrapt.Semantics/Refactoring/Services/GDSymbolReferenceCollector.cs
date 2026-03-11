@@ -89,7 +89,7 @@ public class GDSymbolReferenceCollector
         {
             if (script.FullPath == null) continue;
 
-            var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
+            var model = _projectModel.ResolveModel(script);
             if (model == null) continue;
 
             var symbol = model.FindSymbol(symbolName);
@@ -317,7 +317,7 @@ public class GDSymbolReferenceCollector
 
         foreach (var script in scripts)
         {
-            var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
+            var model = _projectModel.ResolveModel(script);
             if (model == null) continue;
 
             var localSymbol = model.FindSymbol(symbol.Name);
@@ -939,7 +939,7 @@ public class GDSymbolReferenceCollector
 
     private string? GetExtendsTypeName(GDScriptFile script)
     {
-        var model = _projectModel?.GetSemanticModel(script) ?? script.SemanticModel;
+        var model = _projectModel.ResolveModel(script);
         return model?.BaseTypeName;
     }
 

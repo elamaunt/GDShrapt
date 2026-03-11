@@ -18,6 +18,7 @@ public class GDDeadCodeService
     private readonly GDSignalConnectionRegistry _signalRegistry;
     private Dictionary<string, string>? _autoloadNamesByPath;
     private int _annotationSuppressedCount;
+    private int _virtualMethodsSkippedCount;
 
 
     /// <summary>
@@ -89,6 +90,7 @@ public class GDDeadCodeService
             : null;
         int filesAnalyzed = 0;
         _annotationSuppressedCount = 0;
+        _virtualMethodsSkippedCount = 0;
 
         foreach (var file in _project.ScriptFiles)
         {
@@ -101,7 +103,7 @@ public class GDDeadCodeService
         report.AnnotationSuppressedCount = _annotationSuppressedCount;
         report.SceneSignalConnectionsConsidered = _signalRegistry.GetAllConnections()
             .Count(c => c.IsSceneConnection);
-        report.VirtualMethodsSkipped = options.SkipMethods.Count;
+        report.VirtualMethodsSkipped = _virtualMethodsSkippedCount;
         report.AutoloadsResolved = _autoloadNamesByPath?.Count ?? 0;
         report.TotalCallSitesRegistered = _callSiteRegistry?.GetAllTargets().Count() ?? 0;
         report.CSharpCodeDetected = _projectModel.CSharpInterop.HasCSharpCode;
@@ -347,8 +349,11 @@ public class GDDeadCodeService
             if (string.IsNullOrEmpty(methodName))
                 continue;
 
-            if (options.ShouldSkipMethod(methodName))
+            if (options.SkipGodotVirtuals && IsGodotVirtualOverride(file, methodName))
+            {
+                _virtualMethodsSkippedCount++;
                 continue;
+            }
 
             if (IsFrameworkMethod(file, methodName, options))
                 continue;
@@ -359,7 +364,7 @@ public class GDDeadCodeService
                 continue;
             }
 
-            bool isPrivate = methodName.StartsWith("_") && !options.ShouldSkipMethod(methodName);
+            bool isPrivate = methodName.StartsWith("_") && !(options.SkipGodotVirtuals && IsGodotVirtualOverride(file, methodName));
 
             if (isPrivate && !options.IncludePrivate)
                 continue;
@@ -427,7 +432,7 @@ public class GDDeadCodeService
                     {
                         CallSitesScanned = _callSiteRegistry?.GetAllTargets().Count() ?? 0,
                         CrossFileAccessChecks = effectiveNames.Count,
-                        IsVirtualOrEntrypoint = options.ShouldSkipMethod(methodName)
+                        IsVirtualOrEntrypoint = options.SkipGodotVirtuals && IsGodotVirtualOverride(file, methodName)
                     };
                 }
 
@@ -918,7 +923,7 @@ public class GDDeadCodeService
             if (string.IsNullOrEmpty(methodName))
                 continue;
 
-            if (options.ShouldSkipMethod(methodName))
+            if (options.SkipGodotVirtuals && IsGodotVirtualOverride(file, methodName))
                 continue;
 
             var paramSymbols = semanticModel.GetSymbolsOfKind(GDSymbolKind.Parameter)
@@ -980,6 +985,46 @@ public class GDDeadCodeService
                 };
             }
         }
+    }
+
+    // GDScript-specific lifecycle methods not represented in TypesMap
+    // (they have no C# equivalent in GodotSharp bindings).
+    private static readonly HashSet<string> _gdScriptLifecycleMethods = new(StringComparer.Ordinal)
+    {
+        "_init",
+        "_to_string",
+    };
+
+    private bool IsGodotVirtualOverride(GDScriptFile file, string methodName)
+    {
+        if (_gdScriptLifecycleMethods.Contains(methodName))
+            return true;
+
+        var chain = _projectModel.GetInheritanceChain(file);
+        var provider = _projectModel.RuntimeProvider;
+        if (provider == null)
+            return false;
+
+        foreach (var baseType in chain)
+        {
+            if (provider.IsVirtualMethod(baseType, methodName))
+                return true;
+        }
+
+        // If the chain ends at an unknown type (not in TypesMap),
+        // check root types as fallback — the script likely inherits from them.
+        if (chain.Count > 0)
+        {
+            var lastType = chain[chain.Count - 1];
+            if (!provider.IsKnownType(lastType))
+            {
+                if (provider.IsVirtualMethod("Node", methodName)
+                    || provider.IsVirtualMethod("Object", methodName))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private IEnumerable<GDDeadCodeItem> FindUnusedConstants(

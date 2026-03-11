@@ -831,6 +831,7 @@ namespace GDShrapt.Reader
         }
 
         public GDExpression GetConstantInitializer(string typeName, string constantName) => null;
+        public bool IsVirtualMethod(string typeName, string methodName) => false;
 
         private static string ExtractBaseTypeName(string typeName) =>
             GDGenericTypeHelper.ExtractBaseTypeName(typeName);
