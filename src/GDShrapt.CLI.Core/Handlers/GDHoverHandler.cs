@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
@@ -24,6 +27,9 @@ public class GDHoverHandler : IGDHoverHandler
     /// <inheritdoc />
     public virtual GDHoverInfo? GetHover(string filePath, int line, int column)
     {
+        if (IsTscnFile(filePath))
+            return GetHoverInTscn(filePath, line, column);
+
         var script = _projectModel.Project.GetScript(filePath);
         var semanticModel = script != null ? _projectModel.GetSemanticModel(script) : null;
         if (semanticModel == null || script?.Class == null)
@@ -564,5 +570,134 @@ public class GDHoverHandler : IGDHoverHandler
             parent = parent.Parent;
         }
         return false;
+    }
+
+    private static bool IsTscnFile(string filePath)
+    {
+        return filePath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)
+            || filePath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static readonly Regex TscnResPathRegex = new(@"""(res://[^""]+)""", RegexOptions.Compiled);
+
+    private GDHoverInfo? GetHoverInTscn(string filePath, int line, int column)
+    {
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(filePath);
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (line < 1 || line > lines.Length)
+            return null;
+
+        var lineText = lines[line - 1];
+        var col0 = column - 1;
+
+        foreach (Match match in TscnResPathRegex.Matches(lineText))
+        {
+            var pathStart = match.Index + 1;
+            var pathEnd = match.Index + match.Length - 1;
+
+            if (col0 >= pathStart && col0 < pathEnd)
+            {
+                var resPath = match.Groups[1].Value;
+                return BuildTscnResourceHover(resPath, filePath, line, match.Index + 1, match.Index + match.Length - 1);
+            }
+        }
+
+        return null;
+    }
+
+    private GDHoverInfo? BuildTscnResourceHover(string resPath, string sceneFilePath, int line, int startCol, int endCol)
+    {
+        var project = _projectModel.Project;
+        var projectPath = project.ProjectPath;
+        if (string.IsNullOrEmpty(projectPath))
+            return null;
+
+        var relativePath = resPath.Substring("res://".Length);
+        var resolvedPath = Path.GetFullPath(Path.Combine(projectPath, relativePath));
+
+        var sb = new StringBuilder();
+
+        if (resPath.EndsWith(".gd", StringComparison.OrdinalIgnoreCase))
+        {
+            var script = project.GetScript(resolvedPath);
+            if (script?.Class != null)
+            {
+                var className = script.Class.ClassName?.Identifier?.Sequence;
+                var extends = script.Class.Extends?.Type?.ToString();
+
+                sb.Append("```gdscript\n");
+                if (!string.IsNullOrEmpty(className))
+                {
+                    sb.Append("class ");
+                    sb.Append(className);
+                    if (!string.IsNullOrEmpty(extends))
+                    {
+                        sb.Append(" extends ");
+                        sb.Append(extends);
+                    }
+                }
+                else if (!string.IsNullOrEmpty(extends))
+                {
+                    sb.Append("extends ");
+                    sb.Append(extends);
+                }
+                sb.Append("\n```");
+
+                var methodCount = script.Class.Members?.OfType<GDMethodDeclaration>().Count() ?? 0;
+                var varCount = script.Class.Members?.OfType<GDVariableDeclaration>().Count() ?? 0;
+                sb.Append($"\n\n**GDScript** `{Path.GetFileName(resolvedPath)}`");
+                sb.Append($"  \n{methodCount} method(s), {varCount} variable(s)");
+            }
+            else
+            {
+                sb.Append($"**GDScript** `{Path.GetFileName(resolvedPath)}`");
+            }
+        }
+        else if (resPath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase))
+        {
+            sb.Append($"**Scene** `{Path.GetFileName(resolvedPath)}`");
+
+            var sceneInfo = project.SceneTypesProvider?.GetSceneInfo(resPath);
+            if (sceneInfo != null)
+            {
+                var rootNode = sceneInfo.Nodes.FirstOrDefault();
+                if (rootNode != null)
+                    sb.Append($"  \nRoot: `{rootNode.NodeType}`");
+
+                sb.Append($"  \n{sceneInfo.Nodes.Count} node(s)");
+            }
+        }
+        else if (resPath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase))
+        {
+            sb.Append($"**Resource** `{Path.GetFileName(resolvedPath)}`");
+        }
+        else
+        {
+            var ext = Path.GetExtension(resolvedPath).TrimStart('.');
+            sb.Append($"**{ext.ToUpperInvariant()}** `{Path.GetFileName(resolvedPath)}`");
+        }
+
+        sb.Append($"\n\n`{resPath}`");
+
+        if (!File.Exists(resolvedPath))
+            sb.Append("\n\n*File not found*");
+
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            SymbolName = Path.GetFileName(resolvedPath),
+            StartLine = line,
+            StartColumn = startCol,
+            EndLine = line,
+            EndColumn = endCol
+        };
     }
 }

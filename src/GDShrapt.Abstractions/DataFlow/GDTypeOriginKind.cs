@@ -18,6 +18,7 @@ public enum GDTypeOriginKind
     SceneInjection,
     PreloadInjection,
     InstantiateInjection,
+    GroupInjection,
 
     ContainerElement,
     IndexerAccess,

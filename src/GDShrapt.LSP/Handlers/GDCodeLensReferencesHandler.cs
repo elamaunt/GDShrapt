@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,15 +49,23 @@ public class GDCodeLensReferencesHandler
             return Task.FromResult<GDLspLocation[]?>(locations.ToArray());
         }
 
+        // Unpack signal connection key: "signal:methodName@lineNumber" → methodName
+        var lookupName = symbolName;
+        if (symbolName.StartsWith("signal:", StringComparison.Ordinal))
+        {
+            var atIdx = symbolName.IndexOf('@', 7);
+            lookupName = atIdx > 7 ? symbolName.Substring(7, atIdx - 7) : symbolName.Substring(7);
+        }
+
         // Fallback: cache miss, compute fresh
-        var groups = _findRefsHandler.FindReferences(symbolName, filePath);
+        var groups = _findRefsHandler.FindReferences(lookupName, filePath);
         if (groups == null || groups.Count == 0)
             return Task.FromResult<GDLspLocation[]?>(null);
 
         var result = new List<GDLspLocation>();
         foreach (var group in groups)
         {
-            AddGroupLocations(group, symbolName, result);
+            AddGroupLocations(group, lookupName, result);
         }
 
         return Task.FromResult<GDLspLocation[]?>(result.ToArray());

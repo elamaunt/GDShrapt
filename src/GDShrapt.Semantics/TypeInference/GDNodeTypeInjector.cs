@@ -19,6 +19,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     private readonly IGDScriptProvider? _scriptProvider;
     private readonly GDGodotTypesProvider? _godotTypesProvider;
     private readonly IGDLogger? _logger;
+    private readonly GDGroupRegistry? _groupRegistry;
 
     // Scene snapshot cache: built once per scene path
     private readonly Dictionary<string, GDFlowSceneSnapshot?> _snapshotCache = new();
@@ -26,16 +27,18 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     // Side-channel: origin data from the last InjectType call
     private GDTypeOrigin? _lastInjectionOrigin;
 
-    public GDNodeTypeInjector(
+    internal GDNodeTypeInjector(
         GDSceneTypesProvider? sceneProvider = null,
         IGDScriptProvider? scriptProvider = null,
         GDGodotTypesProvider? godotTypesProvider = null,
-        IGDLogger? logger = null)
+        IGDLogger? logger = null,
+        GDGroupRegistry? groupRegistry = null)
     {
         _sceneProvider = sceneProvider;
         _scriptProvider = scriptProvider;
         _godotTypesProvider = godotTypesProvider;
         _logger = logger;
+        _groupRegistry = groupRegistry;
     }
 
     /// <summary>
@@ -250,7 +253,58 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
                 return result;
         }
 
+        // get_nodes_in_group() / get_first_node_in_group() — narrow via group registry
+        if (GDWellKnownFunctions.IsGroupQuery(callName))
+        {
+            var result = InferGroupQueryType(call, callName);
+            if (!string.IsNullOrEmpty(result))
+                return result;
+        }
+
         return null;
+    }
+
+    private string? InferGroupQueryType(GDCallExpression call, string callName)
+    {
+        if (_groupRegistry == null)
+            return null;
+
+        var args = call.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+
+        Func<string, GDExpression?>? resolveVariable = null;
+        var classDecl = call.RootClassDeclaration;
+        if (classDecl != null)
+            resolveVariable = GDStaticStringExtractor.CreateClassResolver(classDecl);
+
+        Func<string, string, GDExpression?>? crossClassResolver = _scriptProvider != null
+            ? GDStaticStringExtractor.CreateCrossClassResolver(_scriptProvider)
+            : null;
+
+        var groupName = GDStaticStringExtractor.TryExtractString(
+            args[0] as GDExpression, resolveVariable, crossClassResolver);
+
+        if (string.IsNullOrEmpty(groupName))
+            return null;
+
+        var groupType = _groupRegistry.GetGroupType(groupName);
+        if (string.IsNullOrEmpty(groupType))
+            return null;
+
+        string resultType;
+        if (callName == GDWellKnownFunctions.GetNodesInGroup)
+            resultType = $"Array[{groupType}]";
+        else
+            resultType = groupType;
+
+        _lastInjectionOrigin = new GDTypeOrigin(
+            GDTypeOriginKind.GroupInjection,
+            GDTypeOriginConfidence.Inferred,
+            LocationFromNode(call),
+            description: $"{callName}(\"{groupName}\") -> {resultType}");
+
+        return resultType;
     }
 
     private string? ResolveNodeType(string nodePath, string? scriptPath)

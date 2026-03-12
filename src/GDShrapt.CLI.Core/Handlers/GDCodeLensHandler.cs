@@ -16,6 +16,7 @@ public class GDCodeLensHandler : IGDCodeLensHandler
     protected readonly GDScriptProject _project;
     protected readonly GDProjectSemanticModel _projectModel;
     private Dictionary<string, GDSymbolReferences>? _referencesCache;
+    private Dictionary<string, List<GDCodeLensReference>>? _sceneReferencesCache;
     private string? _cachedFilePath;
 
     public GDCodeLensHandler(GDScriptProject project, GDProjectSemanticModel projectModel)
@@ -29,6 +30,9 @@ public class GDCodeLensHandler : IGDCodeLensHandler
     {
         _referencesCache = new Dictionary<string, GDSymbolReferences>(StringComparer.Ordinal);
         _cachedFilePath = filePath;
+
+        if (IsTscnFile(filePath))
+            return GetSceneCodeLenses(filePath);
 
         var script = _project.GetScript(filePath);
         var semanticModel = script?.SemanticModel;
@@ -186,10 +190,18 @@ public class GDCodeLensHandler : IGDCodeLensHandler
     /// <inheritdoc />
     public virtual IReadOnlyList<GDCodeLensReference>? GetCachedReferences(string symbolName, string filePath)
     {
-        if (_referencesCache == null || _cachedFilePath == null)
+        if (_cachedFilePath == null)
             return null;
 
         if (!_cachedFilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        // Check scene node references cache first
+        if (_sceneReferencesCache != null &&
+            _sceneReferencesCache.TryGetValue(symbolName, out var sceneRefs))
+            return sceneRefs;
+
+        if (_referencesCache == null)
             return null;
 
         if (!_referencesCache.TryGetValue(symbolName, out var refs))
@@ -278,5 +290,127 @@ public class GDCodeLensHandler : IGDCodeLensHandler
         if (union > 0)
             label += $" (+{union} unions)";
         return label;
+    }
+
+    private static bool IsTscnFile(string filePath)
+    {
+        return filePath.EndsWith(".tscn", StringComparison.OrdinalIgnoreCase)
+            || filePath.EndsWith(".tres", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private IReadOnlyList<GDCodeLens> GetSceneCodeLenses(string filePath)
+    {
+        var sceneProvider = _project.SceneTypesProvider;
+        if (sceneProvider == null)
+            return [];
+
+        var resPath = sceneProvider.ToResourcePath(filePath);
+        if (string.IsNullOrEmpty(resPath))
+            return [];
+
+        var sceneInfo = sceneProvider.GetSceneInfo(resPath);
+        if (sceneInfo == null)
+            return [];
+
+        var referenceFinder = new GDNodePathReferenceFinder(_project);
+        var lenses = new List<GDCodeLens>();
+        _sceneReferencesCache = new Dictionary<string, List<GDCodeLensReference>>(StringComparer.Ordinal);
+
+        foreach (var node in sceneInfo.Nodes)
+        {
+            if (string.IsNullOrEmpty(node.Name) || node.LineNumber <= 0)
+                continue;
+
+            var refs = referenceFinder.FindGDScriptReferences(node.Name).ToList();
+            if (refs.Count == 0)
+                continue;
+
+            // Cache the references for click resolution
+            var cachedRefs = new List<GDCodeLensReference>();
+            foreach (var r in refs)
+            {
+                if (r.FilePath == null)
+                    continue;
+
+                var col1 = r.PathSpecifier != null ? r.PathSpecifier.StartColumn + 1 : 1;
+                cachedRefs.Add(new GDCodeLensReference
+                {
+                    FilePath = r.FilePath,
+                    Line = r.LineNumber,
+                    Column = col1,
+                    EndColumn = col1 + node.Name.Length,
+                    IsDeclaration = false
+                });
+            }
+            _sceneReferencesCache[node.Name] = cachedRefs;
+
+            var label = refs.Count == 1 ? "1 reference" : $"{refs.Count} references";
+            lenses.Add(new GDCodeLens
+            {
+                Line = node.LineNumber,
+                StartColumn = 1,
+                EndColumn = node.Name.Length + 1,
+                Label = label,
+                CommandName = "gdshrapt.findReferences",
+                CommandArgument = node.Name
+            });
+        }
+
+        // Signal connection CodeLens — show references to callback method
+        foreach (var conn in sceneInfo.SignalConnections)
+        {
+            if (string.IsNullOrEmpty(conn.Method) || conn.LineNumber <= 0)
+                continue;
+
+            var cacheKey = $"signal:{conn.Method}@{conn.LineNumber}";
+
+            var collector = new GDSymbolReferenceCollector(_project, _projectModel);
+            var result = collector.CollectReferences(conn.Method);
+
+            int refCount = 0;
+            var cachedRefs = new List<GDCodeLensReference>();
+
+            foreach (var r in result.References)
+            {
+                if (r.FilePath == null)
+                    continue;
+
+                if (r.Kind == GDSymbolReferenceKind.SceneSignalConnection
+                    && r.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase)
+                    && r.Line + 1 == conn.LineNumber)
+                    continue;
+
+                refCount++;
+                cachedRefs.Add(new GDCodeLensReference
+                {
+                    FilePath = r.FilePath,
+                    Line = r.Line + 1,
+                    Column = r.Column + 1,
+                    EndColumn = r.Column + 1 + conn.Method.Length,
+                    IsDeclaration = r.Kind == GDSymbolReferenceKind.Declaration
+                });
+            }
+
+            _sceneReferencesCache[cacheKey] = cachedRefs;
+
+            var connLabel = refCount switch
+            {
+                0 => "0 references",
+                1 => "1 reference",
+                _ => $"{refCount} references"
+            };
+
+            lenses.Add(new GDCodeLens
+            {
+                Line = conn.LineNumber,
+                StartColumn = conn.MethodColumn + 1,
+                EndColumn = conn.MethodColumn + 1 + conn.Method.Length,
+                Label = connLabel,
+                CommandName = "gdshrapt.findReferences",
+                CommandArgument = cacheKey
+            });
+        }
+
+        return lenses;
     }
 }

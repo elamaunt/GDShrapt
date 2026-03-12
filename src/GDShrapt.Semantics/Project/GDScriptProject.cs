@@ -453,11 +453,67 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             return null;
 
         var godotTypesProvider = new GDGodotTypesProvider();
+        var groupRegistry = BuildGroupRegistry(godotTypesProvider);
         return new GDNodeTypeInjector(
             _sceneTypesProvider,
             this, // IGDScriptProvider
             godotTypesProvider,
-            _logger);
+            _logger,
+            groupRegistry);
+    }
+
+    private GDGroupRegistry BuildGroupRegistry(GDGodotTypesProvider godotTypesProvider)
+    {
+        var registry = new GDGroupRegistry(godotTypesProvider, this);
+
+        // Pass 1: Scene groups (.tscn groups= property)
+        if (_sceneTypesProvider != null)
+        {
+            foreach (var scene in _sceneTypesProvider.AllScenes)
+            {
+                foreach (var node in scene.Nodes)
+                {
+                    if (node.Groups.Count == 0) continue;
+                    var type = node.ScriptTypeName ?? node.NodeType;
+                    foreach (var group in node.Groups)
+                    {
+                        registry.RegisterMember(group, new GDGroupMembership
+                        {
+                            TypeName = type,
+                            Source = GDGroupSource.SceneFile,
+                            SourcePath = scene.ScenePath
+                        });
+                    }
+                }
+            }
+        }
+
+        // Pass 2: Code groups (add_to_group calls)
+        var crossClassResolver = GDStaticStringExtractor.CreateCrossClassResolver(this);
+        foreach (var script in ScriptFiles)
+        {
+            if (script.Class == null) continue;
+
+            var classResolver = GDStaticStringExtractor.CreateClassResolver(script.Class);
+            var collector = new GDGroupCollector(classResolver, crossClassResolver);
+            script.Class.WalkIn(collector);
+
+            var typeName = script.TypeName ?? script.Class?.ClassName?.Identifier?.Sequence;
+            if (typeName == null) continue;
+
+            foreach (var call in collector.AddToGroupCalls)
+            {
+                if (!call.IsOnSelf) continue;
+                registry.RegisterMember(call.GroupName, new GDGroupMembership
+                {
+                    TypeName = typeName,
+                    Source = GDGroupSource.CodeAddToGroup,
+                    SourcePath = script.FullPath
+                });
+            }
+        }
+
+        return registry;
     }
 
     /// <summary>

@@ -558,11 +558,59 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
             }
         }
 
+        // Parse groups property: groups = ["group1", "group2"]
+        var groupsRegex = new Regex(@"^groups\s*=\s*\[([^\]]*)\]", RegexOptions.Multiline);
+        var groupNameRegex = new Regex(@"[&]?""([^""]+)""");
+
+        foreach (Match groupMatch in groupsRegex.Matches(content))
+        {
+            var groupNames = new List<string>();
+            foreach (Match nameMatch in groupNameRegex.Matches(groupMatch.Groups[1].Value))
+                groupNames.Add(nameMatch.Groups[1].Value);
+
+            if (groupNames.Count == 0)
+                continue;
+
+            var groupPos = groupMatch.Index;
+            int groupOwnerIndex = -1;
+            for (int i = nodeMatches.Count - 1; i >= 0; i--)
+            {
+                if (nodeMatches[i].Index < groupPos)
+                {
+                    if (i + 1 >= nodeMatches.Count || nodeMatches[i + 1].Index > groupPos)
+                    {
+                        groupOwnerIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (groupOwnerIndex >= 0 && groupOwnerIndex < nodes.Count)
+                nodes[groupOwnerIndex].Groups = groupNames;
+        }
+
         sceneInfo.Nodes = nodes;
         sceneInfo.UniqueNodes = uniqueNodes;
         sceneInfo.SubSceneReferences = subSceneRefs;
         sceneInfo.ResourceReferences = resourceRefs;
         sceneInfo.AllExtResources = allExtResources;
+
+        // Build group-to-types index
+        foreach (var node in nodes)
+        {
+            if (node.Groups.Count == 0) continue;
+            var type = node.ScriptTypeName ?? node.NodeType;
+            foreach (var group in node.Groups)
+            {
+                if (!sceneInfo.GroupToTypes.TryGetValue(group, out var types))
+                {
+                    types = new List<string>();
+                    sceneInfo.GroupToTypes[group] = types;
+                }
+                if (!types.Contains(type))
+                    types.Add(type);
+            }
+        }
 
         // Parse signal connections
         sceneInfo.SignalConnections = ParseSignalConnections(content, nodes);
@@ -916,6 +964,21 @@ public class GDSceneTypesProvider : IGDRuntimeProvider, IDisposable
     /// Gets all cached scenes.
     /// </summary>
     public IEnumerable<GDSceneInfo> AllScenes => _sceneCache.Values;
+
+    /// <summary>
+    /// Gets all node types that belong to a specific group across all loaded scenes.
+    /// </summary>
+    public IReadOnlyList<string> GetTypesInGroup(string groupName)
+    {
+        var types = new HashSet<string>();
+        foreach (var scene in _sceneCache.Values)
+        {
+            if (scene.GroupToTypes.TryGetValue(groupName, out var sceneTypes))
+                foreach (var type in sceneTypes)
+                    types.Add(type);
+        }
+        return types.ToList();
+    }
 
     /// <summary>
     /// Gets all signal connections for a scene.
@@ -1403,6 +1466,11 @@ public class GDSceneInfo
     /// </summary>
     public IReadOnlyDictionary<string, (string Path, string Type)> AllExtResources { get; set; }
         = new Dictionary<string, (string, string)>();
+
+    /// <summary>
+    /// Maps group names to the node types belonging to those groups in this scene.
+    /// </summary>
+    public Dictionary<string, List<string>> GroupToTypes { get; } = new();
 }
 
 /// <summary>
@@ -1520,6 +1588,11 @@ public class GDNodeTypeInfo
     /// Whether this node's script is a C# script (.cs) rather than GDScript (.gd).
     /// </summary>
     public bool IsCSharpScript { get; set; }
+
+    /// <summary>
+    /// Node groups this node belongs to (from groups = [...] in scene file).
+    /// </summary>
+    public IReadOnlyList<string> Groups { get; set; } = Array.Empty<string>();
 }
 
 /// <summary>

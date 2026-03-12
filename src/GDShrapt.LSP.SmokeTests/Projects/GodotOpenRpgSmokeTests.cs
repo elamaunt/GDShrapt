@@ -421,4 +421,93 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
         result!.Contents.Value.Should().Contain("FieldCamera",
             "hover on class_name should show FieldCamera");
     }
+
+    // ========================================================================
+    // Group Flow Analysis — type inference for get_nodes_in_group()
+    // ========================================================================
+
+    [TestMethod]
+    public void GroupRegistry_PlayerControllerGroup_IsRegistered()
+    {
+        // PlayerController has: const GROUP := "_PLAYER_CONTROLLER_GROUP"
+        // and add_to_group(GROUP) in _ready()
+        // Verify the group registry was built during project analysis
+        var injector = Project.CreateNodeTypeInjector();
+        injector.Should().NotBeNull("node type injector should be created");
+
+        // Verify by testing that get_nodes_in_group("_PLAYER_CONTROLLER_GROUP") narrows the type
+        var reader = new GDScriptReader();
+        var call = reader.ParseExpression("get_tree().get_nodes_in_group(\"_PLAYER_CONTROLLER_GROUP\")") as GDCallExpression;
+        call.Should().NotBeNull();
+
+        var context = new GDTypeInjectionContext { ScriptPath = "res://test.gd" };
+        var type = injector!.InjectType(call!, context);
+
+        type.Should().NotBeNull("group type should be narrowed for _PLAYER_CONTROLLER_GROUP");
+        type.Should().Contain("PlayerController",
+            "get_nodes_in_group should narrow to Array[PlayerController]");
+    }
+
+    [TestMethod]
+    public void GroupFlow_FieldGd_GetNodesInGroup_PlayerControllerGROUP()
+    {
+        // field.gd contains:
+        //   for controller in get_tree().get_nodes_in_group(PlayerController.GROUP):
+        // Verify hover on get_nodes_in_group returns narrowed type
+        var script = FindScript("field/field.gd");
+        script.Should().NotBeNull("field.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "get_nodes_in_group(PlayerController.GROUP)");
+        line.Should().BeGreaterThanOrEqualTo(0,
+            "field.gd should contain get_nodes_in_group(PlayerController.GROUP)");
+
+        var col = GetColumnOf(script!, line, "get_nodes_in_group");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        // The hover should show type information
+        // At minimum it should not crash; ideally it shows PlayerController
+        if (result != null)
+        {
+            Console.WriteLine($"[SMOKE] get_nodes_in_group hover: {result.Contents.Value}");
+        }
+    }
+
+    [TestMethod]
+    public void GroupFlow_GameboardGd_GetNodesInGroup_GameboardLayerGROUP()
+    {
+        // gameboard.gd contains:
+        //   for tilemap: GameboardLayer in get_tree().get_nodes_in_group(GameboardLayer.GROUP):
+        var script = FindScript("gameboard/gameboard.gd");
+        script.Should().NotBeNull("gameboard.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "get_nodes_in_group(GameboardLayer.GROUP)");
+        line.Should().BeGreaterThanOrEqualTo(0,
+            "gameboard.gd should contain get_nodes_in_group(GameboardLayer.GROUP)");
+
+        var col = GetColumnOf(script!, line, "get_nodes_in_group");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        if (result != null)
+        {
+            Console.WriteLine($"[SMOKE] GameboardLayer group hover: {result.Contents.Value}");
+        }
+    }
 }

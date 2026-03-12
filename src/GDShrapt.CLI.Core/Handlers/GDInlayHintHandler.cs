@@ -129,12 +129,25 @@ public class GDInlayHintHandler : IGDInlayHintHandler
             if (GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
                 continue;
 
-            // Find position to insert hint (after variable name)
-            var position = GetHintPositionAfterName(variable.DeclarationNode, variable.Name);
+            // Check if the declaration already has a colon (e.g., var x := -1)
+            // In that case, insert type after the colon without adding another one
+            string label;
+            (int Line, int Column)? position;
+
+            if (variable.DeclarationNode is GDVariableDeclaration varDeclColon && varDeclColon.TypeColon != null)
+            {
+                label = $" {typeName}";
+                position = (varDeclColon.TypeColon.EndLine + 1, varDeclColon.TypeColon.EndColumn + 1);
+            }
+            else
+            {
+                label = $": {typeName}";
+                position = GetHintPositionAfterName(variable.DeclarationNode, variable.Name);
+            }
+
             if (position == null)
                 continue;
 
-            var label = $": {typeName}";
             hints.Add(new GDInlayHint
             {
                 Line = position.Value.Line,
@@ -191,11 +204,24 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                 if (string.IsNullOrEmpty(typeName))
                     continue;
 
-                var position = GetHintPositionAfterIdentifier(varStmt.Identifier);
+                // Check if the declaration already has a colon (e.g., var x := value)
+                string label;
+                (int Line, int Column)? position;
+
+                if (varStmt.Colon != null)
+                {
+                    label = $" {typeName}";
+                    position = (varStmt.Colon.EndLine + 1, varStmt.Colon.EndColumn + 1);
+                }
+                else
+                {
+                    label = $": {typeName}";
+                    position = GetHintPositionAfterIdentifier(varStmt.Identifier);
+                }
+
                 if (position == null)
                     continue;
 
-                var label = $": {typeName}";
                 hints.Add(new GDInlayHint
                 {
                     Line = position.Value.Line,

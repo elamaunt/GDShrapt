@@ -62,6 +62,37 @@ internal static class GDStaticStringExtractor
     }
 
     /// <summary>
+    /// Tries to extract a static string value from an expression,
+    /// with support for cross-class constant resolution (e.g. PlayerController.GROUP).
+    /// </summary>
+    public static string? TryExtractString(
+        GDExpression? expr,
+        Func<string, GDExpression?>? resolveVariable,
+        Func<string, string, GDExpression?>? resolveCrossClass)
+    {
+        if (expr == null)
+            return null;
+
+        // Cross-class member access: ClassName.CONSTANT
+        if (expr is GDMemberOperatorExpression memberExpr
+            && memberExpr.CallerExpression is GDIdentifierExpression classIdent
+            && resolveCrossClass != null)
+        {
+            var className = classIdent.Identifier?.Sequence;
+            var constName = memberExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(className) && !string.IsNullOrEmpty(constName))
+            {
+                var constExpr = resolveCrossClass(className, constName);
+                if (constExpr != null)
+                    return TryExtractString(constExpr, null);
+            }
+        }
+
+        // Delegate to the standard resolver for all other patterns
+        return TryExtractString(expr, resolveVariable);
+    }
+
+    /// <summary>
     /// Tries to extract a static string value from an expression, also returning the source AST node
     /// where the string literal physically resides (for rename edit positioning).
     /// Returns (value, sourceNode) where:
@@ -116,6 +147,26 @@ internal static class GDStaticStringExtractor
             return _ => null;
 
         return varName => GDNodePathExtractor.TryGetStaticStringInitializer(classDecl, varName);
+    }
+
+    /// <summary>
+    /// Creates a cross-class resolver that can resolve ClassName.CONSTANT patterns
+    /// by looking up scripts by type name.
+    /// </summary>
+    public static Func<string, string, GDExpression?> CreateCrossClassResolver(
+        IGDScriptProvider? scriptProvider)
+    {
+        if (scriptProvider == null)
+            return (_, _) => null;
+
+        return (className, constName) =>
+        {
+            var scriptInfo = scriptProvider.GetScriptByTypeName(className);
+            if (scriptInfo?.Class == null)
+                return null;
+
+            return GDNodePathExtractor.TryGetStaticStringInitializer(scriptInfo.Class, constName);
+        };
     }
 
     /// <summary>
