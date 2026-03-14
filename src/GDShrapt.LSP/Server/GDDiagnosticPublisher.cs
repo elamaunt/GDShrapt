@@ -161,6 +161,12 @@ public class GDDiagnosticPublisher : IAsyncDisposable
             var result = GDDiagnosticsHandler.DiagnoseWithSemantics(script, _diagnosticsService, config: _config);
             diagnostics = result.Diagnostics.Select(d => GDDiagnosticAdapter.FromUnifiedDiagnostic(d)).ToArray();
         }
+        else if (GDSceneDiagnosticsHandler.IsSceneFile(filePath))
+        {
+            var sceneHandler = new GDSceneDiagnosticsHandler(_project);
+            var sceneDiags = sceneHandler.AnalyzeScene(filePath);
+            diagnostics = sceneDiags.Select(d => GDDiagnosticAdapter.FromUnifiedDiagnostic(d)).ToArray();
+        }
         else
         {
             // No script found - clear diagnostics

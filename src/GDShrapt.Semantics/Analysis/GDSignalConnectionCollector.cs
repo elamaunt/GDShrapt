@@ -183,6 +183,7 @@ internal class GDSignalConnectionCollector
                         ? GDReferenceConfidence.Potential
                         : GDReferenceConfidence.Strict;
 
+                    var (cbLine, cbCol) = ExtractCallbackPosition(args[0]);
                     _connections.Add(new GDSignalConnectionEntry(
                         _scriptFile.FullPath ?? _scriptFile.Reference.FullPath,
                         _currentMethodName,
@@ -190,7 +191,8 @@ internal class GDSignalConnectionCollector
                         gdScript4EmitterType, gdScript4SignalName,
                         cbClassName, cbMethodName,
                         isDynamicSignal: false, isDynamicCallback: isDynCb,
-                        isSceneConnection: false, gdScript4Confidence));
+                        isSceneConnection: false, gdScript4Confidence,
+                        callbackLine: cbLine, callbackColumn: cbCol));
                     return;
                 }
             }
@@ -235,6 +237,7 @@ internal class GDSignalConnectionCollector
             // Get line/column
             var line = callExpr.StartLine;
             var column = callExpr.StartColumn;
+            var (cbLine3, cbCol3) = ExtractCallbackPosition(args[1]);
 
             var entry = new GDSignalConnectionEntry(
                 _scriptFile.FullPath ?? _scriptFile.Reference.FullPath,
@@ -248,7 +251,8 @@ internal class GDSignalConnectionCollector
                 isDynamicSignal,
                 isDynamicCallback,
                 isSceneConnection: false,
-                confidence);
+                confidence,
+                callbackLine: cbLine3, callbackColumn: cbCol3);
 
             _connections.Add(entry);
         }
@@ -341,6 +345,17 @@ internal class GDSignalConnectionCollector
             }
 
             return (null, null, true);
+        }
+
+        private static (int line, int column) ExtractCallbackPosition(GDExpression expr)
+        {
+            if (expr is GDIdentifierExpression identExpr && identExpr.Identifier != null)
+                return (identExpr.Identifier.StartLine, identExpr.Identifier.StartColumn);
+
+            if (expr is GDMemberOperatorExpression memberOp && memberOp.Identifier != null)
+                return (memberOp.Identifier.StartLine, memberOp.Identifier.StartColumn);
+
+            return (-1, -1);
         }
     }
 }

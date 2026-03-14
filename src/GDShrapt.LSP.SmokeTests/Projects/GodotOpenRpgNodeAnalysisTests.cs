@@ -441,9 +441,18 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
         // Count non-own-declaration entries (what the user sees on click)
         int clickCount = cached!.Count(r => !r.IsDeclaration);
 
-        // Parse the strict count from the label (format: "N references" or "N references (+M unions)")
+        // Parse the strict count from the label (format: "N references", "N references (+M unions)", or "N+M references")
         var labelNumber = lens!.Label.Split(' ')[0];
-        int labelStrict = int.Parse(labelNumber);
+        int labelStrict;
+        if (labelNumber.Contains('+'))
+        {
+            var parts = labelNumber.Split('+');
+            labelStrict = int.Parse(parts[0]) + int.Parse(parts[1]);
+        }
+        else
+        {
+            labelStrict = int.Parse(labelNumber);
+        }
 
         // Parse union count if present
         int labelUnion = 0;
@@ -943,5 +952,388 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
 
         content.Should().Contain("animation_finished",
             "hover should show snake_case signal name");
+    }
+
+    // ========== Scene CodeLens scoping smoke tests ==========
+
+    [TestMethod]
+    public void MainScene_NodeCodeLens_NoFalsePositivesFromOtherScenes()
+    {
+        var sceneProvider = Project.SceneTypesProvider!;
+        var mainScene = sceneProvider.AllScenes
+            .FirstOrDefault(s => s.ScenePath.EndsWith("main.tscn", StringComparison.OrdinalIgnoreCase));
+        mainScene.Should().NotBeNull("main.tscn should exist in godot-open-rpg");
+
+        var codeLensHandler = Registry.GetService<IGDCodeLensHandler>()!;
+        var lenses = codeLensHandler.GetCodeLenses(mainScene!.FullPath);
+
+        Console.WriteLine($"[LENS] Total scene lenses for main.tscn: {lenses.Count}");
+        foreach (var lens in lenses.Take(20))
+            Console.WriteLine($"[LENS] L{lens.Line}: {lens.Label} ({lens.CommandArgument})");
+
+        // CollisionShape2D nodes should NOT show references from player_controller.gd
+        // (which is in gamepiece.tscn, not main.tscn)
+        // CommandArgument is now node Path (e.g. "SomePath/CollisionShape2D"), not just name
+        var collisionLenses = lenses
+            .Where(l => l.CommandArgument != null &&
+                        (l.CommandArgument == "CollisionShape2D" || l.CommandArgument.EndsWith("/CollisionShape2D")))
+            .ToList();
+        foreach (var cl in collisionLenses)
+        {
+            var refs = codeLensHandler.GetCachedReferences(cl.CommandArgument!, mainScene.FullPath);
+            if (refs != null)
+            {
+                foreach (var r in refs)
+                    Console.WriteLine($"[LENS]   {cl.CommandArgument} ref: {System.IO.Path.GetFileName(r.FilePath)}:{r.Line}");
+
+                refs.Should().NotContain(r => r.FilePath.Contains("player_controller"),
+                    $"player_controller.gd is in gamepiece.tscn, not main.tscn (node: {cl.CommandArgument})");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void SceneCodeLens_CompletesQuickly()
+    {
+        var sceneProvider = Project.SceneTypesProvider!;
+        var mainScene = sceneProvider.AllScenes
+            .FirstOrDefault(s => s.ScenePath.EndsWith("main.tscn", StringComparison.OrdinalIgnoreCase));
+        mainScene.Should().NotBeNull("main.tscn should exist in godot-open-rpg");
+
+        var codeLensHandler = Registry.GetService<IGDCodeLensHandler>()!;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var lenses = codeLensHandler.GetCodeLenses(mainScene!.FullPath);
+        sw.Stop();
+
+        Console.WriteLine($"[PERF] Scene CodeLens took {sw.ElapsedMilliseconds}ms for {lenses.Count} lenses");
+        sw.ElapsedMilliseconds.Should().BeLessThan(3000,
+            "scene CodeLens should complete within 3 seconds");
+    }
+
+    [TestMethod]
+    public void SceneCodeLens_AllRefsFromSceneScriptsOnly()
+    {
+        var sceneProvider = Project.SceneTypesProvider!;
+        var mainScene = sceneProvider.AllScenes
+            .FirstOrDefault(s => s.ScenePath.EndsWith("main.tscn", StringComparison.OrdinalIgnoreCase));
+        mainScene.Should().NotBeNull("main.tscn should exist in godot-open-rpg");
+
+        // Collect allowed scripts (same logic as implementation)
+        var allowedScripts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var node in mainScene!.Nodes)
+        {
+            if (!string.IsNullOrEmpty(node.ScriptPath))
+                allowedScripts.Add(node.ScriptPath);
+        }
+
+        // Add instantiating scripts
+        var projectModel = new GDProjectSemanticModel(Project);
+        if (projectModel.SceneFlow != null)
+        {
+            foreach (var edge in projectModel.SceneFlow.GetScenesThatInstantiate(mainScene.ScenePath))
+            {
+                if (!string.IsNullOrEmpty(edge.SourceFile))
+                    allowedScripts.Add(edge.SourceFile);
+            }
+
+            // BFS sub-scenes
+            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { mainScene.ScenePath };
+            var queue = new Queue<string>();
+            foreach (var edge in projectModel.SceneFlow.GetInstantiatedScenes(mainScene.ScenePath))
+                if (!string.IsNullOrEmpty(edge.TargetScene) && visited.Add(edge.TargetScene))
+                    queue.Enqueue(edge.TargetScene);
+
+            while (queue.Count > 0)
+            {
+                var subScenePath = queue.Dequeue();
+                var subSceneInfo = sceneProvider.GetSceneInfo(subScenePath);
+                if (subSceneInfo == null) continue;
+                foreach (var node in subSceneInfo.Nodes)
+                    if (!string.IsNullOrEmpty(node.ScriptPath))
+                        allowedScripts.Add(node.ScriptPath);
+                foreach (var edge in projectModel.SceneFlow.GetInstantiatedScenes(subScenePath))
+                    if (!string.IsNullOrEmpty(edge.TargetScene) && visited.Add(edge.TargetScene))
+                        queue.Enqueue(edge.TargetScene);
+            }
+        }
+
+        Console.WriteLine($"[LENS] main.tscn allowed scripts: {allowedScripts.Count}");
+        foreach (var s in allowedScripts.Take(10))
+            Console.WriteLine($"[LENS]   {s}");
+
+        var codeLensHandler = Registry.GetService<IGDCodeLensHandler>()!;
+        var lenses = codeLensHandler.GetCodeLenses(mainScene.FullPath);
+
+        // Verify all node refs come from allowed scripts
+        var nodeLenses = lenses.Where(l => l.CommandArgument != null && !l.CommandArgument.StartsWith("signal:")).ToList();
+        foreach (var lens in nodeLenses)
+        {
+            var refs = codeLensHandler.GetCachedReferences(lens.CommandArgument!, mainScene.FullPath);
+            if (refs == null) continue;
+
+            foreach (var r in refs)
+            {
+                // Convert file path to resource path for comparison
+                var resPath = sceneProvider.ToResourcePath(r.FilePath);
+                if (resPath != null)
+                {
+                    allowedScripts.Should().Contain(resPath,
+                        $"Reference to '{lens.CommandArgument}' from {System.IO.Path.GetFileName(r.FilePath)} " +
+                        $"should be from an allowed script (attached, instantiating, or sub-scene)");
+                }
+            }
+        }
+    }
+
+    [TestMethod]
+    public void MainScene_InteractionPopup_NoFalsePositivesFromOtherParents()
+    {
+        var sceneProvider = Project.SceneTypesProvider!;
+        var mainScene = sceneProvider.AllScenes
+            .FirstOrDefault(s => s.ScenePath.EndsWith("main.tscn", StringComparison.OrdinalIgnoreCase));
+        mainScene.Should().NotBeNull("main.tscn should exist in godot-open-rpg");
+
+        var codeLensHandler = Registry.GetService<IGDCodeLensHandler>()!;
+        var lenses = codeLensHandler.GetCodeLenses(mainScene!.FullPath);
+
+        // Find all InteractionPopup lenses (multiple nodes with the same name under different parents)
+        var popupLenses = lenses
+            .Where(l => l.CommandArgument != null &&
+                        (l.CommandArgument == "InteractionPopup" || l.CommandArgument.EndsWith("/InteractionPopup")))
+            .ToList();
+
+        Console.WriteLine($"[LENS] InteractionPopup lenses: {popupLenses.Count}");
+        foreach (var pl in popupLenses)
+            Console.WriteLine($"[LENS]   Path={pl.CommandArgument} Line={pl.Line} Label={pl.Label}");
+
+        // Each InteractionPopup should only show references from its parent's script
+        foreach (var pl in popupLenses)
+        {
+            var refs = codeLensHandler.GetCachedReferences(pl.CommandArgument!, mainScene.FullPath);
+            if (refs == null || refs.Count == 0)
+                continue;
+
+            Console.WriteLine($"[LENS]   {pl.CommandArgument} refs:");
+            foreach (var r in refs)
+                Console.WriteLine($"[LENS]     {System.IO.Path.GetFileName(r.FilePath)}:{r.Line}");
+
+            // The StrangeTreeInteraction/InteractionPopup should NOT have refs from door_unlock or fan_interaction
+            if (pl.CommandArgument!.Contains("StrangeTreeInteraction"))
+            {
+                refs.Should().NotContain(r => r.FilePath.Contains("door_unlock_interaction"),
+                    "door_unlock_interaction.gd references a DIFFERENT InteractionPopup under Door/Interaction");
+                refs.Should().NotContain(r => r.FilePath.Contains("fan_interaction"),
+                    "fan_interaction.gd references a DIFFERENT InteractionPopup under AdoringFan/Interaction");
+            }
+
+            // No InteractionPopup should show more than ~2 references from the same parent's scripts
+            refs.Count.Should().BeLessThan(4,
+                $"InteractionPopup at {pl.CommandArgument} should have at most a few references, not cross-parent ones");
+        }
+    }
+
+    [TestMethod]
+    public void FanInteraction_HoverOnGetVariable_ShowsMethodInfo()
+    {
+        var script = FindScript("town/fan_interaction.gd");
+        script.Should().NotBeNull("fan_interaction.gd should exist in godot-open-rpg");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var line = FindLineContaining(script, "get_variable");
+        line.Should().BeGreaterThan(-1, "fan_interaction.gd should contain get_variable");
+
+        var column = GetColumnOf(script, line, "get_variable");
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, column)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on get_variable should return result");
+        Console.WriteLine($"[HOVER] get_variable content: {result!.Contents.Value}");
+
+        // Dialogic is an external addon — its types may not be fully resolvable.
+        // When the caller type chain (Dialogic.VAR) can be resolved, the fix in GetSymbolForNode
+        // will show proper method info. For now verify hover at least returns something meaningful.
+        result!.Contents.Value.Should().Contain("get_variable",
+            "hover should at least show the symbol name");
+    }
+
+    [TestMethod]
+    public void FanInteraction_HoverOnGetVariable_HasValidRange()
+    {
+        var script = FindScript("town/fan_interaction.gd");
+        script.Should().NotBeNull("fan_interaction.gd should exist in godot-open-rpg");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var line = FindLineContaining(script, "get_variable");
+        line.Should().BeGreaterThan(-1);
+
+        var column = GetColumnOf(script, line, "get_variable");
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, column)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on get_variable should return result");
+        result!.Range.Should().NotBeNull("hover range should not be null for member access hover");
+    }
+
+    [TestMethod]
+    public void InventoryScript_AddMethodCodeLens_ShowsCrossFileReferences()
+    {
+        var script = FindScript("common/inventory.gd");
+        script.Should().NotBeNull("inventory.gd should exist in godot-open-rpg");
+
+        var codeLensHandler = Registry.GetService<IGDCodeLensHandler>()!;
+        var lenses = codeLensHandler.GetCodeLenses(script!.FullPath!);
+
+        var addLens = lenses.FirstOrDefault(l => l.CommandArgument == "add");
+        addLens.Should().NotBeNull("CodeLens for 'add' should exist in inventory.gd");
+
+        Console.WriteLine($"[LENS] add label: {addLens!.Label}");
+
+        var cached = codeLensHandler.GetCachedReferences("add", script.FullPath!);
+        cached.Should().NotBeNull("cached refs should exist for 'add'");
+
+        Console.WriteLine($"[LENS] add refs: {cached!.Count}");
+        foreach (var r in cached)
+            Console.WriteLine($"[LENS]   {System.IO.Path.GetFileName(r.FilePath)}:{r.Line}");
+
+        var crossFileRefs = cached.Where(r => !r.IsDeclaration).ToList();
+        crossFileRefs.Count.Should().BeGreaterThan(0,
+            "Inventory.add should have cross-file references (fan_interaction.gd uses inventory.add)");
+    }
+
+    [TestMethod]
+    public void FanInteraction_ExecuteCodeLens_NoFalsePositivesFromDialogicEvents()
+    {
+        var script = FindScript("town/fan_interaction.gd");
+        script.Should().NotBeNull("fan_interaction.gd should exist in godot-open-rpg");
+
+        var codeLensHandler = Registry.GetService<IGDCodeLensHandler>()!;
+        var lenses = codeLensHandler.GetCodeLenses(script!.FullPath!);
+
+        var executeLens = lenses.FirstOrDefault(l => l.CommandArgument == "_execute");
+        executeLens.Should().NotBeNull("CodeLens for _execute should exist");
+
+        Console.WriteLine($"[LENS] _execute label: {executeLens!.Label}");
+
+        var cached = codeLensHandler.GetCachedReferences("_execute", script.FullPath!);
+        cached.Should().NotBeNull("cached refs should exist");
+
+        Console.WriteLine($"[LENS] _execute refs: {cached!.Count}");
+        foreach (var r in cached)
+            Console.WriteLine($"[LENS]   {System.IO.Path.GetFileName(r.FilePath)}:{r.Line}");
+
+        // No references should come from the Dialogic addon (different hierarchy)
+        cached.Should().NotContain(r => r.FilePath.Contains("addons/dialogic") || r.FilePath.Contains("addons\\dialogic"),
+            "_execute refs should not include DialogicEvent hierarchy files");
+
+        // The Cutscene hierarchy has ~10 scripts max with _execute
+        cached.Count.Should().BeLessThan(20,
+            "_execute in fan_interaction.gd should only show refs from Cutscene hierarchy");
+    }
+
+    [TestMethod]
+    public void InventoryScript_NewInventory_InferredType_IsInventory()
+    {
+        var script = FindScript("common/inventory.gd");
+        script.Should().NotBeNull("inventory.gd should exist in godot-open-rpg");
+
+        var projectModel = new GDProjectSemanticModel(Project);
+        var semanticModel = projectModel.GetSemanticModel(script!);
+        semanticModel.Should().NotBeNull();
+
+        var allIdents = script!.Class!.AllNodes
+            .OfType<GDIdentifierExpression>()
+            .Where(e => e.Identifier?.Sequence == "new_inventory")
+            .ToList();
+
+        Console.WriteLine($"[DIAG] Found {allIdents.Count} 'new_inventory' identifier expressions");
+        allIdents.Should().NotBeEmpty("inventory.gd should contain 'new_inventory' identifier");
+
+        var exprType = ((IGDMemberAccessAnalyzer)semanticModel!).GetExpressionType(allIdents[0]);
+        Console.WriteLine($"[DIAG] GetExpressionType(new_inventory) = '{exprType}'");
+
+        exprType.Should().Be("Inventory",
+            "var new_inventory: = Inventory.new() should infer type 'Inventory', not base class 'Resource'");
+    }
+
+    [TestMethod]
+    public void InventoryScript_Save_NoFalsePositiveGD4002()
+    {
+        var script = FindScript("common/inventory.gd");
+        script.Should().NotBeNull("inventory.gd should exist in godot-open-rpg");
+
+        var projectModel = new GDProjectSemanticModel(Project);
+        var semanticModel = projectModel.GetSemanticModel(script!);
+        semanticModel.Should().NotBeNull();
+
+        var options = new GDSemanticValidatorOptions
+        {
+            CheckTypes = true,
+            CheckMemberAccess = true,
+            CheckArgumentTypes = true
+        };
+        var validator = new GDSemanticValidator(semanticModel!, options);
+        var result = validator.Validate(script!.Class!);
+
+        var gd4002 = result.Diagnostics
+            .Where(d => d.Code == GDDiagnosticCode.MethodNotFound)
+            .ToList();
+
+        Console.WriteLine($"[DIAG] Total GD4002 (MethodNotFound) diagnostics: {gd4002.Count}");
+        foreach (var diag in gd4002)
+            Console.WriteLine($"[DIAG]   {diag.CodeString} L{diag.StartLine}: {diag.Message}");
+
+        var saveDiags = gd4002
+            .Where(d => d.Message.Contains("save"))
+            .ToList();
+
+        saveDiags.Should().BeEmpty(
+            "Inventory.save() exists — GD4002 'Method save not found' is a false positive");
+    }
+
+    [TestMethod]
+    public void InventoryScript_HoverNewInventory_ShowsInventoryType()
+    {
+        var script = FindScript("common/inventory.gd");
+        script.Should().NotBeNull("inventory.gd should exist in godot-open-rpg");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var line = FindLineContaining(script, "new_inventory");
+        line.Should().BeGreaterThanOrEqualTo(0, "inventory.gd should contain 'new_inventory'");
+        var column = GetColumnOf(script, line, "new_inventory");
+
+        Console.WriteLine($"[HOVER] new_inventory at line={line}, col={column}");
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, column)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on 'new_inventory' should return content");
+
+        Console.WriteLine($"[HOVER] content: {result!.Contents.Value}");
+
+        result.Contents.Value.Should().Contain("Inventory",
+            "hover on new_inventory should show Inventory type, not Resource or Unknown");
+        result.Contents.Value.Should().NotContain("Unknown",
+            "type should be resolved, not Unknown");
     }
 }

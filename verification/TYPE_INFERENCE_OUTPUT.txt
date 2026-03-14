@@ -4084,7 +4084,7 @@ test_scripts/diagnostics/validator/scope_errors.gd
 105:1 GDIdentifierExpression emit_signal -> Error
 105:13 GDStringExpression "another_un..." -> String
 113:0 Method test_gd2006_valid -> void
-114:1 Variable val -> Variant
+114:1 Variable val -> TestEnum
 114:12 GDMemberOperatorExpression TestEnum.VALUE_A -> TestEnum
 114:12 GDIdentifierExpression TestEnum -> TestEnum
 115:1 GDCallExpression print() -> void
@@ -14520,16 +14520,16 @@ test_scripts/simple_class.gd
 55:14 GDIdentifierExpression position -> Vector2
 59:0 Method create_at -> SimpleClass
 59:22 Parameter pos -> Vector2
-60:1 Variable instance -> Node2D
-60:17 GDCallExpression SimpleClass.new() -> Node2D
+60:1 Variable instance -> SimpleClass
+60:17 GDCallExpression SimpleClass.new() -> SimpleClass
 60:17 GDMemberOperatorExpression SimpleClass.new -> Variant
-60:17 GDIdentifierExpression SimpleClass -> Node2D
+60:17 GDIdentifierExpression SimpleClass -> SimpleClass
 61:1 GDDualOperatorExpression instance.positionAssignmentpos -> Vector2
 61:1 GDMemberOperatorExpression instance.position -> Vector2
-61:1 GDIdentifierExpression instance -> Node2D
+61:1 GDIdentifierExpression instance -> SimpleClass
 61:21 GDIdentifierExpression pos -> Vector2
 62:1 GDReturnExpression return instance -> Variant
-62:8 GDIdentifierExpression instance -> Node2D
+62:8 GDIdentifierExpression instance -> SimpleClass
 
 test_scripts/standard_methods.gd
 2:0 Class StandardMethods -> Variant

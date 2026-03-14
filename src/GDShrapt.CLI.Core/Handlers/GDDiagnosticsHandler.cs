@@ -73,6 +73,12 @@ public class GDDiagnosticsHandler : IGDDiagnosticsHandler
     /// <inheritdoc />
     public virtual IReadOnlyList<GDUnifiedDiagnostic> AnalyzeFile(string filePath)
     {
+        if (GDSceneDiagnosticsHandler.IsSceneFile(filePath))
+        {
+            var sceneHandler = new GDSceneDiagnosticsHandler(_project);
+            return sceneHandler.AnalyzeScene(filePath);
+        }
+
         var file = _project.GetScript(filePath);
         if (file == null)
             return [];

@@ -53,7 +53,7 @@ static func create_from_base(pos: Vector2) -> SimpleClass:
 
 
 class InnerClass:
-	var value: int = 0  # 52:12-GD7022-OK
+	var value: int = 0  # 56:12-GD7022-OK
 
 	func increment() -> void:
 		value += 1

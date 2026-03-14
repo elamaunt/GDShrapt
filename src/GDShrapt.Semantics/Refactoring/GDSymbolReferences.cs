@@ -155,19 +155,36 @@ public class GDAllSymbolReferences
 {
     /// <summary>
     /// Primary references (from the main inheritance hierarchy).
+    /// When bridge-connected, contains merged refs from all hierarchies.
     /// </summary>
     public GDSymbolReferences Primary { get; }
 
     /// <summary>
     /// Unrelated same-name symbol references (different inheritance hierarchies).
+    /// Empty when bridge-connected (all merged into Primary).
     /// </summary>
     public IReadOnlyList<GDSymbolReferences> UnrelatedSymbols { get; }
 
+    /// <summary>
+    /// True when hierarchies are dynamically connected via duck-typed calls from bridge files.
+    /// </summary>
+    public bool IsBridgeConnected { get; }
+
+    /// <summary>
+    /// Number of references from the primary hierarchy only (before merge).
+    /// Used by CodeLens to show "N+M references" format.
+    /// </summary>
+    public int PrimaryHierarchyRefCount { get; }
+
     public GDAllSymbolReferences(
         GDSymbolReferences primary,
-        IReadOnlyList<GDSymbolReferences> unrelatedSymbols)
+        IReadOnlyList<GDSymbolReferences> unrelatedSymbols,
+        bool isBridgeConnected = false,
+        int primaryHierarchyRefCount = 0)
     {
         Primary = primary;
         UnrelatedSymbols = unrelatedSymbols;
+        IsBridgeConnected = isBridgeConnected;
+        PrimaryHierarchyRefCount = primaryHierarchyRefCount;
     }
 }

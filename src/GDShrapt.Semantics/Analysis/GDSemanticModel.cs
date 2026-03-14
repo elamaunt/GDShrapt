@@ -362,7 +362,28 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
         var symbol = _symbolRegistry.GetSymbolForNode(node);
         if (symbol != null)
+        {
+            // For member access nodes, the registry may contain a duck-typed/unresolved symbol
+            // from collection time. Try type-based resolution which may succeed at query time.
+            if (node is GDMemberOperatorExpression memberAccessNode
+                && symbol.DeclarationNode == null
+                && symbol.Kind == GDSymbolKind.Property
+                && string.IsNullOrEmpty(symbol.TypeName))
+            {
+                var memberName = memberAccessNode.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(memberName))
+                {
+                    var callerType = GetExpressionType(memberAccessNode.CallerExpression);
+                    if (!string.IsNullOrEmpty(callerType))
+                    {
+                        var betterSymbol = ResolveMember(callerType, memberName);
+                        if (betterSymbol != null)
+                            return betterSymbol;
+                    }
+                }
+            }
             return symbol;
+        }
 
         if (node is GDIdentifierExpression identExpr)
         {
@@ -1896,7 +1917,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Gets all inner class symbols.
     /// </summary>
-    public IReadOnlyList<GDSymbolInfo> GetInnerClasses() => GetSymbolsOfKind(GDSymbolKind.Class);
+    public IReadOnlyList<GDSymbolInfo> GetInnerClasses() =>
+        GetSymbolsOfKind(GDSymbolKind.Class)
+            .Where(s => s.Symbol?.Declaration is GDInnerClassDeclaration)
+            .ToList();
 
     /// <summary>
     /// Gets the declaration node for a symbol.

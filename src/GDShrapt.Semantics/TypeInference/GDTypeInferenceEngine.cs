@@ -860,22 +860,16 @@ namespace GDShrapt.Semantics
 
             if (symbol != null)
             {
-                // Prefer TypeNode if available (has generic type info)
-                if (symbol.TypeNode != null)
-                    return symbol.TypeNode;
-                // Fall back to TypeName
-                if (!string.IsNullOrEmpty(symbol.TypeName))
-                    return CreateSimpleType(symbol.TypeName);
-
-                // Handle enum symbols - enum type is the enum name itself
-                // This allows AIState.PATROL where AIState is a local enum
-                if (symbol.Kind == GDSymbolKind.Enum)
+                // Handle class symbols first — class_name identifier represents the class type itself,
+                // not an instance of the base class (symbol.TypeName stores the extends type)
+                if (symbol.Kind == GDSymbolKind.Class)
                 {
                     return CreateSimpleType(symbol.Name);
                 }
 
-                // Handle inner class symbols - class type is the class name
-                if (symbol.Kind == GDSymbolKind.Class)
+                // Handle enum symbols - enum type is the enum name itself
+                // This allows AIState.PATROL where AIState is a local enum
+                if (symbol.Kind == GDSymbolKind.Enum)
                 {
                     return CreateSimpleType(symbol.Name);
                 }
@@ -887,6 +881,13 @@ namespace GDShrapt.Semantics
                 {
                     return CreateSimpleType("Callable");
                 }
+
+                // Prefer TypeNode if available (has generic type info)
+                if (symbol.TypeNode != null)
+                    return symbol.TypeNode;
+                // Fall back to TypeName
+                if (!string.IsNullOrEmpty(symbol.TypeName))
+                    return CreateSimpleType(symbol.TypeName);
 
                 // Fallback: infer type from declaration
                 // Handle local variables (statements)

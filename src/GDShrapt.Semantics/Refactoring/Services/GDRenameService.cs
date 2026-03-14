@@ -251,7 +251,40 @@ public class GDRenameService
         {
             var hierarchyRoots = FindHierarchyRoots(definitions);
 
-            // Pick the hierarchy with the most strict edits
+            // Bridge detection: when multiple hierarchies are dynamically connected
+            // via duck-typed calls from bridge files, rename must cover ALL hierarchies.
+            // Only when filterFilePath is set (user indicated which hierarchy they're in).
+            if (hierarchyRoots.Count > 1 && _projectModel != null && !string.IsNullOrEmpty(filterFilePath))
+            {
+                var collector = new GDSymbolReferenceCollector(_project, _projectModel);
+                var allRefs = collector.CollectAllReferences(oldName, filterFilePath);
+
+                if (allRefs.IsBridgeConnected)
+                {
+                    var strictEdits = new List<GDTextEdit>();
+                    var potentialEdits = new List<GDTextEdit>();
+                    var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    // null declaringTypeName → BuildUnrelatedFilesSet returns empty → all refs pass through
+                    ConvertRefsToEdits(allRefs.Primary, oldName, newName,
+                        null, null, strictEdits, potentialEdits, filesModified);
+
+                    CollectTscnEdits(oldName, newName, null, strictEdits, potentialEdits, filesModified);
+                    CollectAllMemberAccessEdits(oldName, newName, strictEdits, potentialEdits, filesModified);
+
+                    strictEdits = DeduplicateEdits(strictEdits);
+                    potentialEdits = DeduplicateEdits(potentialEdits);
+                    var warnings = CollectStringReferenceWarnings(oldName);
+                    var symbolKind = definitions.First().Symbol.Kind;
+                    warnings.AddRange(CollectReflectionWarnings(oldName, symbolKind));
+                    warnings.AddRange(CollectCSharpInteropWarnings(oldName, definitions.First().Script));
+
+                    return GDRenameResult.SuccessfulWithConfidence(
+                        SortEditsReverse(strictEdits), SortEditsReverse(potentialEdits), filesModified.Count, warnings);
+                }
+            }
+
+            // Non-bridge: pick the hierarchy with the most strict edits
             GDRenameResult? bestResult = null;
             foreach (var root in hierarchyRoots)
             {

@@ -46,6 +46,11 @@ public class GDHoverHandler : IGDHoverHandler
 
         var content = BuildHoverContent(symbol, semanticModel, node);
 
+        // Show cross-hierarchy bridge info for class members
+        var crossHierarchyInfo = BuildCrossHierarchyInfo(symbol, script);
+        if (!string.IsNullOrEmpty(crossHierarchyInfo))
+            content += "\n\n" + crossHierarchyInfo;
+
         // Use pre-cached documentation (built-in docs or cross-file ## comments)
         var documentation = symbol.Documentation;
 
@@ -65,6 +70,15 @@ public class GDHoverHandler : IGDHoverHandler
 
         // Use identifier token for hover range (just the name, not the entire declaration)
         var posToken = symbol.PositionToken;
+        if (posToken == null && node != null)
+        {
+            if (node is GDMemberOperatorExpression memberOp)
+                posToken = memberOp.Identifier;
+            else if (node is GDIdentifierExpression identExpr)
+                posToken = identExpr.Identifier;
+            else
+                posToken = node.FirstLeafToken;
+        }
 
         return new GDHoverInfo
         {
@@ -421,6 +435,37 @@ public class GDHoverHandler : IGDHoverHandler
         }
 
         return result;
+    }
+
+    private string? BuildCrossHierarchyInfo(Semantics.GDSymbolInfo symbol, GDScriptFile script)
+    {
+        if (symbol.Kind != GDSymbolKind.Method && symbol.Kind != GDSymbolKind.Signal)
+            return null;
+
+        if (script?.FullPath == null)
+            return null;
+
+        var collector = new GDSymbolReferenceCollector(_projectModel.Project, _projectModel);
+        var allRefs = collector.CollectAllReferences(symbol.Name, script.FullPath);
+
+        if (!allRefs.IsBridgeConnected)
+            return null;
+
+        var ownType = script.TypeName;
+        var otherTypes = allRefs.Primary.References
+            .Where(r => r.Kind == GDSymbolReferenceKind.Declaration
+                && r.Script?.TypeName != null
+                && !string.Equals(r.Script.TypeName, ownType, StringComparison.Ordinal))
+            .Select(r => r.Script!.TypeName!)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToList();
+
+        if (otherTypes.Count == 0)
+            return null;
+
+        var typeList = string.Join(" | ", otherTypes.Select(t => $"`{t}`"));
+        return $"**bridge**: dynamically connected to {typeList} via untyped calls";
     }
 
     private static string? BuildOriginInfo(GDFlowVariableType flowVarType)

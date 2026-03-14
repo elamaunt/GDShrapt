@@ -1,23 +1,23 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-11 18:45:28
+Generated: 2026-03-14 03:36:14
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 731
+Total diagnostics: 730
 Scripts analyzed:  61
 
 By Severity:
   Error     :    30
   Hint      :    94
   Info      :    36
-  Warning   :   571
+  Warning   :   570
 
 By Source:
   Linter              :   304
-  SemanticValidator   :   393
+  SemanticValidator   :   392
   Validator           :    34
 
 By Code (Top 30):
@@ -41,13 +41,13 @@ By Code (Top 30):
   GD3009    :    5  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
   GD3024    :    5  (Not all code paths return a value in 'test_gdl228_valid' ...)
-  GD4002    :    5  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
   GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
   GDL210    :    5  (Unreachable code detected)
   GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
+  GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD4009    :    4  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
   GD3006    :    3  (Unknown type: 'CompletelyUnknownType')
   GD3010    :    3  (Argument type mismatch for 'x' in call to '_take_int': ex...)
@@ -558,7 +558,7 @@ DIAGNOSTICS BY FILE
     21:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
     25:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/inheritance_test.gd (25 diagnostics) ---
+--- test_scripts/inheritance_test.gd (24 diagnostics) ---
 
     29:5   [GDL201] Warning - Local variable 'current_pos' is declared but never used
     30:5   [GDL201] Warning - Local variable 'global_pos' is declared but never used
@@ -577,7 +577,6 @@ DIAGNOSTICS BY FILE
    104:5   [GDL201] Warning - Local variable 'glob' is declared but never used
    105:5   [GDL201] Warning - Local variable 'transform' is declared but never used
    106:5   [GDL201] Warning - Local variable 'global_transform_val' is declared but never used
-   117:2   [GD4002] Warning - Method '_physics_process' not found on inner class 'InheritanceTest'
    138:5   [GDL201] Warning - Local variable 'is_pressed' is declared but never used
    139:5   [GDL201] Warning - Local variable 'strength' is declared but never used
    143:5   [GDL203] Info - Function '_on_ready' only contains 'pass'

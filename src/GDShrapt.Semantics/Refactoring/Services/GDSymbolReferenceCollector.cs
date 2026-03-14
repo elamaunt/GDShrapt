@@ -73,12 +73,8 @@ public class GDSymbolReferenceCollector
         if (string.IsNullOrEmpty(symbolName))
             return new GDAllSymbolReferences(Empty(symbolName), Array.Empty<GDSymbolReferences>());
 
-        // If filtering by file, use standard single-hierarchy collection
-        if (!string.IsNullOrEmpty(filterFilePath))
-        {
-            var refs = CollectReferences(symbolName, filterFilePath);
-            return new GDAllSymbolReferences(refs, Array.Empty<GDSymbolReferences>());
-        }
+        if (filterFilePath != null)
+            filterFilePath = filterFilePath.Replace('\\', '/');
 
         // Collect all scripts where symbolName is defined as a class member
         var definitions = new List<(GDScriptFile Script, GDSymbolInfo Symbol)>();
@@ -107,9 +103,11 @@ public class GDSymbolReferenceCollector
         // No class member definitions — use local or single collection
         if (definitions.Count == 0)
         {
-            var refs = localOnlySymbol != null
-                ? CollectReferences(localOnlySymbol, localOnlyScript)
-                : Empty(symbolName);
+            var refs = !string.IsNullOrEmpty(filterFilePath)
+                ? CollectReferences(symbolName, filterFilePath)
+                : (localOnlySymbol != null
+                    ? CollectReferences(localOnlySymbol, localOnlyScript)
+                    : Empty(symbolName));
             return new GDAllSymbolReferences(refs, Array.Empty<GDSymbolReferences>());
         }
 
@@ -118,11 +116,13 @@ public class GDSymbolReferenceCollector
 
         if (hierarchyRoots.Count == 1)
         {
-            var singleRefs = CollectReferences(hierarchyRoots[0].Symbol, hierarchyRoots[0].Script);
+            var singleRefs = !string.IsNullOrEmpty(filterFilePath)
+                ? CollectReferences(symbolName, filterFilePath)
+                : CollectReferences(hierarchyRoots[0].Symbol, hierarchyRoots[0].Script);
             return new GDAllSymbolReferences(singleRefs, Array.Empty<GDSymbolReferences>());
         }
 
-        // Build per-hierarchy file sets to exclude cross-contamination
+        // Multiple hierarchies — build per-hierarchy file sets to exclude cross-contamination
         var hierarchyFiles = new List<HashSet<string>>();
         for (int i = 0; i < hierarchyRoots.Count; i++)
         {
@@ -130,7 +130,6 @@ public class GDSymbolReferenceCollector
             var files = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (rootScript.FullPath != null)
                 files.Add(rootScript.FullPath);
-            // Also include scripts that inherit from this root
             if (_projectModel?.TypeSystem != null && rootScript.TypeName != null)
             {
                 foreach (var script in _project.ScriptFiles)
@@ -143,22 +142,100 @@ public class GDSymbolReferenceCollector
             hierarchyFiles.Add(files);
         }
 
-        // Pick primary hierarchy: the one with the most files (most derived classes)
+        // Pick primary hierarchy: by filterFilePath if provided, else by most files
         int primaryIndex = 0;
-        int maxFiles = hierarchyFiles[0].Count;
-        for (int i = 1; i < hierarchyRoots.Count; i++)
+        if (!string.IsNullOrEmpty(filterFilePath))
         {
-            if (hierarchyFiles[i].Count > maxFiles)
+            for (int i = 0; i < hierarchyRoots.Count; i++)
             {
-                maxFiles = hierarchyFiles[i].Count;
-                primaryIndex = i;
+                if (hierarchyFiles[i].Contains(filterFilePath))
+                {
+                    primaryIndex = i;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            int maxFiles = hierarchyFiles[0].Count;
+            for (int i = 1; i < hierarchyRoots.Count; i++)
+            {
+                if (hierarchyFiles[i].Count > maxFiles)
+                {
+                    maxFiles = hierarchyFiles[i].Count;
+                    primaryIndex = i;
+                }
             }
         }
 
-        var primary = hierarchyRoots[primaryIndex];
-        var primaryAllRefs = CollectReferences(primary.Symbol, primary.Script);
+        // Collect refs for all hierarchies
+        var allHierarchyFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var hf in hierarchyFiles)
+            foreach (var f in hf)
+                allHierarchyFiles.Add(f);
 
-        // Filter primary: exclude references from unrelated hierarchy files
+        var perHierarchyRefs = new List<GDSymbolReferences>();
+        var perHierarchyExternalFiles = new List<HashSet<string>>();
+        for (int i = 0; i < hierarchyRoots.Count; i++)
+        {
+            var root = hierarchyRoots[i];
+            var refs = CollectReferences(root.Symbol, root.Script);
+            perHierarchyRefs.Add(refs);
+
+            var externalFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var r in refs.References)
+            {
+                if (r.FilePath != null && !allHierarchyFiles.Contains(r.FilePath))
+                    externalFiles.Add(r.FilePath);
+            }
+            perHierarchyExternalFiles.Add(externalFiles);
+        }
+
+        // Bridge detection: a file outside all hierarchies that appears in refs
+        // for 2+ different hierarchies is a bridge (duck-typed call on untyped variable)
+        bool hasBridge = false;
+        for (int i = 0; i < perHierarchyExternalFiles.Count && !hasBridge; i++)
+        {
+            foreach (var file in perHierarchyExternalFiles[i])
+            {
+                for (int j = i + 1; j < perHierarchyExternalFiles.Count; j++)
+                {
+                    if (perHierarchyExternalFiles[j].Contains(file))
+                    {
+                        hasBridge = true;
+                        break;
+                    }
+                }
+                if (hasBridge) break;
+            }
+        }
+
+        if (hasBridge)
+        {
+            // Bridge detected: merge all hierarchy refs into single Primary
+            var seen = new HashSet<(string?, int, int)>();
+            var mergedRefs = new List<GDSymbolReference>();
+            var mergedWarnings = new List<GDRenameWarning>();
+            foreach (var refs in perHierarchyRefs)
+            {
+                foreach (var r in refs.References)
+                    if (seen.Add((r.FilePath, r.Line, r.Column)))
+                        mergedRefs.Add(r);
+                mergedWarnings.AddRange(refs.StringWarnings);
+            }
+            int primaryRefCount = perHierarchyRefs[primaryIndex].References.Count;
+            var merged = new GDSymbolReferences(
+                perHierarchyRefs[primaryIndex].Symbol,
+                perHierarchyRefs[primaryIndex].DeclaringScript,
+                mergedRefs, mergedWarnings);
+            return new GDAllSymbolReferences(merged, Array.Empty<GDSymbolReferences>(),
+                isBridgeConnected: true, primaryHierarchyRefCount: primaryRefCount);
+        }
+
+        // No bridge: filter per hierarchy (existing logic)
+        var primary = hierarchyRoots[primaryIndex];
+        var primaryAllRefs = perHierarchyRefs[primaryIndex];
+
         var unrelatedFileSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < hierarchyRoots.Count; i++)
         {
@@ -172,18 +249,16 @@ public class GDSymbolReferenceCollector
             .ToList();
         var primaryRefs = new GDSymbolReferences(primaryAllRefs.Symbol, primaryAllRefs.DeclaringScript, filteredPrimaryRefs, primaryAllRefs.StringWarnings);
 
-        // Collect unrelated hierarchies with filtering
         var unrelatedList = new List<GDSymbolReferences>();
         for (int i = 0; i < hierarchyRoots.Count; i++)
         {
             if (i == primaryIndex) continue;
-            var root = hierarchyRoots[i];
-            var allRefs = CollectReferences(root.Symbol, root.Script);
+            var myRefs = perHierarchyRefs[i];
             var myFiles = hierarchyFiles[i];
-            var filtered = allRefs.References
+            var filtered = myRefs.References
                 .Where(r => r.FilePath == null || myFiles.Contains(r.FilePath))
                 .ToList();
-            unrelatedList.Add(new GDSymbolReferences(allRefs.Symbol, allRefs.DeclaringScript, filtered, allRefs.StringWarnings));
+            unrelatedList.Add(new GDSymbolReferences(myRefs.Symbol, myRefs.DeclaringScript, filtered, myRefs.StringWarnings));
         }
 
         return new GDAllSymbolReferences(primaryRefs, unrelatedList);
@@ -604,7 +679,11 @@ public class GDSymbolReferenceCollector
             var connLine = conn.IsSceneConnection ? conn.Line - 1 : conn.Line;
             var connCol = conn.Column;
 
-            if (!seen.Add((conn.SourceFilePath, connLine, connCol)))
+            // Use callback identifier position when available (for accurate highlight)
+            var refLine = conn.CallbackLine >= 0 ? conn.CallbackLine : connLine;
+            var refCol = conn.CallbackColumn >= 0 ? conn.CallbackColumn : connCol;
+
+            if (!seen.Add((conn.SourceFilePath, refLine, refCol)))
                 continue;
 
             // Try to find the corresponding script file.
@@ -617,7 +696,7 @@ public class GDSymbolReferenceCollector
             // Remove plain read reference on the same line — signal connection replaces it
             refs.RemoveAll(r =>
                 r.Script == script &&
-                r.Line == connLine &&
+                r.Line == refLine &&
                 r.Kind != GDSymbolReferenceKind.Declaration &&
                 r.Kind != GDSymbolReferenceKind.Override &&
                 r.Kind != GDSymbolReferenceKind.SuperCall &&
@@ -625,7 +704,7 @@ public class GDSymbolReferenceCollector
 
             refs.Add(new GDSymbolReference(
                 script, null, null,
-                connLine, connCol,
+                refLine, refCol,
                 conn.Confidence,
                 null,
                 conn.IsSceneConnection

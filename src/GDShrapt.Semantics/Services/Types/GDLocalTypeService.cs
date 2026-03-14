@@ -73,7 +73,8 @@ internal class GDLocalTypeService
             return false;
 
         var symbols = _findSymbols(typeName);
-        return symbols.Any(s => s.Kind == GDSymbolKind.Class);
+        return symbols.Any(s => s.Kind == GDSymbolKind.Class
+            && s.DeclarationNode is GDInnerClassDeclaration);
     }
 
     /// <summary>

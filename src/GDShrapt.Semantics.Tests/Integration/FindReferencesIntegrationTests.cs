@@ -797,4 +797,213 @@ func process():
     }
 
     #endregion
+
+    #region Cross-Hierarchy Separation
+
+    [TestMethod]
+    public void CollectAllReferences_TwoHierarchies_SeparatesPrimary()
+    {
+        var tempPath = CreateTempProject(
+            ("base_a.gd", "class_name BaseA\nextends Node2D\n\nfunc execute() -> void:\n\tpass\n"),
+            ("child_a.gd", "extends BaseA\n\nfunc execute() -> void:\n\tsuper.execute()\n"),
+            ("base_b.gd", "class_name BaseB\nextends Resource\n\nfunc execute() -> void:\n\tpass\n"),
+            ("child_b.gd", "extends BaseB\n\nfunc execute() -> void:\n\tsuper.execute()\n"));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var collector = new GDSymbolReferenceCollector(project, projectModel);
+
+            var childA = project.ScriptFiles.First(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("child_a.gd"));
+            var allRefs = collector.CollectAllReferences("execute", childA.FullPath);
+
+            Assert.IsNotNull(allRefs.Primary, "primary should not be null");
+
+            // Primary should be BaseA hierarchy (since child_a.gd is in it)
+            var crossHierarchyRefs = allRefs.Primary.References
+                .Where(r => r.FilePath != null &&
+                    (r.FilePath.Replace('\\', '/').EndsWith("base_b.gd") ||
+                     r.FilePath.Replace('\\', '/').EndsWith("child_b.gd")))
+                .ToList();
+            Assert.AreEqual(0, crossHierarchyRefs.Count,
+                "primary refs should not include BaseB hierarchy files");
+
+            // Unrelated should contain BaseB hierarchy
+            Assert.IsTrue(allRefs.UnrelatedSymbols.Count > 0,
+                "BaseB hierarchy should be in unrelated");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void CollectAllReferences_SingleHierarchy_NoUnrelated()
+    {
+        var tempPath = CreateTempProject(
+            ("entity.gd", "class_name Entity\nextends Node2D\n\nfunc attack() -> void:\n\tpass\n"),
+            ("player.gd", "extends Entity\n\nfunc attack() -> void:\n\tsuper.attack()\n"));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var collector = new GDSymbolReferenceCollector(project, projectModel);
+
+            var player = project.ScriptFiles.First(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("player.gd"));
+            var allRefs = collector.CollectAllReferences("attack", player.FullPath);
+
+            Assert.IsNotNull(allRefs.Primary, "primary should not be null");
+            Assert.AreEqual(0, allRefs.UnrelatedSymbols.Count,
+                "single hierarchy has no unrelated");
+            Assert.IsTrue(allRefs.Primary.References.Count >= 2,
+                $"should have declaration + override + super call refs, got {allRefs.Primary.References.Count}");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
+
+    #region Bridge Detection
+
+    [TestMethod]
+    public void CollectAllReferences_BridgeConnected_MergesHierarchies()
+    {
+        var tempPath = CreateTempProject(
+            ("base_a.gd", "class_name BaseA\nextends Node2D\n\nfunc execute() -> void:\n\tpass\n"),
+            ("child_a.gd", "extends BaseA\n\nfunc execute() -> void:\n\tsuper.execute()\n"),
+            ("base_b.gd", "class_name BaseB\nextends Resource\n\nfunc execute() -> void:\n\tpass\n"),
+            ("child_b.gd", "extends BaseB\n\nfunc execute() -> void:\n\tsuper.execute()\n"),
+            ("bridge.gd", "extends Node\n\nvar obj\n\nfunc run():\n\tobj.execute()\n"));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var collector = new GDSymbolReferenceCollector(project, projectModel);
+
+            var childA = project.ScriptFiles.First(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("child_a.gd"));
+            var allRefs = collector.CollectAllReferences("execute", childA.FullPath);
+
+            Assert.IsTrue(allRefs.IsBridgeConnected,
+                "should detect bridge connection via untyped call in bridge.gd");
+            Assert.AreEqual(0, allRefs.UnrelatedSymbols.Count,
+                "bridge-connected hierarchies should be merged, no unrelated");
+            Assert.IsTrue(allRefs.PrimaryHierarchyRefCount > 0,
+                "primary hierarchy ref count should be tracked");
+
+            // Merged refs should include files from both hierarchies
+            var refFiles = allRefs.Primary.References
+                .Where(r => r.FilePath != null)
+                .Select(r => System.IO.Path.GetFileName(r.FilePath!))
+                .Distinct()
+                .ToList();
+            Assert.IsTrue(refFiles.Any(f => f == "base_a.gd" || f == "child_a.gd"),
+                "merged refs should include BaseA hierarchy");
+            Assert.IsTrue(refFiles.Any(f => f == "base_b.gd" || f == "child_b.gd"),
+                "merged refs should include BaseB hierarchy");
+            Assert.IsTrue(refFiles.Any(f => f == "bridge.gd"),
+                "merged refs should include bridge file");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void CollectAllReferences_NoBridge_SeparatesHierarchies()
+    {
+        var tempPath = CreateTempProject(
+            ("base_a.gd", "class_name BaseA\nextends Node2D\n\nfunc execute() -> void:\n\tpass\n"),
+            ("child_a.gd", "extends BaseA\n\nfunc execute() -> void:\n\tsuper.execute()\n"),
+            ("base_b.gd", "class_name BaseB\nextends Resource\n\nfunc execute() -> void:\n\tpass\n"),
+            ("child_b.gd", "extends BaseB\n\nfunc execute() -> void:\n\tsuper.execute()\n"));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var collector = new GDSymbolReferenceCollector(project, projectModel);
+
+            var childA = project.ScriptFiles.First(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("child_a.gd"));
+            var allRefs = collector.CollectAllReferences("execute", childA.FullPath);
+
+            Assert.IsFalse(allRefs.IsBridgeConnected,
+                "no bridge file → should not be bridge-connected");
+            Assert.IsTrue(allRefs.UnrelatedSymbols.Count > 0,
+                "BaseB hierarchy should be in unrelated");
+
+            var primaryFiles = allRefs.Primary.References
+                .Where(r => r.FilePath != null)
+                .Select(r => System.IO.Path.GetFileName(r.FilePath!))
+                .Distinct()
+                .ToList();
+            Assert.IsFalse(primaryFiles.Any(f => f == "base_b.gd" || f == "child_b.gd"),
+                "primary should not include BaseB hierarchy");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
+
+    #region Cross-File Typed Member Access References
+
+    [TestMethod]
+    public void CollectAllReferences_TypedMemberAccess_FindsCrossFileReference()
+    {
+        var tempPath = CreateTempProject(
+            ("inventory.gd", "class_name Inventory\nextends Resource\n\nfunc add(item_type: String, amount: int) -> void:\n\tpass\n"),
+            ("caller.gd", "extends Node\n\nfunc _ready():\n\tvar inv: Inventory = Inventory.new()\n\tinv.add(\"x\", 1)\n"));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var collector = new GDSymbolReferenceCollector(project, projectModel);
+
+            var inventoryScript = project.ScriptFiles.First(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("inventory.gd"));
+            var allRefs = collector.CollectAllReferences("add", inventoryScript.FullPath);
+
+            Assert.IsNotNull(allRefs.Primary, "primary should not be null");
+
+            var crossFileRefs = allRefs.Primary.References
+                .Where(r => r.FilePath != null && r.FilePath.Replace('\\', '/').EndsWith("caller.gd"))
+                .ToList();
+            Assert.IsTrue(crossFileRefs.Count > 0,
+                "caller.gd should have a reference to Inventory.add via typed variable");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    [TestMethod]
+    public void CollectAllReferences_InferredTypeMemberAccess_FindsCrossFileReference()
+    {
+        var tempPath = CreateTempProject(
+            ("inventory.gd", "class_name Inventory\nextends Resource\n\nstatic func restore() -> Inventory:\n\treturn null\n\nfunc add(item_type: String, amount: int) -> void:\n\tpass\n"),
+            ("caller.gd", "extends Node\n\nfunc _ready():\n\tvar inv: = Inventory.restore()\n\tinv.add(\"x\", 1)\n"));
+        try
+        {
+            using var project = GDProjectLoader.LoadProject(tempPath);
+            project.BuildCallSiteRegistry();
+            var projectModel = new GDProjectSemanticModel(project);
+            var collector = new GDSymbolReferenceCollector(project, projectModel);
+
+            var inventoryScript = project.ScriptFiles.First(f =>
+                f.FullPath != null && f.FullPath.Replace('\\', '/').EndsWith("inventory.gd"));
+            var allRefs = collector.CollectAllReferences("add", inventoryScript.FullPath);
+
+            Assert.IsNotNull(allRefs.Primary, "primary should not be null");
+
+            var crossFileRefs = allRefs.Primary.References
+                .Where(r => r.FilePath != null && r.FilePath.Replace('\\', '/').EndsWith("caller.gd"))
+                .ToList();
+            Assert.IsTrue(crossFileRefs.Count > 0,
+                "caller.gd should have a reference to Inventory.add via inferred type from static method return");
+        }
+        finally { DeleteTempProject(tempPath); }
+    }
+
+    #endregion
 }

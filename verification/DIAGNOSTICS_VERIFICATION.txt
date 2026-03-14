@@ -1,62 +1,14 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-11 18:48:07
+Generated: 2026-03-14 05:08:36
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           894
-Verified (OK):   884
-Unverified:      10
+Total:           893
+Verified (OK):   893
+Unverified:      0
 False Positives: 0
 Skipped:         0
-Orphaned Markers:1
-
-================================================================================
-UNVERIFIED DIAGNOSTICS
-================================================================================
-
---- test_scripts/attribute_doc_test.gd (3 diagnostics) ---
-  6:19 [GD7022] Type annotation 'float' is redundant (obvious from literal)
-    Add: # 6:19-GD7022-OK
-  9:20 [GD7022] Type annotation 'int' is redundant (obvious from literal)
-    Add: # 9:20-GD7022-OK
-  14:24 [GD7022] Type annotation 'int' is redundant (obvious from literal)
-    Add: # 14:24-GD7022-OK
-
---- test_scripts/autoload_usage.gd (2 diagnostics) ---
-  5:5 [GDL201] Local variable 'level' is declared but never used
-    Add: # 5:5-GDL201-OK
-  7:5 [GDL201] Local variable 'count' is declared but never used
-    Add: # 7:5-GDL201-OK
-
---- test_scripts/extended_class.gd (1 diagnostics) ---
-  56:12 [GD7022] Type annotation 'int' is redundant (obvious from literal)
-    Add: # 56:12-GD7022-OK
-
---- test_scripts/inheritance_test.gd (1 diagnostics) ---
-  117:2 [GD4002] Method '_physics_process' not found on inner class 'InheritanceTest'
-    Add: # 117:2-GD4002-OK
-
---- test_scripts/semantic_tokens_test.gd (3 diagnostics) ---
-  6:23 [GD7022] Type annotation 'bool' is redundant (obvious from literal)
-    Add: # 6:23-GD7022-OK
-  10:17 [GD7022] Type annotation 'int' is redundant (obvious from literal)
-    Add: # 10:17-GD7022-OK
-  14:5 [GDL201] Local variable 'connected_area' is declared but never used
-    Add: # 14:5-GDL201-OK
-
-================================================================================
-ORPHANED MARKERS (MARKERS WITHOUT DIAGNOSTICS)
-================================================================================
-
-These markers exist in GDScript files but no corresponding diagnostic was produced.
-This may indicate:
-  - A bug was fixed and the diagnostic is no longer emitted
-  - Code was changed and the marker is outdated
-  - The marker coordinates are incorrect
-
---- extended_class.gd (1 orphaned) ---
-  # 52:12-GD7022-OK <- No diagnostic at this location
-    Action: Remove marker or investigate why diagnostic disappeared
+Orphaned Markers:0
 

@@ -89,6 +89,7 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
             // Try declared type first, then infer from initializer
             var typeName = variable.TypeName;
+            bool isUnionVar = false;
             var declaredSemType = !string.IsNullOrEmpty(typeName)
                 ? GDSemanticType.FromRuntimeTypeName(typeName) : null;
 
@@ -99,6 +100,8 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     var typeInfo = semanticModel.TypeSystem.GetType(varDecl.Initializer);
                     if (!typeInfo.IsVariant)
                     {
+                        isUnionVar = typeInfo is GDUnionSemanticType;
+
                         // Enrich plain container types with usage-based generic parameters
                         if (typeInfo.IsContainer)
                         {
@@ -156,8 +159,10 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                 Kind = GDInlayHintKind.Type,
                 PaddingLeft = false,
                 PaddingRight = true,
-                Tooltip = $"Inferred type: {typeName}",
-                TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
+                Tooltip = isUnionVar
+                    ? $"Union type: {typeName} (not directly annotatable)"
+                    : $"Inferred type: {typeName}",
+                TextEdits = isUnionVar ? null : CreateInsertEdit(position.Value.Line, position.Value.Column, label)
             });
         }
     }
@@ -196,10 +201,12 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
                 // Try to infer type from initializer via SemanticModel
                 string? typeName = null;
+                bool isUnionLocal = false;
                 if (varStmt.Initializer != null)
                 {
                     var typeInfo = semanticModel.TypeSystem.GetType(varStmt.Initializer);
                     typeName = typeInfo.IsVariant ? null : typeInfo.DisplayName;
+                    isUnionLocal = typeInfo is GDUnionSemanticType;
                 }
                 if (string.IsNullOrEmpty(typeName))
                     continue;
@@ -230,8 +237,10 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     Kind = GDInlayHintKind.Type,
                     PaddingLeft = false,
                     PaddingRight = true,
-                    Tooltip = $"Inferred type: {typeName}",
-                    TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
+                    Tooltip = isUnionLocal
+                        ? $"Union type: {typeName} (not directly annotatable)"
+                        : $"Inferred type: {typeName}",
+                    TextEdits = isUnionLocal ? null : CreateInsertEdit(position.Value.Line, position.Value.Column, label)
                 });
             }
 
@@ -346,6 +355,7 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     continue;
 
                 var label = $": {typeName}";
+                var isUnion = inferred.IsUnion;
                 hints.Add(new GDInlayHint
                 {
                     Line = position.Value.Line,
@@ -354,8 +364,10 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                     Kind = GDInlayHintKind.Type,
                     PaddingLeft = false,
                     PaddingRight = true,
-                    Tooltip = $"Inferred type: {typeName} ({inferred.Reason ?? "from usage"})",
-                    TextEdits = CreateInsertEdit(position.Value.Line, position.Value.Column, label)
+                    Tooltip = isUnion
+                        ? $"Union type: {typeName} (not directly annotatable)"
+                        : $"Inferred type: {typeName} ({inferred.Reason ?? "from usage"})",
+                    TextEdits = isUnion ? null : CreateInsertEdit(position.Value.Line, position.Value.Column, label)
                 });
             }
         }

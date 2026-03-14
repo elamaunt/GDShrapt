@@ -268,6 +268,10 @@ internal class GDExpressionTypeService
                 if (symbol?.Kind == GDSymbolKind.Enum)
                     return symbol.Name;
 
+                // Class name identifier represents the class type itself
+                if (symbol?.Kind == GDSymbolKind.Class)
+                    return symbol.Name;
+
                 // For class members with explicit type annotation, return the declared type
                 if (symbol != null && symbol.Kind != GDSymbolKind.Method
                     && !string.IsNullOrEmpty(symbol.TypeName)
@@ -455,6 +459,13 @@ internal class GDExpressionTypeService
                 if (symbol?.Kind == GDSymbolKind.Method)
                 {
                     return "Callable";
+                }
+
+                // Class name identifier represents the class type itself,
+                // not an instance of the base class (TypeName stores extends type)
+                if (symbol?.Kind == GDSymbolKind.Class)
+                {
+                    return symbol.Name;
                 }
 
                 var unionType = _unionTypeService.GetUnionType(varName, symbol, null);

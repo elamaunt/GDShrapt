@@ -69,6 +69,16 @@ public class GDSignalConnectionEntry
     public GDReferenceConfidence Confidence { get; }
 
     /// <summary>
+    /// Line of the callback identifier within the connect() call arguments (-1 if unavailable).
+    /// </summary>
+    public int CallbackLine { get; }
+
+    /// <summary>
+    /// Column of the callback identifier within the connect() call arguments (-1 if unavailable).
+    /// </summary>
+    public int CallbackColumn { get; }
+
+    /// <summary>
     /// Creates a new signal connection entry.
     /// </summary>
     public GDSignalConnectionEntry(
@@ -83,7 +93,9 @@ public class GDSignalConnectionEntry
         bool isDynamicSignal = false,
         bool isDynamicCallback = false,
         bool isSceneConnection = false,
-        GDReferenceConfidence confidence = GDReferenceConfidence.Strict)
+        GDReferenceConfidence confidence = GDReferenceConfidence.Strict,
+        int callbackLine = -1,
+        int callbackColumn = -1)
     {
         SourceFilePath = sourceFilePath;
         SourceMethodName = sourceMethodName;
@@ -97,6 +109,8 @@ public class GDSignalConnectionEntry
         IsDynamicCallback = isDynamicCallback;
         IsSceneConnection = isSceneConnection;
         Confidence = confidence;
+        CallbackLine = callbackLine;
+        CallbackColumn = callbackColumn;
     }
 
     /// <summary>

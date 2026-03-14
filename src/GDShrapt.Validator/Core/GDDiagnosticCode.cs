@@ -6,7 +6,7 @@ namespace GDShrapt.Reader
     /// - GD1xxx: Syntax errors
     /// - GD2xxx: Scope errors
     /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018, annotation analysis GD3022-3025)
-    /// - GD4xxx: Call errors (including signal types GD4009-4010, scene nodes GD4011-4012)
+    /// - GD4xxx: Call errors (including signal types GD4009-4010, scene nodes GD4011-4013)
     /// - GD5xxx: Control flow errors
     /// - GD6xxx: Indentation errors
     /// - GD7xxx: Duck typing errors (including scene node lifecycle GD7017-7018, type annotation hints GD7019-7022)
@@ -277,6 +277,11 @@ namespace GDShrapt.Reader
         /// %Name not found as unique node in any scene using this script.
         /// </summary>
         InvalidUniqueNode = 4012,
+
+        /// <summary>
+        /// Signal connection in scene targets a method that does not exist in the target script.
+        /// </summary>
+        InvalidSignalConnectionMethod = 4013,
 
         // Control flow errors (5xxx)
         /// <summary>

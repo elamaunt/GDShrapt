@@ -123,4 +123,115 @@ func _ready():
         hover.Should().NotBeNull();
         hover!.Content.Should().Contain("health");
     }
+
+    [TestMethod]
+    public void Hover_MemberAccess_KnownCallerType_ShowsMethodInfo()
+    {
+        SetupProject(
+            ("inventory.gd", @"class_name Inventory
+extends Resource
+
+func add(item_type: String, amount: int) -> void:
+    pass
+"),
+            ("main.gd", @"extends Node
+
+func _ready():
+    var inv: Inventory = Inventory.new()
+    inv.add(""sword"", 1)
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "main.gd");
+
+        // Hover on "add" in "inv.add" — line 5, column at "add"
+        // "    inv.add" → "add" starts at column 9 (1-based)
+        var hover = _handler!.GetHover(filePath, 5, 9);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("func add", "should show method signature, not 'var add'");
+        hover!.Content.Should().NotContain("Unknown", "type should be resolved");
+    }
+
+    [TestMethod]
+    public void Hover_MemberAccess_BuiltinMember_HasHoverRange()
+    {
+        SetupProject(("test.gd", @"extends Node
+
+func _ready():
+    var n: Node = Node.new()
+    n.get_name()
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+
+        // Hover on "get_name" in "n.get_name()" — line 5
+        // "    n.get_name()" → "get_name" starts at column 7 (1-based)
+        var hover = _handler!.GetHover(filePath, 5, 7);
+
+        hover.Should().NotBeNull();
+        hover!.StartLine.Should().NotBeNull("built-in member hover should have a range");
+        hover!.EndLine.Should().NotBeNull("built-in member hover should have a range");
+        hover!.StartColumn.Should().NotBeNull("built-in member hover should have a range");
+        hover!.EndColumn.Should().NotBeNull("built-in member hover should have a range");
+    }
+
+    [TestMethod]
+    public void Hover_MemberAccess_InferredType_ShowsCorrectMember()
+    {
+        SetupProject(
+            ("inventory.gd", @"class_name Inventory
+extends Resource
+
+static func restore() -> Inventory:
+    return null
+
+func add(item_type: String, amount: int) -> void:
+    pass
+"),
+            ("user.gd", @"extends Node
+
+func _ready():
+    var inv: = Inventory.restore()
+    inv.add(""x"", 1)
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "user.gd");
+
+        // Hover on "add" in "inv.add" — line 5
+        // "    inv.add" → "add" starts at column 9 (1-based)
+        var hover = _handler!.GetHover(filePath, 5, 9);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("func add", "inferred type should resolve member correctly");
+    }
+
+    [TestMethod]
+    public void Hover_ClassName_New_InSameFile_ShowsChildType_NotBaseClass()
+    {
+        SetupProject(
+            ("inventory.gd", @"class_name Inventory
+extends Resource
+
+func save() -> void:
+    pass
+
+static func restore() -> Inventory:
+    var new_inventory: = Inventory.new()
+    new_inventory.save()
+    return new_inventory
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "inventory.gd");
+
+        // Hover on "new_inventory" in "new_inventory.save()" (usage site, not declaration)
+        // Line 9 (1-based): "    new_inventory.save()"
+        // "new_inventory" starts at column 5 (after "    ")
+        var hover = _handler!.GetHover(filePath, 9, 5);
+
+        hover.Should().NotBeNull("hover on new_inventory should return content");
+        hover!.Content.Should().Contain("Inventory",
+            "inferred type should be Inventory, not Resource");
+        hover!.Content.Should().NotContain("Unknown",
+            "type should be resolved, not Unknown");
+    }
 }

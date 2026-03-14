@@ -56,6 +56,11 @@ public class GDCodeLensReferencesHandler
             var atIdx = symbolName.IndexOf('@', 7);
             lookupName = atIdx > 7 ? symbolName.Substring(7, atIdx - 7) : symbolName.Substring(7);
         }
+        else if (symbolName.Contains('/'))
+        {
+            // Node path (e.g. "NpcA/InteractionPopup") — not a symbol name, no fallback
+            return Task.FromResult<GDLspLocation[]?>(null);
+        }
 
         // Fallback: cache miss, compute fresh
         var groups = _findRefsHandler.FindReferences(lookupName, filePath);
