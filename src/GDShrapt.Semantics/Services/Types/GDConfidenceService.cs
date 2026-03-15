@@ -29,9 +29,15 @@ internal class GDConfidenceService
     /// </summary>
     public delegate string? GetRootVariableNameDelegate(GDExpression? expression);
 
+    /// <summary>
+    /// Delegate for getting flow-sensitive variable type at a location.
+    /// </summary>
+    public delegate GDFlowVariableType? GetVariableTypeAtDelegate(string variableName, GDNode atLocation);
+
     private readonly GetExpressionTypeDelegate? _getExpressionType;
     private readonly FindSymbolDelegate? _findSymbol;
     private readonly GetRootVariableNameDelegate? _getRootVariableName;
+    private readonly GetVariableTypeAtDelegate? _getVariableTypeAt;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GDConfidenceService"/> class.
@@ -43,7 +49,8 @@ internal class GDConfidenceService
         GDContainerTypeService containerTypeService,
         GetExpressionTypeDelegate? getExpressionType = null,
         FindSymbolDelegate? findSymbol = null,
-        GetRootVariableNameDelegate? getRootVariableName = null)
+        GetRootVariableNameDelegate? getRootVariableName = null,
+        GetVariableTypeAtDelegate? getVariableTypeAt = null)
     {
         _runtimeProvider = runtimeProvider;
         _duckTypeService = duckTypeService ?? new GDDuckTypeService();
@@ -52,6 +59,7 @@ internal class GDConfidenceService
         _getExpressionType = getExpressionType;
         _findSymbol = findSymbol;
         _getRootVariableName = getRootVariableName;
+        _getVariableTypeAt = getVariableTypeAt;
     }
 
     /// <summary>
@@ -80,22 +88,23 @@ internal class GDConfidenceService
         var varName = _getRootVariableName?.Invoke(memberAccess.CallerExpression);
         if (!string.IsNullOrEmpty(varName))
         {
-            var narrowed = _duckTypeService.GetNarrowedType(varName, memberAccess);
-            if (!string.IsNullOrEmpty(narrowed))
-                return GDReferenceConfidence.Strict;
-
-            // Check narrowing context for duck type constraints
-            var narrowingContext = _duckTypeService.FindNarrowingContextForNode(memberAccess);
-            if (narrowingContext != null)
+            var flowType = _getVariableTypeAt?.Invoke(varName, memberAccess);
+            if (flowType != null)
             {
-                var narrowedInfo = narrowingContext.GetNarrowedType(varName);
-                if (narrowedInfo != null)
+                var effective = flowType.EffectiveType;
+                if (effective != null && !effective.IsVariant)
+                {
+                    if (flowType.IsNarrowed || flowType.CurrentType.IsSingleType)
+                        return GDReferenceConfidence.Strict;
+                }
+
+                if (flowType.DuckType != null && flowType.DuckType.HasRequirements)
                 {
                     var memberName = memberAccess.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(memberName) && narrowedInfo.RequiredMethods.ContainsKey(memberName))
+                    if (!string.IsNullOrEmpty(memberName) && flowType.DuckType.RequiredMethods.ContainsKey(memberName))
                         return GDReferenceConfidence.Potential;
 
-                    if (narrowedInfo.ExcludedTypes.Contains(GDNullSemanticType.Instance))
+                    if (flowType.IsGuaranteedNonNull)
                         return GDReferenceConfidence.Potential;
                 }
             }
@@ -303,9 +312,9 @@ internal class GDConfidenceService
 
             if (!string.IsNullOrEmpty(varName))
             {
-                var narrowed = _duckTypeService.GetNarrowedType(varName, memberOp);
-                if (narrowed != null)
-                    return $"Variable '{varName}' narrowed to '{narrowed}' by control flow";
+                var flowType = _getVariableTypeAt?.Invoke(varName, memberOp);
+                if (flowType != null && flowType.IsNarrowed)
+                    return $"Variable '{varName}' narrowed to '{flowType.EffectiveType?.DisplayName}' by control flow";
 
                 var duckType = _duckTypeService.GetDuckType(varName);
                 if (duckType != null)
@@ -334,15 +343,5 @@ internal class GDConfidenceService
         return "Symbol in scope";
     }
 
-    /// <summary>
-    /// Checks if a type name represents a concrete (non-Variant, non-Unknown) type.
-    /// </summary>
-    private static bool IsConcreteType(string? typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return false;
-
-        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
-        return !semType.IsVariant && !semType.IsType("Unknown");
-    }
+    private static bool IsConcreteType(string? typeName) => GDWellKnownTypes.IsConcreteType(typeName);
 }

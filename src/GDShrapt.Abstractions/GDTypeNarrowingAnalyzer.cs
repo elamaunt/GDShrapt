@@ -560,6 +560,11 @@ public class GDTypeNarrowingAnalyzer
             // Mark variable as guaranteed non-null (narrowed away from null)
             context.ExcludeType(varName, GDNullSemanticType.Instance);
         }
+        else
+        {
+            // x == null (not negated) or x != null (negated): x is null in this branch
+            context.SetConcreteType(varName, GDNullSemanticType.Instance);
+        }
     }
 
     /// <summary>

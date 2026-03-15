@@ -452,20 +452,30 @@ public class GDHoverHandler : IGDHoverHandler
             return null;
 
         var ownType = script.TypeName;
-        var otherTypes = allRefs.Primary.References
+        var otherTypeEntries = allRefs.Primary.References
             .Where(r => r.Kind == GDSymbolReferenceKind.Declaration
                 && r.Script?.TypeName != null
                 && !string.Equals(r.Script.TypeName, ownType, StringComparison.Ordinal))
-            .Select(r => r.Script!.TypeName!)
-            .Distinct()
-            .OrderBy(t => t)
+            .Select(r => (TypeName: r.Script!.TypeName!, ResPath: r.Script.ResPath ?? r.FilePath))
+            .GroupBy(e => e.TypeName)
+            .Select(g => (TypeName: g.Key, ResPath: g.First().ResPath))
+            .OrderBy(e => e.TypeName)
             .ToList();
 
-        if (otherTypes.Count == 0)
+        if (otherTypeEntries.Count == 0)
             return null;
 
-        var typeList = string.Join(" | ", otherTypes.Select(t => $"`{t}`"));
-        return $"**bridge**: dynamically connected to {typeList} via untyped calls";
+        var typeList = string.Join(" | ", otherTypeEntries.Select(e => $"`{e.TypeName}`"));
+        var result = $"**bridge**: dynamically connected to {typeList} via untyped calls ({otherTypeEntries.Count} files)";
+
+        const int maxShown = 5;
+        foreach (var entry in otherTypeEntries.Take(maxShown))
+            result += $"  \n— `{entry.TypeName}` → {entry.ResPath}";
+
+        if (otherTypeEntries.Count > maxShown)
+            result += $"  \n— ... and {otherTypeEntries.Count - maxShown} more";
+
+        return result;
     }
 
     private static string? BuildOriginInfo(GDFlowVariableType flowVarType)

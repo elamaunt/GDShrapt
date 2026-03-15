@@ -74,8 +74,7 @@ internal class GDFlowAnalysisRegistry
     /// </summary>
     internal GDFlowAnalyzer GetOrCreateFlowAnalyzer(
         GDNode methodScope,
-        GDTypeInferenceEngine? typeEngine,
-        System.Func<GDExpression, string?>? expressionTypeGetter = null,
+        IGDExpressionTypeProvider? typeProvider,
         System.Func<IEnumerable<string>>? onreadyVarsGetter = null,
         string? filePath = null)
     {
@@ -84,7 +83,7 @@ internal class GDFlowAnalysisRegistry
             return existing;
         }
 
-        var analyzer = new GDFlowAnalyzer(typeEngine, expressionTypeGetter, onreadyVarsGetter);
+        var analyzer = new GDFlowAnalyzer(typeProvider, onreadyVarsGetter);
         if (filePath != null)
             analyzer.SetFilePath(filePath);
         // Cache BEFORE Analyze to prevent infinite recursion

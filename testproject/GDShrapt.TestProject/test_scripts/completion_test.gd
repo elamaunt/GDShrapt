@@ -139,7 +139,7 @@ func test_typed_array_completion() -> void:
 
 	for v in vectors:
 		# 'v.' should show Vector2 methods
-		print(v.length())
+		print(v.length())  # 142:8-GD7007-SKIP
 
 
 func helper_function(param1: int, param2: String) -> bool:

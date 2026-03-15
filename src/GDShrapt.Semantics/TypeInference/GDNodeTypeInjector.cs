@@ -20,6 +20,7 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
     private readonly GDGodotTypesProvider? _godotTypesProvider;
     private readonly IGDLogger? _logger;
     private readonly GDGroupRegistry? _groupRegistry;
+    private readonly GDTresResourceProvider? _tresResourceProvider;
 
     // Scene snapshot cache: built once per scene path
     private readonly Dictionary<string, GDFlowSceneSnapshot?> _snapshotCache = new();
@@ -32,13 +33,15 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
         IGDScriptProvider? scriptProvider = null,
         GDGodotTypesProvider? godotTypesProvider = null,
         IGDLogger? logger = null,
-        GDGroupRegistry? groupRegistry = null)
+        GDGroupRegistry? groupRegistry = null,
+        GDTresResourceProvider? tresResourceProvider = null)
     {
         _sceneProvider = sceneProvider;
         _scriptProvider = scriptProvider;
         _godotTypesProvider = godotTypesProvider;
         _logger = logger;
         _groupRegistry = groupRegistry;
+        _tresResourceProvider = tresResourceProvider;
     }
 
     /// <summary>
@@ -360,6 +363,11 @@ public class GDNodeTypeInjector : IGDRuntimeTypeInjector
             var tresType = _sceneProvider?.GetResourceType(resourcePath);
             if (!string.IsNullOrEmpty(tresType))
                 return tresType;
+
+            var tresInfo = _tresResourceProvider?.GetResourceInfo(resourcePath);
+            if (!string.IsNullOrEmpty(tresInfo?.EffectiveClassName))
+                return tresInfo.EffectiveClassName;
+
             return "Resource";
         }
 

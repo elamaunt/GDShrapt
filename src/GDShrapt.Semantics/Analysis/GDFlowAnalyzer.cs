@@ -14,8 +14,8 @@ namespace GDShrapt.Semantics;
 /// </summary>
 internal class GDFlowAnalyzer : GDVisitor
 {
-    private readonly GDTypeInferenceEngine? _typeEngine;
-    private readonly Func<GDExpression, string?>? _expressionTypeProvider;
+    private readonly IGDExpressionTypeProvider? _typeProvider;
+    private readonly GDTypeInferenceEngine? _typeEngineForContainers;
     private readonly Func<IEnumerable<string>>? _onreadyVariablesProvider;
     private readonly Stack<GDFlowState> _stateStack = new();
     private readonly Stack<List<GDFlowState>> _branchStatesStack = new();
@@ -48,32 +48,34 @@ internal class GDFlowAnalyzer : GDVisitor
     // File path for origin tracking
     private string? _filePath;
 
-    public GDFlowAnalyzer(GDTypeInferenceEngine? typeEngine)
+    public GDFlowAnalyzer(IGDExpressionTypeProvider? typeProvider)
     {
-        _typeEngine = typeEngine;
+        _typeProvider = typeProvider;
+        _typeEngineForContainers = typeProvider as GDTypeInferenceEngine;
         _currentState = new GDFlowState();
     }
 
-    /// <summary>
-    /// Creates a flow analyzer with an optional expression type provider callback.
-    /// The callback can provide richer type information (e.g., from union types).
-    /// </summary>
-    public GDFlowAnalyzer(GDTypeInferenceEngine? typeEngine, Func<GDExpression, string?>? expressionTypeProvider)
-        : this(typeEngine)
+    public GDFlowAnalyzer(
+        IGDExpressionTypeProvider? typeProvider,
+        Func<IEnumerable<string>>? onreadyVariablesProvider)
+        : this(typeProvider)
     {
-        _expressionTypeProvider = expressionTypeProvider;
+        _onreadyVariablesProvider = onreadyVariablesProvider;
     }
 
-    /// <summary>
-    /// Creates a flow analyzer with expression type and onready variables providers.
-    /// </summary>
+    [System.Obsolete("Use IGDExpressionTypeProvider overload instead.")]
+    public GDFlowAnalyzer(GDTypeInferenceEngine? typeEngine)
+        : this((IGDExpressionTypeProvider?)typeEngine)
+    {
+    }
+
+    [System.Obsolete("Use IGDExpressionTypeProvider overload instead.")]
     public GDFlowAnalyzer(
         GDTypeInferenceEngine? typeEngine,
         Func<GDExpression, string?>? expressionTypeProvider,
         Func<IEnumerable<string>>? onreadyVariablesProvider)
-        : this(typeEngine, expressionTypeProvider)
+        : this((IGDExpressionTypeProvider?)typeEngine, onreadyVariablesProvider)
     {
-        _onreadyVariablesProvider = onreadyVariablesProvider;
     }
 
     /// <summary>
@@ -253,7 +255,7 @@ internal class GDFlowAnalyzer : GDVisitor
     private void CollectContainerProfiles(GDNode scope)
     {
         var scopes = new GDScopeStack();
-        var containerCollector = new GDContainerUsageCollector(scopes, _typeEngine);
+        var containerCollector = new GDContainerUsageCollector(scopes, _typeEngineForContainers);
         containerCollector.Collect(scope);
 
         foreach (var kv in containerCollector.Profiles)
@@ -694,7 +696,7 @@ internal class GDFlowAnalyzer : GDVisitor
             return;
         }
 
-        var symbol = _typeEngine?.Scopes?.Lookup(name);
+        var symbol = _typeProvider?.LookupSymbol(name);
         if (symbol != null)
         {
             var semType = !string.IsNullOrEmpty(symbol.TypeName)
@@ -729,7 +731,7 @@ internal class GDFlowAnalyzer : GDVisitor
 
     private bool IsSubclassOf(string childType, string parentType)
     {
-        var provider = _typeEngine?.RuntimeProvider;
+        var provider = _typeProvider?.RuntimeProvider;
         if (provider == null)
             return false;
 
@@ -761,17 +763,7 @@ internal class GDFlowAnalyzer : GDVisitor
         _resolvingExpressions.Add(expr);
         try
         {
-            // Try expression type provider first (string path — legacy)
-            var primaryType = _expressionTypeProvider?.Invoke(expr);
-            if (!string.IsNullOrEmpty(primaryType) && !GDSemanticType.FromRuntimeTypeName(primaryType).IsVariant)
-                return GDSemanticType.FromRuntimeTypeName(primaryType);
-
-            // Semantic type engine — direct path, preserves GDCallableSemanticType
-            var semanticType = _typeEngine?.InferSemanticType(expr);
-            if (semanticType != null && !semanticType.IsVariant)
-                return semanticType;
-
-            return primaryType != null ? GDSemanticType.FromRuntimeTypeName(primaryType) : semanticType;
+            return _typeProvider?.InferType(expr);
         }
         finally
         {
@@ -779,44 +771,9 @@ internal class GDFlowAnalyzer : GDVisitor
         }
     }
 
-    /// <summary>
-    /// Resolves type for an expression, trying the expression type provider first,
-    /// then falling back to the type engine. Avoids returning "Variant" when a more
-    /// specific type is available.
-    /// </summary>
     private string? ResolveTypeWithFallback(GDExpression? expr)
     {
-        if (expr == null)
-            return null;
-
-        // Guard against infinite recursion
-        if (_resolvingExpressions.Contains(expr))
-            return null;
-
-        if (_resolvingExpressions.Count >= MaxResolveDepth)
-            return null;
-
-        _resolvingExpressions.Add(expr);
-        try
-        {
-            // Try expression type provider first (can use union types and richer inference)
-            var primaryType = _expressionTypeProvider?.Invoke(expr);
-            if (!string.IsNullOrEmpty(primaryType) && !GDSemanticType.FromRuntimeTypeName(primaryType).IsVariant)
-                return primaryType;
-
-            // Fall back to basic type engine inference
-            var fallbackSemanticType = _typeEngine?.InferSemanticType(expr);
-            var fallbackType = fallbackSemanticType?.DisplayName;
-            if (fallbackSemanticType != null && !fallbackSemanticType.IsVariant)
-                return fallbackType;
-
-            // Return Variant as last resort if that's what we got
-            return primaryType ?? fallbackType;
-        }
-        finally
-        {
-            _resolvingExpressions.Remove(expr);
-        }
+        return ResolveSemanticType(expr)?.DisplayName;
     }
 
     #endregion
@@ -984,7 +941,7 @@ internal class GDFlowAnalyzer : GDVisitor
             }
             else
             {
-                var collectionType = _typeEngine?.InferSemanticType(forStmt.Collection)?.DisplayName;
+                var collectionType = _typeProvider?.InferType(forStmt.Collection)?.DisplayName;
                 elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
             }
 
@@ -1148,7 +1105,7 @@ internal class GDFlowAnalyzer : GDVisitor
         // Infer subject type from match statement
         string? subjectType = null;
         if (_matchSubjectStack.Count > 0 && _matchSubjectStack.Peek() != null)
-            subjectType = _typeEngine?.InferSemanticType(_matchSubjectStack.Peek()!)?.DisplayName;
+            subjectType = _typeProvider?.InferType(_matchSubjectStack.Peek()!)?.DisplayName;
 
         // Extract guard condition narrowing
         var (guardVar, guardType) = GDMatchPatternHelper.ExtractGuardNarrowing(matchCase);
@@ -1417,7 +1374,19 @@ internal class GDFlowAnalyzer : GDVisitor
     /// </summary>
     private void ApplyInOperatorNarrowing(GDDualOperatorExpression inExpr, GDFlowState state)
     {
-        // Left expression is the variable to narrow
+        // Pattern: "method_name" in obj → duck type constraint on obj
+        if (inExpr.LeftExpression is GDStringExpression strExpr &&
+            inExpr.RightExpression is GDIdentifierExpression rightIdent)
+        {
+            var memberName = strExpr.String?.Sequence;
+            var objName = rightIdent.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(memberName) && !string.IsNullOrEmpty(objName))
+            {
+                state.RequireMethod(objName, memberName);
+            }
+        }
+
+        // Pattern: x in container → narrow x to element/key type
         if (inExpr.LeftExpression is not GDIdentifierExpression leftIdent)
             return;
 
@@ -1441,7 +1410,7 @@ internal class GDFlowAnalyzer : GDVisitor
         // If variable has a known union type, compute intersection
         if (currentVarType != null && !currentVarType.CurrentType.IsEmpty)
         {
-            var intersection = currentVarType.CurrentType.IntersectWithType(GDSemanticType.FromRuntimeTypeName(elementType!), _typeEngine?.RuntimeProvider);
+            var intersection = currentVarType.CurrentType.IntersectWithType(GDSemanticType.FromRuntimeTypeName(elementType!), _typeProvider?.RuntimeProvider);
 
             if (!intersection.IsEmpty)
             {
@@ -1623,7 +1592,7 @@ internal class GDFlowAnalyzer : GDVisitor
     /// Array[int] -> int, Dictionary[String, int] -> String, String -> String
     /// </summary>
     private bool IsNumericType(string? type) =>
-        !string.IsNullOrEmpty(type) && (_typeEngine?.RuntimeProvider?.IsNumericType(type) ?? GDWellKnownTypes.IsNumericType(type));
+        !string.IsNullOrEmpty(type) && (_typeProvider?.IsNumericType(type) ?? GDWellKnownTypes.IsNumericType(type));
 
     /// <summary>
     /// Applies narrowing from has_method/has/has_signal checks.

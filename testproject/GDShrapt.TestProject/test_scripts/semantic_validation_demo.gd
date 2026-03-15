@@ -39,7 +39,7 @@ func indexer_validation_demo() -> void:  # 25:5-GDL226-OK
 
 	# Dictionary with any key (untyped) - OK
 	var dict: Dictionary = {"key": 1, 2: "value"}
-	var _d = dict["key"]
+	var _d = dict["key"]  # 42:10-GD3013-SKIP
 	var _e = dict[2]
 
 	# Typed Dictionary with matching key - OK

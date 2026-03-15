@@ -206,6 +206,21 @@ func _ready():
     }
 
     [TestMethod]
+    public void Hover_Signal_ShowsParameterSignature()
+    {
+        SetupProject(("test.gd", @"class_name TestClass
+extends Node
+
+signal item_changed(type: int, amount: int)
+"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        // Hover on "item_changed" at line 4, col ~8
+        var hover = _handler!.GetHover(filePath, 4, 8);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("item_changed(type: int, amount: int)");
+    }
+
+    [TestMethod]
     public void Hover_ClassName_New_InSameFile_ShowsChildType_NotBaseClass()
     {
         SetupProject(
@@ -233,5 +248,313 @@ static func restore() -> Inventory:
             "inferred type should be Inventory, not Resource");
         hover!.Content.Should().NotContain("Unknown",
             "type should be resolved, not Unknown");
+    }
+
+    // ========================================
+    // Bridge detection tests
+    // ========================================
+
+    [TestMethod]
+    public void Hover_Bridge_BothTypesFlowIn_ShowsBridgeWithFilePaths()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func save() -> void:
+    pass
+"),
+            ("type_b.gd", @"class_name TypeB
+extends Resource
+
+func save() -> void:
+    pass
+"),
+            ("bridge.gd", @"class_name Bridge
+extends Node
+
+func do_save(target):
+    target.save()
+"),
+            ("caller.gd", @"extends Node
+
+func _ready():
+    var b: Bridge = Bridge.new()
+    b.do_save(TypeA.new())
+    b.do_save(TypeB.new())
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_a.gd");
+
+        // Hover on "save" declaration — line 4, col ~6
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("bridge", "should show bridge info when both types flow in");
+        hover!.Content.Should().Contain("TypeB", "should mention the other hierarchy type");
+        hover!.Content.Should().Contain("files)", "should show file count");
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_OnlyOneTypeFlowsIn_NoBridge()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func save() -> void:
+    pass
+"),
+            ("type_b.gd", @"class_name TypeB
+extends Resource
+
+func save() -> void:
+    pass
+"),
+            ("bridge.gd", @"class_name Bridge
+extends Node
+
+func do_save(target):
+    target.save()
+"),
+            ("caller.gd", @"extends Node
+
+func _ready():
+    var b: Bridge = Bridge.new()
+    b.do_save(TypeA.new())
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_a.gd");
+
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        // Should NOT show bridge since only TypeA flows into do_save
+        if (hover != null)
+        {
+            hover.Content.Should().NotContain("bridge",
+                "should not show bridge when only one type flows in via call sites");
+        }
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_SameHierarchy_NoBridge()
+    {
+        SetupProject(
+            ("base_type.gd", @"class_name BaseType
+extends Node
+
+func save() -> void:
+    pass
+"),
+            ("child_type.gd", @"class_name ChildType
+extends BaseType
+
+func save() -> void:
+    pass
+"),
+            ("user.gd", @"extends Node
+
+func _ready():
+    var b: BaseType = BaseType.new()
+    b.save()
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "base_type.gd");
+
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        if (hover != null)
+        {
+            hover.Content.Should().NotContain("bridge",
+                "same inheritance hierarchy should not be a bridge");
+        }
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_SingleType_NoBridge()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func unique_method() -> void:
+    pass
+"),
+            ("user.gd", @"extends Node
+
+func _ready():
+    var a: TypeA = TypeA.new()
+    a.unique_method()
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_a.gd");
+
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        if (hover != null)
+        {
+            hover.Content.Should().NotContain("bridge",
+                "single type defining method should not be a bridge");
+        }
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_ThreeHierarchies_AllFlowIn_ShowsBridge()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func process() -> void:
+    pass
+"),
+            ("type_b.gd", @"class_name TypeB
+extends Resource
+
+func process() -> void:
+    pass
+"),
+            ("type_c.gd", @"class_name TypeC
+extends RefCounted
+
+func process() -> void:
+    pass
+"),
+            ("bridge.gd", @"class_name Bridge
+extends Node
+
+func do_process(target):
+    target.process()
+"),
+            ("caller.gd", @"extends Node
+
+func _ready():
+    var b: Bridge = Bridge.new()
+    b.do_process(TypeA.new())
+    b.do_process(TypeB.new())
+    b.do_process(TypeC.new())
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_a.gd");
+
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("bridge", "should show bridge for 3 hierarchies");
+        hover!.Content.Should().Contain("TypeB", "should mention TypeB");
+        hover!.Content.Should().Contain("TypeC", "should mention TypeC");
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_Symmetry_HoverFromTypeBSide()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func save() -> void:
+    pass
+"),
+            ("type_b.gd", @"class_name TypeB
+extends Resource
+
+func save() -> void:
+    pass
+"),
+            ("bridge.gd", @"class_name Bridge
+extends Node
+
+func do_save(target):
+    target.save()
+"),
+            ("caller.gd", @"extends Node
+
+func _ready():
+    var b: Bridge = Bridge.new()
+    b.do_save(TypeA.new())
+    b.do_save(TypeB.new())
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_b.gd");
+
+        // Hover on TypeB's save() declaration — line 4, col ~6
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("bridge", "bridge should be symmetric");
+        hover!.Content.Should().Contain("TypeA", "should mention TypeA from TypeB's perspective");
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_DeadCode_NoBridge()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func save() -> void:
+    pass
+"),
+            ("type_b.gd", @"class_name TypeB
+extends Resource
+
+func save() -> void:
+    pass
+"),
+            ("bridge.gd", @"extends Node
+
+func do_save(target):
+    target.save()
+"));
+        // No caller file — do_save is never called
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_a.gd");
+
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        if (hover != null)
+        {
+            hover.Content.Should().NotContain("bridge",
+                $"dead code (no call sites) should not produce bridge. Hover: {hover.Content}");
+        }
+    }
+
+    [TestMethod]
+    public void Hover_Bridge_FilePathLabelsShown()
+    {
+        SetupProject(
+            ("type_a.gd", @"class_name TypeA
+extends Node
+
+func save() -> void:
+    pass
+"),
+            ("type_b.gd", @"class_name TypeB
+extends Resource
+
+func save() -> void:
+    pass
+"),
+            ("bridge.gd", @"class_name Bridge
+extends Node
+
+func do_save(target):
+    target.save()
+"),
+            ("caller.gd", @"extends Node
+
+func _ready():
+    var b: Bridge = Bridge.new()
+    b.do_save(TypeA.new())
+    b.do_save(TypeB.new())
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "type_a.gd");
+
+        var hover = _handler!.GetHover(filePath, 4, 6);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("bridge", "should show bridge info");
+        hover!.Content.Should().Contain("type_b.gd", "should include file path for TypeB");
     }
 }

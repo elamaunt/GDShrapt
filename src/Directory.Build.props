@@ -16,4 +16,9 @@
     <FluentAssertionsVersion>8.2.0</FluentAssertionsVersion>
     <CoverletVersion>6.0.4</CoverletVersion>
   </PropertyGroup>
+
+  <!-- Limit test parallelism to avoid system instability -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true' or '$(OutputType)' == 'Library'">
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)test.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
 </Project>

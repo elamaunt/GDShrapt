@@ -459,7 +459,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             this, // IGDScriptProvider
             godotTypesProvider,
             _logger,
-            groupRegistry);
+            groupRegistry,
+            _tresResourceProvider);
     }
 
     private GDGroupRegistry BuildGroupRegistry(GDGodotTypesProvider godotTypesProvider)
@@ -599,7 +600,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             autoloadsProvider,
             _sceneTypesProvider,
             this, // IGDScriptProvider for preload type inference
-            _logger);
+            _logger,
+            _tresResourceProvider);
     }
 
     /// <summary>

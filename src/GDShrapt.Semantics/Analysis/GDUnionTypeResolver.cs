@@ -62,8 +62,8 @@ internal class GDUnionTypeResolver
         }
         else if (typesWithMember > 0)
         {
-            // Member exists in SOME types → Union (proven but shared with other types)
-            return GDReferenceConfidence.Union;
+            // Member exists in SOME types → Potential
+            return GDReferenceConfidence.Potential;
         }
         else
         {

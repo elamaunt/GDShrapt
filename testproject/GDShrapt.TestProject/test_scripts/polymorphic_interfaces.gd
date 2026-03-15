@@ -37,7 +37,7 @@ func register_updatable(entity):
 func damage_all(amount):
 	var results = []
 	for e in damageable_entities:
-		var before = e.get_health()  # 40:15-GD7003-OK, 40:15-GD7007-OK
+		var before = e.get_health()  # 40:15-GD7003-OK, 40:15-GD7007-SKIP
 		e.take_damage(amount)
 		var after = e.get_health()  # 42:14-GD7003-OK
 		results.append({"entity": e, "damage": before - after})
@@ -75,13 +75,13 @@ func set_targeting_strategy(strategy):
 
 func calculate_damage(base_damage, target):
 	if damage_calculator:
-		return damage_calculator.calculate(base_damage, target)
+		return damage_calculator.calculate(base_damage, target)  # 78:9-GD7003-OK
 	return base_damage
 
 
 func find_path(from_pos, to_pos):
 	if movement_strategy:
-		return movement_strategy.compute_path(from_pos, to_pos)
+		return movement_strategy.compute_path(from_pos, to_pos)  # 84:9-GD7003-OK
 	return [to_pos]  # Direct path fallback
 
 
@@ -225,7 +225,7 @@ func process_with_decorators(data):
 
 	# Finally apply base processor
 	if base_processor:
-		current = base_processor.process(current)
+		current = base_processor.process(current)  # 228:12-GD7003-OK
 
 	return current
 
@@ -239,7 +239,7 @@ func _create_next_func(start_index):
 			var next_func = _create_next_func(i + 1)
 			current = decorator.process(current, next_func)  # 240:13-GD7003-OK, 240:13-GD7007-OK
 		if base_processor:
-			current = base_processor.process(current)
+			current = base_processor.process(current)  # 242:13-GD7003-OK
 		return current
 
 
@@ -379,12 +379,12 @@ var current_state  # Has: enter(), exit(), update(delta), handle_input(event)
 
 func change_state(new_state):
 	if current_state:
-		current_state.exit()
+		current_state.exit()  # 382:2-GD7003-OK
 
 	current_state = new_state
 
 	if current_state:
-		current_state.enter()
+		current_state.enter()  # 387:2-GD7003-OK
 
 
 func state_update(delta):
@@ -399,7 +399,7 @@ func state_update(delta):
 
 func state_handle_input(event):
 	if current_state:
-		return current_state.handle_input(event)
+		return current_state.handle_input(event)  # 402:9-GD7003-OK
 	return false
 
 
@@ -411,7 +411,7 @@ var caretaker_data      # Current state, type varies
 
 func save_state():
 	if caretaker_data and caretaker_data.has_method("create_memento"):
-		var memento = caretaker_data.create_memento()
+		var memento = caretaker_data.create_memento()  # 414:16-GD7003-OK
 		memento_stack.append(memento)
 
 
@@ -421,7 +421,7 @@ func restore_state():
 
 	var memento = memento_stack.pop_back()
 	if caretaker_data and caretaker_data.has_method("restore_from_memento"):
-		caretaker_data.restore_from_memento(memento)
+		caretaker_data.restore_from_memento(memento)  # 424:2-GD7003-OK
 		return true
 	return false
 

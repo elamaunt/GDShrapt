@@ -1,23 +1,23 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-14 03:36:14
+Generated: 2026-03-15 02:33:01
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 730
+Total diagnostics: 738
 Scripts analyzed:  61
 
 By Severity:
   Error     :    30
   Hint      :    94
   Info      :    36
-  Warning   :   570
+  Warning   :   578
 
 By Source:
   Linter              :   304
-  SemanticValidator   :   392
+  SemanticValidator   :   400
   Validator           :    34
 
 By Code (Top 30):
@@ -26,8 +26,8 @@ By Code (Top 30):
   GD7006    :   39  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
   GD3023    :   33  (Function 'create_game_object' returns inconsistent types:...)
+  GD7003    :   33  (Calling method 'visit' on untyped variable 'visitor' with...)
   GDL203    :   28  (Function '_process_idle' only contains 'pass')
-  GD7003    :   26  (Calling method 'visit' on untyped variable 'visitor' with...)
   GD7005    :   21  (Variable 'child_sprite' is @onready - _ready() may not ha...)
   GDL513    :   20  (Expected 2 empty line(s) before function, found 1)
   GDL001    :   13  (Class name 'DiagnosticsTest_BestPractices' should use Pas...)
@@ -37,8 +37,8 @@ By Code (Top 30):
   GDL101    :    8  (Line 212 exceeds 120 characters (length: 146))
   GDL202    :    8  (Parameter 'delta' is declared but never used)
   GDL211    :    7  (Local variable 'class_level_var' shadows a class-level va...)
+  GD3009    :    6  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
-  GD3009    :    5  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
   GD3024    :    5  (Not all code paths return a value in 'test_gdl228_valid' ...)
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
@@ -604,7 +604,7 @@ DIAGNOSTICS BY FILE
     13:2   [GD7007] Warning - Variable 'panel' may be null when accessing 'refresh_ui'
     17:1   [GD7007] Warning - Variable 'panel' may be null when accessing 'refresh_ui'
 
---- test_scripts/polymorphic_interfaces.gd (36 diagnostics) ---
+--- test_scripts/polymorphic_interfaces.gd (45 diagnostics) ---
 
      2:11  [GDL222] Warning - 'PolymorphicInterfaces' has 40 public methods (max 20)
     40:15  [GD7003] Warning - Calling method 'get_health' on untyped variable 'e' without type guard
@@ -613,6 +613,8 @@ DIAGNOSTICS BY FILE
     49:2   [GD7003] Warning - Calling method 'move_to' on untyped variable 'e' without type guard
     49:2   [GD7007] Warning - Variable 'e' may be null when accessing 'move_to'
     54:2   [GD7007] Warning - Variable 'e' may be null when accessing 'update'
+    78:9   [GD7003] Warning - Calling method 'calculate' on untyped variable 'damage_calculator' without type guard
+    84:9   [GD7003] Warning - Calling method 'compute_path' on untyped variable 'movement_strategy' without type guard
     91:8   [GD7007] Warning - Variable 'available_targets' may be null when accessing 'is_empty'
     92:9   [GD7006] Warning - Variable 'available_targets' may be null when accessing '[...]'
    104:14  [GD7007] Warning - Variable 'command' may be null when accessing 'execute'
@@ -625,8 +627,10 @@ DIAGNOSTICS BY FILE
    195:13  [GD7007] Warning - Variable 'collector' may be null when accessing 'call'
    224:12  [GD7003] Warning - Calling method 'process' on untyped variable 'decorator' without type guard
    224:12  [GD7007] Warning - Variable 'decorator' may be null when accessing 'process'
+   228:12  [GD7003] Warning - Calling method 'process' on untyped variable 'base_processor' without type guard
    240:13  [GD7003] Warning - Calling method 'process' on untyped variable 'decorator' without type guard
    240:13  [GD7007] Warning - Variable 'decorator' may be null when accessing 'process'
+   242:13  [GD7003] Warning - Calling method 'process' on untyped variable 'base_processor' without type guard
    261:9   [GD7003] Warning - Calling method 'adapt' on untyped variable 'adapter' without type guard
    261:9   [GD7007] Warning - Variable 'adapter' may be null when accessing 'adapt'
    266:9   [GD7003] Warning - Calling method 'adapt' on untyped variable 'adapter' without type guard
@@ -642,6 +646,11 @@ DIAGNOSTICS BY FILE
    338:8   [GD7007] Warning - Variable 'factory' may be null when accessing 'create'
    364:8   [GD7003] Warning - Calling method 'receive' on untyped variable 'recipient' without type guard
    364:8   [GD7007] Warning - Variable 'recipient' may be null when accessing 'receive'
+   382:2   [GD7003] Warning - Calling method 'exit' on untyped variable 'current_state' without type guard
+   387:2   [GD7003] Warning - Calling method 'enter' on untyped variable 'current_state' without type guard
+   402:9   [GD7003] Warning - Calling method 'handle_input' on untyped variable 'current_state' without type guard
+   414:16  [GD7003] Warning - Calling method 'create_memento' on untyped variable 'caretaker_data' without type guard
+   424:2   [GD7003] Warning - Calling method 'restore_from_memento' on untyped variable 'caretaker_data' without type guard
 
 --- test_scripts/reflection_test.gd (3 diagnostics) ---
 
@@ -716,7 +725,7 @@ DIAGNOSTICS BY FILE
    256:1   [GD7019] Warning - Assignment widens 'Node2D' to 'Node'
    275:12  [GD3013] Warning - Dictionary expects key of type 'String', got 'int'
 
---- test_scripts/signal_callback_chains.gd (41 diagnostics) ---
+--- test_scripts/signal_callback_chains.gd (39 diagnostics) ---
 
      2:11  [GDL222] Warning - 'SignalCallbackChains' has 25 public methods (max 20)
      2:11  [GDL232] Warning - 'SignalCallbackChains' has 8 inner classes (max 5)
@@ -752,8 +761,6 @@ DIAGNOSTICS BY FILE
    418:20  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
    426:2   [GD7006] Warning - Variable 'operations' may be null when accessing '[...]'
    431:4   [GD7007] Warning - Variable 'url' may be null when accessing 'begins_with'
-   447:1   [GD7003] Warning - Calling method 'resolve' on untyped variable 'ctx' without type guard
-   453:2   [GD7003] Warning - Calling method 'reject' on untyped variable 'ctx' without type guard
    465:1   [GD7007] Warning - Variable 'target' may be null when accessing 'connect'
    468:4   [GD3020] Warning - Variable 'timeout' may be null; comparison with '>' would cause runtime error
    470:2   [GD7005] Warning - Variable 'timer' may be null when accessing 'timeout'
@@ -899,12 +906,13 @@ DIAGNOSTICS BY FILE
    220:0   [GD3023] Warning - Function 'factory_method' returns inconsistent types: Node, Node2D, Control, null
    233:0   [GD3023] Warning - Function 'type_from_data' returns inconsistent types: Vector2, Color, Rect2, Dictionary
 
---- test_scripts/union_types_complex.gd (22 diagnostics) ---
+--- test_scripts/union_types_complex.gd (23 diagnostics) ---
 
      2:11  [GDL222] Warning - 'UnionTypesComplex' has 28 public methods (max 20)
     24:0   [GD3023] Warning - Function 'try_operation' returns inconsistent types: String, int
     29:5   [GD3020] Warning - Variable 'input' may be null; comparison with '<' would cause runtime error
     43:5   [GD7016] Warning - Property 'id' not found on type 'Node'
+    52:9   [GD3009] Warning - Property 'global_position' not found on type 'Node'
     58:0   [GD3023] Warning - Function 'process_by_type' returns inconsistent types: int, float, String, Array, null
     84:0   [GD3023] Warning - Function 'complex_conditional' returns inconsistent types: int, String, Array[int], Dictionary[String, bool]
     98:0   [GD3023] Warning - Function 'match_return' returns inconsistent types: String, float, Array[int], Dictionary[String, int]

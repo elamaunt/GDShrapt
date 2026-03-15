@@ -211,7 +211,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             _containerTypeService,
             GetExpressionType,
             FindSymbol,
-            GetRootVariableName);
+            GetRootVariableName,
+            GetVariableTypeAt);
 
         _argumentTypeService = new GDArgumentTypeService(runtimeProvider);
         _argumentTypeService.SetFindSymbolDelegate(FindSymbol);
@@ -863,6 +864,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         => _memberResolver.FindMember(typeName, memberName);
 
     /// <summary>
+    /// Eagerly initializes flow analysis for a method scope and returns the analyzer.
+    /// Used by GDSemanticReferenceCollector to pre-compute flow state before processing references.
+    /// </summary>
+    internal GDFlowAnalyzer? EnsureFlowAnalyzer(GDNode methodScope)
+        => GetOrCreateFlowAnalyzer(methodScope);
+
+    /// <summary>
     /// Gets or creates a flow analyzer for a method-like scope.
     /// Flow analyzers are cached per scope.
     /// </summary>
@@ -871,15 +879,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (methodScope == null)
             return null;
 
-        return _flowRegistry.GetOrCreateFlowAnalyzer(methodScope, _typeEngine, GetExpressionTypeWithoutFlow, () => GetOnreadyVariables(), _scriptFile?.FullPath);
-    }
-
-    /// <summary>
-    /// Gets expression type without using flow analysis (to avoid recursion when called from flow analyzer).
-    /// </summary>
-    private string? GetExpressionTypeWithoutFlow(GDExpression expression)
-    {
-        return _expressionTypeService.GetExpressionTypeWithoutFlow(expression);
+        return _flowRegistry.GetOrCreateFlowAnalyzer(methodScope, _expressionTypeService, () => GetOnreadyVariables(), _scriptFile?.FullPath);
     }
 
     /// <summary>
@@ -892,9 +892,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     /// <summary>
     /// Gets the full flow variable type info at a specific location.
+    /// Single source of truth for variable types: includes narrowing, union, duck types, nullability.
+    /// No fallbacks — returns null if flow analysis has no data for this location.
     /// </summary>
-    public GDFlowVariableType? GetFlowVariableType(string variableName, GDNode atLocation)
+    public GDFlowVariableType? GetVariableTypeAt(string variableName, GDNode atLocation)
         => _flowQueryService.GetFlowVariableType(variableName, atLocation);
+
+    /// <summary>
+    /// Gets the full flow variable type info at a specific location.
+    /// </summary>
+    [System.Obsolete("Use GetVariableTypeAt() instead — single source of truth for variable types.")]
+    public GDFlowVariableType? GetFlowVariableType(string variableName, GDNode atLocation)
+        => GetVariableTypeAt(variableName, atLocation);
 
     /// <summary>
     /// Gets the variable type from the initial flow state at method entry (before any narrowing).
@@ -1432,13 +1441,20 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     }
 
     /// <summary>
-    /// Gets the narrowed type for a variable at a specific location (from if checks).
-    /// Walks up the AST to find the nearest branch with narrowing info.
-    /// Internal - use TypeSystem.GetNarrowedType() or TypeSystem.GetTypeInfo() for external access.
+    /// Gets the narrowed type for a variable at a specific location.
+    /// Uses flow analysis as the single source of truth.
     /// </summary>
     internal string? GetNarrowedType(string variableName, GDNode atLocation)
     {
-        return _duckTypeService.GetNarrowedType(variableName, atLocation);
+        var flowType = GetVariableTypeAt(variableName, atLocation);
+        if (flowType == null)
+            return null;
+
+        var effective = flowType.EffectiveType;
+        if (effective == null || effective.IsVariant)
+            return null;
+
+        return effective.DisplayName;
     }
 
     /// <summary>
@@ -2056,38 +2072,6 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         }
     }
 
-    /// <summary>
-    /// Sets narrowing context for a node.
-    /// </summary>
-    internal void SetNarrowingContext(GDNode node, GDTypeNarrowingContext context)
-    {
-        if (node != null && context != null)
-        {
-            _duckTypeService.SetNarrowingContext(node, context);
-        }
-    }
-
-    /// <summary>
-    /// Sets narrowing context for statements following an if-statement with early return.
-    /// The context applies to sibling statements that come after the if-statement.
-    /// </summary>
-    internal void SetPostIfNarrowing(GDIfStatement ifStatement, GDTypeNarrowingContext context)
-    {
-        if (ifStatement == null || context == null)
-            return;
-
-        if (ifStatement.Parent is GDStatementsList statementsList)
-        {
-            bool foundIf = false;
-            foreach (var statement in statementsList)
-            {
-                if (foundIf)
-                    _duckTypeService.SetNarrowingContext(statement, context);
-                if (ReferenceEquals(statement, ifStatement))
-                    foundIf = true;
-            }
-        }
-    }
 
     /// <summary>
     /// Adds a type usage to the model.

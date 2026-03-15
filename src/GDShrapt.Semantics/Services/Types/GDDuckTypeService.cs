@@ -11,7 +11,6 @@ namespace GDShrapt.Semantics;
 internal class GDDuckTypeService
 {
     private readonly Dictionary<string, GDDuckType> _duckTypes = new();
-    private readonly Dictionary<GDNode, GDTypeNarrowingContext> _narrowingContexts = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GDDuckTypeService"/> class.
@@ -32,50 +31,6 @@ internal class GDDuckTypeService
     }
 
     /// <summary>
-    /// Gets the narrowed type for a variable at a specific location.
-    /// Walks up the AST to find the nearest branch with narrowing info.
-    /// </summary>
-    public string? GetNarrowedType(string variableName, GDNode atLocation)
-    {
-        if (string.IsNullOrEmpty(variableName) || atLocation == null)
-            return null;
-
-        // Walk up the AST checking all narrowing contexts, not just the first one.
-        // A nested if may have its own narrowing context that doesn't include
-        // the outer if's type guard (e.g., `if event is Foo: if event.x == 1:`)
-        var current = (GDNode?)atLocation;
-        while (current != null)
-        {
-            if (_narrowingContexts.TryGetValue(current, out var context))
-            {
-                var concreteType = context.GetConcreteType(variableName);
-                if (concreteType != null)
-                    return concreteType.DisplayName;
-            }
-
-            current = current.Parent;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Finds the narrowing context that applies to a given node location.
-    /// </summary>
-    public GDTypeNarrowingContext? FindNarrowingContextForNode(GDNode node)
-    {
-        var current = node;
-        while (current != null)
-        {
-            if (_narrowingContexts.TryGetValue(current, out var context))
-                return context;
-
-            current = current.Parent;
-        }
-        return null;
-    }
-
-    /// <summary>
     /// Gets all duck types.
     /// </summary>
     public IEnumerable<KeyValuePair<string, GDDuckType>> GetAllDuckTypes()
@@ -84,26 +39,12 @@ internal class GDDuckTypeService
     }
 
     /// <summary>
-    /// Gets all narrowing contexts.
-    /// </summary>
-    public IReadOnlyDictionary<GDNode, GDTypeNarrowingContext> NarrowingContexts => _narrowingContexts;
-
-    /// <summary>
     /// Sets duck type information for a variable.
     /// </summary>
     internal void SetDuckType(string variableName, GDDuckType duckType)
     {
         if (!string.IsNullOrEmpty(variableName) && duckType != null)
             _duckTypes[variableName] = duckType;
-    }
-
-    /// <summary>
-    /// Sets narrowing context for a node.
-    /// </summary>
-    internal void SetNarrowingContext(GDNode node, GDTypeNarrowingContext context)
-    {
-        if (node != null && context != null)
-            _narrowingContexts[node] = context;
     }
 
     /// <summary>
@@ -143,31 +84,16 @@ internal class GDDuckTypeService
         {
             foreach (var reference in references)
             {
-                if (reference.ReferenceNode?.Parent is GDMemberOperatorExpression memberOp)
+                if (reference.ReferenceNode?.Parent is GDMemberOperatorExpression)
                 {
-                    var narrowedType = GetNarrowedType(symbolName, memberOp);
-                    if (string.IsNullOrEmpty(narrowedType))
-                    {
-                        // This usage is not in a type guard - duck type is needed
-                        return false;
-                    }
+                    // Member access on untyped variable — duck type is needed
+                    return false;
                 }
             }
         }
 
-        // All usages are narrowed, suppress duck constraints
         return true;
     }
 
-    /// <summary>
-    /// Checks if a type name represents a concrete (non-Variant, non-Unknown) type.
-    /// </summary>
-    private static bool IsConcreteType(string? typeName)
-    {
-        if (string.IsNullOrEmpty(typeName))
-            return false;
-
-        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
-        return !semType.IsVariant && !semType.IsType("Unknown");
-    }
+    private static bool IsConcreteType(string? typeName) => GDWellKnownTypes.IsConcreteType(typeName);
 }

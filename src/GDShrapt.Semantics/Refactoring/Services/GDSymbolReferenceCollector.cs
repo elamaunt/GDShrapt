@@ -185,7 +185,8 @@ public class GDSymbolReferenceCollector
             var externalFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var r in refs.References)
             {
-                if (r.FilePath != null && !allHierarchyFiles.Contains(r.FilePath))
+                if (r.FilePath != null && !allHierarchyFiles.Contains(r.FilePath)
+                    && r.Confidence != GDReferenceConfidence.NameMatch)
                     externalFiles.Add(r.FilePath);
             }
             perHierarchyExternalFiles.Add(externalFiles);
@@ -683,8 +684,7 @@ public class GDSymbolReferenceCollector
             var refLine = conn.CallbackLine >= 0 ? conn.CallbackLine : connLine;
             var refCol = conn.CallbackColumn >= 0 ? conn.CallbackColumn : connCol;
 
-            if (!seen.Add((conn.SourceFilePath, refLine, refCol)))
-                continue;
+            seen.Add((conn.SourceFilePath, refLine, refCol));
 
             // Try to find the corresponding script file.
             // For .tscn scene files, GetScript returns null since they're not GDScript files.

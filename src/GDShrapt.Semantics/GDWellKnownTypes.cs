@@ -122,6 +122,15 @@ internal static class GDWellKnownTypes
         ["NAN"] = Numeric.Float,
     };
 
+    public static bool IsConcreteType(string? typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+        return !semType.IsVariant && !semType.IsType("Unknown");
+    }
+
     public static bool IsNumericType(string typeName) => typeName is Numeric.Int or Numeric.Float;
 
     public static bool IsStringType(string typeName) => typeName is Strings.String or Strings.StringName;

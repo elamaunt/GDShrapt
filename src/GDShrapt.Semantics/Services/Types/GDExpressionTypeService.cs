@@ -11,7 +11,7 @@ namespace GDShrapt.Semantics;
 /// Service for expression type inference.
 /// Extracted from GDSemanticModel to reduce its size.
 /// </summary>
-internal class GDExpressionTypeService
+internal class GDExpressionTypeService : IGDExpressionTypeProvider
 {
     private readonly IGDRuntimeProvider? _runtimeProvider;
     private readonly GDTypeInferenceEngine? _typeEngine;
@@ -86,6 +86,61 @@ internal class GDExpressionTypeService
     {
         _getOnreadyVariables = getOnreadyVariables;
     }
+
+    // === IGDExpressionTypeProvider (explicit, no-flow to prevent recursion) ===
+
+    GDSemanticType? IGDExpressionTypeProvider.InferType(GDExpression expression)
+    {
+        if (expression is GDCallExpression callExpr)
+        {
+            if (callExpr.CallerExpression is GDMemberOperatorExpression callMemberExpr)
+            {
+                var methodName = callMemberExpr.Identifier?.Sequence;
+                if (methodName == GDWellKnownFunctions.Constructor)
+                {
+                    var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
+                    if (!string.IsNullOrEmpty(callerType))
+                        return GDSemanticType.FromRuntimeTypeName(callerType);
+                }
+            }
+
+            var callResult = _typeEngine?.InferSemanticType(expression);
+            if (callResult != null)
+                return callResult;
+        }
+
+        if (expression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var symbol = _findSymbol?.Invoke(varName);
+                if (symbol?.Kind == GDSymbolKind.Method)
+                    return GDSemanticType.FromRuntimeTypeName("Callable");
+
+                if (symbol?.Kind == GDSymbolKind.Class)
+                    return GDSemanticType.FromRuntimeTypeName(symbol.Name);
+
+                var unionType = _unionTypeService.GetUnionType(varName, symbol, null);
+                if (unionType != null && unionType.IsSingleType)
+                {
+                    var effectiveType = unionType.EffectiveType;
+                    if (!effectiveType.IsVariant && !effectiveType.IsNull)
+                        return effectiveType;
+                }
+            }
+        }
+
+        return _typeEngine?.InferSemanticType(expression);
+    }
+
+    GDSymbol? IGDExpressionTypeProvider.LookupSymbol(string name) =>
+        _findSymbol?.Invoke(name)?.Symbol;
+
+    IGDRuntimeProvider? IGDExpressionTypeProvider.RuntimeProvider => _runtimeProvider;
+
+    bool IGDExpressionTypeProvider.IsNumericType(string typeName) =>
+        _runtimeProvider?.IsNumericType(typeName) ?? GDWellKnownTypes.IsNumericType(typeName);
 
     /// <summary>
     /// Gets the semantic type for an expression, preserving GDCallableSemanticType.
@@ -244,11 +299,6 @@ internal class GDExpressionTypeService
                 var containerFallback = _containerTypeService.GetInferredContainerType(varName);
                 if (containerFallback != null && containerFallback.HasElementTypes)
                     return containerFallback.ToString();
-
-                // Fall back to narrowing
-                var narrowed = _duckTypeService.GetNarrowedType(varName, expression);
-                if (!string.IsNullOrEmpty(narrowed))
-                    return narrowed;
 
                 // Fall back to union type
                 var symbol = _findSymbol?.Invoke(varName);
@@ -610,8 +660,7 @@ internal class GDExpressionTypeService
 
         return _flowRegistry.GetOrCreateFlowAnalyzer(
             methodScope,
-            _typeEngine,
-            GetExpressionTypeWithoutFlow,
+            this,
             _getOnreadyVariables ?? (() => Enumerable.Empty<string>()),
             _filePath);
     }

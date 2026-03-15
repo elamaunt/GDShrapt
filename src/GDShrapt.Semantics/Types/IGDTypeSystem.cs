@@ -36,6 +36,12 @@ public interface IGDTypeSystem
     /// </summary>
     string? GetNarrowedType(string variableName, GDNode atLocation);
 
+    /// <summary>
+    /// Gets the full flow-sensitive variable type at a specific location.
+    /// Single source of truth: includes narrowing, union, duck types, nullability.
+    /// </summary>
+    GDFlowVariableType? GetVariableTypeAt(string variableName, GDNode atLocation);
+
     // ========================================
     // Union and Duck Types
     // ========================================

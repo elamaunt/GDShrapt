@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
 using System.Linq;
@@ -111,6 +112,20 @@ public class GDCrossFileReferenceFinder
                 if (confidence == GDReferenceConfidence.NameMatch)
                     continue;
 
+                if (confidence == GDReferenceConfidence.Potential)
+                {
+                    var varName = GetRootVariableName(memberAccess.CallerExpression);
+                    if (!string.IsNullOrEmpty(varName))
+                    {
+                        var flowConfidence = DetermineFlowBasedConfidence(
+                            semanticModel.GetVariableTypeAt(varName, memberAccess), declaringTypeName);
+                        if (flowConfidence != null)
+                            confidence = flowConfidence.Value;
+                        // else: keep Potential — flow has no additional info
+                    }
+                    // else: no variable name — keep Potential
+                }
+
                 if (confidence == GDReferenceConfidence.Strict)
                 {
                     var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
@@ -118,16 +133,13 @@ public class GDCrossFileReferenceFinder
                         && callerType != GDWellKnownTypes.Self
                         && !IsTypeCompatible(callerType, declaringTypeName))
                     {
-                        // Check if caller has union type where one part is compatible
                         var varName = GetRootVariableName(memberAccess.CallerExpression);
                         if (!string.IsNullOrEmpty(varName))
                         {
-                            var unionType = semanticModel.GetUnionType(varName);
-                            if (unionType != null && unionType.IsUnion &&
-                                unionType.Types.Any(t => IsTypeCompatible(t.DisplayName, declaringTypeName)))
-                            {
-                                confidence = GDReferenceConfidence.Union;
-                            }
+                            var flowConfidence = DetermineFlowBasedConfidence(
+                                semanticModel.GetVariableTypeAt(varName, memberAccess), declaringTypeName);
+                            if (flowConfidence != null)
+                                confidence = flowConfidence.Value;
                             else
                                 continue;
                         }
@@ -174,10 +186,37 @@ public class GDCrossFileReferenceFinder
             if (!IsTypeCompatible(callerType, declaringTypeName))
                 continue;
 
+            // For duck-typed access (Variant caller), check data-flow proof:
+            // upgrade to Union if the declaring type appears in the variable's union type,
+            // otherwise mark as Potential (duck-typed, no proof).
+            var isVariantCaller = callerType == GDWellKnownTypes.Variant;
+
             foreach (var maRef in memberRefs)
             {
                 if (maRef.ReferenceNode == null)
                     continue;
+
+                var confidence = GDReferenceConfidence.Strict;
+
+                if (isVariantCaller)
+                {
+                    confidence = GDReferenceConfidence.Potential;
+
+                    var memberAccessNode = maRef.ReferenceNode as GDMemberOperatorExpression
+                        ?? maRef.ReferenceNode.Parent as GDMemberOperatorExpression;
+
+                    if (memberAccessNode != null)
+                    {
+                        var varName = GetRootVariableName(memberAccessNode.CallerExpression);
+                        if (!string.IsNullOrEmpty(varName))
+                        {
+                            var flowConfidence = DetermineFlowBasedConfidence(
+                                semanticModel.GetVariableTypeAt(varName, memberAccessNode), declaringTypeName);
+                            if (flowConfidence != null)
+                                confidence = flowConfidence.Value;
+                        }
+                    }
+                }
 
                 var identToken = maRef.IdentifierToken;
                 var line = identToken?.StartLine ?? maRef.ReferenceNode.StartLine;
@@ -191,7 +230,7 @@ public class GDCrossFileReferenceFinder
                     maRef.ReferenceNode,
                     line,
                     col,
-                    GDReferenceConfidence.Strict,
+                    confidence,
                     $"Member access via '{callerType}.{memberName}'");
             }
         }
@@ -233,6 +272,7 @@ public class GDCrossFileReferenceFinder
 
     /// <summary>
     /// Determines the confidence level for a member access reference.
+    /// Uses flow-sensitive type data as the single source of truth.
     /// </summary>
     private GDReferenceConfidence DetermineConfidence(
         GDMemberOperatorExpression memberAccess,
@@ -248,36 +288,60 @@ public class GDCrossFileReferenceFinder
         // 2. If type is known
         if (!string.IsNullOrEmpty(callerType))
         {
-            // Type matches or inherits from target
             if (IsTypeCompatible(callerType, targetTypeName))
                 return GDReferenceConfidence.Strict;
             else
-                return GDReferenceConfidence.NameMatch; // Incompatible type - likely false positive
+                return GDReferenceConfidence.NameMatch;
         }
 
-        // 3. Type unknown - check type narrowing context
+        // 3. Type unknown — query flow-sensitive data at this location
         var varName = GetRootVariableName(memberAccess.CallerExpression);
         if (varName != null)
         {
-            // Check for type narrowing from if checks
-            var narrowedType = semanticModel.GetNarrowedType(varName, memberAccess);
-            if (!string.IsNullOrEmpty(narrowedType))
-            {
-                if (IsTypeCompatible(narrowedType, targetTypeName))
-                    return GDReferenceConfidence.Strict;
-            }
+            var flowConfidence = DetermineFlowBasedConfidence(
+                semanticModel.GetVariableTypeAt(varName, memberAccess), targetTypeName);
+            if (flowConfidence != null)
+                return flowConfidence.Value;
+        }
 
-            // Check duck type compatibility
-            var duckType = semanticModel.GetDuckType(varName);
-            if (duckType != null && _duckTypeResolver != null)
+        return GDReferenceConfidence.Potential;
+    }
+
+    /// <summary>
+    /// Determines confidence from flow-sensitive variable type data.
+    /// Returns null if the flow type provides no useful information (skip the reference).
+    /// </summary>
+    private GDReferenceConfidence? DetermineFlowBasedConfidence(
+        GDFlowVariableType? flowType, string declaringTypeName)
+    {
+        if (flowType == null)
+            return null;
+
+        var effective = flowType.EffectiveType;
+
+        // Narrowed or single type — check compatibility
+        if (effective != null && !effective.IsVariant)
+        {
+            if (flowType.IsNarrowed || flowType.CurrentType.IsSingleType)
             {
-                if (_duckTypeResolver.IsCompatibleWith(duckType, targetTypeName))
-                    return GDReferenceConfidence.Potential;
+                if (IsTypeCompatible(effective.DisplayName, declaringTypeName))
+                    return GDReferenceConfidence.Strict;
+                return GDReferenceConfidence.NameMatch;
             }
         }
 
-        // 4. Default to Potential for untyped access
-        return GDReferenceConfidence.Potential;
+        // Union — check if target type is among union members
+        if (flowType.CurrentType.IsUnion)
+        {
+            if (flowType.CurrentType.Types.Any(t => IsTypeCompatible(t.DisplayName, declaringTypeName)))
+                return GDReferenceConfidence.Union;
+        }
+
+        // Duck type — variable has duck constraints, keep as Potential
+        if (flowType.DuckType != null && flowType.DuckType.HasRequirements)
+            return GDReferenceConfidence.Potential;
+
+        return null;
     }
 
     /// <summary>

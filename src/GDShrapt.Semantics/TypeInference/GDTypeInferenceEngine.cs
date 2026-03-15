@@ -11,7 +11,7 @@ namespace GDShrapt.Semantics
     /// Supports generic types like Array[T] and Dictionary[K,V].
     /// Supports bidirectional type inference (forward and backward).
     /// </summary>
-    internal class GDTypeInferenceEngine
+    internal class GDTypeInferenceEngine : IGDExpressionTypeProvider
     {
         private readonly IGDRuntimeProvider _runtimeProvider;
         private readonly GDScopeStack _scopes;
@@ -61,6 +61,15 @@ namespace GDShrapt.Semantics
         /// Gets the scope stack.
         /// </summary>
         public GDScopeStack Scopes => _scopes;
+
+        GDSemanticType? IGDExpressionTypeProvider.InferType(GDExpression expression) =>
+            InferSemanticType(expression);
+
+        GDSymbol? IGDExpressionTypeProvider.LookupSymbol(string name) =>
+            _scopes?.Lookup(name);
+
+        bool IGDExpressionTypeProvider.IsNumericType(string typeName) =>
+            _runtimeProvider?.IsNumericType(typeName) ?? GDWellKnownTypes.IsNumericType(typeName);
 
         /// <summary>
         /// Creates a new type inference engine.

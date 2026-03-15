@@ -36,8 +36,8 @@ func call_all_matching(obj, prefix, args = []):  # 35:23-GD7020-OK
 	# Call all methods starting with prefix
 	var results = {}
 	for method in obj.get_method_list(): # 38:15-GD7007-OK
-		var name = method["name"]
-		if name.begins_with(prefix):
+		var name = method["name"]  # 39:13-GD3013-SKIP
+		if name.begins_with(prefix):  # 40:5-GD4002-SKIP
 			results[name] = obj.callv(name, args)
 	return results
 
@@ -124,8 +124,8 @@ func serialize_object(obj):  # 122:22-GD7020-OK
 
 	# Get all exported properties
 	for prop in obj.get_property_list(): # 126:13-GD7007-OK
-		var name = prop["name"]
-		var usage = prop["usage"]
+		var name = prop["name"]  # 127:13-GD3013-SKIP
+		var usage = prop["usage"]  # 128:14-GD3013-SKIP
 
 		# Only serialize exported and stored properties
 		if usage & PROPERTY_USAGE_STORAGE:
@@ -359,7 +359,7 @@ func create_logging_proxy(target, logger):  # 357:26-GD7020-OK
 
 	# Intercept all calls for logging
 	for method in target.get_method_list(): # 361:15-GD7007-OK
-		var method_name = method["name"]
+		var method_name = method["name"]  # 362:20-GD3013-SKIP
 		var interceptor = _create_logging_interceptor(logger)
 		proxy.intercept(method_name, interceptor)
 
@@ -400,7 +400,7 @@ func add_around(method_pattern, advice):
 func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK
 	# Apply before advice
 	for pattern in before_advice:
-		if method_name.match(pattern):  # 403:5-GD7007-OK
+		if method_name.match(pattern):  # 403:5-GD4002-SKIP, 403:5-GD7007-OK
 			for advice in before_advice[pattern]:
 				advice.call(obj, method_name, args)  # 405:4-GD7007-OK
 
@@ -408,7 +408,7 @@ func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK
 	var result
 	var has_around = false
 	for pattern in around_advice:
-		if method_name.match(pattern):
+		if method_name.match(pattern):  # 411:5-GD4002-SKIP
 			var proceed = func(): return obj.callv(method_name, args)  # 412:32-GD7007-OK
 			result = around_advice[pattern].call(obj, method_name, args, proceed)
 			has_around = true
@@ -419,7 +419,7 @@ func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK
 
 	# Apply after advice
 	for pattern in after_advice:
-		if method_name.match(pattern):
+		if method_name.match(pattern):  # 422:5-GD4002-SKIP
 			for advice in after_advice[pattern]:
 				advice.call(obj, method_name, args, result)
 

@@ -875,7 +875,8 @@ func process():
             ("child_a.gd", "extends BaseA\n\nfunc execute() -> void:\n\tsuper.execute()\n"),
             ("base_b.gd", "class_name BaseB\nextends Resource\n\nfunc execute() -> void:\n\tpass\n"),
             ("child_b.gd", "extends BaseB\n\nfunc execute() -> void:\n\tsuper.execute()\n"),
-            ("bridge.gd", "extends Node\n\nvar obj\n\nfunc run():\n\tobj.execute()\n"));
+            ("bridge.gd", "class_name BridgeRunner\nextends Node\n\nfunc run(target):\n\ttarget.execute()\n"),
+            ("caller.gd", "extends Node\n\nfunc _ready():\n\tvar b: BridgeRunner = BridgeRunner.new()\n\tb.run(BaseA.new())\n\tb.run(BaseB.new())\n"));
         try
         {
             using var project = GDProjectLoader.LoadProject(tempPath);

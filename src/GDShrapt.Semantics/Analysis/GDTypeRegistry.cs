@@ -16,7 +16,6 @@ internal class GDTypeRegistry
 
     // Duck typing
     private readonly Dictionary<string, GDDuckType> _duckTypes = new();
-    private readonly Dictionary<GDNode, GDTypeNarrowingContext> _narrowingContexts = new();
 
     // Type usages (type annotations, is checks, extends)
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
@@ -65,14 +64,6 @@ internal class GDTypeRegistry
     public GDDuckType? GetDuckType(string variableName)
     {
         return _duckTypes.TryGetValue(variableName, out var duckType) ? duckType : null;
-    }
-
-    /// <summary>
-    /// Gets the narrowing context for a node.
-    /// </summary>
-    public GDTypeNarrowingContext? GetNarrowingContext(GDNode node)
-    {
-        return _narrowingContexts.TryGetValue(node, out var context) ? context : null;
     }
 
     /// <summary>
@@ -167,17 +158,6 @@ internal class GDTypeRegistry
         if (!string.IsNullOrEmpty(variableName) && duckType != null)
         {
             _duckTypes[variableName] = duckType;
-        }
-    }
-
-    /// <summary>
-    /// Registers a narrowing context for a node.
-    /// </summary>
-    internal void RegisterNarrowingContext(GDNode node, GDTypeNarrowingContext context)
-    {
-        if (node != null && context != null)
-        {
-            _narrowingContexts[node] = context;
         }
     }
 
@@ -310,7 +290,6 @@ internal class GDTypeRegistry
         _nodeTypes.Clear();
         _nodeTypeNodes.Clear();
         _duckTypes.Clear();
-        _narrowingContexts.Clear();
         _typeUsages.Clear();
         _variableProfiles.Clear();
         _unionTypeCache.Clear();

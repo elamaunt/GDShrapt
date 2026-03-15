@@ -57,6 +57,12 @@ public class GDTypeSystem : IGDTypeSystem
     }
 
     /// <inheritdoc/>
+    public GDFlowVariableType? GetVariableTypeAt(string variableName, GDNode atLocation)
+    {
+        return _model.GetVariableTypeAt(variableName, atLocation);
+    }
+
+    /// <inheritdoc/>
     public GDUnionType? GetUnionType(string symbolName)
     {
         return _model.GetUnionType(symbolName);
@@ -184,9 +190,11 @@ public class GDTypeSystem : IGDTypeSystem
             var narrowedType = _model.GetNarrowedType(variableName, atLocation);
             if (!string.IsNullOrEmpty(narrowedType))
             {
+                var narrowedSemType = GDSemanticType.FromRuntimeTypeName(narrowedType);
                 return new GDTypeInfo
                 {
-                    NarrowedType = GDSemanticType.FromRuntimeTypeName(narrowedType),
+                    InferredType = narrowedSemType,
+                    NarrowedType = narrowedSemType,
                     Confidence = GDTypeConfidence.Certain
                 };
             }

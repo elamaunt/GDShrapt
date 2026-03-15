@@ -3,9 +3,9 @@ DEAD CODE ANALYSIS: godot-open-rpg
 ================================================================================
 
 SUMMARY
-Items: 126
+Items: 156
 Variable: 20
-Function: 98
+Function: 128
 Signal: 2
 Constant: 6
 
@@ -13,6 +13,9 @@ BY FILE
 --------------------------------------------------------------------------------
 addons/dialogic/Core/DialogicGameHandler.gd:
   231:5 Function: preload_timeline [FNC] [Strict]
+
+addons/dialogic/Core/Dialogic_Subsystem.gd:
+  10:5 Function: post_install [FNC] [Strict]
 
 addons/dialogic/Core/index_class.gd:
   105:5 Function: _get_style_presets [FNC] [Strict]
@@ -46,8 +49,13 @@ addons/dialogic/Editor/Common/update_install_window.gd:
 addons/dialogic/Editor/Common/update_manager.gd:
   16:4 Variable: current_version [VNR] [Strict]
 
+addons/dialogic/Editor/Events/BranchEnd.gd:
+  25:5 Function: visual_select [FNC] [Strict]
+  48:5 Function: unhighlight [FNC] [Strict]
+
 addons/dialogic/Editor/Events/EventBlock/event_block.gd:
   10:4 Variable: editor_reference [VNR] [Strict]
+  118:5 Function: visual_select [FNC] [Strict]
 
 addons/dialogic/Editor/Events/Fields/array_part.gd:
   8:4 Variable: value_field [VNR] [Strict]
@@ -98,9 +106,58 @@ addons/dialogic/Modules/Background/dialogic_background.gd:
   30:5 Function: _custom_fade_in [FNC] [Strict]
   36:5 Function: _custom_fade_out [FNC] [Strict]
 
+addons/dialogic/Modules/Character/DefaultAnimations/bounce.gd:
+  13:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/bounce_in_out.gd:
+  35:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/fade_down_in_out.gd:
+  40:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/fade_in_out.gd:
+  28:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/fade_up_in_out.gd:
+  40:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/heartbeat.gd:
+  10:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/instant_in_out.gd:
+  8:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/shake_x.gd:
+  17:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/shake_y.gd:
+  20:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/slide_down_in_out.gd:
+  22:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/slide_left_in_out.gd:
+  22:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/slide_right_in_out.gd:
+  23:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/slide_up_in.gd:
+  21:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/tada.gd:
+  22:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/zoom_center_in_out.gd:
+  32:5 Function: _get_named_variations [FNC] [Strict]
+
+addons/dialogic/Modules/Character/DefaultAnimations/zoom_in_out.gd:
+  31:5 Function: _get_named_variations [FNC] [Strict]
+
 addons/dialogic/Modules/Character/class_dialogic_animation.gd:
   53:5 Function: pause [FNC] [Strict]
   58:5 Function: resume [FNC] [Strict]
+  63:5 Function: _get_named_variations [FNC] [Strict]
 
 addons/dialogic/Modules/Character/dialogic_portrait.gd:
   69:5 Function: _highlight [FNC] [Strict]
@@ -118,10 +175,20 @@ addons/dialogic/Modules/Character/subsystem_portraits.gd:
   577:5 Function: get_current_character [FNC] [Strict]
   605:5 Function: get_character_info [FNC] [Strict]
 
+addons/dialogic/Modules/Choice/event_choice.gd:
+  56:5 Function: get_end_branch_control [FNC] [Strict]
+
+addons/dialogic/Modules/Choice/subsystem_choices.gd:
+  60:5 Function: post_install [FNC] [Strict]
+
+addons/dialogic/Modules/Condition/event_condition.gd:
+  63:5 Function: get_end_branch_control [FNC] [Strict]
+
 addons/dialogic/Modules/Core/event_end_branch.gd:
   37:5 Function: find_opening_index [FNC] [Strict]
 
 addons/dialogic/Modules/Core/subsystem_input.gd:
+  52:5 Function: post_install [FNC] [Strict]
   122:5 Function: handle_node_gui_input [FNC] [Strict]
 
 addons/dialogic/Modules/DefaultLayoutParts/Layer_Glossary/glossary_popup_layer.gd:
@@ -143,6 +210,7 @@ addons/dialogic/Modules/HighlightPortrait/simple_highlight_portrait.gd:
   28:5 Function: _unhighlight [FNC] [Strict]
 
 addons/dialogic/Modules/History/subsystem_history.gd:
+  101:5 Function: post_install [FNC] [Strict]
   147:5 Function: open_history [FNC] [Strict]
   151:5 Function: close_history [FNC] [Strict]
   241:5 Function: has_last_event_been_visited [FNC] [Strict]
@@ -187,6 +255,7 @@ addons/dialogic/Modules/Text/character_settings/character_portrait_mood_settings
 
 addons/dialogic/Modules/Text/subsystem_text.gd:
   27:4 Variable: text_already_read [VNR] [Strict]
+  76:5 Function: post_install [FNC] [Strict]
   224:5 Function: is_textbox_visible [FNC] [Strict]
   249:5 Function: set_text_voice_synced [FNC] [Strict]
   255:5 Function: is_text_voice_synced [FNC] [Strict]
@@ -194,7 +263,9 @@ addons/dialogic/Modules/Text/subsystem_text.gd:
   417:5 Function: get_current_speaker [FNC] [Strict]
 
 addons/dialogic/Modules/Variable/subsystem_variables.gd:
+  188:5 Function: folders [FNC] [Strict]
   196:5 Function: variables [FNC] [Strict]
+  260:6 Function: folders [FNC] [Strict]
   268:6 Function: variables [FNC] [Strict]
 
 addons/dialogic/Modules/Voice/subsystem_voice.gd:
@@ -207,6 +278,9 @@ addons/dialogic/Resources/dialogic_style.gd:
   38:5 Function: get_layer_count [FNC] [Strict]
   44:5 Function: get_layer_index [FNC] [Strict]
   261:5 Function: prepare [FNC] [Strict]
+
+addons/dialogic/Resources/event.gd:
+  151:5 Function: get_end_branch_control [FNC] [Strict]
 
 addons/dialogic/plugin.gd:
   23:5 Function: _enable_plugin [FNC] [Strict]

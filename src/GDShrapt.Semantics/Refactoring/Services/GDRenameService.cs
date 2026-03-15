@@ -677,9 +677,17 @@ public class GDRenameService
                     editProvenanceVar = ExtractVariableName(gdRef);
                 }
 
+                var editReason = sref.ConfidenceReason;
+                if (sref.Kind == GDSymbolReferenceKind.Declaration
+                    && string.IsNullOrEmpty(editReason)
+                    && sref.Script?.TypeName == oldName)
+                {
+                    editReason = "class_name declaration";
+                }
+
                 targetEdits.Add(new GDTextEdit(
                     sref.FilePath, line, col, oldName, newName,
-                    sref.Confidence, sref.ConfidenceReason)
+                    sref.Confidence, editReason)
                 {
                     DetailedProvenance = editProvenance,
                     ProvenanceVariableName = editProvenanceVar

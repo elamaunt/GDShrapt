@@ -20,7 +20,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
     private readonly IGDRuntimeTypeInjector? _typeInjector;
     private readonly GDCallSiteRegistry? _callSiteRegistry;
     private GDTypeInferenceEngine? _typeEngine;
-    private readonly GDTypeNarrowingAnalyzer? _narrowingAnalyzer;
 
     private GDSemanticModel? _model;
     private GDValidationContext? _validationContext;
@@ -30,9 +29,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     private readonly Stack<GDScope> _gdScopeStack = new();
     private GDScope? _currentGDScope;
-
-    private readonly Stack<GDTypeNarrowingContext> _narrowingStack = new();
-    private GDTypeNarrowingContext? _currentNarrowingContext;
 
     private bool _inAssignmentLeft;
     private bool _inPropertyWriteCaller;
@@ -59,10 +55,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
         _typeInjector = typeInjector;
         _callSiteRegistry = callSiteRegistry;
 
-        if (runtimeProvider != null)
-        {
-            _narrowingAnalyzer = new GDTypeNarrowingAnalyzer(runtimeProvider);
-        }
     }
 
     /// <summary>
@@ -134,8 +126,6 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
         _currentGDScope = new GDScope(GDScopeType.Global, null, _scriptFile.Class);
         _gdScopeStack.Push(_currentGDScope);
-
-        _currentNarrowingContext = new GDTypeNarrowingContext();
 
         _scriptFile.Class.WalkIn(this);
 
@@ -291,7 +281,16 @@ internal class GDSemanticReferenceCollector : GDVisitor
         if (string.IsNullOrEmpty(name))
             return;
 
-        DeclareClassMember(GDSymbol.Signal(name, signalDecl), context, declaringTypeName);
+        var symbol = GDSymbol.Signal(name, signalDecl);
+        symbol.Parameters = signalDecl.Parameters?
+            .Select((p, i) => new GDParameterSymbolInfo(
+                p.Identifier?.Sequence ?? $"param{i}",
+                p.Type?.BuildName(),
+                p.DefaultValue != null,
+                i))
+            .ToList();
+
+        DeclareClassMember(symbol, context, declaringTypeName);
     }
 
     private void RegisterConstant(GDVariableDeclaration constDecl, GDValidationContext context, string declaringTypeName)
@@ -340,6 +339,8 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
     public override void Left(GDMethodDeclaration methodDeclaration)
     {
+        // Ensure flow analysis is cached for this method (used by diagnostics, nullability, etc.)
+        _model?.EnsureFlowAnalyzer(methodDeclaration);
         PopScope();
         _validationContext?.Scopes.Pop();
     }
@@ -435,141 +436,14 @@ internal class GDSemanticReferenceCollector : GDVisitor
     {
         PushScope(GDScopeType.Conditional, ifStatement);
         _validationContext?.Scopes.Push(GDScopeType.Conditional, ifStatement);
-
-        _narrowingStack.Push(_currentNarrowingContext ?? new GDTypeNarrowingContext());
     }
 
     public override void Left(GDIfStatement ifStatement)
     {
-        var afterIfNarrowing = ComputePostIfNarrowing(ifStatement);
-
-        if (_narrowingStack.Count > 0)
-            _currentNarrowingContext = _narrowingStack.Pop();
-
-        if (afterIfNarrowing != null)
-        {
-            _currentNarrowingContext = afterIfNarrowing;
-            _model!.SetPostIfNarrowing(ifStatement, afterIfNarrowing);
-        }
-
         PopScope();
         _validationContext?.Scopes.Pop();
     }
 
-    private string? ResolveVariableDeclaredType(string name, GDNode contextNode)
-    {
-        var symbol = _model?.FindSymbolInScope(name, contextNode);
-        if (symbol == null)
-            return null;
-
-        if (symbol.TypeName != null)
-            return symbol.TypeName;
-
-        if (_typeEngine != null && symbol.DeclarationNode != null)
-        {
-            GDExpression? initializer = null;
-            if (symbol.DeclarationNode is GDVariableDeclarationStatement localVar)
-                initializer = localVar.Initializer;
-            else if (symbol.DeclarationNode is GDVariableDeclaration classVar)
-                initializer = classVar.Initializer;
-
-            if (initializer != null)
-                return _typeEngine.InferSemanticType(initializer)?.DisplayName;
-        }
-
-        return null;
-    }
-
-    public override void Visit(GDIfBranch ifBranch)
-    {
-        if (ifBranch.Condition != null && _narrowingAnalyzer != null)
-        {
-            _narrowingAnalyzer.SetVariableTypeResolver(name =>
-                ResolveVariableDeclaredType(name, ifBranch));
-            var ifNarrowing = _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: false);
-            _currentNarrowingContext = ifNarrowing;
-            _model!.SetNarrowingContext(ifBranch, ifNarrowing);
-        }
-    }
-
-    public override void Left(GDIfBranch ifBranch)
-    {
-        if (_narrowingStack.Count > 0)
-            _currentNarrowingContext = _narrowingStack.Peek();
-    }
-
-    public override void Visit(GDElifBranch elifBranch)
-    {
-        if (elifBranch.Condition != null && _narrowingAnalyzer != null)
-        {
-            _narrowingAnalyzer.SetVariableTypeResolver(name =>
-                ResolveVariableDeclaredType(name, elifBranch));
-            var elifNarrowing = _narrowingAnalyzer.AnalyzeCondition(elifBranch.Condition, isNegated: false);
-            _currentNarrowingContext = elifNarrowing;
-            _model!.SetNarrowingContext(elifBranch, elifNarrowing);
-        }
-    }
-
-    public override void Left(GDElifBranch elifBranch)
-    {
-        if (_narrowingStack.Count > 0)
-            _currentNarrowingContext = _narrowingStack.Peek();
-    }
-
-    public override void Visit(GDElseBranch elseBranch)
-    {
-        if (_narrowingStack.Count > 0)
-            _currentNarrowingContext = _narrowingStack.Peek();
-        else
-            _currentNarrowingContext = new GDTypeNarrowingContext();
-    }
-
-    public override void Left(GDElseBranch elseBranch)
-    {
-    }
-
-    /// <summary>
-    /// Computes narrowing for code after an if-statement with early return.
-    /// If the if-branch contains unconditional return and no else branch,
-    /// the code after will have the inverse condition narrowing.
-    /// </summary>
-    private GDTypeNarrowingContext? ComputePostIfNarrowing(GDIfStatement ifStatement)
-    {
-        if (_narrowingAnalyzer == null)
-            return null;
-
-        var ifBranch = ifStatement.IfBranch;
-        if (ifBranch == null || ifBranch.Condition == null)
-            return null;
-
-        // ElseBranch property creates empty branch if null — check ElseKeyword
-        if (ifStatement.ElseBranch?.ElseKeyword != null)
-            return null;
-
-        if (!BranchHasUnconditionalReturn(ifBranch))
-            return null;
-
-        _narrowingAnalyzer.SetVariableTypeResolver(name =>
-            ResolveVariableDeclaredType(name, ifBranch));
-        return _narrowingAnalyzer.AnalyzeCondition(ifBranch.Condition, isNegated: true);
-    }
-
-    /// <summary>
-    /// Checks if a branch contains an unconditional return statement.
-    /// </summary>
-    private static bool BranchHasUnconditionalReturn(GDIfBranch branch)
-    {
-        var statements = branch.Statements;
-        if (statements == null || statements.Count == 0)
-            return false;
-
-        var lastStatement = statements.LastOrDefault();
-        if (lastStatement is GDExpressionStatement exprStmt)
-        {
-            return exprStmt.Expression is GDReturnExpression;
-        }
-        return lastStatement is GDReturnExpression;
-    }
 
     public override void Visit(GDInnerClassDeclaration innerClass)
     {
@@ -956,9 +830,9 @@ internal class GDSemanticReferenceCollector : GDVisitor
             var varName = GDFlowNarrowingHelper.GetRootVariableName(callerExpr);
             if (!string.IsNullOrEmpty(varName))
             {
-                var narrowedSemanticType = _currentNarrowingContext?.GetConcreteType(varName);
-                var narrowedType = narrowedSemanticType?.DisplayName;
-                if (!string.IsNullOrEmpty(narrowedType))
+                var flowVarType = _model?.GetVariableTypeAt(varName, memberExpression);
+                var narrowedType = flowVarType?.EffectiveType?.DisplayName;
+                if (!string.IsNullOrEmpty(narrowedType) && !GDSemanticType.FromRuntimeTypeName(narrowedType).IsVariant)
                 {
                     var symbolInfo = ResolveMemberOnType(narrowedType, memberName);
                     if (symbolInfo != null)
@@ -1822,7 +1696,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
         {
             if (member is GDMethodDeclaration method)
             {
-                var flowAnalyzer = new GDFlowAnalyzer(_typeEngine);
+                var flowAnalyzer = new GDFlowAnalyzer((IGDExpressionTypeProvider?)_typeEngine);
                 flowAnalyzer.Analyze(method);
 
                 // Local variable usage profiles

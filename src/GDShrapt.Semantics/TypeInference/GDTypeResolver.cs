@@ -53,6 +53,39 @@ public class GDTypeResolver
         }
     }
 
+    internal GDTypeResolver(
+        GDGodotTypesProvider? godotTypesProvider,
+        GDProjectTypesProvider? projectTypesProvider,
+        GDAutoloadsProvider? autoloadsProvider,
+        GDSceneTypesProvider? sceneTypesProvider,
+        IGDScriptProvider? scriptProvider,
+        IGDLogger? logger,
+        GDTresResourceProvider? tresResourceProvider)
+    {
+        _godotTypesProvider = godotTypesProvider ?? new GDGodotTypesProvider();
+        _projectTypesProvider = projectTypesProvider;
+        _autoloadsProvider = autoloadsProvider;
+        _sceneTypesProvider = sceneTypesProvider;
+        _scriptProvider = scriptProvider;
+        _logger = logger ?? GDNullLogger.Instance;
+
+        _compositeProvider = new GDCompositeRuntimeProvider(
+            _godotTypesProvider,
+            _projectTypesProvider,
+            _autoloadsProvider,
+            _sceneTypesProvider);
+
+        if (_sceneTypesProvider != null || _scriptProvider != null || _godotTypesProvider != null)
+        {
+            _nodeTypeInjector = new GDNodeTypeInjector(
+                _sceneTypesProvider,
+                _scriptProvider,
+                _godotTypesProvider,
+                _logger,
+                tresResourceProvider: tresResourceProvider);
+        }
+    }
+
     /// <summary>
     /// Gets the runtime provider for use with GDShrapt.Validator.
     /// </summary>

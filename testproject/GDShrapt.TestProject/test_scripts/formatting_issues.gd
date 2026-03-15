@@ -33,7 +33,7 @@ func inconsistent_operators():
 	var b = 20-10  # 33:5-GDL211-OK
 	var c=30 * 2  # 34:5-GDL211-OK
 	var d = 40/ 4  # 35:5-GDL211-OK
-	var e=a+b-c*d  # 36:5-GDL211-OK
+	var e=a+b-c*d  # 36:5-GDL211-OK, 36:7-GD3002-SKIP
 	return e
 
 

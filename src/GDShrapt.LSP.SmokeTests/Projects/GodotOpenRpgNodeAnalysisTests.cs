@@ -1336,4 +1336,33 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
         result.Contents.Value.Should().NotContain("Unknown",
             "type should be resolved, not Unknown");
     }
+
+    [TestMethod]
+    public void InventoryScript_HoverOnItemChangedSignal_ShowsParameterSignature()
+    {
+        var script = FindScript("common/inventory.gd");
+        script.Should().NotBeNull("inventory.gd should exist in godot-open-rpg");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var line = FindLineContaining(script, "signal item_changed");
+        line.Should().BeGreaterThan(-1, "inventory.gd should contain 'signal item_changed'");
+
+        var column = GetColumnOf(script, line, "item_changed");
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, column)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("hover on item_changed signal should return content");
+
+        Console.WriteLine($"[HOVER] signal content: {result!.Contents.Value}");
+
+        result.Contents.Value.Should().Contain("item_changed(",
+            "signal hover should show parameter signature, not just 'signal item_changed'");
+    }
 }

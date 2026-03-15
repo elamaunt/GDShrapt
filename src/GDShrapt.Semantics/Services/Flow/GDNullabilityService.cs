@@ -159,18 +159,17 @@ internal class GDNullabilityService
     /// </summary>
     public static bool HasNonNullInitializer(GDSymbolInfo symbol)
     {
+        GDExpression? initializer = null;
+
         if (symbol.DeclarationNode is GDVariableDeclaration varDecl)
-        {
-            var initializer = varDecl.Initializer;
-            if (initializer == null)
-                return false;
+            initializer = varDecl.Initializer;
 
-            if (initializer is GDIdentifierExpression nullIdent && nullIdent.Identifier?.Sequence == "null")
-                return false;
+        if (initializer == null)
+            return false;
 
-            return true;
-        }
+        if (initializer is GDIdentifierExpression nullIdent && nullIdent.Identifier?.Sequence == "null")
+            return false;
 
-        return false;
+        return true;
     }
 }

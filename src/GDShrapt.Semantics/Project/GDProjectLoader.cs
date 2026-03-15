@@ -37,6 +37,7 @@ public static class GDProjectLoader
         project.LoadScenes();
         project.LoadResources();
         project.AnalyzeAll();
+        project.EnrichWithCallSiteAnalysis();
         project.ResolveTresClassNames();
 
         return project;
@@ -60,6 +61,7 @@ public static class GDProjectLoader
         project.LoadScenes();
         project.LoadResources();
         project.AnalyzeAll();
+        project.EnrichWithCallSiteAnalysis();
         project.ResolveTresClassNames();
 
         return project;

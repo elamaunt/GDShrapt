@@ -76,14 +76,19 @@ Strict edits (8):
     40:8 take_damage -> take_damage_renamed [Strict] (super.take_damage() call in derived class) # OK
     98:9 take_damage -> take_damage_renamed [Strict] (Member access via 'BaseEntity.take_damage') # OK
 
-Potential edits (4):
+Potential edits (7):
   test_scripts/cross_file_inference.gd:
     92:22 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal) # OK
   test_scripts/duck_caller.gd:
     12:25 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal) # OK
+    13:11 take_damage -> take_damage_renamed [Potential] (Member access via 'Variant.take_damage') # OK
+  test_scripts/duck_typing_advanced.gd:
+    26:22 take_damage -> take_damage_renamed [Potential] (Member access via 'Variant.take_damage') # OK
   test_scripts/extended_class.gd:
     30:24 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal) # OK
     31:16 take_damage -> take_damage_renamed [Potential] (call("take_damage") string literal) # OK
+  test_scripts/polymorphic_interfaces.gd:
+    41:5 take_damage -> take_damage_renamed [Potential] (Member access via 'Variant.take_damage') # OK
 
 ---
 

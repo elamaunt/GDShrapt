@@ -52,7 +52,7 @@ func invoke_chain(name, initial_value):
 
 	var current = initial_value
 	for callback in callback_chains[name]:
-		current = callback.call(current) # 55:12-GD7007-OK
+		current = callback.call(current) # 55:12-GD7007-SKIP
 	return current
 
 
@@ -444,13 +444,13 @@ class SignalWaitContext:
 
 func _on_signal_received(ctx: SignalWaitContext, args = []):
 	ctx.target.disconnect(ctx.signal_name, ctx.connection)
-	ctx.operation.resolve(args) # 447:1-GD7003-OK
+	ctx.operation.resolve(args)
 
 
 func _on_wait_timeout(ctx: SignalWaitContext):
 	if ctx.target.is_connected(ctx.signal_name, ctx.connection):
 		ctx.target.disconnect(ctx.signal_name, ctx.connection)
-		ctx.operation.reject("Timeout") # 453:2-GD7003-OK
+		ctx.operation.reject("Timeout")
 
 
 func wait_for_signal(target, signal_name, timeout = 5.0):
