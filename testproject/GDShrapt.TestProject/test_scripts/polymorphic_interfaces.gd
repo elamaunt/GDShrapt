@@ -411,7 +411,7 @@ var caretaker_data      # Current state, type varies
 
 func save_state():
 	if caretaker_data and caretaker_data.has_method("create_memento"):
-		var memento = caretaker_data.create_memento()  # 414:16-GD7003-OK
+		var memento = caretaker_data.create_memento()
 		memento_stack.append(memento)
 
 
@@ -421,7 +421,7 @@ func restore_state():
 
 	var memento = memento_stack.pop_back()
 	if caretaker_data and caretaker_data.has_method("restore_from_memento"):
-		caretaker_data.restore_from_memento(memento)  # 424:2-GD7003-OK
+		caretaker_data.restore_from_memento(memento)
 		return true
 	return false
 

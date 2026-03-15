@@ -60,7 +60,7 @@ func get_statistics() -> Dictionary:
 func validate_data() -> bool:
 	# BUG: This doesn't handle null values correctly
 	for item in data:
-		if item == null:
+		if item == null:  # 63:5-GD7013-OK
 			return false
 	return true
 

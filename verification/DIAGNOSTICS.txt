@@ -1,32 +1,32 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-15 02:33:01
+Generated: 2026-03-15 16:40:34
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 738
+Total diagnostics: 736
 Scripts analyzed:  61
 
 By Severity:
   Error     :    30
-  Hint      :    94
+  Hint      :    98
   Info      :    36
-  Warning   :   578
+  Warning   :   572
 
 By Source:
   Linter              :   304
-  SemanticValidator   :   400
+  SemanticValidator   :   398
   Validator           :    34
 
 By Code (Top 30):
-  GD7007    :  185  (Variable 'timer_node' is @onready - _ready() may not have...)
+  GD7007    :  183  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  158  (Local variable 'level' is declared but never used)
-  GD7006    :   39  (Variable 'data' may be null when accessing '[...]')
+  GD7006    :   38  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
   GD3023    :   33  (Function 'create_game_object' returns inconsistent types:...)
-  GD7003    :   33  (Calling method 'visit' on untyped variable 'visitor' with...)
+  GD7003    :   31  (Calling method 'visit' on untyped variable 'visitor' with...)
   GDL203    :   28  (Function '_process_idle' only contains 'pass')
   GD7005    :   21  (Variable 'child_sprite' is @onready - _ready() may not ha...)
   GDL513    :   20  (Expected 2 empty line(s) before function, found 1)
@@ -37,8 +37,8 @@ By Code (Top 30):
   GDL101    :    8  (Line 212 exceeds 120 characters (length: 146))
   GDL202    :    8  (Parameter 'delta' is declared but never used)
   GDL211    :    7  (Local variable 'class_level_var' shadows a class-level va...)
-  GD3009    :    6  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
+  GD3009    :    5  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
   GD3024    :    5  (Not all code paths return a value in 'test_gdl228_valid' ...)
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
@@ -49,8 +49,8 @@ By Code (Top 30):
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
   GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD4009    :    4  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
+  GD7013    :    4  (Redundant null check: 'right' is already known to be non-...)
   GD3006    :    3  (Unknown type: 'CompletelyUnknownType')
-  GD3010    :    3  (Argument type mismatch for 'x' in call to '_take_int': ex...)
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -155,7 +155,7 @@ DIAGNOSTICS BY FILE
    124:0   [GD3023] Warning - Function '_reducer' returns inconsistent types: int, String
    140:14  [GD3002] Warning - Potential type mismatch in arithmetic operation: Array + Array[int]
 
---- test_scripts/cyclic_inference.gd (26 diagnostics) ---
+--- test_scripts/cyclic_inference.gd (28 diagnostics) ---
 
      2:11  [GDL222] Warning - 'CyclicInference' has 22 public methods (max 20)
     49:4   [GD3020] Warning - Variable 'value' may be null; comparison with '>' would cause runtime error
@@ -177,9 +177,11 @@ DIAGNOSTICS BY FILE
    252:7   [GD3020] Warning - Variable 'new_pos' may be null; comparison with '<' would cause runtime error
    252:17  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
    253:11  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
+   258:5   [GD7013] Hint - Redundant null check: 'right' is already known to be non-null
    279:7   [GD3020] Warning - Variable 'new_pos' may be null; comparison with '<' would cause runtime error
    279:17  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
    280:11  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
+   285:5   [GD7013] Hint - Redundant null check: 'right' is already known to be non-null
    299:4   [GD3020] Warning - Variable 'pos' may be null; comparison with '>=' would cause runtime error
    299:11  [GD7007] Warning - Variable 'tokens' may be null when accessing 'size'
    302:13  [GD7006] Warning - Variable 'tokens' may be null when accessing '[...]'
@@ -404,7 +406,7 @@ DIAGNOSTICS BY FILE
    248:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    251:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/dynamic_dispatch.gd (31 diagnostics) ---
+--- test_scripts/dynamic_dispatch.gd (30 diagnostics) ---
 
      2:11  [GDL222] Warning - 'DynamicDispatch' has 27 public methods (max 20)
     21:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
@@ -424,7 +426,6 @@ DIAGNOSTICS BY FILE
    172:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: null, Array, Dictionary
    193:0   [GD3023] Warning - Function '_deserialize_typed' returns inconsistent types: Vector2, Vector3, Color
    194:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   231:3   [GD7007] Warning - Variable 'instance' may be null when accessing 'set'
    231:21  [GD7006] Warning - Variable 'init_params' may be null when accessing '[...]'
    256:8   [GD7003] Warning - Calling method 'get_file' on untyped expression without type guard
    256:8   [GD7003] Warning - Calling method 'get_path' on untyped expression without type guard
@@ -438,7 +439,7 @@ DIAGNOSTICS BY FILE
    405:4   [GD7007] Warning - Variable 'advice' may be null when accessing 'call'
    412:32  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
 
---- test_scripts/ecs_like_system.gd (30 diagnostics) ---
+--- test_scripts/ecs_like_system.gd (29 diagnostics) ---
 
      2:11  [GDL222] Warning - 'ECSLikeSystem' has 31 public methods (max 20)
    137:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
@@ -455,7 +456,6 @@ DIAGNOSTICS BY FILE
    255:18  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
    258:5   [GD7007] Warning - Variable 'overrides' may be null when accessing 'has'
    259:15  [GD7006] Warning - Variable 'overrides' may be null when accessing '[...]'
-   260:7   [GD7007] Warning - Variable 'comp_def' may be null when accessing 'has'
    263:0   [GDL101] Warning - Line 263 exceeds 120 characters (length: 159)
    290:2   [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
    296:5   [GD7006] Warning - Variable 'event' may be null when accessing '[...]'
@@ -527,7 +527,6 @@ DIAGNOSTICS BY FILE
    296:15  [GD7006] Warning - Variable 'cost' may be null when accessing '[...]'
    316:12  [GD7007] Warning - Variable 'ability' may be null when accessing 'get'
    319:46  [GD7006] Warning - Variable 'cost' may be null when accessing '[...]'
-   334:32  [GD7006] Warning - Variable 'ability' may be null when accessing '[...]'
    361:49  [GD7006] Warning - Variable 'scaling' may be null when accessing '[...]'
    385:2   [GD7006] Warning - Variable 'effect' may be null when accessing '[...]'
    389:3   [GD7007] Warning - Variable 'effect' may be null when accessing 'call'
@@ -537,6 +536,7 @@ DIAGNOSTICS BY FILE
    459:19  [GD7007] Warning - Variable 'recipe' may be null when accessing 'get'
    463:20  [GD7007] Warning - Variable 'ingredient' may be null when accessing 'get'
    466:8   [GD3020] Warning - Variable 'required' may be null; comparison with '>' would cause runtime error
+   469:6   [GD7013] Hint - Redundant null check: 'item' is already known to be non-null
    473:6   [GD3020] Warning - Variable 'count' may be null; comparison with '<=' would cause runtime error
    473:6   [GD3020] Warning - Variable 'required' may be null; comparison with '<=' would cause runtime error
    507:32  [GD7007] Warning - Variable 'data' may be null when accessing 'get'
@@ -604,7 +604,7 @@ DIAGNOSTICS BY FILE
     13:2   [GD7007] Warning - Variable 'panel' may be null when accessing 'refresh_ui'
     17:1   [GD7007] Warning - Variable 'panel' may be null when accessing 'refresh_ui'
 
---- test_scripts/polymorphic_interfaces.gd (45 diagnostics) ---
+--- test_scripts/polymorphic_interfaces.gd (43 diagnostics) ---
 
      2:11  [GDL222] Warning - 'PolymorphicInterfaces' has 40 public methods (max 20)
     40:15  [GD7003] Warning - Calling method 'get_health' on untyped variable 'e' without type guard
@@ -649,8 +649,6 @@ DIAGNOSTICS BY FILE
    382:2   [GD7003] Warning - Calling method 'exit' on untyped variable 'current_state' without type guard
    387:2   [GD7003] Warning - Calling method 'enter' on untyped variable 'current_state' without type guard
    402:9   [GD7003] Warning - Calling method 'handle_input' on untyped variable 'current_state' without type guard
-   414:16  [GD7003] Warning - Calling method 'create_memento' on untyped variable 'caretaker_data' without type guard
-   424:2   [GD7003] Warning - Calling method 'restore_from_memento' on untyped variable 'caretaker_data' without type guard
 
 --- test_scripts/reflection_test.gd (3 diagnostics) ---
 
@@ -869,8 +867,9 @@ DIAGNOSTICS BY FILE
    303:5   [GDL201] Warning - Local variable 'sin_val' is declared but never used
    304:5   [GDL201] Warning - Local variable 'cos_val' is declared but never used
 
---- test_scripts/todo_examples.gd (2 diagnostics) ---
+--- test_scripts/todo_examples.gd (3 diagnostics) ---
 
+    63:5   [GD7013] Hint - Redundant null check: 'item' is already known to be non-null
     74:5   [GDL203] Info - Function 'import_from_json' only contains 'pass'
     74:22  [GDL202] Info - Parameter 'json_string' is declared but never used
 
@@ -906,13 +905,12 @@ DIAGNOSTICS BY FILE
    220:0   [GD3023] Warning - Function 'factory_method' returns inconsistent types: Node, Node2D, Control, null
    233:0   [GD3023] Warning - Function 'type_from_data' returns inconsistent types: Vector2, Color, Rect2, Dictionary
 
---- test_scripts/union_types_complex.gd (23 diagnostics) ---
+--- test_scripts/union_types_complex.gd (22 diagnostics) ---
 
      2:11  [GDL222] Warning - 'UnionTypesComplex' has 28 public methods (max 20)
     24:0   [GD3023] Warning - Function 'try_operation' returns inconsistent types: String, int
     29:5   [GD3020] Warning - Variable 'input' may be null; comparison with '<' would cause runtime error
     43:5   [GD7016] Warning - Property 'id' not found on type 'Node'
-    52:9   [GD3009] Warning - Property 'global_position' not found on type 'Node'
     58:0   [GD3023] Warning - Function 'process_by_type' returns inconsistent types: int, float, String, Array, null
     84:0   [GD3023] Warning - Function 'complex_conditional' returns inconsistent types: int, String, Array[int], Dictionary[String, bool]
     98:0   [GD3023] Warning - Function 'match_return' returns inconsistent types: String, float, Array[int], Dictionary[String, int]

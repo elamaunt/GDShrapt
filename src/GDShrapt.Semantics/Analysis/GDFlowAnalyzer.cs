@@ -20,6 +20,7 @@ internal class GDFlowAnalyzer : GDVisitor
     private readonly Stack<GDFlowState> _stateStack = new();
     private readonly Stack<List<GDFlowState>> _branchStatesStack = new();
     private readonly Stack<GDExpression?> _matchSubjectStack = new();
+    private readonly Stack<GDExpression?> _ifConditionStack = new();
     private GDFlowState _currentState;
 
     // Results: maps AST nodes to their flow state at that point
@@ -763,12 +764,69 @@ internal class GDFlowAnalyzer : GDVisitor
         _resolvingExpressions.Add(expr);
         try
         {
+            // For member call expressions (receiver.method(args)), try flow-aware resolution first.
+            // The type provider's InferType uses union types for identifiers, which may include
+            // types from ALL assignments in the method (circular). Flow state has the correct
+            // narrowed type at this point in the control flow.
+            var flowResult = TryResolveCallWithFlowState(expr);
+            if (flowResult != null)
+                return flowResult;
+
             return _typeProvider?.InferType(expr);
         }
         finally
         {
             _resolvingExpressions.Remove(expr);
         }
+    }
+
+    private GDSemanticType? TryResolveCallWithFlowState(GDExpression expr)
+    {
+        if (expr is not GDCallExpression callExpr)
+            return null;
+
+        if (callExpr.CallerExpression is not GDMemberOperatorExpression memberOp)
+            return null;
+
+        var methodName = memberOp.Identifier?.Sequence;
+        if (string.IsNullOrEmpty(methodName))
+            return null;
+
+        // Get receiver's narrowed type from current flow state
+        string? receiverType = null;
+        if (memberOp.CallerExpression is GDIdentifierExpression receiverIdent)
+        {
+            var varName = receiverIdent.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                var flowVar = _currentState.GetVariableType(varName);
+                if (flowVar != null)
+                {
+                    var effective = flowVar.EffectiveType;
+                    if (effective != null && !effective.IsVariant)
+                        receiverType = effective.DisplayName;
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(receiverType))
+            return null;
+
+        var runtimeProvider = _typeProvider?.RuntimeProvider;
+        if (runtimeProvider == null)
+            return null;
+
+        // Walk inheritance chain to find the method
+        var currentType = receiverType;
+        for (int i = 0; i < 20 && !string.IsNullOrEmpty(currentType); i++)
+        {
+            var memberInfo = runtimeProvider.GetMember(currentType, methodName);
+            if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method && !string.IsNullOrEmpty(memberInfo.Type))
+                return GDSemanticType.FromRuntimeTypeName(memberInfo.Type);
+            currentType = runtimeProvider.GetBaseType(currentType);
+        }
+
+        return null;
     }
 
     private string? ResolveTypeWithFallback(GDExpression? expr)
@@ -797,6 +855,7 @@ internal class GDFlowAnalyzer : GDVisitor
         ApplyNarrowingFromCondition(ifBranch.Condition, branchState);
 
         _currentState = branchState;
+        _ifConditionStack.Push(ifBranch.Condition);
         RecordState(ifBranch);
     }
 
@@ -838,6 +897,12 @@ internal class GDFlowAnalyzer : GDVisitor
         // Create child state from parent (not from previous branch)
         var parentState = _stateStack.Count > 0 ? _stateStack.Peek() : _currentState;
         _currentState = parentState.CreateChild();
+
+        // Apply negated narrowing from if-condition (condition is false in else branch)
+        var ifCondition = _ifConditionStack.Count > 0 ? _ifConditionStack.Peek() : null;
+        if (ifCondition != null)
+            ApplyNegatedNarrowingFromCondition(ifCondition, _currentState);
+
         RecordState(elseBranch);
     }
 
@@ -853,6 +918,7 @@ internal class GDFlowAnalyzer : GDVisitor
 
     public override void Left(GDIfStatement ifStmt)
     {
+        var ifCondition = _ifConditionStack.Count > 0 ? _ifConditionStack.Pop() : null;
         var parentState = _stateStack.Count > 0 ? _stateStack.Pop() : _currentState;
         var branchStates = _branchStatesStack.Count > 0 ? _branchStatesStack.Pop() : new List<GDFlowState>();
 
@@ -868,6 +934,13 @@ internal class GDFlowAnalyzer : GDVisitor
             // preserved via parentType.Clone() instead of going through MergeVariableTypes
             // which strips IsNarrowed.
             _currentState = GDFlowState.MergeBranches(branchStates[0], null, parentState);
+
+            // Early-return guard: if <condition>: return (no else branch)
+            // After the if statement, condition is false -> apply negated narrowing
+            if (branchStates[0].IsTerminated && ifCondition != null)
+            {
+                ApplyNegatedNarrowingFromCondition(ifCondition, _currentState);
+            }
         }
         else
         {
@@ -1251,6 +1324,13 @@ internal class GDFlowAnalyzer : GDVisitor
         if (condition == null)
             return;
 
+        // Unwrap parentheses: (condition) -> condition
+        if (condition is GDBracketExpression bracket && bracket.InnerExpression != null)
+        {
+            ApplyNarrowingFromCondition(bracket.InnerExpression, state);
+            return;
+        }
+
         // Handle: x is Type
         if (condition is GDDualOperatorExpression dualOp &&
             dualOp.Operator?.OperatorType == GDDualOperatorType.Is)
@@ -1268,16 +1348,42 @@ internal class GDFlowAnalyzer : GDVisitor
                     state.MarkNonNull(varName);
                 }
             }
+            return;
         }
 
-        // Handle: x is Type and y is OtherType (or other AND conditions)
+        // Handle: x is Type and y is OtherType (both 'and' and '&&')
         if (condition is GDDualOperatorExpression andOp &&
-            andOp.Operator?.OperatorType == GDDualOperatorType.And)
+            (andOp.Operator?.OperatorType == GDDualOperatorType.And ||
+             andOp.Operator?.OperatorType == GDDualOperatorType.And2))
         {
-            // Apply narrowing from both sides
             ApplyNarrowingFromCondition(andOp.LeftExpression, state);
             ApplyNarrowingFromCondition(andOp.RightExpression, state);
-            return; // Already handled
+            return;
+        }
+
+        // Handle: x is Type or x is OtherType (both 'or' and '||')
+        if (condition is GDDualOperatorExpression orOp &&
+            (orOp.Operator?.OperatorType == GDDualOperatorType.Or ||
+             orOp.Operator?.OperatorType == GDDualOperatorType.Or2))
+        {
+            // For OR: collect is-checks from both sides
+            // If same variable checked on both sides -> narrow to union of types
+            var narrowings = new Dictionary<string, List<GDSemanticType>>();
+            CollectIsCheckNarrowings(orOp.LeftExpression, narrowings);
+            CollectIsCheckNarrowings(orOp.RightExpression, narrowings);
+
+            foreach (var kvp in narrowings)
+            {
+                if (kvp.Value.Count >= 2)
+                {
+                    var union = new GDUnionType();
+                    foreach (var t in kvp.Value)
+                        union.AddType(t);
+                    state.NarrowToIntersection(kvp.Key, union);
+                    state.MarkNonNull(kvp.Key);
+                }
+            }
+            return;
         }
 
         // Handle: x != null / x == null / x == literal
@@ -1300,12 +1406,14 @@ internal class GDFlowAnalyzer : GDVisitor
             {
                 ApplyInOperatorNarrowing(eqOp, state);
             }
+            return;
         }
 
         // Handle: if x (truthiness check)
         if (condition is GDIdentifierExpression truthyIdent)
         {
             GDFlowNarrowingHelper.ApplyTruthinessNarrowing(truthyIdent, state);
+            return;
         }
 
         // Handle: has_method(), has(), has_signal(), is_instance_valid(), is_node_ready()
@@ -1314,6 +1422,7 @@ internal class GDFlowAnalyzer : GDVisitor
             ApplyHasMethodNarrowing(callExpr, state);
             GDFlowNarrowingHelper.ApplyIsInstanceValidNarrowing(callExpr, state);
             ApplyIsNodeReadyNarrowing(callExpr, state);
+            return;
         }
 
         // Handle: not x
@@ -1322,11 +1431,137 @@ internal class GDFlowAnalyzer : GDVisitor
             var singleOpType = notOp.Operator?.OperatorType;
             if (singleOpType == GDSingleOperatorType.Not || singleOpType == GDSingleOperatorType.Not2)
             {
-                // Negation inverts the narrowing
-                // For now, we don't apply narrowing from negations in the true branch
-                // (that would be handled in else branches)
+                // not expr in true branch -> expr is false -> apply negated narrowing
+                ApplyNegatedNarrowingFromCondition(notOp.TargetExpression, state);
             }
         }
+    }
+
+    /// <summary>
+    /// Applies negated narrowing from a condition (used for else branches and after early-return guards).
+    /// When condition is known to be FALSE, this method narrows variables accordingly.
+    /// </summary>
+    private void ApplyNegatedNarrowingFromCondition(GDExpression? condition, GDFlowState state)
+    {
+        if (condition == null)
+            return;
+
+        // Unwrap parentheses
+        if (condition is GDBracketExpression bracket && bracket.InnerExpression != null)
+        {
+            ApplyNegatedNarrowingFromCondition(bracket.InnerExpression, state);
+            return;
+        }
+
+        // not expr -> double negation -> apply positive narrowing
+        if (condition is GDSingleOperatorExpression notOp &&
+            (notOp.Operator?.OperatorType == GDSingleOperatorType.Not ||
+             notOp.Operator?.OperatorType == GDSingleOperatorType.Not2))
+        {
+            ApplyNarrowingFromCondition(notOp.TargetExpression, state);
+            return;
+        }
+
+        // x is Type -> in negated context, x is NOT Type
+        // Cannot express ExcludeType in GDFlowState -> skip
+
+        // A and B -> not(A and B) = not A or not B -> cannot narrow either side -> skip
+
+        // A or B -> not(A or B) = not A and not B -> apply negated narrowing to BOTH (De Morgan)
+        if (condition is GDDualOperatorExpression orOp &&
+            (orOp.Operator?.OperatorType == GDDualOperatorType.Or ||
+             orOp.Operator?.OperatorType == GDDualOperatorType.Or2))
+        {
+            ApplyNegatedNarrowingFromCondition(orOp.LeftExpression, state);
+            ApplyNegatedNarrowingFromCondition(orOp.RightExpression, state);
+            return;
+        }
+
+        // x != null / x == null -> in negated context, flip the semantics
+        if (condition is GDDualOperatorExpression eqOp)
+        {
+            var opType = eqOp.Operator?.OperatorType;
+            if (opType == GDDualOperatorType.NotEqual || opType == GDDualOperatorType.Equal)
+            {
+                var varName = ExtractNullComparisonVariable(eqOp);
+                if (!string.IsNullOrEmpty(varName))
+                {
+                    if (opType == GDDualOperatorType.NotEqual)
+                    {
+                        // x != null was false -> x == null
+                        state.MarkPotentiallyNull(varName);
+                    }
+                    else
+                    {
+                        // x == null was false -> x != null
+                        state.MarkNonNull(varName);
+                    }
+                }
+            }
+            return;
+        }
+
+        // if x -> in negated context, x is falsy -> narrow to null
+        if (condition is GDIdentifierExpression truthyIdent)
+        {
+            var varName = truthyIdent.Identifier?.Sequence;
+            if (!string.IsNullOrEmpty(varName))
+            {
+                state.NarrowType(varName, GDNullSemanticType.Instance);
+                state.MarkPotentiallyNull(varName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Collects is-check narrowings from an expression tree (for OR-condition union narrowing).
+    /// </summary>
+    private static void CollectIsCheckNarrowings(GDExpression? expr, Dictionary<string, List<GDSemanticType>> result)
+    {
+        if (expr == null) return;
+
+        if (expr is GDBracketExpression bracket)
+        {
+            CollectIsCheckNarrowings(bracket.InnerExpression, result);
+            return;
+        }
+
+        if (expr is GDDualOperatorExpression dualOp &&
+            dualOp.Operator?.OperatorType == GDDualOperatorType.Is &&
+            dualOp.LeftExpression is GDIdentifierExpression identExpr)
+        {
+            var varName = identExpr.Identifier?.Sequence;
+            var typeName = GDLiteralTypeResolver.GetTypeNameFromExpression(dualOp.RightExpression);
+            if (!string.IsNullOrEmpty(varName) && !string.IsNullOrEmpty(typeName))
+            {
+                if (!result.ContainsKey(varName))
+                    result[varName] = new List<GDSemanticType>();
+                result[varName].Add(GDSemanticType.FromRuntimeTypeName(typeName));
+            }
+            return;
+        }
+
+        // Nested OR: recurse into both sides
+        if (expr is GDDualOperatorExpression nestedOr &&
+            (nestedOr.Operator?.OperatorType == GDDualOperatorType.Or ||
+             nestedOr.Operator?.OperatorType == GDDualOperatorType.Or2))
+        {
+            CollectIsCheckNarrowings(nestedOr.LeftExpression, result);
+            CollectIsCheckNarrowings(nestedOr.RightExpression, result);
+        }
+    }
+
+    private static string? ExtractNullComparisonVariable(GDDualOperatorExpression eqOp)
+    {
+        if (GDLiteralTypeResolver.IsNullLiteral(eqOp.RightExpression) &&
+            eqOp.LeftExpression is GDIdentifierExpression leftIdent)
+            return leftIdent.Identifier?.Sequence;
+
+        if (GDLiteralTypeResolver.IsNullLiteral(eqOp.LeftExpression) &&
+            eqOp.RightExpression is GDIdentifierExpression rightIdent)
+            return rightIdent.Identifier?.Sequence;
+
+        return null;
     }
 
     /// <summary>

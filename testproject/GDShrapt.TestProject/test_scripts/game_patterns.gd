@@ -331,7 +331,7 @@ func use_ability(ability_id, user, targets = []):
 		result = _apply_effect_template(effect_func, user, targets)
 
 	# Create lasting effect if needed
-	if ability.has("duration") and ability["duration"] > 0:  # 334:32-GD7006-OK
+	if ability.has("duration") and ability["duration"] > 0:
 		active_effects.append({
 			"ability_id": ability_id,
 			"user": user,
@@ -466,7 +466,7 @@ func craft(recipe_id):
 		while required > 0:
 			var item = _find_first_matching_item(item_filter)
 
-			if item == null:
+			if item == null:  # 469:6-GD7013-OK
 				break
 
 			var count = get_item_property(item, "count", 1)

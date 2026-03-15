@@ -21286,8 +21286,8 @@ test_scripts/type_guards.gd
 
   161:2 Variable overlapping
     declared: (none)
-    inferred: Variant
-    effective: Variant
+    inferred: Array[Node2D]
+    effective: Array[Node2D]
     confidence: Medium
     nullable: no
 

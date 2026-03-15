@@ -1,15 +1,15 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-15 02:34:11
+Generated: 2026-03-15 16:41:38
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           901
-Verified (OK):   898
+Total:           899
+Verified (OK):   897
 Unverified:      0
 False Positives: 0
-Skipped:         3
+Skipped:         2
 Orphaned Markers:0
 
 ================================================================================
@@ -18,5 +18,4 @@ SKIPPED (NEEDS ANALYSIS)
 
   test_scripts/polymorphic_interfaces.gd:40:15 [GD7007]
   test_scripts/signal_callback_chains.gd:55:12 [GD7007]
-  test_scripts/union_types_complex.gd:52:9 [GD3009]
 

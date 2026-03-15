@@ -1,3 +1,2635 @@
 # FLOW_NARROWING_UNVERIFIED.txt
 # Copy entries to FLOW_NARROWING_VERIFIED.txt and add # OK
 
+test_scripts/ai_controller.gd
+  _process()
+    38:17 delta -> float (base: float)
+    40:19 delta -> float (base: float)
+    42:18 delta -> float (base: float)
+    44:19 delta -> float (base: float)
+    46:17 delta -> float (base: float)
+
+  _process_patrol()
+    61:1 position -> Vector2 (base: Vector2)
+    61:12 position -> Vector2 (base: Vector2)
+    61:33 target_point -> Vector2 (base: Vector2)
+    61:60 delta -> float (base: float)
+    63:4 position -> Vector2 (base: Vector2)
+    63:25 target_point -> Vector2 (base: Vector2)
+    64:2 current_target_index -> int (base: int)
+    64:26 current_target_index -> int (base: int)
+
+  _process_chase()
+    74:1 position -> Vector2 (base: Vector2)
+    74:12 position -> Vector2 (base: Vector2)
+    74:70 delta -> float (base: float)
+
+  _process_flee()
+    87:2 position -> Vector2 (base: Vector2)
+    87:14 flee_direction -> Vector2 (base: Vector2)
+    87:44 delta -> float (base: float)
+
+  find_path()
+    95:14 target -> Vector2 (base: Vector2)
+
+  change_state()
+    101:21 new_state -> AIState (base: AIState)
+    102:2 current_state -> AIState (base: AIState)
+    102:18 new_state -> AIState (base: AIState)
+    103:21 new_state -> AIState (base: AIState)
+
+  set_target()
+    108:1 target_entity -> Node2D (base: Node2D)
+    108:17 entity -> Node2D (base: Node2D)
+    109:4 entity -> Node2D (base: Node2D)
+
+  is_target_in_range()
+    119:64 range_distance -> float (base: float)
+    119:81 range_distance -> float (base: float)
+
+  get_closest_patrol_point()
+    128:49 closest -> Vector2 (base: Vector2)
+    131:42 point -> Vector2 (base: Vector2)
+    132:5 dist -> float (base: float)
+    132:12 closest_dist -> float (base: float)
+    133:3 closest -> Vector2 (base: Vector2)
+    133:13 point -> Vector2 (base: Vector2)
+    134:3 closest_dist -> float (base: float)
+    134:18 dist -> float (base: float)
+    136:8 closest -> Vector2 (base: Vector2)
+
+test_scripts/base_entity.gd
+  _ready()
+    24:1 current_health -> int (base: int)
+    25:1 is_alive -> bool (base: bool)
+
+  take_damage()
+    33:45 amount -> int (base: int)
+    34:1 current_health -> int (base: int)
+    34:19 actual_damage -> int (base: int)
+    35:1 last_damage_source -> Node (base: Node)
+    35:22 source -> Node (base: Node)
+    37:21 current_health -> int (base: int)
+    38:19 actual_damage -> int (base: int)
+    38:34 source -> Node (base: Node)
+    40:4 current_health -> int (base: int)
+
+  calculate_actual_damage()
+    46:21 raw_damage -> int (base: int)
+    47:8 damage -> int (base: int)
+
+  heal()
+    51:8 is_alive -> null (base: bool)
+    54:1 current_health -> int (base: int)
+    54:22 current_health -> int (base: int)
+    54:39 amount -> int (base: int)
+    55:21 current_health -> int (base: int)
+
+  die()
+    59:8 is_alive -> null (base: bool)
+    62:1 is_alive -> bool (base: bool)
+    63:1 current_health -> int (base: int)
+
+  revive()
+    74:1 is_alive -> bool (base: bool)
+    75:1 current_health -> int (base: int)
+    75:35 health_percent -> float (base: float)
+    76:21 current_health -> int (base: int)
+
+  set_max_health()
+    90:1 max_health -> int (base: int)
+    90:14 value -> int (base: int)
+    91:4 heal_to_full -> bool (base: bool)
+    92:2 current_health -> int (base: int)
+    92:19 max_health -> int (base: int)
+    94:2 current_health -> int (base: int)
+    94:23 current_health -> int (base: int)
+    94:39 max_health -> int (base: int)
+    95:21 current_health -> int (base: int)
+    95:37 max_health -> int (base: int)
+
+  apply_buff()
+    99:1 max_health -> int (base: int)
+    99:15 health_bonus -> int (base: int)
+    100:1 current_health -> int (base: int)
+    100:19 health_bonus -> int (base: int)
+    101:1 defense -> int (base: int)
+    101:12 defense_bonus -> int (base: int)
+    102:21 current_health -> int (base: int)
+    102:37 max_health -> int (base: int)
+
+  remove_buff()
+    106:1 max_health -> int (base: int)
+    106:21 max_health -> int (base: int)
+    106:34 health_bonus -> int (base: int)
+    107:1 current_health -> int (base: int)
+    107:22 current_health -> int (base: int)
+    107:38 max_health -> int (base: int)
+    108:1 defense -> int (base: int)
+    108:18 defense -> int (base: int)
+    108:28 defense_bonus -> int (base: int)
+    109:21 current_health -> int (base: int)
+    109:37 max_health -> int (base: int)
+
+test_scripts/completion_test.gd
+  test_string_completion()
+    41:7 upper -> String (base: String)
+    41:14 lower -> String (base: String)
+    41:21 length -> int (base: int)
+    41:29 trimmed -> String (base: String)
+    41:38 split_result -> PackedStringArray (base: PackedStringArray)
+
+  test_array_completion()
+    54:7 size -> int (base: int)
+    54:13 first -> int (base: int)
+    54:20 last -> int (base: int)
+
+  test_dictionary_completion()
+    65:7 keys -> Array (base: Array)
+    65:13 values -> Array (base: Array)
+    65:21 has_key -> bool (base: bool)
+
+  test_vector_completion()
+    75:7 normalized -> Vector2 (base: Vector2)
+    75:19 length -> float (base: float)
+    75:27 length_squared -> float (base: float)
+    75:43 rotated -> Vector2 (base: Vector2)
+    75:52 distance -> float (base: float)
+
+  test_color_completion()
+    92:7 lighter -> Color (base: Color)
+    92:16 darker -> Color (base: Color)
+    92:24 inverted -> Color (base: Color)
+    92:34 hex -> String (base: String)
+
+  test_timer_completion()
+    102:7 time_left -> float (base: float)
+
+  test_enum_completion()
+    107:1 my_enum -> TestEnum (base: TestEnum)
+    108:1 my_enum -> TestEnum (base: TestEnum)
+    109:1 my_enum -> TestEnum (base: TestEnum)
+    114:7 space_key -> Key (base: Key)
+    114:18 enter_key -> Key (base: Key)
+
+  test_global_completion()
+    126:7 viewport -> Viewport (base: Viewport)
+    126:17 tree -> SceneTree (base: SceneTree)
+    126:23 pressed -> bool (base: bool)
+    126:32 mouse_pos -> Vector2 (base: Vector2)
+
+  test_typed_array_completion()
+    137:1 vectors -> Array[Vector2] (base: Array[Vector2])
+    138:1 vectors -> Array[Vector2] (base: Array[Vector2])
+    140:10 vectors -> Array[Vector2] (base: Array[Vector2])
+    142:8 v -> Vector2 (base: Vector2)
+
+  helper_function()
+    146:8 param1 -> int (base: int)
+    146:27 param2 -> String (base: String)
+
+test_scripts/cross_file_inference.gd
+  _ready()
+    24:1 entity_manager -> ECSLikeSystem (base: ECSLikeSystem)
+    25:1 duck_handler -> DuckTypingAdvanced (base: DuckTypingAdvanced)
+    26:1 cyclic_processor -> CyclicInference (base: CyclicInference)
+    27:1 signal_handler -> SignalCallbackChains (base: SignalCallbackChains)
+    28:1 poly_manager -> PolymorphicInterfaces (base: PolymorphicInterfaces)
+    29:1 union_handler -> UnionTypesComplex (base: UnionTypesComplex)
+    30:1 dynamic_caller -> DynamicDispatch (base: DynamicDispatch)
+
+  process_entity()
+    42:31 entity -> Entity (base: Entity)
+    46:31 entity -> Entity (base: Entity)
+    48:8 entity -> Entity (base: Entity)
+
+  run_cyclic_computation()
+    63:8 step3 -> bool (base: bool)
+
+  setup_signal_handlers()
+    73:1 op -> AsyncOperation (base: AsyncOperation)
+    74:8 op -> AsyncOperation (base: AsyncOperation)
+
+  complex_chain_operation()
+    148:30 entity -> Entity (base: Entity)
+    158:2 processed -> Array (base: Array)
+    158:15 processed -> Array (base: Array)
+    158:40 processed -> Array (base: Array)
+    165:15 entity -> Entity (base: Entity)
+    166:15 processed -> Array (base: Array)
+    171:29 entity -> Entity (base: Entity)
+    174:12 entity -> Entity (base: Entity)
+    175:15 processed -> Array (base: Array)
+
+  create_game_object()
+    242:32 entity -> Entity (base: Entity)
+    244:32 entity -> Entity (base: Entity)
+    246:36 entity -> Entity (base: Entity)
+    247:34 entity -> Entity (base: Entity)
+    248:10 entity -> Entity (base: Entity)
+    252:3 op -> AsyncOperation (base: AsyncOperation)
+    253:10 op -> AsyncOperation (base: AsyncOperation)
+
+  stress_test_inference()
+    314:40 step1 -> Array (base: Array)
+    314:49 step1 -> Array (base: Array)
+    318:41 step4 -> Dictionary (base: Dictionary)
+
+  parallel_inference_test()
+    332:2 results -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    333:2 results -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    334:2 results -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    335:2 results -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    337:8 results -> Dictionary[String, Array] (base: Dictionary[String, Array])
+
+test_scripts/cycles_test.gd
+  process_with_cycle()
+    14:2 current -> Dictionary[String, Variant] (base: Dictionary[String, int])
+    14:22 current -> Dictionary[String, Variant] (base: Dictionary[String, int])
+
+  accumulator_cycle()
+    30:13 items -> Array[int] (base: Array[int])
+    31:2 sum -> int (base: int)
+    31:8 sum -> int (base: int)
+    31:14 item -> int (base: int)
+    32:8 sum -> int (base: int)
+
+  string_builder_cycle()
+    39:2 result -> String (base: String)
+    39:11 result -> String (base: String)
+    40:8 result -> String (base: String)
+
+  array_builder_cycle()
+    47:2 arr -> Array (base: Array)
+    48:2 arr -> Array (base: Array)
+    48:8 arr -> Array (base: Array)
+    49:8 arr -> Array (base: Array)
+
+  recursive_type_cycle()
+    54:4 depth -> int (base: int)
+    56:34 depth -> int (base: int)
+    57:18 child -> Dictionary[String, int] (base: Dictionary[String, int])
+    57:54 child -> Dictionary[String, int] (base: Dictionary[String, int])
+
+  mutual_recursion_a()
+    62:4 value -> int (base: int)
+    64:27 value -> int (base: int)
+
+  mutual_recursion_b()
+    68:4 value -> int (base: int)
+    70:27 value -> int (base: int)
+
+  state_machine_cycle()
+    78:7 iterations -> int (base: int)
+    79:8 state -> String (base: String)
+    81:4 state -> String (base: String)
+    83:4 state -> String (base: String)
+    85:4 state -> String (base: String)
+    86:2 iterations -> int (base: int)
+    88:8 state -> String (base: String)
+
+  linked_list_cycle()
+    94:12 head -> Dictionary[String, Dictionary[String, Dictionary[String, int]]] (base: Dictionary[String, Dictionary[String, Dictionary[String, int]]])
+    98:2 node -> Dictionary[String, Dictionary[String, int]] (base: Dictionary[String, Dictionary[String, Dictionary[String, int]]])
+    98:9 node -> Dictionary[String, Dictionary[String, int]] (base: Dictionary[String, Dictionary[String, Dictionary[String, int]]])
+    100:8 head -> Dictionary[String, Dictionary[String, Dictionary[String, int]]] (base: Dictionary[String, Dictionary[String, Dictionary[String, int]]])
+
+  iterator_pattern()
+    106:16 collection -> Array[int] (base: Array[int])
+    108:16 collection -> Array[int] (base: Array[int])
+    109:2 iterator -> int (base: int)
+    109:13 collection -> Array[int] (base: Array[int])
+    111:8 iterator -> int (base: int)
+
+  reduce_pattern()
+    118:13 items -> Array (base: Array)
+
+  self_referential_update()
+    137:18 counter -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    138:2 counter -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    139:12 old_value -> int (base: int)
+    140:14 counter -> Dictionary[String, Array] (base: Dictionary[String, Array])
+    140:40 old_value -> int (base: int)
+
+test_scripts/cyclic_inference.gd
+  state_processing()
+    95:3 results -> Array (base: Array)
+    96:24 results -> Array (base: Array)
+
+  traverse_and_transform()
+    197:2 new_node -> Dictionary[String, Variant] (base: Dictionary[String, Variant])
+    200:2 new_node -> Dictionary[String, Variant] (base: Dictionary[String, Variant])
+    202:8 new_node -> Dictionary[String, Variant] (base: Dictionary[String, Variant])
+
+test_scripts/diagnostics_issues.gd
+  missing_return_path()
+    35:4 x -> int (base: int)
+    36:9 x -> int (base: int)
+
+  shadowing_test()
+    43:7 position -> Vector2 (base: Vector2)
+
+  another_shadowing()
+    49:7 used_variable -> int (base: int)
+
+  unreachable_code()
+    56:7 x -> int (base: int)
+    57:8 x -> int (base: int)
+
+  empty_if_body()
+    62:4 value -> int (base: int)
+
+  redundant_condition()
+    70:4 flag -> bool (base: bool)
+    73:4 flag -> bool (base: bool)
+
+  deprecated_style()
+    80:30 name -> String (base: String)
+    81:7 message -> String (base: String)
+
+  potential_null_access()
+    87:7 node -> Node (base: Node)
+
+  modifying_loop_variable()
+    98:13 items -> Array[int] (base: Array[int])
+    99:2 item -> int (base: int)
+    100:8 item -> int (base: int)
+
+  always_true_condition()
+    114:4 x -> int (base: int)
+
+  always_false_condition()
+    120:4 x -> int (base: int)
+
+  integer_division_issue()
+    128:8 a -> int (base: int)
+    128:12 b -> int (base: int)
+
+test_scripts/diagnostics/linter/best_practices_rules.gd
+  test_gdl201_valid()
+    27:7 used_var -> int (base: int)
+
+  test_gdl202_valid()
+    49:7 param -> int (base: int)
+
+  test_gdl210_valid()
+    90:4 x -> int (base: int)
+    91:9 x -> int (base: int)
+
+  test_gdl210_invalid()
+    99:8 dead -> int (base: int)
+
+  test_gdl210_suppressed()
+    107:8 suppressed_dead -> int (base: int)
+
+  test_gdl211_valid()
+    117:7 local_only_var -> int (base: int)
+
+  test_gdl211_invalid()
+    123:7 class_level_var -> int (base: int)
+
+  test_gdl211_suppressed()
+    130:7 class_level_var -> int (base: int)
+
+  test_gdl213_valid()
+    139:8 a -> int (base: int)
+    139:13 b -> int (base: int)
+
+  test_gdl213_invalid()
+    144:8 x -> int (base: int)
+    144:13 x -> int (base: int)
+
+  test_gdl213_suppressed()
+    150:8 x -> int (base: int)
+    150:13 x -> int (base: int)
+
+  test_gdl230_valid()
+    191:1 x -> int (base: int)
+    191:5 x -> int (base: int)
+    192:7 x -> int (base: int)
+
+  test_gdl230_invalid()
+    198:1 x -> int (base: int)
+    198:5 x -> int (base: int)
+    199:7 x -> int (base: int)
+
+  test_gdl230_suppressed()
+    206:1 x -> int (base: int)
+    206:5 x -> int (base: int)
+    207:7 x -> int (base: int)
+
+test_scripts/diagnostics/linter/complexity_rules.gd
+  test_gdl225_valid()
+    21:4 x -> int (base: int)
+    22:5 x -> int (base: int)
+    23:6 x -> int (base: int)
+
+  test_gdl225_invalid()
+    29:4 x -> int (base: int)
+    30:5 x -> int (base: int)
+    31:6 x -> int (base: int)
+    32:7 x -> int (base: int)
+    33:8 x -> int (base: int)
+
+  test_gdl225_suppressed()
+    40:4 x -> int (base: int)
+    41:5 x -> int (base: int)
+    42:6 x -> int (base: int)
+    43:7 x -> int (base: int)
+    44:8 x -> int (base: int)
+
+  test_gdl226_valid()
+    59:7 a -> int (base: int)
+    59:10 b -> int (base: int)
+    59:13 c -> int (base: int)
+    59:16 d -> int (base: int)
+    59:19 e -> int (base: int)
+
+  test_gdl226_invalid()
+    80:7 v1 -> int (base: int)
+    80:11 v2 -> int (base: int)
+    80:15 v3 -> int (base: int)
+    80:19 v4 -> int (base: int)
+    80:23 v5 -> int (base: int)
+    80:27 v6 -> int (base: int)
+    80:31 v7 -> int (base: int)
+    80:35 v8 -> int (base: int)
+    80:39 v9 -> int (base: int)
+    80:43 v10 -> int (base: int)
+    80:48 v11 -> int (base: int)
+    80:53 v12 -> int (base: int)
+    80:58 v13 -> int (base: int)
+    80:63 v14 -> int (base: int)
+    80:68 v15 -> int (base: int)
+    80:73 v16 -> int (base: int)
+
+  test_gdl226_suppressed()
+    102:7 v1 -> int (base: int)
+    102:11 v2 -> int (base: int)
+    102:15 v3 -> int (base: int)
+    102:19 v4 -> int (base: int)
+    102:23 v5 -> int (base: int)
+    102:27 v6 -> int (base: int)
+    102:31 v7 -> int (base: int)
+    102:35 v8 -> int (base: int)
+    102:39 v9 -> int (base: int)
+    102:43 v10 -> int (base: int)
+    102:48 v11 -> int (base: int)
+    102:53 v12 -> int (base: int)
+    102:58 v13 -> int (base: int)
+    102:63 v14 -> int (base: int)
+    102:68 v15 -> int (base: int)
+    102:73 v16 -> int (base: int)
+
+  test_gdl223_valid()
+    111:4 x -> int (base: int)
+    113:4 x -> int (base: int)
+    115:4 x -> int (base: int)
+    117:4 x -> int (base: int)
+    119:8 x -> int (base: int)
+
+  test_gdl223_invalid()
+    124:4 x -> int (base: int)
+    126:4 x -> int (base: int)
+    128:4 x -> int (base: int)
+    130:4 x -> int (base: int)
+    132:4 x -> int (base: int)
+    134:4 x -> int (base: int)
+    136:4 x -> int (base: int)
+    138:8 x -> int (base: int)
+
+  test_gdl223_suppressed()
+    144:4 x -> int (base: int)
+    146:4 x -> int (base: int)
+    148:4 x -> int (base: int)
+    150:4 x -> int (base: int)
+    152:4 x -> int (base: int)
+    154:4 x -> int (base: int)
+    156:4 x -> int (base: int)
+    158:8 x -> int (base: int)
+
+  test_gdl228_valid()
+    167:7 x -> int (base: int)
+
+  test_gdl228_invalid()
+    180:4 x -> int (base: int)
+    182:6 x -> int (base: int)
+    184:6 x -> int (base: int)
+    186:6 x -> int (base: int)
+    188:6 x -> int (base: int)
+    190:6 x -> int (base: int)
+    192:6 x -> int (base: int)
+    194:6 x -> int (base: int)
+    196:6 x -> int (base: int)
+    198:6 x -> int (base: int)
+    200:6 x -> int (base: int)
+    202:6 x -> int (base: int)
+    204:6 x -> int (base: int)
+
+  test_gdl228_suppressed()
+    212:4 x -> int (base: int)
+    214:6 x -> int (base: int)
+    216:6 x -> int (base: int)
+    218:6 x -> int (base: int)
+    220:6 x -> int (base: int)
+    222:6 x -> int (base: int)
+    224:6 x -> int (base: int)
+    226:6 x -> int (base: int)
+    228:6 x -> int (base: int)
+    230:6 x -> int (base: int)
+    232:6 x -> int (base: int)
+    234:6 x -> int (base: int)
+    236:6 x -> int (base: int)
+
+test_scripts/diagnostics/linter/formatting_rules.gd
+  test_gdl101_valid()
+    21:7 short_line -> String (base: String)
+
+  test_gdl101_invalid()
+    27:7 very_long_line -> String (base: String)
+
+  formatting_examples()
+    76:7 arr -> Array[int] (base: Array[int])
+    83:7 dict -> Dictionary[String, String] (base: Dictionary[String, String])
+    86:18 a -> int (base: int)
+    86:21 b -> int (base: int)
+    86:24 arr -> Array[int] (base: Array[int])
+
+  _helper_function()
+    90:7 x -> int (base: int)
+    90:10 y -> int (base: int)
+    90:13 z -> Array (base: Array)
+
+test_scripts/diagnostics/suppression/linter_suppression.gd
+  test_file_level_suppression()
+    99:7 this_is_a_very_long_variable_name_that_would_normally_trigger_the_line_length_rule_but_it_is_suppressed -> int (base: int)
+
+test_scripts/diagnostics/validator/abstract_errors.gd
+  test_gd8005_valid()
+    93:7 impl -> ValidImplementation (base: ValidImplementation)
+
+  test_gd8005_invalid()
+    99:7 obj -> CannotInstantiate (base: CannotInstantiate)
+
+  test_gd8005_suppressed()
+    106:7 obj -> CannotInstantiate (base: CannotInstantiate)
+
+test_scripts/diagnostics/validator/call_errors.gd
+  _func_two_args()
+    24:8 a -> int (base: int)
+    24:12 b -> int (base: int)
+
+  test_gd4001_valid()
+    30:7 result -> int (base: int)
+
+  test_gd4001_invalid()
+    36:7 result -> int (base: int)
+
+  test_gd4001_suppressed()
+    43:7 result -> int (base: int)
+
+  test_gd4002_valid()
+    53:1 node -> Node (base: Node)
+
+  test_gd4002_invalid()
+    59:1 node -> Node (base: Node)
+
+  test_gd4002_suppressed()
+    66:1 node -> Node (base: Node)
+
+  test_gd4004_valid()
+    76:1 callable -> Callable (base: Callable)
+
+  test_gd4004_invalid()
+    82:1 number -> int (base: int)
+
+  test_gd4004_suppressed()
+    89:1 text -> String (base: String)
+
+test_scripts/diagnostics/validator/control_flow_errors.gd
+  test_gd5004_valid()
+    67:7 x -> int (base: int)
+    68:8 x -> int (base: int)
+
+  test_gd5004_invalid()
+    75:7 unreachable -> int (base: int)
+    76:8 unreachable -> int (base: int)
+
+  test_gd5004_suppressed()
+    84:8 suppressed -> int (base: int)
+
+  test_gd5010_valid()
+    96:1 mutable_var -> int (base: int)
+    97:7 mutable_var -> int (base: int)
+
+  test_gd5010_invalid()
+    102:1 VALID_CONST -> int (base: int)
+
+  test_gd5010_suppressed()
+    108:1 VALID_CONST -> int (base: int)
+
+test_scripts/diagnostics/validator/duck_typing_errors.gd
+  test_gd7002_valid_typed()
+    20:7 node -> Node (base: Node)
+
+  test_gd7003_valid_typed()
+    47:1 arr -> Array[int] (base: Array)
+
+  test_mixed_guarded_unguarded()
+    81:1 obj -> Node (base: Variant)
+    88:1 obj -> Node (base: Variant)
+
+test_scripts/diagnostics/validator/scope_errors.gd
+  test_gd2001_valid()
+    26:7 defined_var -> int (base: int)
+
+  test_gd2003_valid()
+    68:7 unique_var_a -> int (base: int)
+    68:22 unique_var_b -> int (base: int)
+
+  test_gd2003_invalid()
+    75:7 duplicate_var -> int (base: int)
+
+  test_gd2003_suppressed()
+    83:7 suppressed_dup -> int (base: int)
+
+test_scripts/diagnostics/validator/type_annotation_errors.gd
+  test_gd3023_valid_same_type()
+    14:4 flag -> bool (base: bool)
+
+  test_gd3023_invalid()
+    21:4 flag -> bool (base: bool)
+
+  test_gd3024_valid()
+    33:4 flag -> bool (base: bool)
+
+  test_gd3024_invalid()
+    40:4 flag -> bool (base: bool)
+
+  test_gd3024_valid_void()
+    45:4 flag -> bool (base: bool)
+
+  test_gd7019_valid()
+    87:1 sprite -> Sprite2D (base: Sprite2D)
+
+  test_gd7019_valid_no_annotation()
+    92:1 sprite -> Node (base: Sprite2D)
+
+  test_gd7021_valid()
+    127:2 enemy -> Node (base: Node)
+
+test_scripts/diagnostics/validator/type_errors.gd
+  test_gd3001_valid()
+    27:7 x -> int (base: int)
+    27:10 y -> String (base: String)
+
+  test_gd3001_float_to_int()
+    33:1 x -> float (base: int)
+
+  test_gd3001_invalid()
+    39:1 x -> String (base: int)
+
+  test_gd3001_suppressed()
+    46:1 x -> String (base: int)
+
+  test_gd3004_valid()
+    56:7 node -> Node (base: Node)
+
+  test_gd3004_downcast()
+    62:7 sprite -> Sprite2D (base: Sprite2D)
+
+  test_gd3004_suppressed()
+    69:7 label -> Label (base: Label)
+
+  test_gd3006_valid()
+    80:7 node -> Node (base: Node)
+    80:13 sprite -> Sprite2D (base: Sprite2D)
+
+  test_gd3006_invalid()
+    86:7 x -> CompletelyUnknownType (base: CompletelyUnknownType)
+
+  test_gd3006_suppressed()
+    93:7 y -> AnotherFakeType (base: AnotherFakeType)
+
+  test_gd3006_nested_enum_valid()
+    99:7 mode -> BaseMaterial3D.ShadingMode (base: BaseMaterial3D.ShadingMode)
+
+  test_gd3006_nested_enum_invalid()
+    105:7 x -> FakeParent.FakeChild (base: FakeParent.FakeChild)
+
+  test_gd3009_valid()
+    115:7 node -> Node (base: Node)
+
+  test_gd3009_invalid()
+    121:7 node -> Node (base: Node)
+
+  test_gd3009_suppressed()
+    128:7 node -> Node (base: Node)
+
+  _take_int()
+    137:7 x -> int (base: int)
+
+  test_gd3013_valid()
+    163:11 arr -> Array[int] (base: Array)
+    167:12 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    168:7 val2 -> int (base: int)
+
+  test_gd3013_invalid()
+    174:11 arr -> Array[int] (base: Array)
+
+  test_gd3013_suppressed()
+    182:11 arr -> Array[int] (base: Array)
+
+  test_gd3014_valid()
+    193:11 arr -> Array[int] (base: Array)
+
+  test_gd3014_invalid()
+    200:11 num -> int (base: int)
+
+  test_gd3014_suppressed()
+    208:11 num -> int (base: int)
+
+  test_gd3017_valid()
+    220:7 arr -> Array[int] (base: Array[int])
+    220:12 dict -> Dictionary[String, Node] (base: Dictionary[String, Node])
+
+  test_gd3017_invalid()
+    226:7 arr -> Array[NonExistentTypeXYZ] (base: Array[NonExistentTypeXYZ])
+
+  test_gd3017_suppressed()
+    233:7 arr -> Array[AnotherFakeTypeABC] (base: Array[AnotherFakeTypeABC])
+
+  test_gd3018_valid()
+    244:7 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    244:13 dict2 -> Dictionary[int, String] (base: Dictionary[int, String])
+
+  test_gd3018_invalid()
+    250:7 dict -> Dictionary[Array, int] (base: Dictionary[Array, int])
+
+  test_gd3018_suppressed()
+    257:7 dict -> Dictionary[Dictionary, int] (base: Dictionary[Dictionary, int])
+
+test_scripts/duck_typing_advanced.gd
+  apply_to_all()
+    37:2 results -> Array (base: Array)
+    37:17 r -> void (base: void)
+    38:8 results -> Array (base: Array)
+
+  find_nearest()
+    81:4 candidates -> Array[Node] (base: Array[Node])
+    84:15 candidates -> Array[Node] (base: Array[Node])
+    85:49 nearest -> Node (base: Node)
+    87:10 candidates -> Array[Node] (base: Array[Node])
+    88:39 c -> Node (base: Node)
+    89:5 d -> float (base: float)
+    89:9 nearest_dist -> float (base: float)
+    90:3 nearest -> Array[Node] (base: Node)
+    90:13 c -> Node (base: Array[Node])
+    91:3 nearest_dist -> float (base: float)
+    91:18 d -> float (base: float)
+
+  transform_data()
+    183:3 result -> Array (base: Array)
+    184:9 result -> Array (base: Array)
+    188:3 result -> Dictionary (base: Array)
+    189:9 result -> Dictionary (base: Array)
+
+  process_chain()
+    202:8 step4 -> String (base: String)
+
+  _step_parse()
+    213:8 value -> String (base: Variant)
+
+test_scripts/dynamic_dispatch.gd
+  call_all_matching()
+    39:13 method -> Dictionary (base: Dictionary)
+    41:3 results -> Dictionary (base: Dictionary)
+    42:8 results -> Dictionary (base: Dictionary)
+
+  send_message()
+    103:22 handler_method -> String (base: String)
+    104:21 handler_method -> String (base: String)
+
+  broadcast_message()
+    116:2 results -> Array (base: Array)
+    117:8 results -> Array (base: Array)
+
+  serialize_object()
+    127:13 prop -> Dictionary (base: Dictionary)
+    128:14 prop -> Dictionary (base: Dictionary)
+    133:3 data -> Dictionary (base: Dictionary)
+    135:8 data -> Dictionary (base: Dictionary)
+
+  _serialize_value()
+    152:3 arr -> Array (base: Array)
+    153:9 arr -> Array (base: Array)
+    157:3 dict -> Dictionary (base: Dictionary)
+    158:9 dict -> Dictionary (base: Dictionary)
+
+  _deserialize_value()
+    180:3 arr -> Array (base: Array)
+    181:9 arr -> Array (base: Array)
+    187:3 dict -> Dictionary (base: Dictionary)
+    188:9 dict -> Dictionary (base: Dictionary)
+
+  create_instance_by_name()
+    222:2 instance -> Node (base: Node)
+    230:12 instance -> Node (base: Node)
+    231:3 instance -> Node (base: Node)
+    233:8 instance -> Node (base: Node)
+
+  clone_object()
+    247:44 class_name_str -> String (base: String)
+    248:4 new_instance -> null (base: null)
+    249:24 new_instance -> null (base: null)
+    249:38 data -> Dictionary (base: Dictionary)
+    250:8 new_instance -> null (base: null)
+
+  dispatch()
+    313:3 results -> Dictionary (base: Dictionary)
+    315:8 results -> Dictionary (base: Dictionary)
+
+  create_logging_proxy()
+    362:20 method -> Dictionary (base: Dictionary)
+    364:2 proxy -> DynamicProxy (base: DynamicProxy)
+    364:31 interceptor -> Callable (base: Callable)
+    366:8 proxy -> DynamicProxy (base: DynamicProxy)
+
+  advised_call()
+    413:64 proceed -> Callable() (base: Callable)
+    414:3 has_around -> bool (base: bool)
+    417:8 has_around -> null (base: bool)
+
+test_scripts/ecs_like_system.gd
+  _init()
+    28:2 id -> int (base: int)
+    29:2 name -> String (base: String)
+
+  create_entity()
+    34:28 entity -> Entity (base: Entity)
+    35:1 next_entity_id -> int (base: int)
+    36:8 entity -> Entity (base: Entity)
+
+  get_all_components()
+    87:3 result -> Dictionary (base: Dictionary)
+    88:8 result -> Dictionary (base: Dictionary)
+
+  query_entities()
+    101:4 has_all -> bool (base: bool)
+    103:5 has_all -> bool (base: bool)
+    104:3 result -> Array (base: Array)
+    106:8 result -> Array (base: Array)
+
+  query_with_components()
+    114:12 entity_ids -> Array (base: Array)
+    117:3 comps -> Dictionary (base: Dictionary)
+    118:2 result -> Array (base: Array)
+    118:49 comps -> Dictionary (base: Dictionary)
+    120:8 result -> Array (base: Array)
+
+  query_by_tag()
+    127:3 result -> Array (base: Array)
+    128:8 result -> Array (base: Array)
+
+  query_by_predicate()
+    137:33 comps -> Dictionary (base: Dictionary)
+    138:3 result -> Array (base: Array)
+    139:8 result -> Array (base: Array)
+
+  update()
+    197:13 movers -> Array (base: Array)
+    211:13 with_health -> Array (base: Array)
+    222:13 ai_entities -> Array (base: Array)
+    233:53 context -> Dictionary[String, Variant] (base: Dictionary[String, Variant])
+
+  create_from_archetype()
+    265:3 component -> Dictionary (base: Variant)
+    267:16 entity -> Entity (base: Entity)
+    267:38 component -> Dictionary (base: Variant)
+    269:8 entity -> Entity (base: Entity)
+
+  get_events_by_type()
+    297:3 result -> Array (base: Array)
+    298:8 result -> Array (base: Array)
+
+  update_spatial_index()
+    311:12 positioned -> Array (base: Array)
+    315:26 cell -> Vector2i (base: Vector2i)
+    316:16 cell -> Vector2i (base: Vector2i)
+    317:15 cell -> Vector2i (base: Vector2i)
+
+  query_nearby()
+    332:16 center_cell -> Vector2i (base: Vector2i)
+    332:32 cell_radius -> int (base: int)
+    332:45 center_cell -> Vector2i (base: Vector2i)
+    332:61 cell_radius -> int (base: int)
+    333:17 center_cell -> Vector2i (base: Vector2i)
+    333:33 cell_radius -> int (base: int)
+    333:46 center_cell -> Vector2i (base: Vector2i)
+    333:62 cell_radius -> int (base: int)
+    335:23 cell -> Vector2i (base: Vector2i)
+    336:28 cell -> Vector2i (base: Vector2i)
+    339:6 result -> Array (base: Array)
+    341:8 result -> Array (base: Array)
+
+  serialize_world()
+    355:2 data -> Dictionary[String, Dictionary] (base: Dictionary[String, Dictionary])
+    362:2 data -> Dictionary[String, Dictionary] (base: Dictionary[String, Dictionary])
+    364:3 data -> Dictionary[String, Dictionary] (base: Dictionary[String, Dictionary])
+    366:8 data -> Dictionary[String, Dictionary] (base: Dictionary[String, Dictionary])
+
+  deserialize_world()
+    377:26 eid -> int (base: int)
+    378:2 entity -> Entity (base: Entity)
+    379:2 entity -> Entity (base: Entity)
+    380:11 eid -> int (base: int)
+    380:18 entity -> Entity (base: Entity)
+    386:25 eid -> int (base: int)
+
+  debug_entity()
+    397:1 info -> String (base: String)
+    398:1 info -> String (base: String)
+    399:1 info -> String (base: String)
+    402:2 info -> String (base: String)
+    404:8 info -> String (base: String)
+
+  debug_statistics()
+    416:2 stats -> Dictionary[String, int] (base: Dictionary[String, int])
+    418:8 stats -> Dictionary[String, int] (base: Dictionary[String, int])
+
+test_scripts/enemy_entity.gd
+  _ready()
+    28:1 max_health -> int (base: int)
+
+  _process()
+    32:8 can_attack -> null (base: bool)
+    33:2 _attack_timer -> float (base: float)
+    33:19 delta -> float (base: float)
+    34:5 _attack_timer -> float (base: float)
+    35:3 can_attack -> bool (base: bool)
+    36:3 _attack_timer -> float (base: float)
+
+  set_target()
+    40:14 new_target -> BaseEntity (base: BaseEntity)
+    41:2 target -> BaseEntity (base: BaseEntity)
+    41:11 new_target -> BaseEntity (base: BaseEntity)
+    42:5 target -> BaseEntity (base: BaseEntity)
+    43:24 target -> BaseEntity (base: BaseEntity)
+
+  attack()
+    49:8 can_attack -> null (base: bool)
+    63:1 can_attack -> bool (base: bool)
+    64:1 _attack_timer -> float (base: float)
+
+  _on_player_detected()
+    83:12 player -> BaseEntity (base: BaseEntity)
+
+  take_damage()
+    100:19 amount -> int (base: int)
+
+  patrol_to()
+    109:1 position -> Vector2 (base: Vector2)
+    109:12 position -> Vector2 (base: Vector2)
+    109:33 target_position -> Vector2 (base: Vector2)
+    109:50 speed -> float (base: float)
+    109:58 delta -> float (base: float)
+
+  chase_target()
+    116:1 position -> Vector2 (base: Vector2)
+    116:12 position -> Vector2 (base: Vector2)
+    116:50 speed -> float (base: float)
+    116:58 delta -> float (base: float)
+
+test_scripts/extended_class.gd
+  take_damage()
+    23:30 amount -> int (base: int)
+    24:19 reduced_damage -> int (base: int)
+
+  attack()
+    30:4 target -> Node2D (base: Node2D)
+    31:2 target -> Node2D (base: Node2D)
+    32:2 combo_count -> int (base: int)
+
+  reset_combo()
+    36:1 combo_count -> int (base: int)
+
+  get_info()
+    41:1 base_info -> Dictionary (base: Dictionary)
+    42:1 base_info -> Dictionary (base: Dictionary)
+    43:8 base_info -> Dictionary (base: Dictionary)
+
+  create_from_base()
+    52:30 pos -> Vector2 (base: Vector2)
+
+  increment()
+    59:2 value -> int (base: int)
+
+test_scripts/formatting_issues.gd
+  bad_spacing()
+    24:12 x -> int (base: int)
+    24:14 y -> int (base: int)
+    24:16 z -> int (base: int)
+    25:4 result -> int (base: int)
+    26:9 result -> int (base: int)
+    28:9 result -> int (base: int)
+
+  inconsistent_operators()
+    36:7 a -> int (base: int)
+    36:9 b -> int (base: int)
+    36:11 c -> int (base: int)
+    36:13 d -> float (base: float)
+    37:8 e -> float (base: float)
+
+  missing_spaces_in_comparisons()
+    41:4 value -> int (base: int)
+    41:18 value -> int (base: int)
+    43:6 value -> int (base: int)
+    43:19 value -> int (base: int)
+    45:6 value -> int (base: int)
+    47:6 value -> int (base: int)
+    49:8 value -> int (base: int)
+
+  array_formatting()
+    56:9 arr -> Array[int] (base: Array[int])
+    56:13 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    56:18 nested -> Array[Dictionary[String, int]] (base: Array[Dictionary[String, int]])
+
+  function_call_spacing()
+    61:17 result -> int (base: int)
+    63:1 values -> Array[int] (base: Array[int])
+    64:8 result -> int (base: int)
+
+  long_line_test()
+    68:19 parameter_one -> int (base: int)
+    68:44 parameter_two -> String (base: String)
+    68:69 parameter_three -> float (base: float)
+    68:96 parameter_four -> Array (base: Array)
+    68:122 parameter_five -> Dictionary (base: Dictionary)
+
+  ternary_formatting()
+    72:14 condition -> bool (base: bool)
+
+  lambda_formatting()
+    77:14 arr -> Array[int] (base: Array[int])
+    78:12 arr -> Array[int] (base: Array[int])
+    79:9 filtered -> Array[int] (base: Array[int])
+    79:18 mapped -> Array (base: Array)
+
+  match_statement_formatting()
+    83:7 value -> int (base: int)
+
+  for_loop_formatting()
+    98:8 key -> String (base: String)
+    100:8 item -> int (base: int)
+
+  string_formatting()
+    106:20 name -> String (base: String)
+    107:24 count -> int (base: int)
+    108:8 msg1 -> String (base: String)
+    108:13 msg2 -> String (base: String)
+
+test_scripts/game_patterns.gd
+  find_all_items()
+    39:3 result -> Array (base: Array)
+    40:8 result -> Array (base: Array)
+
+  load_dialog()
+    104:2 dialog_tree -> Dictionary (base: Dictionary)
+
+  get_dialog_text()
+    124:2 text -> String (base: Variant)
+    124:9 text -> String (base: Variant)
+    126:8 text -> String (base: Variant)
+
+  get_dialog_choices()
+    138:3 available -> Array (base: Array)
+    140:8 available -> Array (base: Array)
+
+  select_choice()
+    179:40 choices -> Array (base: Array)
+    182:14 choices -> Array (base: Array)
+
+  _check_quest_completion()
+    245:3 all_complete -> bool (base: bool)
+    248:4 all_complete -> bool (base: bool)
+
+  use_ability()
+    329:2 result -> null (base: null)
+    331:2 result -> Array (base: null)
+
+  _apply_effect_template()
+    355:4 effect_result -> Dictionary (base: Dictionary)
+    362:4 effect_result -> Dictionary (base: Dictionary)
+    365:3 effect_result -> Dictionary (base: Dictionary)
+    368:3 effect_result -> Dictionary (base: Dictionary)
+    370:2 results -> Array (base: Array)
+    370:46 effect_result -> Dictionary (base: Dictionary)
+    372:8 results -> Array (base: Array)
+
+  update_abilities()
+    392:3 to_remove -> Array (base: Array)
+    395:16 to_remove -> Array (base: Array)
+    396:27 to_remove -> Array (base: Array)
+
+  can_craft()
+    422:14 matching -> Array (base: Array)
+    423:3 total -> int (base: int)
+    425:5 total -> int (base: int)
+
+  _find_matching_items()
+    435:3 result -> Array (base: Array)
+    436:8 result -> Array (base: Array)
+
+  craft()
+    466:8 required -> int (base: Variant)
+    478:4 required -> int (base: Variant)
+
+  load_game_state()
+    507:1 inventory -> Array (base: Array)
+    508:1 equipped -> Dictionary (base: Dictionary)
+    510:1 active_quests -> Dictionary (base: Dictionary)
+
+  _serialize_array()
+    519:2 result -> Array (base: Array)
+    520:8 result -> Array (base: Array)
+
+  _serialize_dict()
+    526:2 result -> Dictionary (base: Dictionary)
+    527:8 result -> Dictionary (base: Dictionary)
+
+  _deserialize_array()
+    547:2 result -> Array (base: Array)
+    548:8 result -> Array (base: Array)
+
+  _deserialize_dict()
+    554:2 result -> Dictionary (base: Dictionary)
+    555:8 result -> Dictionary (base: Dictionary)
+
+test_scripts/getters_setters.gd
+  _store_secret()
+    111:24 code -> String (base: String)
+
+  _clamp_to_bounds()
+    116:8 pos -> Vector2 (base: Vector2)
+    117:8 pos -> Vector2 (base: Vector2)
+
+  damage()
+    123:1 health -> int (base: int)
+    123:11 amount -> int (base: int)
+
+  heal()
+    128:1 health -> int (base: int)
+    128:11 amount -> int (base: int)
+
+  teleport()
+    138:1 position -> Vector2 (base: Vector2)
+    138:12 new_pos -> Vector2 (base: Vector2)
+
+  test_property_flow()
+    144:1 health -> int (base: int)
+    148:9 h -> int (base: int)
+    148:12 p -> float (base: float)
+    148:15 a -> bool (base: bool)
+    148:18 s -> String (base: String)
+
+  test_config_property()
+    164:1 config -> Dictionary[String, int] (base: Dictionary)
+    165:9 config -> Dictionary[String, int] (base: Dictionary)
+    166:1 c -> Dictionary (base: Dictionary)
+    167:8 config -> Dictionary[String, int] (base: Dictionary)
+
+  test_nested_property()
+    196:8 d -> int (base: int)
+
+  _init()
+    208:1 _instance_counter -> int (base: int)
+
+test_scripts/global.gd
+  set_level()
+    22:1 current_level -> int (base: int)
+    22:17 level -> int (base: int)
+    23:30 level -> int (base: int)
+
+test_scripts/inheritance_test.gd
+  _physics_process()
+    20:25 delta -> float (base: float)
+    117:25 delta -> float (base: float)
+
+  _process()
+    34:1 rotation_degrees -> float (base: float)
+
+  reset()
+    39:1 position -> Vector2 (base: Vector2)
+    40:1 velocity -> Vector2 (base: Vector2)
+    41:1 rotation -> float (base: float)
+    42:1 scale -> Vector2 (base: Vector2)
+
+  take_damage()
+    46:1 custom_health -> int (base: int)
+    46:22 amount -> int (base: int)
+    47:4 custom_health -> int (base: int)
+
+  apply_knockback()
+    54:1 velocity -> Vector2 (base: Vector2)
+    54:13 direction -> Vector2 (base: Vector2)
+    54:38 force -> float (base: float)
+
+  use_collision_methods()
+    80:4 slide_count -> int (base: int)
+    82:5 collision -> KinematicCollision2D (base: KinematicCollision2D)
+    83:18 collision -> KinematicCollision2D (base: KinematicCollision2D)
+    84:16 collision -> KinematicCollision2D (base: KinematicCollision2D)
+    85:23 collision -> KinematicCollision2D (base: KinematicCollision2D)
+
+  get_enemy_info()
+    121:2 base_state -> Dictionary (base: Dictionary)
+    122:9 base_state -> Dictionary (base: Dictionary)
+
+  _notification()
+    155:7 what -> int (base: int)
+
+  get_global_mouse_in_local()
+    188:20 viewport -> Viewport (base: Viewport)
+    189:17 global_mouse -> Vector2 (base: Vector2)
+
+  check_types()
+    206:6 node -> Node (base: Node)
+
+test_scripts/local_variables.gd
+  conditional_assignment()
+    39:4 condition -> bool (base: bool)
+
+  shadowing_test()
+    48:13 param -> int (base: int)
+    49:4 param -> int (base: int)
+    50:19 outer -> int (base: int)
+    51:14 outer_copy -> int (base: int)
+    52:2 outer -> int (base: int)
+    52:10 inner -> int (base: int)
+    53:8 outer -> int (base: int)
+
+  loop_local_variables()
+    62:2 results -> Array (base: Array)
+    63:8 results -> Array (base: Array)
+
+  captured_variable()
+    69:37 multiplier -> int (base: int)
+    70:14 transform -> Callable(Variant) (base: Callable)
+
+  destructuring_assignment()
+    85:13 pair -> Array (base: Array)
+    86:14 pair -> Array (base: Array)
+
+  early_return_flow()
+    99:9 result -> null (base: null)
+    101:1 result -> null (base: null)
+    106:8 result -> null (base: null)
+
+  variable_in_match()
+    120:3 result -> String (base: String)
+    122:3 result -> String (base: String)
+    124:3 result -> String (base: String)
+    125:8 result -> String (base: String)
+
+  variable_with_default()
+    131:4 local -> int (base: Variant)
+    132:2 local -> Dictionary[String, bool] (base: Variant)
+
+  multi_assignment()
+    143:9 a -> int (base: int)
+    144:9 b -> int (base: int)
+    145:9 c -> int (base: int)
+    146:1 a -> int (base: int)
+    146:5 d -> int (base: int)
+    147:9 a -> int (base: int)
+    147:12 b -> int (base: int)
+    147:15 c -> int (base: int)
+    147:18 d -> int (base: int)
+
+  type_narrowing_local()
+    157:9 keys -> Array (base: Array)
+    162:9 size -> int (base: int)
+    164:8 result -> int (base: Variant)
+
+  walrus_like_pattern()
+    170:12 data -> Dictionary (base: Dictionary)
+
+  chained_locals()
+    177:13 input -> int (base: int)
+    178:13 step1 -> int (base: int)
+    179:19 step2 -> int (base: int)
+    180:17 step3 -> float (base: float)
+    181:13 step4 -> String (base: String)
+    182:8 step5 -> String (base: String)
+
+test_scripts/method_chains.gd
+  process_chain()
+    13:14 data -> Dictionary (base: Dictionary)
+    14:8 result -> float (base: float)
+
+  complex_chain()
+    23:16 input -> Array (base: Array)
+    24:14 filtered -> Array (base: Array)
+    26:13 mapped -> Array (base: Array)
+    27:2 sum -> int (base: int)
+    28:8 sum -> int (base: int)
+
+  string_chain()
+    33:14 text -> String (base: String)
+    34:8 result -> String (base: String)
+
+  dictionary_chain()
+    39:12 dict -> Dictionary (base: Dictionary)
+    40:21 keys -> Array (base: Array)
+    41:1 filtered_keys -> Array (base: Array)
+    42:8 filtered_keys -> Array (base: Array)
+
+  builder_pattern()
+    64:14 builder -> ConfigBuilder (base: ConfigBuilder)
+    65:8 result -> Dictionary (base: Dictionary)
+
+  set_name()
+    74:2 _name -> String (base: String)
+    74:10 name -> String (base: String)
+
+  set_value()
+    78:2 _value -> int (base: int)
+    78:11 value -> int (base: int)
+
+  set_enabled()
+    82:2 _enabled -> bool (base: bool)
+    82:13 enabled -> bool (base: bool)
+
+  node_chain()
+    92:4 parent -> Node (base: Node)
+    95:19 parent -> Node (base: Node)
+    96:4 grandparent -> Node (base: Node)
+
+test_scripts/navigation_test.gd
+  _ready()
+    16:1 texture -> null (base: Texture2D)
+    17:7 clamped -> float (base: float)
+    18:7 instance -> SimpleClass (base: SimpleClass)
+
+  test_builtin_functions()
+    25:7 a -> float (base: float)
+    25:10 b -> float (base: float)
+    25:13 c -> float (base: float)
+    25:16 d -> String (base: String)
+
+test_scripts/path_extends_test.gd
+  test_inherited_member_via_path()
+    10:1 max_health -> int (base: int)
+    11:47 max_health -> int (base: int)
+    14:1 current_health -> float (base: int)
+    14:18 max_health -> int (base: int)
+    15:27 current_health -> float (base: int)
+
+test_scripts/player_entity.gd
+  _ready()
+    26:1 max_health -> int (base: int)
+    27:1 current_health -> int (base: int)
+    27:18 max_health -> int (base: int)
+
+  take_damage()
+    31:22 amount -> int (base: int)
+    34:1 reduced_amount -> int (base: int)
+    34:25 amount -> int (base: int)
+    38:2 reduced_amount -> int (base: int)
+    38:23 reduced_amount -> int (base: int)
+    40:19 reduced_amount -> int (base: int)
+    40:35 source -> Node (base: Node)
+
+  collect_health_pack()
+    44:6 value -> int (base: int)
+
+  collect_armor()
+    50:1 armor -> int (base: int)
+    50:10 value -> int (base: int)
+    51:20 armor -> int (base: int)
+
+  gain_experience()
+    55:1 experience -> int (base: int)
+    55:15 amount -> int (base: int)
+    56:24 amount -> int (base: int)
+    60:4 experience -> int (base: int)
+    60:18 xp_needed -> int (base: int)
+
+  level_up_player()
+    65:1 level -> int (base: int)
+    66:1 experience -> int (base: int)
+    69:1 max_health -> int (base: int)
+    70:1 current_health -> int (base: int)
+    70:18 max_health -> int (base: int)
+    71:1 armor -> int (base: int)
+    72:1 defense -> int (base: int)
+    74:21 current_health -> int (base: int)
+    74:37 max_health -> int (base: int)
+    75:20 armor -> int (base: int)
+    76:15 level -> int (base: int)
+
+  start_blocking()
+    85:1 is_blocking -> bool (base: bool)
+
+  stop_blocking()
+    89:1 is_blocking -> bool (base: bool)
+
+  perform_attack()
+    93:26 target -> BaseEntity (base: BaseEntity)
+    97:14 base_damage -> int (base: int)
+    98:1 target -> BaseEntity (base: BaseEntity)
+    98:20 damage -> int (base: int)
+    99:1 combo_count -> int (base: int)
+
+  reset_combo()
+    103:1 combo_count -> int (base: int)
+
+  die()
+    108:1 is_blocking -> bool (base: bool)
+
+test_scripts/polymorphic_interfaces.gd
+  damage_all()
+    43:2 results -> Array (base: Array)
+    44:8 results -> Array (base: Array)
+
+  notify_observers()
+    155:2 results -> Array (base: Array)
+    156:8 results -> Array (base: Array)
+
+  process_tree()
+    172:3 children_results -> Array (base: Array)
+    174:37 children_results -> Array (base: Array)
+
+  collect_from_tree()
+    197:2 results -> Array (base: Array)
+    201:3 results -> Array (base: Array)
+    203:8 results -> Array (base: Array)
+
+  process_with_decorators()
+    224:39 next_func -> Callable (base: Callable)
+
+  _create_next_func()
+    240:40 next_func -> Callable (base: Callable)
+
+  adapt_value()
+    259:17 value_type -> String (base: String)
+    260:25 value_type -> String (base: String)
+
+  iterate_all()
+    299:2 results -> Array (base: Array)
+    300:8 results -> Array (base: Array)
+
+  iterate_with_transform()
+    308:2 results -> Array (base: Array)
+    308:32 item -> void (base: void)
+    309:8 results -> Array (base: Array)
+
+  iterate_until()
+    318:20 item -> void (base: void)
+    320:2 results -> Array (base: Array)
+    320:17 item -> void (base: void)
+    321:8 results -> Array (base: Array)
+
+  create_multiple()
+    345:5 instance -> null (base: null)
+    346:3 instances -> Array (base: Array)
+    346:20 instance -> null (base: null)
+    347:8 instances -> Array (base: Array)
+
+  broadcast_message()
+    371:3 results -> Dictionary (base: Dictionary)
+    372:8 results -> Dictionary (base: Dictionary)
+
+  state_update()
+    396:9 result -> Dictionary (base: Dictionary)
+
+test_scripts/refactoring_targets.gd
+  calculate_score()
+    28:4 base_value -> int (base: int)
+    29:2 bonus -> int (base: int)
+    30:6 base_value -> int (base: int)
+    31:2 bonus -> int (base: int)
+    32:6 base_value -> int (base: int)
+    33:2 bonus -> int (base: int)
+    35:2 bonus -> int (base: int)
+    38:24 base_value -> int (base: int)
+    38:37 bonus -> int (base: int)
+    38:46 multiplier -> float (base: float)
+    39:8 final_score -> int (base: int)
+
+  process_enemies()
+    46:12 enemy_score -> int (base: int)
+
+  update_player()
+    54:8 is_game_active -> null (base: bool)
+    59:21 pi_value -> float (base: float)
+    60:15 circumference -> float (base: float)
+    64:15 gravity -> float (base: float)
+
+  check_game_state()
+    75:4 has_won -> bool (base: bool)
+    76:32 time_bonus -> float (base: float)
+    77:2 score -> int (base: int)
+    77:10 final_score -> int (base: int)
+
+  add_score()
+    84:1 score -> int (base: int)
+    84:10 points -> int (base: int)
+    85:20 score -> int (base: int)
+    87:4 score -> int (base: int)
+
+  spawn_enemy()
+    96:1 enemy_count -> int (base: int)
+    99:25 spawn_position -> Vector2 (base: Vector2)
+    100:25 spawn_position -> Vector2 (base: Vector2)
+    101:34 validated_x -> float (base: float)
+    101:47 validated_y -> float (base: float)
+    104:29 validated_position -> Vector2 (base: Vector2)
+
+  calculate_damage()
+    109:14 base_damage -> int (base: int)
+    110:1 damage -> int (base: int)
+    110:11 armor -> int (base: int)
+    111:1 damage -> int (base: int)
+    111:17 damage -> int (base: int)
+    113:4 is_critical -> bool (base: bool)
+    114:2 damage -> int (base: int)
+    118:1 damage -> int (base: int)
+    118:14 damage -> int (base: int)
+    118:23 random_variance -> float (base: float)
+    120:8 damage -> int (base: int)
+
+  reset_game()
+    124:1 score -> int (base: int)
+    125:1 enemy_count -> int (base: int)
+    126:1 is_game_active -> bool (base: bool)
+    127:1 player_speed -> float (base: float)
+
+test_scripts/rename_test.gd
+  _ready()
+    14:1 local_speed -> float (base: float)
+
+  test_rename_local_variable()
+    20:1 counter -> int (base: int)
+    21:1 counter -> int (base: int)
+    22:1 counter -> int (base: int)
+    23:26 counter -> int (base: int)
+    24:1 counter -> int (base: int)
+    24:11 counter -> int (base: int)
+    25:28 counter -> int (base: int)
+    27:4 counter -> int (base: int)
+    28:2 counter -> int (base: int)
+    30:16 counter -> int (base: int)
+
+  test_rename_parameter()
+    36:14 value -> int (base: int)
+    37:1 result -> int (base: int)
+    37:11 value -> int (base: int)
+    38:21 value -> int (base: int)
+    40:4 value -> int (base: int)
+    41:9 name -> String (base: String)
+    41:33 value -> int (base: int)
+    43:9 name -> String (base: String)
+    43:32 value -> int (base: int)
+
+  test_rename_inherited_member()
+    49:18 player_speed -> int (base: float)
+    50:17 temp_value -> float (base: float)
+    52:1 player_speed -> int (base: float)
+    53:22 player_speed -> int (base: float)
+    55:4 player_speed -> int (base: float)
+    56:2 player_speed -> int (base: float)
+    58:1 local_speed -> float (base: float)
+    58:15 player_speed -> int (base: float)
+
+  _on_score_changed()
+    72:1 cached_score -> int (base: int)
+    72:16 new_score -> int (base: int)
+    73:29 new_score -> int (base: int)
+
+  test_rename_class_member()
+    79:1 result -> float (base: float)
+    80:23 multiplier -> float (base: float)
+    82:1 multiplier -> float (base: float)
+    83:27 multiplier -> float (base: float)
+
+  test_rename_in_expressions()
+    92:11 x -> int (base: int)
+    92:15 y -> int (base: int)
+    92:19 z -> int (base: int)
+    93:15 x -> int (base: int)
+    93:19 y -> int (base: int)
+    93:23 z -> int (base: int)
+    94:16 x -> int (base: int)
+    94:20 y -> int (base: int)
+    94:26 x -> int (base: int)
+    94:30 z -> int (base: int)
+    94:35 x -> int (base: int)
+    94:39 x -> int (base: int)
+    96:16 sum -> int (base: int)
+    97:20 product -> int (base: int)
+    98:20 complex -> int (base: int)
+    100:1 x -> int (base: int)
+    100:5 sum -> int (base: int)
+    101:1 x -> int (base: int)
+    101:5 product -> int (base: int)
+    102:1 x -> int (base: int)
+    102:5 complex -> int (base: int)
+
+  test_rename_in_array_operations()
+    109:1 items -> Array[int] (base: Array[int])
+    110:1 items -> Array[int] (base: Array[int])
+    111:18 items -> Array[int] (base: Array[int])
+    112:17 items -> Array[int] (base: Array[int])
+    114:13 items -> Array[int] (base: Array[int])
+    115:18 item -> int (base: int)
+    117:1 items -> Array[int] (base: Array[int])
+    118:1 items -> Array[int] (base: Array[int])
+
+  calculate_with_factor()
+    123:14 base -> int (base: int)
+    123:21 factor -> float (base: float)
+    124:1 result -> float (base: float)
+    124:11 factor -> float (base: float)
+    125:1 result -> float (base: float)
+    125:11 factor -> float (base: float)
+    127:4 factor -> float (base: float)
+    128:2 result -> float (base: float)
+    128:12 factor -> float (base: float)
+    129:6 factor -> float (base: float)
+    130:2 result -> float (base: float)
+    130:12 factor -> float (base: float)
+    132:8 result -> float (base: float)
+
+test_scripts/scene_nodes.gd
+  _ready()
+    37:4 player_node -> CharacterBody2D (base: CharacterBody2D)
+    38:15 player_node -> CharacterBody2D (base: CharacterBody2D)
+    42:4 optional -> Node (base: Node)
+
+  setup_player()
+    52:1 p -> CharacterBody2D (base: CharacterBody2D)
+
+  update_health_bar()
+    62:24 max_health -> int (base: int)
+    63:20 health -> int (base: int)
+
+  find_nodes_by_group()
+    70:15 tree -> SceneTree (base: SceneTree)
+    71:8 players -> Array[Node] (base: Array[Node])
+
+  find_first_in_group()
+    75:43 group_name -> String (base: String)
+    76:4 nodes -> Array[Node] (base: Array[Node])
+    77:9 nodes -> Array[Node] (base: Array[Node])
+
+  get_children_of_type()
+    86:3 result -> Array[Sprite2D] (base: Array[Sprite2D])
+    87:8 result -> Array[Sprite2D] (base: Array[Sprite2D])
+
+  recursive_find()
+    92:30 node_name -> String (base: String)
+
+  _find_recursive()
+    96:4 node -> Node (base: Node)
+    96:17 target_name -> String (base: String)
+    97:9 node -> Node (base: Node)
+    99:14 node -> Node (base: Node)
+    100:30 child -> Node (base: Node)
+    100:37 target_name -> String (base: String)
+    101:5 found -> Node (base: Node)
+    102:10 found -> Node (base: Node)
+
+  get_parent_of_type()
+    110:7 current -> Node (base: Node)
+    113:2 current -> Node (base: Node)
+    113:12 current -> Node (base: Node)
+
+  reparent_node()
+    119:18 node -> Node (base: Node)
+    120:4 old_parent -> Node (base: Node)
+    121:2 old_parent -> Node (base: Node)
+    121:26 node -> Node (base: Node)
+    122:1 new_parent -> Node (base: Node)
+    122:22 node -> Node (base: Node)
+
+  instantiate_scene()
+    127:16 scene -> PackedScene (base: PackedScene)
+    128:11 instance -> Node (base: Node)
+    129:8 instance -> Node (base: Node)
+
+  instantiate_typed()
+    134:16 scene -> PackedScene (base: PackedScene)
+    135:4 instance -> CharacterBody2D (base: CharacterBody2D)
+    136:12 instance -> CharacterBody2D (base: CharacterBody2D)
+    137:9 instance -> CharacterBody2D (base: CharacterBody2D)
+
+  queue_free_child()
+    143:30 child_name -> String (base: String)
+    144:4 child -> Node (base: Node)
+    145:2 child -> Node (base: Node)
+
+  find_owner()
+    160:8 scene_owner -> Node (base: Node)
+
+  duplicate_node()
+    166:8 copy -> Node2D (base: Node2D)
+
+  get_node_configuration_warnings()
+    174:2 warnings -> PackedStringArray (base: PackedStringArray)
+    177:2 warnings -> PackedStringArray (base: PackedStringArray)
+    179:8 warnings -> PackedStringArray (base: PackedStringArray)
+
+  access_sibling()
+    185:4 parent -> Node (base: Node)
+    188:14 parent -> Node (base: Node)
+    189:5 child -> Node (base: Node)
+    189:23 child -> Node (base: Node)
+    190:10 child -> Node (base: Node)
+
+  access_node_via_path()
+    197:29 path -> NodePath (base: NodePath)
+    198:8 node -> Node (base: Node)
+
+  access_node_property_via_path()
+    203:17 path -> NodePath (base: NodePath)
+    205:20 path -> NodePath (base: NodePath)
+
+  get_viewport_info()
+    211:12 viewport -> Viewport (base: Viewport)
+    212:17 viewport -> Viewport (base: Viewport)
+    213:17 size -> Vector2 (base: Vector2)
+    213:32 mouse_pos -> Vector2 (base: Vector2)
+
+test_scripts/scene_references.gd
+  _ready()
+    19:1 _scene_loaded -> bool (base: bool)
+
+  _on_player_health_changed()
+    39:21 new_health -> int (base: int)
+    42:33 new_health -> int (base: int)
+
+  spawn_enemy()
+    48:14 enemy_scene -> PackedScene (base: PackedScene)
+    49:1 enemy -> Node2D (base: Node2D)
+    49:18 spawn_pos -> Vector2 (base: Vector2)
+    50:27 enemy -> Node2D (base: Node2D)
+    51:8 enemy -> Node2D (base: Node2D)
+
+  get_enemies()
+    58:3 enemies -> Array[Node2D] (base: Array[Node2D])
+    59:8 enemies -> Array[Node2D] (base: Array[Node2D])
+
+  clear_enemies()
+    64:2 child -> Node (base: Node)
+
+  get_node_by_path()
+    68:25 path -> String (base: String)
+
+  find_child_of_type()
+    72:14 parent -> Node (base: Node)
+    73:5 child -> Node (base: Node)
+    73:26 type_name -> String (base: String)
+    74:10 child -> Node (base: Node)
+    75:34 child -> Node (base: Node)
+    75:41 type_name -> String (base: String)
+    76:5 found -> Node (base: Node)
+    77:10 found -> Node (base: Node)
+
+test_scripts/semantic_tokens_test.gd
+  _get_configuration_warnings()
+    15:8 warnings -> Array (base: PackedStringArray)
+
+test_scripts/semantic_validation_demo.gd
+  indexer_validation_demo()
+    30:10 arr -> Array[int] (base: Array)
+    34:10 typed_arr -> Array[int] (base: Array[int])
+    38:10 text -> String (base: String)
+    42:10 dict -> Dictionary[int, Variant] (base: Dictionary)
+    43:10 dict -> Dictionary[int, Variant] (base: Dictionary)
+    47:10 typed_dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    51:10 packed -> PackedInt32Array (base: PackedInt32Array)
+    57:10 arr2 -> Array[int] (base: Array)
+    61:10 str_dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    65:10 text2 -> String (base: String)
+    71:10 num -> int (base: int)
+    75:10 flt -> float (base: float)
+    79:10 flag -> bool (base: bool)
+
+  take_int()
+    156:7 x -> int (base: int)
+
+  take_string()
+    159:7 s -> String (base: String)
+
+  take_node()
+    162:7 n -> Node (base: Node)
+
+  take_node2d()
+    165:7 n -> Node2D (base: Node2D)
+
+  argument_type_validation_demo()
+    176:11 node2d -> Node2D (base: Node2D)
+    192:13 node -> Node (base: Node)
+
+  member_access_validation_demo()
+    204:12 node -> Node2D (base: Node2D)
+    205:12 node -> Node2D (base: Node2D)
+    216:10 unknown -> null (base: null)
+    222:12 text -> String (base: String)
+
+  type_assignment_validation_demo()
+    239:1 a -> int (base: int)
+    251:1 x -> String (base: int)
+    256:1 n2d -> Node2D (base: Node2D)
+    256:7 n -> Node (base: Node)
+
+  complex_scenario_1()
+    271:19 data -> Dictionary[String, Array[int]] (base: Dictionary[String, Array[int]])
+    272:7 first_score -> int (base: int)
+    275:12 data -> Dictionary[String, Array[int]] (base: Dictionary[String, Array[int]])
+
+  complex_scenario_2()
+    288:30 player_data -> Dictionary[String, int] (base: Dictionary[String, int])
+
+  complex_scenario_3()
+    293:15 entities -> Array (base: Array)
+
+  null_handling()
+    312:4 node -> Node (base: Node)
+    313:14 node -> Node (base: Node)
+
+  variant_handling()
+    319:1 v -> String (base: Variant)
+    320:1 v -> Array[int] (base: Variant)
+    321:1 v -> Dictionary[String, String] (base: Variant)
+    324:10 v -> Dictionary[String, String] (base: Variant)
+
+  generic_base_type_handling()
+    333:7 arr -> Array[int] (base: Array[int])
+    334:7 dict -> Dictionary[String, float] (base: Dictionary[String, float])
+
+test_scripts/signal_callback_chains.gd
+  then()
+    71:5 _state -> String (base: String)
+
+  catch_error()
+    77:5 _state -> String (base: String)
+
+  resolve()
+    90:2 _state -> String (base: String)
+
+  reject()
+    98:2 _state -> String (base: String)
+
+  start_async_task()
+    124:39 op -> AsyncOperation (base: AsyncOperation)
+    126:8 op -> AsyncOperation (base: AsyncOperation)
+
+  _run_task()
+    133:16 resolve -> Callable(Variant) (base: Callable)
+    133:25 reject -> Callable(Variant) (base: Callable)
+
+  emit_event()
+    168:3 results -> Array (base: Array)
+    176:3 results -> Array (base: Array)
+    178:8 results -> Array (base: Array)
+
+  _run_stage()
+    201:28 next -> Callable(Variant) (base: Callable)
+
+  handle_request()
+    221:21 context -> Dictionary[String, Dictionary] (base: Dictionary[String, Dictionary])
+    223:8 context -> Dictionary[String, Dictionary] (base: Dictionary[String, Dictionary])
+
+  _next_middleware()
+    233:28 next -> Callable (base: Callable)
+
+  subscribe()
+    248:22 subscription -> Dictionary[String, bool] (base: Dictionary[String, bool])
+    249:9 subscription -> Dictionary[String, bool] (base: Dictionary[String, bool])
+
+  map()
+    275:16 mapped -> Observable (base: Observable)
+    276:16 mapped -> Observable (base: Observable)
+    277:11 mapped -> Observable (base: Observable)
+    279:9 mapped -> Observable (base: Observable)
+
+  filter()
+    285:4 filtered -> Observable (base: Observable)
+    287:3 on_next_filter -> Callable(Variant) (base: Callable)
+    288:16 filtered -> Observable (base: Observable)
+    289:11 filtered -> Observable (base: Observable)
+    291:9 filtered -> Observable (base: Observable)
+
+  _on_debounce_timeout()
+    311:1 timer -> Timer (base: Timer)
+
+  debounce()
+    321:1 _pending_debounce_key -> String (base: String)
+    325:1 timer -> Timer (base: Timer)
+    326:1 timer -> Timer (base: Timer)
+    327:1 timer -> Timer (base: Timer)
+    327:49 timer -> Timer (base: Timer)
+    328:11 timer -> Timer (base: Timer)
+    329:1 timer -> Timer (base: Timer)
+    330:24 timer -> Timer (base: Timer)
+
+  _on_throttle_timeout()
+    334:16 key -> String (base: String)
+    335:1 timer -> Timer (base: Timer)
+
+  throttle()
+    347:1 timer -> Timer (base: Timer)
+    348:1 timer -> Timer (base: Timer)
+    349:1 timer -> Timer (base: Timer)
+    349:54 timer -> Timer (base: Timer)
+    350:11 timer -> Timer (base: Timer)
+    351:1 timer -> Timer (base: Timer)
+
+  async_fetch()
+    362:4 result -> Dictionary[String, bool] (base: Dictionary[String, bool])
+    363:18 result -> Dictionary[String, bool] (base: Dictionary[String, bool])
+    365:18 result -> Dictionary[String, bool] (base: Dictionary[String, bool])
+
+  _create_parallel_success_handler()
+    398:5 ctx -> ParallelContext (base: ParallelContext)
+    400:2 ctx -> ParallelContext (base: ParallelContext)
+    400:14 index -> int (base: int)
+    401:2 ctx -> ParallelContext (base: ParallelContext)
+    402:5 ctx -> ParallelContext (base: ParallelContext)
+    402:28 ctx -> ParallelContext (base: ParallelContext)
+    403:3 ctx -> ParallelContext (base: ParallelContext)
+    403:24 ctx -> ParallelContext (base: ParallelContext)
+
+  _create_parallel_error_handler()
+    408:5 ctx -> ParallelContext (base: ParallelContext)
+    410:2 ctx -> ParallelContext (base: ParallelContext)
+    411:2 ctx -> ParallelContext (base: ParallelContext)
+
+  async_parallel()
+    417:1 ctx -> ParallelContext (base: ParallelContext)
+    418:1 ctx -> ParallelContext (base: ParallelContext)
+    419:1 ctx -> ParallelContext (base: ParallelContext)
+    420:1 ctx -> ParallelContext (base: ParallelContext)
+    421:1 ctx -> ParallelContext (base: ParallelContext)
+    424:57 ctx -> ParallelContext (base: ParallelContext)
+    425:53 ctx -> ParallelContext (base: ParallelContext)
+    426:21 success_handler -> Callable (base: Callable)
+    426:38 error_handler -> Callable (base: Callable)
+
+  _on_signal_received()
+    446:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+    446:23 ctx -> SignalWaitContext (base: SignalWaitContext)
+    446:40 ctx -> SignalWaitContext (base: SignalWaitContext)
+    447:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+
+  _on_wait_timeout()
+    451:4 ctx -> SignalWaitContext (base: SignalWaitContext)
+    451:28 ctx -> SignalWaitContext (base: SignalWaitContext)
+    451:45 ctx -> SignalWaitContext (base: SignalWaitContext)
+    452:2 ctx -> SignalWaitContext (base: SignalWaitContext)
+    452:24 ctx -> SignalWaitContext (base: SignalWaitContext)
+    452:41 ctx -> SignalWaitContext (base: SignalWaitContext)
+    453:2 ctx -> SignalWaitContext (base: SignalWaitContext)
+
+  wait_for_signal()
+    460:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+    461:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+    462:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+    462:17 operation -> AsyncOperation (base: AsyncOperation)
+    463:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+    463:43 ctx -> SignalWaitContext (base: SignalWaitContext)
+    465:29 ctx -> SignalWaitContext (base: SignalWaitContext)
+    470:46 ctx -> SignalWaitContext (base: SignalWaitContext)
+    472:8 operation -> AsyncOperation (base: AsyncOperation)
+
+  call_parallel()
+    493:3 results -> Array (base: Array)
+    494:9 results -> Array (base: Array)
+
+  call_retry()
+    517:8 attempt -> int (base: int)
+    520:4 last_error -> null (base: null)
+    521:29 last_error -> null (base: null)
+    521:41 attempt -> int (base: int)
+    523:4 attempt -> int (base: int)
+    527:19 last_error -> null (base: null)
+    527:43 attempt -> int (base: int)
+
+  compose_callbacks()
+    533:1 composed -> ComposedCallback (base: ComposedCallback)
+    534:8 composed -> ComposedCallback (base: ComposedCallback)
+
+  parallel_callbacks()
+    540:1 parallel -> ParallelCallback (base: ParallelCallback)
+    541:8 parallel -> ParallelCallback (base: ParallelCallback)
+
+  conditional_callback()
+    546:1 cond -> ConditionalCallback (base: ConditionalCallback)
+    547:1 cond -> ConditionalCallback (base: ConditionalCallback)
+    548:1 cond -> ConditionalCallback (base: ConditionalCallback)
+    549:8 cond -> ConditionalCallback (base: ConditionalCallback)
+
+  retry_callback()
+    555:1 retry -> RetryCallback (base: RetryCallback)
+    556:1 retry -> RetryCallback (base: RetryCallback)
+    557:1 retry -> RetryCallback (base: RetryCallback)
+    558:8 retry -> RetryCallback (base: RetryCallback)
+
+test_scripts/signals_test.gd
+  emit_health_change()
+    40:1 _health -> int (base: int)
+    40:11 new_health -> int (base: int)
+    41:21 old -> int (base: int)
+    41:26 _health -> int (base: int)
+
+  emit_position()
+    46:1 _position -> Vector2 (base: Vector2)
+    46:13 pos -> Vector2 (base: Vector2)
+    47:23 _position -> Vector2 (base: Vector2)
+
+  emit_data()
+    52:20 data -> Dictionary (base: Dictionary)
+
+  emit_generic()
+    57:20 name -> String (base: String)
+
+  _on_health_changed()
+    75:19 old -> int (base: int)
+    75:32 new -> int (base: int)
+    76:4 new -> int (base: int)
+
+  _on_position_updated()
+    82:32 new_pos -> Vector2 (base: Vector2)
+
+  _on_data_received()
+    87:12 data -> Dictionary (base: Dictionary)
+    88:36 keys -> Array (base: Array)
+
+  conditional_emit()
+    118:4 condition -> bool (base: bool)
+    119:31 value -> int (base: int)
+
+  await_with_timeout()
+    144:7 timer -> SceneTreeTimer (base: SceneTreeTimer)
+
+  emit_custom()
+    158:1 data -> CustomData (base: CustomData)
+    159:1 data -> CustomData (base: CustomData)
+    160:1 data -> CustomData (base: CustomData)
+    161:25 data -> CustomData (base: CustomData)
+
+  _on_custom_data()
+    165:10 data -> CustomData (base: CustomData)
+    166:12 data -> CustomData (base: CustomData)
+    167:15 data -> CustomData (base: CustomData)
+
+  connect_tracked()
+    174:1 _connection -> Callable (base: Callable)
+    175:24 _connection -> Callable (base: Callable)
+
+  _on_simple_with_context()
+    203:20 context -> String (base: String)
+    203:41 value -> int (base: int)
+
+test_scripts/simple_class.gd
+  _process()
+    28:23 delta -> float (base: float)
+
+  _initialize()
+    32:1 health -> int (base: int)
+    33:31 health -> int (base: int)
+
+  take_damage()
+    38:1 health -> int (base: int)
+    38:11 amount -> int (base: int)
+    39:21 health -> int (base: int)
+    42:4 health -> int (base: int)
+
+  create_at()
+    61:1 instance -> SimpleClass (base: SimpleClass)
+    61:21 pos -> Vector2 (base: Vector2)
+    62:8 instance -> SimpleClass (base: SimpleClass)
+
+test_scripts/standard_methods.gd
+  test_array_methods()
+    14:12 arr -> Array[int] (base: Array[int])
+    15:13 arr -> Array[int] (base: Array[int])
+    16:16 arr -> Array[int] (base: Array[int])
+    17:17 arr -> Array[int] (base: Array[int])
+    18:15 arr -> Array[int] (base: Array[int])
+    21:16 arr -> Array[int] (base: Array[int])
+    22:15 arr -> Array[int] (base: Array[int])
+    23:19 arr -> Array[int] (base: Array[int])
+    26:13 arr -> Array[int] (base: Array[int])
+    27:12 arr -> Array[int] (base: Array[int])
+    28:12 arr -> Array[int] (base: Array[int])
+    29:18 arr -> Array[int] (base: Array[int])
+    32:18 arr -> Array[int] (base: Array[int])
+    33:14 arr -> Array[int] (base: Array[int])
+    34:16 arr -> Array[int] (base: Array[int])
+    35:14 arr -> Array[int] (base: Array[int])
+    37:9 size -> int (base: int)
+    37:15 is_empty -> bool (base: bool)
+    37:25 has_val -> bool (base: bool)
+    37:34 front -> int (base: int)
+    37:41 duplicated -> Array[int] (base: Array[int])
+
+  test_dict_methods()
+    46:12 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    49:16 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    50:15 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    51:15 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    52:19 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    55:12 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    56:14 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    59:15 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    60:19 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    61:16 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    64:18 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    65:14 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    67:9 size -> int (base: int)
+    67:15 is_empty -> bool (base: bool)
+    67:25 has_key -> bool (base: bool)
+    67:34 keys -> Array[String] (base: Array[String])
+    67:40 get_val -> int (base: int)
+
+  test_string_methods()
+    76:14 text -> String (base: String)
+    77:13 text -> String (base: String)
+    78:16 text -> String (base: String)
+    79:17 text -> String (base: String)
+    80:16 text -> String (base: String)
+    81:15 text -> String (base: String)
+    84:16 text -> String (base: String)
+    85:14 text -> String (base: String)
+    86:12 text -> String (base: String)
+    87:16 text -> String (base: String)
+    88:19 text -> String (base: String)
+    89:20 text -> String (base: String)
+    90:22 text -> String (base: String)
+    93:13 text -> String (base: String)
+    94:13 text -> String (base: String)
+    95:16 text -> String (base: String)
+    96:16 text -> String (base: String)
+    97:16 text -> String (base: String)
+    98:17 text -> String (base: String)
+    99:14 text -> String (base: String)
+    100:14 text -> String (base: String)
+    101:14 text -> String (base: String)
+    102:11 text -> String (base: String)
+    105:13 text -> String (base: String)
+    108:18 text -> String (base: String)
+    110:9 length -> int (base: int)
+    110:17 is_empty -> bool (base: bool)
+    110:27 upper -> String (base: String)
+    110:34 split -> PackedStringArray (base: PackedStringArray)
+
+  test_vector2_methods()
+    119:14 vec -> Vector2 (base: Vector2)
+    120:17 vec -> Vector2 (base: Vector2)
+    121:13 vec -> Vector2 (base: Vector2)
+    122:16 vec -> Vector2 (base: Vector2)
+    123:11 vec -> Vector2 (base: Vector2)
+    124:13 vec -> Vector2 (base: Vector2)
+    125:14 vec -> Vector2 (base: Vector2)
+    126:16 vec -> Vector2 (base: Vector2)
+    129:18 vec -> Vector2 (base: Vector2)
+    130:15 vec -> Vector2 (base: Vector2)
+    131:15 vec -> Vector2 (base: Vector2)
+    132:15 vec -> Vector2 (base: Vector2)
+    133:17 vec -> Vector2 (base: Vector2)
+    134:16 vec -> Vector2 (base: Vector2)
+    135:17 vec -> Vector2 (base: Vector2)
+    136:16 vec -> Vector2 (base: Vector2)
+    137:17 vec -> Vector2 (base: Vector2)
+    140:21 vec -> Vector2 (base: Vector2)
+    141:17 vec -> Vector2 (base: Vector2)
+    142:15 vec -> Vector2 (base: Vector2)
+    144:9 length -> float (base: float)
+    144:17 angle -> float (base: float)
+    144:24 normalized -> Vector2 (base: Vector2)
+    144:36 is_normalized -> bool (base: bool)
+
+  test_vector3_methods()
+    152:14 vec -> Vector3 (base: Vector3)
+    153:18 vec -> Vector3 (base: Vector3)
+    154:13 vec -> Vector3 (base: Vector3)
+    155:11 vec -> Vector3 (base: Vector3)
+    156:21 vec -> Vector3 (base: Vector3)
+    158:9 length -> float (base: float)
+    158:17 normalized -> Vector3 (base: Vector3)
+    158:29 cross -> Vector3 (base: Vector3)
+    158:36 dot -> float (base: float)
+
+  test_transform2d_methods()
+    166:14 t -> Transform2D (base: Transform2D)
+    167:16 t -> Transform2D (base: Transform2D)
+    168:13 t -> Transform2D (base: Transform2D)
+    169:16 t -> Transform2D (base: Transform2D)
+    170:15 t -> Transform2D (base: Transform2D)
+    172:9 origin -> Vector2 (base: Vector2)
+    172:17 rotation -> float (base: float)
+    172:27 scale -> Vector2 (base: Vector2)
+    172:34 inverted -> Transform2D (base: Transform2D)
+
+  test_color_methods()
+    181:11 c -> Color (base: Color)
+    182:18 c -> Color (base: Color)
+    183:13 c -> Color (base: Color)
+    184:17 c -> Color (base: Color)
+    187:16 c -> Color (base: Color)
+    188:17 c -> Color (base: Color)
+    189:16 c -> Color (base: Color)
+    190:14 c -> Color (base: Color)
+    193:12 c -> Color (base: Color)
+    196:14 c -> Color (base: Color)
+    197:14 c -> Color (base: Color)
+    199:9 hue -> float (base: float)
+    199:14 darkened -> Color (base: Color)
+    199:24 html -> String (base: String)
+    199:30 rgba32 -> int (base: int)
+
+  test_rect2_methods()
+    207:12 r -> Rect2 (base: Rect2)
+    208:14 r -> Rect2 (base: Rect2)
+    209:17 r -> Rect2 (base: Rect2)
+    210:18 r -> Rect2 (base: Rect2)
+    211:16 r -> Rect2 (base: Rect2)
+    212:13 r -> Rect2 (base: Rect2)
+    213:14 r -> Rect2 (base: Rect2)
+    214:20 r -> Rect2 (base: Rect2)
+    216:9 area -> float (base: float)
+    216:15 center -> Vector2 (base: Vector2)
+    216:23 has_point -> bool (base: bool)
+    216:34 grown -> Rect2 (base: Rect2)
+
+  test_aabb_methods()
+    224:14 box -> AABB (base: AABB)
+    225:14 box -> AABB (base: AABB)
+    226:17 box -> AABB (base: AABB)
+    227:18 box -> AABB (base: AABB)
+    227:33 box -> AABB (base: AABB)
+    228:16 box -> AABB (base: AABB)
+    229:13 box -> AABB (base: AABB)
+    231:9 center -> Vector3 (base: Vector3)
+    231:17 volume -> float (base: float)
+    231:25 has_point -> bool (base: bool)
+    231:36 grown -> AABB (base: AABB)
+
+  test_plane_methods()
+    239:14 p -> Plane (base: Plane)
+    240:14 p -> Plane (base: Plane)
+    241:9 p -> Plane (base: Plane)
+    242:16 p -> Plane (base: Plane)
+    243:21 p -> Plane (base: Plane)
+    244:20 p -> Plane (base: Plane)
+    246:9 center -> Vector3 (base: Vector3)
+    246:17 normal -> Vector3 (base: Vector3)
+    246:25 distance -> float (base: float)
+    246:35 is_point_over -> bool (base: bool)
+
+  test_packed_arrays()
+    259:16 int_arr -> PackedInt32Array (base: PackedInt32Array)
+    260:18 float_arr -> PackedFloat32Array (base: PackedFloat32Array)
+    261:15 str_arr -> PackedStringArray (base: PackedStringArray)
+    262:18 vec2_arr -> PackedVector2Array (base: PackedVector2Array)
+    265:16 int_arr -> PackedInt32Array (base: PackedInt32Array)
+    266:18 byte_arr -> PackedByteArray (base: PackedByteArray)
+    268:9 int_size -> int (base: int)
+    268:19 str_has -> bool (base: bool)
+    268:28 vec2_empty -> bool (base: bool)
+
+  test_node_methods()
+    285:9 parent -> Node (base: Node)
+    285:17 children -> Array[Node] (base: Array[Node])
+    285:27 child_count -> int (base: int)
+    285:40 is_inside -> bool (base: bool)
+
+  test_math_functions()
+    306:9 abs_val -> int (base: int)
+    306:18 floor_val -> int (base: int)
+    306:29 clamp_val -> int (base: int)
+    306:40 sqrt_val -> float (base: float)
+
+test_scripts/todo_examples.gd
+  process_data()
+    35:8 result -> String (base: String)
+
+  add_item()
+    41:1 processed_count -> int (base: int)
+
+  clear_data()
+    47:1 processed_count -> int (base: int)
+
+test_scripts/type_guards.gd
+  early_return_guard()
+    86:8 keys -> Array (base: Array)
+
+  assignment_after_guard()
+    95:2 result -> String (base: String)
+    97:2 result -> String (base: String)
+    99:8 result -> String (base: String)
+
+  loop_with_guard()
+    105:13 items -> Array (base: Array)
+    107:3 results -> Array (base: Array)
+    109:3 results -> Array (base: Array)
+    111:3 results -> Array (base: Array)
+    112:8 results -> Array (base: Array)
+
+  match_type_guard()
+    124:13 x -> int (base: int)
+    125:24 x -> int (base: int)
+    126:13 x -> String (base: String)
+    127:23 x -> String (base: String)
+
+  guard_in_while()
+    185:7 current -> Dictionary (base: Variant)
+    185:33 current -> Dictionary (base: Variant)
+    186:14 current -> Dictionary (base: Variant)
+    187:2 current -> Dictionary (base: Variant)
+    187:12 current -> Dictionary (base: Variant)
+    188:8 current -> Dictionary (base: Variant)
+
+  multiple_guards_same_var()
+    196:2 result -> String (base: String)
+    200:4 result -> String (base: String)
+    200:24 name -> String (base: StringName)
+    202:4 result -> String (base: String)
+    204:8 result -> String (base: String)
+
+  enum_like_guard()
+    233:18 data -> Dictionary (base: Dictionary)
+    238:10 data -> Dictionary (base: Dictionary)
+    241:10 data -> Dictionary (base: Dictionary)
+    244:10 data -> Dictionary (base: Dictionary)
+
+  ternary_with_guard()
+    259:8 result -> float (base: float)
+
+  guard_propagation()
+    271:9 inner_func -> Callable() -> Array (base: Callable)
+
+test_scripts/type_inference.gd
+  test_assignments()
+    39:7 sum -> int (base: int)
+    39:12 product -> float (base: float)
+    39:21 concat -> String (base: String)
+    39:29 negated -> bool (base: bool)
+
+  test_method_chain_inference()
+    50:14 step1 -> String (base: String)
+    51:14 step2 -> String (base: String)
+    52:18 step3 -> int (base: int)
+    54:7 step1 -> String (base: String)
+    54:14 step2 -> String (base: String)
+    54:21 step3 -> int (base: int)
+    54:28 step4 -> String (base: String)
+
+  array_operations()
+    61:16 numbers -> Array[int] (base: Array[int])
+    62:14 filtered -> Array[int] (base: Array[int])
+    63:15 mapped -> Array (base: Array)
+
+  test_typed_array_inference()
+    71:14 items -> Array[int] (base: Array[int])
+    72:14 items -> Array[int] (base: Array[int])
+    73:15 items -> Array[int] (base: Array[int])
+    75:7 first -> int (base: int)
+    75:14 front -> int (base: int)
+    75:21 popped -> int (base: int)
+
+  get_node_types()
+    84:4 sprite -> Sprite2D (base: Sprite2D)
+    85:2 sprite -> Sprite2D (base: Sprite2D)
+    86:4 label -> Label (base: Label)
+    87:2 label -> Label (base: Label)
+
+  test_conditional_inference()
+    92:25 value -> float (base: float)
+    95:23 number -> int (base: int)
+    95:41 number -> int (base: int)
+    97:7 result -> String (base: String)
+    97:15 clamped -> int (base: int)
+
+  test_match_inference()
+    103:7 value -> int (base: int)
+
+  test_loop_variable_inference()
+    118:8 item -> int (base: int)
+    121:8 key -> String (base: String)
+
+  test_dictionary_access()
+    128:16 data -> Dictionary[String, bool] (base: Dictionary[String, bool])
+    129:17 data -> Dictionary[String, bool] (base: Dictionary[String, bool])
+    131:7 name_val -> String (base: String)
+    131:17 value_val -> int (base: int)
+
+  test_call_inference()
+    140:7 pos -> Vector2 (base: Vector2)
+    140:12 tree -> SceneTree (base: SceneTree)
+    140:18 time -> int (base: int)
+
+  create_vector()
+    144:16 x -> float (base: float)
+    144:19 y -> float (base: float)
+
+  test_custom_function_inference()
+    149:15 vec -> Vector2 (base: Vector2)
+    151:7 vec -> Vector2 (base: Vector2)
+    151:12 length -> float (base: float)
+
+  test_packed_array_inference()
+    160:17 packed_ints -> PackedInt32Array (base: PackedInt32Array)
+    161:19 packed_floats -> PackedFloat32Array (base: PackedFloat32Array)
+    162:20 packed_strings -> PackedStringArray (base: PackedStringArray)
+    164:7 int_elem -> int (base: int)
+    164:17 float_elem -> float (base: float)
+    164:29 string_elem -> String (base: String)
+
+  test_complex_expression_inference()
+    173:16 a -> int (base: int)
+    173:20 b -> float (base: float)
+    173:25 c -> int (base: int)
+    175:8 result -> float (base: float)
+
+  test_typed_dictionary_inference()
+    194:14 dict -> Dictionary[String, int] (base: Dictionary[String, int])
+    197:7 value -> int (base: int)
+    197:14 value2 -> int (base: int)
+
+  test_nested_array_inference()
+    203:12 local_matrix -> Array[Array[int]] (base: Array[Array[int]])
+    204:13 local_matrix -> Array[Array[int]] (base: Array[Array[int]])
+    209:7 row -> Array[int] (base: Array[int])
+    209:12 cell -> int (base: int)
+    209:18 member_row -> Array[int] (base: Array[int])
+
+  test_typed_custom_class_array()
+    215:1 nodes -> Array[Node2D] (base: Array[Node2D])
+    216:14 nodes -> Array[Node2D] (base: Array[Node2D])
+    218:7 first -> Node2D (base: Node2D)
+
+  test_untyped_containers()
+    224:12 untyped_arr -> Array[float] (base: Array)
+    228:16 untyped_dict -> Dictionary[String, int] (base: Dictionary)
+    230:13 dict_val -> int (base: int)
+
+test_scripts/ui_panel_a.gd
+  refresh_ui()
+    8:1 _data -> int (base: int)
+
+test_scripts/ui_panel_b.gd
+  refresh_ui()
+    8:1 _counter -> int (base: int)
+
+test_scripts/union_returns.gd
+  get_or_error()
+    11:8 data -> Dictionary[String, int] (base: Dictionary[String, int])
+    11:17 key -> String (base: String)
+    12:39 key -> String (base: String)
+    13:8 data -> Dictionary[String, int] (base: Dictionary[String, int])
+    13:13 key -> String (base: String)
+
+  optional_int()
+    18:4 condition -> bool (base: bool)
+
+  multi_type()
+    25:7 type_name -> String (base: String)
+
+  parse_value()
+    49:4 text -> String (base: String)
+    50:9 text -> String (base: String)
+    51:4 text -> String (base: String)
+    52:9 text -> String (base: String)
+    53:8 text -> String (base: String)
+
+  get_node_or_default()
+    58:29 path -> String (base: String)
+    59:4 node -> Node (base: Node)
+    60:9 node -> Node (base: Node)
+    61:29 path -> String (base: String)
+
+  load_resource()
+    66:21 path -> String (base: String)
+    67:4 resource -> Resource (base: Resource)
+    68:34 path -> String (base: String)
+    70:8 resource -> Resource (base: Resource)
+
+  conditional_expression_return()
+    108:14 condition -> bool (base: bool)
+
+  loop_return()
+    113:13 items -> Array (base: Array)
+    118:8 items -> Array (base: Array)
+
+  recursive_return()
+    123:4 depth -> int (base: int)
+    125:30 depth -> int (base: int)
+    127:19 depth -> int (base: int)
+
+  callback_return()
+    133:14 callback -> Callable (base: Callable)
+
+  exception_pattern()
+    141:7 operation -> String (base: String)
+
+  maybe_monad()
+    165:13 get_value -> Callable (base: Callable)
+
+  either_pattern()
+    173:4 condition -> bool (base: bool)
+
+  union_in_match()
+    187:13 x -> int (base: int)
+    188:10 x -> int (base: int)
+    189:13 x -> String (base: String)
+    190:10 x -> String (base: String)
+
+  async_result()
+    197:4 success -> bool (base: bool)
+
+  validate_input()
+    207:2 errors -> Array (base: Array)
+    211:3 errors -> Array (base: Array)
+    213:3 errors -> Array (base: Array)
+    215:4 errors -> Array (base: Array)
+    216:36 errors -> Array (base: Array)
+    217:32 input -> Dictionary (base: Variant)
+
+  factory_method()
+    222:7 type_name -> String (base: String)
+
+  type_from_data()
+    235:18 data -> Dictionary (base: Dictionary)
+    238:18 data -> Dictionary (base: Dictionary)
+    238:36 data -> Dictionary (base: Dictionary)
+    240:16 data -> Dictionary (base: Dictionary)
+    240:34 data -> Dictionary (base: Dictionary)
+    240:52 data -> Dictionary (base: Dictionary)
+    243:4 data -> Dictionary (base: Dictionary)
+    243:22 data -> Dictionary (base: Dictionary)
+    244:4 data -> Dictionary (base: Dictionary)
+    244:22 data -> Dictionary (base: Dictionary)
+    247:10 data -> Dictionary (base: Dictionary)
+
+test_scripts/union_types_complex.gd
+  get_optional_player()
+    42:10 players -> Array[Node] (base: Array[Node])
+    43:5 p -> Node (base: Node)
+    44:10 p -> Node (base: Node)
+
+  match_with_patterns()
+    120:13 x -> int (base: int)
+    121:10 x -> int (base: int)
+
+  process_mixed_array()
+    142:38 item -> Array[int] (base: Array[int])
+    143:2 results -> Array (base: Array)
+    144:8 results -> Array (base: Array)
+
+  safe_chain_example()
+    205:28 data -> Dictionary[String, Dictionary[String, Dictionary[String, String]]] (base: Dictionary[String, Dictionary[String, Dictionary[String, String]]])
+    206:31 data -> Dictionary[String, Dictionary[String, Dictionary[String, String]]] (base: Dictionary[String, Dictionary[String, Dictionary[String, String]]])
+
+  map_with_fallback()
+    246:3 results -> Array (base: Array)
+    248:3 results -> Array (base: Array)
+    249:8 results -> Array (base: Array)
+
+  filter_map()
+    259:3 results -> Array (base: Array)
+    260:8 results -> Array (base: Array)
+
+  async_request()
+    284:1 next_request_id -> int (base: int)
+    285:17 request_id -> int (base: int)
+    288:36 request_id -> int (base: int)
+    290:8 request_id -> int (base: int)
+
+  validate_and_process()
+    351:18 data -> Dictionary (base: Variant)
+    356:43 data -> Dictionary (base: Variant)
+
+test_scripts/unrelated_class.gd
+  take_damage()
+    11:19 amount -> int (base: int)
+
+test_scripts/validation_edge_cases.gd
+  test_variant_methods()
+    13:1 arr -> Array (base: Array)
+    14:1 arr -> Array (base: Array)
+    15:12 arr -> Array (base: Array)
+    18:1 dict -> Dictionary (base: Dictionary)
+    19:1 dict -> Dictionary (base: Dictionary)
+    20:11 dict -> Dictionary (base: Dictionary)
+
+  set_value()
+    38:2 _value -> int (base: int)
+    38:11 v -> int (base: int)
+
+  test_stringname()
+    62:17 sn -> String (base: StringName)
+

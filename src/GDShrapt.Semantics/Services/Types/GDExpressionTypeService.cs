@@ -385,9 +385,30 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 }
             }
 
-            var callResult = _typeEngine?.InferSemanticType(expression)?.DisplayName;
-            if (!string.IsNullOrEmpty(callResult))
-                return callResult;
+            // Type engine first — handles generics (Array[T].front() -> T), special methods, etc.
+            var callResult = _typeEngine?.InferSemanticType(expression);
+            if (callResult != null && !callResult.IsVariant)
+                return callResult.DisplayName;
+
+            // Flow-aware fallback: when type engine returns Variant (can't resolve receiver),
+            // use flow-narrowed receiver type to look up method return type.
+            // Handles: result.duplicate() inside `elif result is Dictionary:`
+            if (callExpr.CallerExpression is GDMemberOperatorExpression fallbackMemberExpr)
+            {
+                var methodName = fallbackMemberExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(methodName))
+                {
+                    var receiverType = GetExpressionType(fallbackMemberExpr.CallerExpression);
+                    if (!string.IsNullOrEmpty(receiverType) &&
+                        !GDSemanticType.FromRuntimeTypeName(receiverType).IsVariant)
+                    {
+                        var memberInfo = FindMemberWithInheritance(receiverType, methodName);
+                        if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method
+                            && !string.IsNullOrEmpty(memberInfo.Type))
+                            return memberInfo.Type;
+                    }
+                }
+            }
         }
 
         // For binary operators

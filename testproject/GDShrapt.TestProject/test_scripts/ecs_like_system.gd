@@ -257,7 +257,7 @@ func create_from_archetype(archetype_name, overrides = {}):
 
 		if overrides.has(comp_type):  # 258:5-GD7007-OK
 			component = overrides[comp_type]  # 259:15-GD7006-OK
-		elif comp_def.has("factory") and comp_def["factory"] is Callable:  # 260:7-GD7007-OK
+		elif comp_def.has("factory") and comp_def["factory"] is Callable:
 			component = comp_def["factory"].call()
 		elif comp_def.has("default"):
 			component = comp_def["default"].duplicate() if comp_def["default"] is Dictionary or comp_def["default"] is Array else comp_def["default"]  # 263:0-GDL101-OK

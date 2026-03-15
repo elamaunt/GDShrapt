@@ -872,11 +872,13 @@ test_scripts/base_entity.gd
       46:21 raw_damage -> int (base: int)
       47:8 damage -> int (base: int)
     heal():
+      51:8 is_alive -> null (base: bool)
       54:1 current_health -> int (base: int)
       54:22 current_health -> int (base: int)
       54:39 amount -> int (base: int)
       55:21 current_health -> int (base: int)
     die():
+      59:8 is_alive -> null (base: bool)
       62:1 is_alive -> bool (base: bool)
       63:1 current_health -> int (base: int)
     revive():
@@ -2968,6 +2970,10 @@ test_scripts/cycles_test.gd
     reduce_pattern():
       118:13 items -> Array (base: Array)
     _reducer():
+      125:4 acc -> int (base: Variant)
+      125:19 item -> int (base: Variant)
+      126:9 acc -> int (base: Variant)
+      126:15 item -> int (base: Variant)
       127:4 acc -> String (base: Variant)
       128:9 acc -> String (base: Variant)
     self_referential_update():
@@ -4021,6 +4027,14 @@ test_scripts/cyclic_inference.gd
     nullable:     no
 
   Flow Narrowing:
+    process_a():
+      16:4 input -> int (base: Variant)
+      16:21 input -> int (base: Variant)
+      17:19 input -> int (base: Variant)
+    process_b():
+      23:4 input -> int (base: Variant)
+      23:21 input -> int (base: Variant)
+      24:19 input -> int (base: Variant)
     transform_stage_1():
       32:4 data -> String (base: Variant)
       33:27 data -> String (base: Variant)
@@ -9573,6 +9587,11 @@ test_scripts/duck_typing_advanced.gd
       211:5 value -> String (base: Variant)
       212:28 value -> String (base: Variant)
       213:8 value -> String (base: Variant)
+    _step_validate():
+      219:4 value -> int (base: Variant)
+      219:21 value -> int (base: Variant)
+      221:4 value -> Array (base: Variant)
+      221:23 value -> Array (base: Variant)
     _step_transform():
       227:4 value -> int (base: Variant)
       228:9 value -> int (base: Variant)
@@ -11504,9 +11523,13 @@ test_scripts/dynamic_dispatch.gd
       188:9 dict -> Dictionary (base: Dictionary)
     create_instance_by_name():
       221:4 class_ref -> PackedScene (base: Variant)
+      222:2 instance -> Node (base: Node)
       222:13 class_ref -> PackedScene (base: Variant)
       223:6 class_ref -> GDScript (base: Variant)
       224:13 class_ref -> GDScript (base: Variant)
+      230:12 instance -> Node (base: Node)
+      231:3 instance -> Node (base: Node)
+      233:8 instance -> Node (base: Node)
     clone_object():
       247:44 class_name_str -> String (base: String)
       248:4 new_instance -> null (base: null)
@@ -11524,7 +11547,7 @@ test_scripts/dynamic_dispatch.gd
     advised_call():
       413:64 proceed -> Callable() (base: Callable)
       414:3 has_around -> bool (base: bool)
-      417:8 has_around -> bool (base: bool)
+      417:8 has_around -> null (base: bool)
 
 
 test_scripts/ecs_like_system.gd
@@ -13235,6 +13258,7 @@ test_scripts/ecs_like_system.gd
       380:18 entity -> Entity (base: Entity)
       386:25 eid -> int (base: int)
     debug_entity():
+      393:8 entity -> null (base: Variant)
       397:1 info -> String (base: String)
       398:1 info -> String (base: String)
       399:1 info -> String (base: String)
@@ -13583,6 +13607,7 @@ test_scripts/enemy_entity.gd
     _ready():
       28:1 max_health -> int (base: int)
     _process():
+      32:8 can_attack -> null (base: bool)
       33:2 _attack_timer -> float (base: float)
       33:19 delta -> float (base: float)
       34:5 _attack_timer -> float (base: float)
@@ -13595,6 +13620,7 @@ test_scripts/enemy_entity.gd
       42:5 target -> BaseEntity (base: BaseEntity)
       43:24 target -> BaseEntity (base: BaseEntity)
     attack():
+      49:8 can_attack -> null (base: bool)
       63:1 can_attack -> bool (base: bool)
       64:1 _attack_timer -> float (base: float)
     _on_player_detected():
@@ -13604,9 +13630,8 @@ test_scripts/enemy_entity.gd
       93:15 last_damage_source -> PlayerEntity (base: Node)
     take_damage():
       100:19 amount -> int (base: int)
-      100:27 source -> Node (base: Node)
-      103:17 source -> Node (base: Node)
-      104:13 source -> Node (base: Node)
+      103:17 source -> BaseEntity (base: Node)
+      104:13 source -> BaseEntity (base: Node)
     patrol_to():
       109:1 position -> Vector2 (base: Vector2)
       109:12 position -> Vector2 (base: Vector2)
@@ -16214,10 +16239,10 @@ test_scripts/game_patterns.gd
       478:4 required -> int (base: Variant)
       482:4 result -> Callable (base: Variant)
       483:2 result -> Callable (base: Variant)
-      483:11 result -> Callable (base: Array)
+      483:11 result -> Callable (base: Variant)
       484:6 result -> Dictionary (base: Variant)
-      485:2 result -> Array (base: Variant)
-      485:11 result -> Array (base: Array)
+      485:2 result -> Dictionary (base: Variant)
+      485:11 result -> Dictionary (base: Variant)
     load_game_state():
       507:1 inventory -> Array (base: Array)
       508:1 equipped -> Dictionary (base: Dictionary)
@@ -20940,6 +20965,11 @@ test_scripts/polymorphic_interfaces.gd
     broadcast_message():
       371:3 results -> Dictionary (base: Dictionary)
       372:8 results -> Dictionary (base: Dictionary)
+    state_update():
+      394:5 result -> Dictionary (base: Dictionary)
+      394:30 result -> Dictionary (base: Dictionary)
+      395:16 result -> Dictionary (base: Dictionary)
+      396:9 result -> Dictionary (base: Dictionary)
 
 
 test_scripts/refactoring_targets.gd
@@ -21335,6 +21365,7 @@ test_scripts/refactoring_targets.gd
     process_enemies():
       46:12 enemy_score -> int (base: int)
     update_player():
+      54:8 is_game_active -> null (base: bool)
       59:21 pi_value -> float (base: float)
       60:15 circumference -> float (base: float)
       64:15 gravity -> float (base: float)
@@ -26310,9 +26341,13 @@ test_scripts/signal_callback_chains.gd
       494:9 results -> Array (base: Array)
     call_retry():
       517:8 attempt -> int (base: int)
+      519:6 result -> Dictionary (base: Variant)
+      519:31 result -> Dictionary (base: Variant)
       520:4 last_error -> null (base: null)
+      520:17 result -> Dictionary (base: Variant)
       521:29 last_error -> null (base: null)
       521:41 attempt -> int (base: int)
+      522:12 result -> Dictionary (base: Variant)
       523:4 attempt -> int (base: int)
       527:19 last_error -> null (base: null)
       527:43 attempt -> int (base: int)
@@ -29337,8 +29372,8 @@ test_scripts/type_guards.gd
 --- 161:2 Variable overlapping ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
+    inferred:     Array[Node2D]
+    effective:    Array[Node2D]
     confidence:   Medium
     nullable:     no
 
@@ -29652,7 +29687,18 @@ test_scripts/type_guards.gd
       35:18 data -> Dictionary (base: Variant)
       36:6 type_val -> String (base: Variant)
       38:11 type_val -> String (base: Variant)
+    type_guard_with_and():
+      46:4 value -> Array (base: Variant)
+      46:23 value -> Array (base: Variant)
+      48:9 value -> Array (base: Variant)
+      50:4 value -> String (base: Variant)
+      50:28 value -> String (base: Variant)
+      52:9 value -> String (base: Variant)
+      54:4 value -> Dictionary (base: Variant)
+      54:28 value -> Dictionary (base: Variant)
+      56:9 value -> Dictionary (base: Variant)
     early_return_guard():
+      85:12 data -> Dictionary (base: Variant)
       86:8 keys -> Array (base: Array)
     assignment_after_guard():
       92:4 value -> int (base: Variant)
@@ -29690,6 +29736,15 @@ test_scripts/type_guards.gd
       161:20 node -> Area2D (base: Node)
       164:4 node -> Node2D (base: Node)
       166:12 node -> Node2D (base: Node)
+    negated_guard():
+      179:8 value -> Dictionary (base: Variant)
+    guard_in_while():
+      185:7 current -> Dictionary (base: Variant)
+      185:33 current -> Dictionary (base: Variant)
+      186:14 current -> Dictionary (base: Variant)
+      187:2 current -> Dictionary (base: Variant)
+      187:12 current -> Dictionary (base: Variant)
+      188:8 current -> Dictionary (base: Variant)
     multiple_guards_same_var():
       195:4 value -> Dictionary (base: Variant)
       196:2 result -> String (base: String)
@@ -29702,6 +29757,10 @@ test_scripts/type_guards.gd
       202:4 result -> String (base: String)
       202:31 name -> int (base: Variant)
       204:8 result -> String (base: String)
+    guard_with_method_call():
+      209:4 value -> Array (base: Variant)
+      209:23 value -> Array (base: Variant)
+      211:9 value -> Array (base: Variant)
     enum_like_guard():
       233:18 data -> Dictionary (base: Dictionary)
       238:10 data -> Dictionary (base: Dictionary)
@@ -31364,6 +31423,9 @@ test_scripts/union_returns.gd
       18:4 condition -> bool (base: bool)
     multi_type():
       25:7 type_name -> String (base: String)
+    success_or_error():
+      42:4 input -> int (base: Variant)
+      42:21 input -> int (base: Variant)
     parse_value():
       49:4 text -> String (base: String)
       50:9 text -> String (base: String)
@@ -31402,6 +31464,12 @@ test_scripts/union_returns.gd
       108:14 condition -> bool (base: bool)
     loop_return():
       113:13 items -> Array (base: Array)
+      114:5 item -> int (base: Variant)
+      114:21 item -> int (base: Variant)
+      115:35 item -> int (base: Variant)
+      116:5 item -> String (base: Variant)
+      116:24 item -> String (base: Variant)
+      117:10 item -> String (base: Variant)
       118:8 items -> Array (base: Array)
     recursive_return():
       123:4 depth -> int (base: int)
@@ -31415,6 +31483,9 @@ test_scripts/union_returns.gd
       141:7 operation -> String (base: String)
       143:6 data -> Dictionary (base: Variant)
       144:11 data -> Dictionary (base: Variant)
+    result_monad():
+      158:4 value -> int (base: Variant)
+      158:21 value -> int (base: Variant)
     maybe_monad():
       165:13 get_value -> Callable (base: Callable)
     either_pattern():
@@ -32604,9 +32675,9 @@ test_scripts/union_types_complex.gd
       43:5 p -> Node (base: Node)
       44:10 p -> Node (base: Node)
     get_position_or_null():
-      51:4 node -> Node (base: Node)
-      51:13 node -> Node (base: Node)
-      52:9 node -> Node (base: Node)
+      51:4 node -> Node2D (base: Node)
+      51:13 node -> Node2D (base: Node)
+      52:9 node -> Node2D (base: Node)
     process_by_type():
       60:4 value -> int (base: Variant)
       61:9 value -> int (base: Variant)
@@ -32640,7 +32711,14 @@ test_scripts/union_types_complex.gd
       192:5 current -> Dictionary (base: Variant)
       193:3 current -> Dictionary (base: Variant)
       193:13 current -> Dictionary (base: Variant)
-      200:8 current -> Dictionary (base: Variant)
+      194:7 current -> Array (base: Variant)
+      194:28 key -> int (base: Variant)
+      195:6 key -> int (base: Variant)
+      195:17 key -> int (base: Variant)
+      195:24 current -> Array (base: Variant)
+      197:3 current -> Array (base: Variant)
+      197:13 current -> Array (base: Variant)
+      197:21 key -> int (base: Variant)
     safe_chain_example():
       205:28 data -> Dictionary[String, Dictionary[String, Dictionary[String, String]]] (base: Dictionary[String, Dictionary[String, Dictionary[String, String]]])
       206:31 data -> Dictionary[String, Dictionary[String, Dictionary[String, String]]] (base: Dictionary[String, Dictionary[String, Dictionary[String, String]]])
@@ -32667,11 +32745,19 @@ test_scripts/union_types_complex.gd
     process_with_guards():
       334:6 value -> Array (base: Variant)
       336:9 value -> Array (base: Variant)
+    validate_and_process():
+      348:8 data -> Dictionary (base: Variant)
+      351:18 data -> Dictionary (base: Variant)
+      356:43 data -> Dictionary (base: Variant)
+      356:49 type_field -> String (base: Variant)
     type_flow_test_method():
       383:4 local -> Dictionary (base: Variant)
       385:14 local -> Dictionary (base: Variant)
       387:13 local -> Dictionary (base: Variant)
       389:14 local -> Dictionary (base: Variant)
+      393:4 local -> Array (base: Variant)
+      393:23 local -> Array (base: Variant)
+      395:9 local -> Array (base: Variant)
       403:4 local -> String (base: Variant)
 
 

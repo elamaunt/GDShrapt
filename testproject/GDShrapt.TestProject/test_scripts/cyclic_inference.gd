@@ -255,7 +255,7 @@ func parse_expr(tokens, pos):
 			break
 
 		var right = parse_term(tokens, new_pos + 1)
-		if right == null:
+		if right == null:  # 258:5-GD7013-OK
 			break
 
 		if op == "+":
@@ -282,7 +282,7 @@ func parse_term(tokens, pos):
 			break
 
 		var right = parse_factor(tokens, new_pos + 1)
-		if right == null:
+		if right == null:  # 285:5-GD7013-OK
 			break
 
 		if op == "*":
