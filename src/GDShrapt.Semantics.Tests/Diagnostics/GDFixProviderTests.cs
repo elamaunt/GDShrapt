@@ -289,6 +289,392 @@ func test():
 
     #endregion
 
+    #region Null Guard Fix Tests (GD7005-7009)
+
+    [TestMethod]
+    public void GetFixes_PotentiallyNullAccess_IncludesNullGuard()
+    {
+        var code = @"
+func process(obj):
+    var x = obj.health
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
+
+        var fixes = _fixProvider.GetFixes("GD7005", memberAccess, null, null).ToList();
+
+        var textEdit = fixes.OfType<GDTextEditFixDescriptor>().FirstOrDefault(f => f.Kind == GDFixKind.AddTypeGuard);
+        textEdit.Should().NotBeNull("should have a null guard fix");
+        textEdit!.NewText.Should().Contain("!= null");
+        textEdit.NewText.Should().Contain("obj");
+
+        // AST verification: apply fix and re-parse
+        var modified = ApplyInsertFix(code, textEdit);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDIfStatement>().Should().NotBeEmpty("should have an if statement after fix");
+        modifiedAst.AllNodes.OfType<GDMemberOperatorExpression>().Should().NotBeEmpty("original access should still exist");
+    }
+
+    [TestMethod]
+    public void GetFixes_PotentiallyNullMethodCall_IncludesNullGuard()
+    {
+        var code = @"
+func process(obj):
+    obj.method()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var callExpr = classDecl.AllNodes.OfType<GDCallExpression>().First();
+
+        var fixes = _fixProvider.GetFixes("GD7007", callExpr, null, null).ToList();
+
+        var textEdit = fixes.OfType<GDTextEditFixDescriptor>().FirstOrDefault(f => f.Kind == GDFixKind.AddTypeGuard);
+        textEdit.Should().NotBeNull();
+        textEdit!.NewText.Should().Contain("if obj != null:");
+
+        // AST verification
+        var modified = ApplyInsertFix(code, textEdit);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDIfStatement>().Should().NotBeEmpty();
+        modifiedAst.AllNodes.OfType<GDCallExpression>().Should().NotBeEmpty("call should still exist");
+    }
+
+    [TestMethod]
+    public void GetFixes_PotentiallyNullIndexer_IncludesNullGuard()
+    {
+        var code = @"
+func process(arr):
+    var x = arr[0]
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var indexer = classDecl.AllNodes.OfType<GDIndexerExpression>().First();
+
+        var fixes = _fixProvider.GetFixes("GD7006", indexer, null, null).ToList();
+
+        var textEdit = fixes.OfType<GDTextEditFixDescriptor>().FirstOrDefault(f => f.Kind == GDFixKind.AddTypeGuard);
+        textEdit.Should().NotBeNull();
+        textEdit!.NewText.Should().Contain("arr");
+        textEdit.NewText.Should().Contain("!= null");
+
+        // AST verification
+        var modified = ApplyInsertFix(code, textEdit);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDIfStatement>().Should().NotBeEmpty();
+    }
+
+    [TestMethod]
+    public void GetFixes_NullGuard_AlsoHasSuppression()
+    {
+        var code = @"
+func process(obj):
+    var x = obj.health
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var memberAccess = classDecl.AllNodes.OfType<GDMemberOperatorExpression>().First();
+
+        var fixes = _fixProvider.GetFixes("GD7005", memberAccess, null, null).ToList();
+
+        fixes.Should().Contain(f => f is GDSuppressionFixDescriptor);
+        fixes.Should().Contain(f => f is GDTextEditFixDescriptor);
+    }
+
+    #endregion
+
+    #region Remove Unreachable Code Fix Tests (GD5004)
+
+    [TestMethod]
+    public void GetFixes_UnreachableCode_IncludesRemoveFix()
+    {
+        var code = @"
+func test():
+    return 1
+    pass
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var passExpr = classDecl.AllNodes.OfType<GDPassExpression>().FirstOrDefault();
+        if (passExpr == null) return; // pass might be parsed differently
+
+        // Find the statement containing pass
+        var passStatement = classDecl.AllNodes.OfType<GDExpressionStatement>()
+            .FirstOrDefault(s => s.AllNodes.OfType<GDPassExpression>().Any());
+        if (passStatement == null) return;
+
+        var fixes = _fixProvider.GetFixes("GD5004", passStatement, null, null).ToList();
+
+        var removeFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.RemoveUnreachableCode);
+        removeFix.Should().NotBeNull("should have remove unreachable code fix");
+
+        fixes.Should().Contain(f => f is GDSuppressionFixDescriptor, "suppression should also be present");
+    }
+
+    [TestMethod]
+    public void GetFixes_UnreachableCode_RemoveFix_ProducesValidAST()
+    {
+        var code = @"
+func test():
+    return 1
+    var x = 2
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var varStmt = classDecl.AllNodes.OfType<GDVariableDeclarationStatement>().FirstOrDefault();
+        if (varStmt == null) return;
+
+        var fixes = _fixProvider.GetFixes("GD5004", varStmt, null, null).ToList();
+
+        var removeFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.RemoveUnreachableCode);
+        if (removeFix == null) return;
+
+        // AST verification
+        var modified = ApplyRemoveFix(code, removeFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDReturnExpression>().Should().NotBeEmpty("return should remain");
+    }
+
+    #endregion
+
+    #region Remove Await Fix Tests (GD5007)
+
+    [TestMethod]
+    public void GetFixes_AwaitOnNonAwaitable_IncludesRemoveAwait()
+    {
+        var code = @"
+func test():
+    var x = await 5
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var awaitExpr = classDecl.AllNodes.OfType<GDAwaitExpression>().FirstOrDefault();
+        if (awaitExpr == null) return;
+
+        var fixes = _fixProvider.GetFixes("GD5007", awaitExpr, null, null).ToList();
+
+        var removeFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.RemoveText);
+        removeFix.Should().NotBeNull("should have remove await fix");
+        removeFix!.NewText.Should().BeEmpty("removal fix has empty new text");
+
+        // AST verification: apply fix and verify no await expression remains
+        var modified = ApplyRemoveFix(code, removeFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDAwaitExpression>().Should().BeEmpty("await should be removed");
+        modifiedAst.AllNodes.OfType<GDNumberExpression>().Should().NotBeEmpty("number literal should remain");
+    }
+
+    [TestMethod]
+    public void GetFixes_AwaitOnString_IncludesRemoveAwait()
+    {
+        var code = "func test():\n\tvar x = await \"hello\"\n";
+        var classDecl = _reader.ParseFileContent(code);
+        var awaitExpr = classDecl.AllNodes.OfType<GDAwaitExpression>().FirstOrDefault();
+        if (awaitExpr == null) return;
+
+        var fixes = _fixProvider.GetFixes("GD5007", awaitExpr, null, null).ToList();
+
+        var removeFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.RemoveText);
+        removeFix.Should().NotBeNull();
+
+        // AST verification
+        var modified = ApplyRemoveFix(code, removeFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDAwaitExpression>().Should().BeEmpty();
+        modifiedAst.AllNodes.OfType<GDStringExpression>().Should().NotBeEmpty("string should remain");
+    }
+
+    #endregion
+
+    #region Dynamic Guard Fix Tests (GD7015-7016)
+
+    [TestMethod]
+    public void GetFixes_DynamicMethodNotFound_IncludesHasMethodGuard()
+    {
+        var code = @"
+func test(obj):
+    obj.call(""unknown_method"")
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var callExpr = classDecl.AllNodes.OfType<GDCallExpression>()
+            .FirstOrDefault(c => c.CallerExpression is GDMemberOperatorExpression m && m.Identifier?.Sequence == "call");
+        if (callExpr == null) return;
+
+        var fixes = _fixProvider.GetFixes("GD7015", callExpr, null, null).ToList();
+
+        var guardFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.AddMethodGuard);
+        guardFix.Should().NotBeNull("should have dynamic method guard");
+        guardFix!.NewText.Should().Contain("has_method");
+        guardFix.NewText.Should().Contain("unknown_method");
+
+        // AST verification
+        var modified = ApplyInsertFix(code, guardFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDIfStatement>().Should().NotBeEmpty();
+    }
+
+    [TestMethod]
+    public void GetFixes_DynamicPropertyNotFound_IncludesInGuard()
+    {
+        var code = @"
+func test(obj):
+    obj.get(""unknown_prop"")
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var callExpr = classDecl.AllNodes.OfType<GDCallExpression>()
+            .FirstOrDefault(c => c.CallerExpression is GDMemberOperatorExpression m && m.Identifier?.Sequence == "get");
+        if (callExpr == null) return;
+
+        var fixes = _fixProvider.GetFixes("GD7016", callExpr, null, null).ToList();
+
+        var guardFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.AddTypeGuard);
+        guardFix.Should().NotBeNull("should have property guard");
+        guardFix!.NewText.Should().Contain("unknown_prop");
+        guardFix.NewText.Should().Contain("in obj");
+
+        // AST verification
+        var modified = ApplyInsertFix(code, guardFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDIfStatement>().Should().NotBeEmpty();
+    }
+
+    #endregion
+
+    #region Container Specialization Fix Tests (GD3025)
+
+    [TestMethod]
+    public void GetFixes_ContainerMissingSpecialization_SuggestsArrayVariant()
+    {
+        var code = @"
+var items: Array
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var varDecl = classDecl.AllNodes.OfType<GDVariableDeclaration>().First();
+
+        var fixes = _fixProvider.GetFixes("GD3025", varDecl, null, null).ToList();
+
+        var specializationFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.AddTypeAnnotation);
+        specializationFix.Should().NotBeNull("should suggest Array[Variant]");
+        specializationFix!.NewText.Should().Be("Array[Variant]");
+
+        // AST verification
+        var modified = ApplyReplaceFix(code, specializationFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        var modifiedDecl = modifiedAst.AllNodes.OfType<GDVariableDeclaration>().FirstOrDefault();
+        modifiedDecl.Should().NotBeNull();
+        modifiedDecl!.Type?.ToString().Should().Contain("Array");
+    }
+
+    [TestMethod]
+    public void GetFixes_ContainerMissingSpecialization_SuggestsDictionaryVariant()
+    {
+        var code = @"
+var data: Dictionary
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var varDecl = classDecl.AllNodes.OfType<GDVariableDeclaration>().First();
+
+        var fixes = _fixProvider.GetFixes("GD3025", varDecl, null, null).ToList();
+
+        var specializationFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.AddTypeAnnotation);
+        specializationFix.Should().NotBeNull("should suggest Dictionary[Variant, Variant]");
+        specializationFix!.NewText.Should().Be("Dictionary[Variant, Variant]");
+    }
+
+    #endregion
+
+    #region Add Await Fix Tests (GD5011)
+
+    [TestMethod]
+    public void GetFixes_PossibleMissedAwait_IncludesAddAwait()
+    {
+        var code = @"
+func _ready():
+    do_async()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var callExpr = classDecl.AllNodes.OfType<GDCallExpression>().First();
+
+        var fixes = _fixProvider.GetFixes("GD5011", callExpr, null, null).ToList();
+
+        var addAwaitFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.AddAwait);
+        addAwaitFix.Should().NotBeNull("should have add await fix");
+        addAwaitFix!.NewText.Should().Be("await ");
+
+        // AST verification
+        var modified = ApplyInsertFix(code, addAwaitFix);
+        var modifiedAst = _reader.ParseFileContent(modified);
+        modifiedAst.AllNodes.OfType<GDAwaitExpression>().Should().NotBeEmpty("await expression should now exist");
+        modifiedAst.AllNodes.OfType<GDCallExpression>().Should().NotBeEmpty("call should still exist inside await");
+    }
+
+    [TestMethod]
+    public void GetFixes_PossibleMissedAwait_FromExpressionStatement()
+    {
+        var code = @"
+func _ready():
+    do_async()
+";
+        var classDecl = _reader.ParseFileContent(code);
+        var exprStmt = classDecl.AllNodes.OfType<GDExpressionStatement>().First();
+
+        var fixes = _fixProvider.GetFixes("GD5011", exprStmt, null, null).ToList();
+
+        var addAwaitFix = fixes.OfType<GDTextEditFixDescriptor>()
+            .FirstOrDefault(f => f.Kind == GDFixKind.AddAwait);
+        addAwaitFix.Should().NotBeNull("should handle expression statement containing call");
+    }
+
+    #endregion
+
+    #region Fix Application Helpers
+
+    private string ApplyInsertFix(string code, GDTextEditFixDescriptor fix)
+    {
+        var lines = code.Split('\n').ToList();
+        var lineIndex = fix.Line - 1; // 1-based → 0-based
+        if (lineIndex < 0 || lineIndex >= lines.Count)
+            return code;
+
+        var line = lines[lineIndex];
+        var col = Math.Min(fix.StartColumn, line.Length);
+        lines[lineIndex] = line.Insert(col, fix.NewText);
+        return string.Join("\n", lines);
+    }
+
+    private string ApplyRemoveFix(string code, GDTextEditFixDescriptor fix)
+    {
+        var lines = code.Split('\n').ToList();
+        var lineIndex = fix.Line - 1;
+        if (lineIndex < 0 || lineIndex >= lines.Count)
+            return code;
+
+        var line = lines[lineIndex];
+        var start = Math.Min(fix.StartColumn, line.Length);
+        var end = Math.Min(fix.EndColumn, line.Length);
+        if (start < end)
+            lines[lineIndex] = line.Remove(start, end - start);
+        return string.Join("\n", lines);
+    }
+
+    private string ApplyReplaceFix(string code, GDTextEditFixDescriptor fix)
+    {
+        var lines = code.Split('\n').ToList();
+        var lineIndex = fix.Line - 1;
+        if (lineIndex < 0 || lineIndex >= lines.Count)
+            return code;
+
+        var line = lines[lineIndex];
+        var start = Math.Min(fix.StartColumn, line.Length);
+        var end = Math.Min(fix.EndColumn, line.Length);
+        lines[lineIndex] = line[..start] + fix.NewText + line[end..];
+        return string.Join("\n", lines);
+    }
+
+    #endregion
+
     /// <summary>
     /// Mock runtime provider for testing.
     /// </summary>

@@ -227,6 +227,13 @@ public class GDSemanticValidator
             paramHintValidator.Validate(node);
         }
 
+        // Run await consistency validator (requires semantic model)
+        if (_options.CheckAwaitConsistency && _semanticModel != null)
+        {
+            var awaitValidator = new GDAwaitConsistencyValidator(context, _semanticModel);
+            awaitValidator.Validate(node);
+        }
+
         var result = context.BuildResult();
 
         // Apply comment-based suppression if enabled
@@ -447,6 +454,12 @@ public class GDSemanticValidatorOptions
     /// Disabled by default.
     /// </summary>
     public bool CheckRedundantAnnotations { get; set; } = false;
+
+    /// <summary>
+    /// Whether to check for coroutine calls without await (GD5011).
+    /// Requires a semantic model. Enabled by default.
+    /// </summary>
+    public bool CheckAwaitConsistency { get; set; } = true;
 
     /// <summary>
     /// Severity for annotation narrowing hints (GD3022).

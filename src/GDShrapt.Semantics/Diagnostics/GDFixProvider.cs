@@ -100,6 +100,45 @@ public class GDFixProvider : IGDFixProvider
                 foreach (var fix in CreateAddReturnStatementFixes(node))
                     yield return fix;
                 break;
+
+            case "GD7005": // PotentiallyNullAccess
+            case "GD7006": // PotentiallyNullIndexer
+            case "GD7007": // PotentiallyNullMethodCall
+            case "GD7008": // ClassVariableMayBeNull
+            case "GD7009": // NullableTypeNotChecked
+                foreach (var fix in CreateNullGuardFixes(node, diagnosticCode))
+                    yield return fix;
+                break;
+
+            case "GD5004": // UnreachableCode
+                foreach (var fix in CreateRemoveUnreachableCodeFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD5007": // AwaitOnNonAwaitable
+                foreach (var fix in CreateRemoveAwaitFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD7015": // DynamicMethodNotFound
+                foreach (var fix in CreateDynamicMethodGuardFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD7016": // DynamicPropertyNotFound
+                foreach (var fix in CreateDynamicPropertyGuardFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD3025": // ContainerMissingSpecialization
+                foreach (var fix in CreateContainerSpecializationFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD5011": // PossibleMissedAwait
+                foreach (var fix in CreateAddAwaitFixes(node))
+                    yield return fix;
+                break;
         }
     }
 
@@ -388,6 +427,279 @@ public class GDFixProvider : IGDFixProvider
             0,
             $"{new string('\t', indent)}return\n"
         ).WithKind(GDFixKind.InsertText);
+    }
+
+    #endregion
+
+    #region Null Guard Fixes (GD7005-7009)
+
+    private IEnumerable<GDFixDescriptor> CreateNullGuardFixes(GDNode node, string diagnosticCode)
+    {
+        var varName = ExtractNullableVariableName(node);
+        if (string.IsNullOrEmpty(varName))
+            yield break;
+
+        var statementLine = FindContainingStatementLine(node);
+        var indent = GetIndentLevel(node);
+
+        yield return GDTextEditFixDescriptor.Insert(
+            $"Add null check: if {varName} != null",
+            statementLine,
+            0,
+            $"{new string('\t', indent)}if {varName} != null:\n"
+        ).WithKind(GDFixKind.AddTypeGuard);
+    }
+
+    private string? ExtractNullableVariableName(GDNode node)
+    {
+        // For member access: obj.health → "obj"
+        var memberAccess = FindMemberAccess(node);
+        if (memberAccess != null)
+            return GetRootVariableName(memberAccess.CallerExpression);
+
+        // For indexing: arr[0] → "arr"
+        if (node is GDIndexerExpression indexer)
+            return GetRootVariableName(indexer.CallerExpression);
+
+        // For call expression: obj.method() → "obj"
+        if (node is GDCallExpression call)
+        {
+            if (call.CallerExpression is GDMemberOperatorExpression callMember)
+                return GetRootVariableName(callMember.CallerExpression);
+            return GetRootVariableName(call.CallerExpression);
+        }
+
+        // For identifier expression: obj → "obj"
+        if (node is GDIdentifierExpression idExpr)
+            return idExpr.Identifier?.Sequence;
+
+        return null;
+    }
+
+    #endregion
+
+    #region Remove Unreachable Code Fix (GD5004)
+
+    private IEnumerable<GDFixDescriptor> CreateRemoveUnreachableCodeFixes(GDNode node)
+    {
+        var startLine = node.StartLine + 1; // 1-based
+        var endLine = node.EndLine + 1;
+        var startCol = node.StartColumn;
+
+        // Calculate end column from the node's end position
+        var endCol = node.EndColumn + 1;
+
+        // For single-line statements, remove the entire line content
+        if (startLine == endLine)
+        {
+            yield return GDTextEditFixDescriptor.Remove(
+                "Remove unreachable code",
+                startLine,
+                0,
+                endCol
+            ).WithKind(GDFixKind.RemoveUnreachableCode);
+        }
+        else
+        {
+            // Multi-line: remove from start to end
+            yield return GDTextEditFixDescriptor.Remove(
+                "Remove unreachable code",
+                startLine,
+                0,
+                endCol
+            ).WithKind(GDFixKind.RemoveUnreachableCode);
+        }
+    }
+
+    #endregion
+
+    #region Remove Await Fix (GD5007)
+
+    private IEnumerable<GDFixDescriptor> CreateRemoveAwaitFixes(GDNode node)
+    {
+        // Find GDAwaitExpression
+        GDAwaitExpression? awaitExpr = node as GDAwaitExpression;
+        if (awaitExpr == null)
+        {
+            // Try to find in parent chain
+            var current = node;
+            while (current != null)
+            {
+                if (current is GDAwaitExpression ae)
+                {
+                    awaitExpr = ae;
+                    break;
+                }
+                current = current.Parent as GDNode;
+            }
+        }
+
+        if (awaitExpr?.AwaitKeyword == null)
+            yield break;
+
+        var line = awaitExpr.AwaitKeyword.StartLine + 1; // 1-based
+        var startCol = awaitExpr.AwaitKeyword.StartColumn;
+        // "await " — keyword + space after it
+        var endCol = awaitExpr.Expression?.StartColumn ?? (startCol + 6);
+
+        yield return GDTextEditFixDescriptor.Remove(
+            "Remove 'await' keyword",
+            line,
+            startCol,
+            endCol
+        ).WithKind(GDFixKind.RemoveText);
+    }
+
+    #endregion
+
+    #region Dynamic Guard Fixes (GD7015-7016)
+
+    private IEnumerable<GDFixDescriptor> CreateDynamicMethodGuardFixes(GDNode node)
+    {
+        // node is the call expression like obj.call("method_name")
+        var callExpr = node as GDCallExpression;
+        if (callExpr == null)
+            yield break;
+
+        // Extract the method name from the first argument (string literal)
+        var methodName = ExtractFirstStringArgument(callExpr);
+        if (string.IsNullOrEmpty(methodName))
+            yield break;
+
+        // Extract the caller variable name
+        var varName = GetCallerVariableName(callExpr);
+        if (string.IsNullOrEmpty(varName))
+            yield break;
+
+        var statementLine = FindContainingStatementLine(node);
+        var indent = GetIndentLevel(node);
+
+        yield return GDTextEditFixDescriptor.Insert(
+            $"Add guard: if {varName}.has_method(\"{methodName}\")",
+            statementLine,
+            0,
+            $"{new string('\t', indent)}if {varName}.has_method(\"{methodName}\"):\n"
+        ).WithKind(GDFixKind.AddMethodGuard);
+    }
+
+    private IEnumerable<GDFixDescriptor> CreateDynamicPropertyGuardFixes(GDNode node)
+    {
+        var callExpr = node as GDCallExpression;
+        if (callExpr == null)
+            yield break;
+
+        var propName = ExtractFirstStringArgument(callExpr);
+        if (string.IsNullOrEmpty(propName))
+            yield break;
+
+        var varName = GetCallerVariableName(callExpr);
+        if (string.IsNullOrEmpty(varName))
+            yield break;
+
+        var statementLine = FindContainingStatementLine(node);
+        var indent = GetIndentLevel(node);
+
+        yield return GDTextEditFixDescriptor.Insert(
+            $"Add guard: if \"{propName}\" in {varName}",
+            statementLine,
+            0,
+            $"{new string('\t', indent)}if \"{propName}\" in {varName}:\n"
+        ).WithKind(GDFixKind.AddTypeGuard);
+    }
+
+    private string? ExtractFirstStringArgument(GDCallExpression callExpr)
+    {
+        var args = callExpr.Parameters?.ToList();
+        if (args == null || args.Count == 0)
+            return null;
+
+        if (args[0] is GDStringExpression strExpr)
+            return strExpr.String?.Sequence;
+
+        return null;
+    }
+
+    private string? GetCallerVariableName(GDCallExpression callExpr)
+    {
+        if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
+            return GetRootVariableName(memberOp.CallerExpression);
+
+        return null;
+    }
+
+    #endregion
+
+    #region Container Specialization Fix (GD3025)
+
+    private IEnumerable<GDFixDescriptor> CreateContainerSpecializationFixes(GDNode node)
+    {
+        // Find the type node (Array or Dictionary)
+        GDTypeNode? typeNode = null;
+
+        if (node is GDTypeNode tn)
+            typeNode = tn;
+        else if (node is GDVariableDeclaration varDecl)
+            typeNode = varDecl.Type;
+        else if (node is GDVariableDeclarationStatement varStmt)
+            typeNode = varStmt.Type;
+
+        if (typeNode == null)
+            yield break;
+
+        var typeName = typeNode.ToString().Trim();
+        var line = typeNode.StartLine + 1;
+        var startCol = typeNode.StartColumn;
+        var endCol = typeNode.EndColumn + 1;
+
+        if (typeName == "Array")
+        {
+            yield return GDTextEditFixDescriptor.Replace(
+                "Specialize to Array[Variant]",
+                line,
+                startCol,
+                endCol,
+                "Array[Variant]"
+            ).WithKind(GDFixKind.AddTypeAnnotation);
+        }
+        else if (typeName == "Dictionary")
+        {
+            yield return GDTextEditFixDescriptor.Replace(
+                "Specialize to Dictionary[Variant, Variant]",
+                line,
+                startCol,
+                endCol,
+                "Dictionary[Variant, Variant]"
+            ).WithKind(GDFixKind.AddTypeAnnotation);
+        }
+    }
+
+    #endregion
+
+    #region Add Await Fix (GD5011)
+
+    private IEnumerable<GDFixDescriptor> CreateAddAwaitFixes(GDNode node)
+    {
+        // node is the GDCallExpression that should be awaited
+        GDCallExpression? callExpr = node as GDCallExpression;
+        if (callExpr == null)
+        {
+            // Maybe node is an expression statement containing the call
+            if (node is GDExpressionStatement exprStmt)
+                callExpr = exprStmt.Expression as GDCallExpression;
+        }
+
+        if (callExpr == null)
+            yield break;
+
+        var line = callExpr.StartLine + 1; // 1-based
+        var col = callExpr.StartColumn;
+
+        yield return GDTextEditFixDescriptor.Insert(
+            "Add 'await' keyword",
+            line,
+            col,
+            "await "
+        ).WithKind(GDFixKind.AddAwait);
     }
 
     #endregion

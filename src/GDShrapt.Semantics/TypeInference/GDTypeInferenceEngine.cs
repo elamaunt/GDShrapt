@@ -2014,6 +2014,21 @@ namespace GDShrapt.Semantics
 
                     return memberInfo.Type;
                 }
+
+                // Local enum value access (e.g., TestEnum.VALUE_A)
+                // Runtime provider doesn't know about local enums, so check via symbol lookup
+                var callerSymbol = _scopes?.Lookup(callerType)
+                    ?? _symbolLookupFallback?.Invoke(callerType, memberExpr.CallerExpression);
+                if (callerSymbol?.Kind == GDSymbolKind.Enum &&
+                    callerSymbol.Declaration is GDEnumDeclaration enumDecl &&
+                    enumDecl.Values != null)
+                {
+                    foreach (var v in enumDecl.Values)
+                    {
+                        if (v.Identifier?.Sequence == memberName)
+                            return callerType;
+                    }
+                }
             }
 
             return null;

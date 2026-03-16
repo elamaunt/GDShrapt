@@ -334,6 +334,11 @@ namespace GDShrapt.Reader
         /// </summary>
         ConstantReassignment = 5010,
 
+        /// <summary>
+        /// Coroutine called without await keyword.
+        /// </summary>
+        PossibleMissedAwait = 5011,
+
         // Indentation errors (6xxx)
         /// <summary>
         /// Inconsistent indentation style (mixing tabs and spaces).
