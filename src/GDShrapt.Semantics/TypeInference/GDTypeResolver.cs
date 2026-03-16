@@ -29,7 +29,7 @@ public class GDTypeResolver
         IGDScriptProvider? scriptProvider = null,
         IGDLogger? logger = null)
     {
-        _godotTypesProvider = godotTypesProvider ?? new GDGodotTypesProvider();
+        _godotTypesProvider = godotTypesProvider ?? GDGodotTypesProvider.Shared;
         _projectTypesProvider = projectTypesProvider;
         _autoloadsProvider = autoloadsProvider;
         _sceneTypesProvider = sceneTypesProvider;
@@ -62,7 +62,7 @@ public class GDTypeResolver
         IGDLogger? logger,
         GDTresResourceProvider? tresResourceProvider)
     {
-        _godotTypesProvider = godotTypesProvider ?? new GDGodotTypesProvider();
+        _godotTypesProvider = godotTypesProvider ?? GDGodotTypesProvider.Shared;
         _projectTypesProvider = projectTypesProvider;
         _autoloadsProvider = autoloadsProvider;
         _sceneTypesProvider = sceneTypesProvider;

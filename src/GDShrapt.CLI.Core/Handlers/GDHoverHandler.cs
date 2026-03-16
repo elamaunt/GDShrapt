@@ -300,10 +300,11 @@ public class GDHoverHandler : IGDHoverHandler
         string? narrowedType = null;
         GDFlowVariableType? flowVarType = null;
 
-        if (node is GDIdentifierExpression identExpr)
+        if (node is GDIdentifierExpression || symbol.DeclarationNode != null)
         {
             var varName = symbol.Name;
-            flowVarType = semanticModel.GetFlowVariableType(varName, node);
+            var flowTarget = node is GDIdentifierExpression ? node : symbol.DeclarationNode;
+            flowVarType = semanticModel.GetFlowVariableType(varName, flowTarget);
 
             if (flowVarType != null)
             {

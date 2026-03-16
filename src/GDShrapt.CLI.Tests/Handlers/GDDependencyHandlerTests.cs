@@ -17,14 +17,13 @@ public class GDDependencyHandlerTests
     [TestInitialize]
     public void Setup()
     {
-        _project = TestProjectHelper.LoadTestProject();
+        _project = TestProjectHelper.GetCachedTestProject();
         _handler = new GDDependencyHandler(new GDProjectSemanticModel(_project));
     }
 
     [TestCleanup]
     public void Cleanup()
     {
-        _project?.Dispose();
     }
 
     // === AnalyzeFile Tests ===

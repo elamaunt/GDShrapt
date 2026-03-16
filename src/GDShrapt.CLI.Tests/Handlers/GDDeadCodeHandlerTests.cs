@@ -23,7 +23,7 @@ public class GDDeadCodeHandlerTests
     [TestInitialize]
     public void Setup()
     {
-        _project = TestProjectHelper.LoadTestProject();
+        _project = TestProjectHelper.GetCachedTestProject();
         _projectModel = new GDProjectSemanticModel(_project);
         _handler = new GDDeadCodeHandler(_projectModel);
     }
@@ -31,7 +31,6 @@ public class GDDeadCodeHandlerTests
     [TestCleanup]
     public void Cleanup()
     {
-        _project?.Dispose();
     }
 
     // === AnalyzeFile Tests ===

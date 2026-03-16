@@ -95,7 +95,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `GDProjectSemanticModel` - Cross-file analysis with incremental updates, `SceneFlow`, `ResourceFlow`
 - Type inference: `GDTypeInferenceSource`, `GDDuckTypeResolver`, `GDParameterTypeResolver`, `GDMethodSignatureInferenceEngine`, `GDUnionTypeResolver`
 - Duck-type inference: `GDParameterUsageAnalyzer` (collects constraints), `GDParameterTypeResolver` (resolves to types via TypesMap)
-- `GDFlowAnalyzer` - Control flow analysis, reachability, type narrowing
+- `GDFlowAnalyzer` - SSA-style flow analyzer — **primary type source** for variables. Tracks `DeclaredType` (annotation, immutable) and `CurrentType` (SSA-replaced) with full provenance via `GDTypeOrigin` (`GDTypeOriginKind`, `GDTypeOriginConfidence`). See `Analysis/CLAUDE.md` for DataFlow Infrastructure details
 - `GDDiagnosticsService` - Unified validation + linting pipeline
 - Type providers: `GDSceneTypesProvider` (scene files), `GDGodotTypesProvider` (built-in types with `FindTypesWithMethod()`, `FindTypesWithProperty()`), `GDProjectTypesProvider` (project types)
 - Refactoring services: `GDGoToDefinitionService`, `GDAddTypeAnnotationService`, `GDReorderMembersService`, `GDExtractMethodService`, `GDExtractConstantService`, `GDExtractVariableService`, `GDInvertConditionService`, `GDConvertForToWhileService`, `GDSurroundWithService`, `GDSnippetService`
@@ -114,6 +114,11 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `GDDynamicCallValidator` - Dynamic call/get/set (GD7015-7016)
 - `GDSceneNodeValidator` - Node path validation against scene data (GD4011, GD4012)
 - `GDNodeLifecycleValidator` - Node access lifecycle, @onready detection (GD7018)
+- `GDReturnConsistencyValidator` - Return type consistency (GD3023, GD3024)
+- `GDAnnotationNarrowingValidator` - Annotation quality, uses flow origins (GD3022, GD7022)
+- `GDTypeWideningValidator` - Assignment widens typed variable, uses flow (GD7019)
+- `GDContainerSpecializationValidator` - Container specialization hints (GD3025, GD7021)
+- `GDParameterTypeHintValidator` - Call-site parameter type consensus (GD7020)
 
 **Abstractions** - Core interfaces
 - `IGDRuntimeProvider` - Type system: `IsKnownType()`, `GetTypeInfo()`, `GetMember()`, `GetBaseType()`, `IsAssignableTo()`, `GetGlobalFunction()`, `GetGlobalClass()`, `GetAllTypes()`

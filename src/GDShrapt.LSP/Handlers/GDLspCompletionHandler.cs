@@ -29,6 +29,9 @@ public class GDLspCompletionHandler
         var line = @params.Position.Line + 1;
         var column = @params.Position.Character + 1;
 
+        // Get text before cursor for context detection
+        var textBeforeCursor = GetTextBeforeCursor(@params.TextDocument.Uri, @params.Position.Line, @params.Position.Character);
+
         // Determine trigger context
         var triggerKind = @params.Context?.TriggerKind ?? GDLspCompletionTriggerKind.Invoked;
         var triggerChar = @params.Context?.TriggerCharacter;
@@ -46,10 +49,36 @@ public class GDLspCompletionHandler
                 FilePath = filePath,
                 Line = line,
                 Column = column,
+                TextBeforeCursor = textBeforeCursor,
                 CompletionType = GDCompletionType.MemberAccess,
                 MemberAccessExpression = expression
             };
             items = _handler.GetCompletions(request);
+        }
+        else if (triggerKind == GDLspCompletionTriggerKind.TriggerCharacter && triggerChar == ":")
+        {
+            // Determine if this is a type annotation context
+            var completionType = IsTypeAnnotationContext(textBeforeCursor)
+                ? GDCompletionType.TypeAnnotation
+                : GDCompletionType.Symbol;
+
+            var request = new GDCompletionRequest
+            {
+                FilePath = filePath,
+                Line = line,
+                Column = column,
+                TextBeforeCursor = textBeforeCursor,
+                CompletionType = completionType,
+                CursorContext = completionType == GDCompletionType.TypeAnnotation
+                    ? GDCursorContext.TypeAnnotation
+                    : GDCursorContext.Unknown
+            };
+            items = _handler.GetCompletions(request);
+        }
+        else if (triggerKind == GDLspCompletionTriggerKind.TriggerCharacter && triggerChar == "(")
+        {
+            // Opening parenthesis — suppress completion, let signature help handle it
+            items = [];
         }
         else if (triggerKind == GDLspCompletionTriggerKind.TriggerCharacter && triggerChar == "$")
         {
@@ -58,6 +87,7 @@ public class GDLspCompletionHandler
                 FilePath = filePath,
                 Line = line,
                 Column = column,
+                TextBeforeCursor = textBeforeCursor,
                 CompletionType = GDCompletionType.NodePath,
                 NodePathPrefix = "$"
             };
@@ -74,6 +104,7 @@ public class GDLspCompletionHandler
                     FilePath = filePath,
                     Line = line,
                     Column = column,
+                    TextBeforeCursor = textBeforeCursor,
                     CompletionType = GDCompletionType.NodePath,
                     NodePathPrefix = nodePathPrefix
                 };
@@ -86,20 +117,21 @@ public class GDLspCompletionHandler
         }
         else
         {
-            // General completion
+            // Manual invocation or continued typing — let handler auto-resolve context
             var request = new GDCompletionRequest
             {
                 FilePath = filePath,
                 Line = line,
                 Column = column,
-                CompletionType = GDCompletionType.Symbol
+                TextBeforeCursor = textBeforeCursor,
+                CompletionType = GDCompletionType.Symbol,
+                WordPrefix = ExtractWordPrefix(textBeforeCursor)
             };
             items = _handler.GetCompletions(request);
         }
 
         if (items.Count == 0)
         {
-            // Return empty list instead of null to indicate "no completions" vs "error"
             return Task.FromResult<GDLspCompletionList?>(new GDLspCompletionList
             {
                 IsIncomplete = false,
@@ -121,6 +153,66 @@ public class GDLspCompletionHandler
         };
 
         return Task.FromResult<GDLspCompletionList?>(result);
+    }
+
+    private string? GetTextBeforeCursor(string uri, int line, int character)
+    {
+        if (_documentManager == null)
+            return null;
+
+        var doc = _documentManager.GetDocument(uri);
+        if (doc == null)
+            return null;
+
+        var lines = doc.Content.Split('\n');
+        if (line < 0 || line >= lines.Length)
+            return null;
+
+        var lineText = lines[line];
+        if (character > lineText.Length)
+            character = lineText.Length;
+
+        return lineText.Substring(0, character);
+    }
+
+    private static bool IsTypeAnnotationContext(string? textBeforeCursor)
+    {
+        if (string.IsNullOrEmpty(textBeforeCursor))
+            return false;
+
+        var trimmed = textBeforeCursor.TrimEnd();
+
+        // var name: or const name:
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"(?:var|const)\s+\w+\s*:$"))
+            return true;
+
+        // Parameter type: func foo(param:
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"\(\s*\w+\s*:$") ||
+            System.Text.RegularExpressions.Regex.IsMatch(trimmed, @",\s*\w+\s*:$"))
+            return true;
+
+        // Match case pattern: var x:
+        // This is NOT a type annotation in GDScript match patterns
+
+        return false;
+    }
+
+    private static string? ExtractWordPrefix(string? textBeforeCursor)
+    {
+        if (string.IsNullOrEmpty(textBeforeCursor))
+            return null;
+
+        // Walk backward to find the word being typed
+        var pos = textBeforeCursor.Length - 1;
+        while (pos >= 0 && (char.IsLetterOrDigit(textBeforeCursor[pos]) || textBeforeCursor[pos] == '_'))
+            pos--;
+
+        pos++;
+        if (pos >= textBeforeCursor.Length)
+            return null;
+
+        var prefix = textBeforeCursor.Substring(pos);
+        return string.IsNullOrEmpty(prefix) ? null : prefix;
     }
 
     private string? ExtractExpressionBeforeDot(string uri, int line, int character)

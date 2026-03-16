@@ -43,6 +43,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     private IReadOnlyList<GDAutoloadEntry>? _autoloadEntries;
     private Version? _godotVersion;
     private bool _godotVersionParsed;
+    private GDProjectTypesProvider? _cachedProjectTypesProvider;
+    private volatile bool _projectTypesDirty = true;
 
     #region Events
 
@@ -259,6 +261,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         }
 
         _logger.Debug($"Project loaded: {_scripts.Count} scripts");
+        _projectTypesDirty = true;
 
         if (_enableFileWatcher)
         {
@@ -452,7 +455,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         if (_sceneTypesProvider == null)
             return null;
 
-        var godotTypesProvider = new GDGodotTypesProvider();
+        var godotTypesProvider = GDGodotTypesProvider.Shared;
         var groupRegistry = BuildGroupRegistry(godotTypesProvider);
         return new GDNodeTypeInjector(
             _sceneTypesProvider,
@@ -559,14 +562,25 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         return _scripts.Values.FirstOrDefault(x => x.Class == classDecl);
     }
 
+    internal GDProjectTypesProvider GetOrCreateProjectTypesProvider()
+    {
+        if (_projectTypesDirty || _cachedProjectTypesProvider == null)
+        {
+            var provider = new GDProjectTypesProvider(this);
+            provider.RebuildCache();
+            _cachedProjectTypesProvider = provider;
+            _projectTypesDirty = false;
+        }
+        return _cachedProjectTypesProvider;
+    }
+
     /// <summary>
     /// Creates a runtime provider for type resolution across the project.
     /// </summary>
     public IGDRuntimeProvider CreateRuntimeProvider()
     {
-        var godotTypesProvider = new GDGodotTypesProvider();
-        var projectTypesProvider = new GDProjectTypesProvider(this);
-        projectTypesProvider.RebuildCache();
+        var godotTypesProvider = GDGodotTypesProvider.Shared;
+        var projectTypesProvider = GetOrCreateProjectTypesProvider();
 
         // Load autoloads from project.godot
         var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
@@ -585,9 +599,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// </summary>
     public GDTypeResolver CreateTypeResolver()
     {
-        var godotTypesProvider = new GDGodotTypesProvider();
-        var projectTypesProvider = new GDProjectTypesProvider(this);
-        projectTypesProvider.RebuildCache();
+        var godotTypesProvider = GDGodotTypesProvider.Shared;
+        var projectTypesProvider = GetOrCreateProjectTypesProvider();
 
         // Load autoloads from project.godot
         var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
@@ -613,6 +626,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         var script = CreateScriptFile(reference);
         _scripts.TryAdd(reference, script);
         script.Reload();
+        _projectTypesDirty = true;
         return script;
     }
 
@@ -625,6 +639,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         var script = CreateScriptFile(reference);
         _scripts.TryAdd(reference, script);
         script.Reload(content);
+        _projectTypesDirty = true;
         return script;
     }
 
@@ -633,7 +648,9 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     /// </summary>
     public bool RemoveScript(string fullPath)
     {
-        return _scripts.TryRemove(new GDScriptReference(fullPath), out _);
+        var removed = _scripts.TryRemove(new GDScriptReference(fullPath), out _);
+        if (removed) _projectTypesDirty = true;
+        return removed;
     }
 
     /// <summary>
@@ -934,6 +951,8 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
                 DisableFileWatcher();
                 _scripts.Clear();
+                _cachedProjectTypesProvider = null;
+                _sceneTypesProvider?.Dispose();
             }
             _disposed = true;
         }

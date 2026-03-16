@@ -7773,6 +7773,8 @@ test_scripts/diagnostics/validator/scope_errors.gd
       75:7 duplicate_var -> int (base: int)
     test_gd2003_suppressed():
       83:7 suppressed_dup -> int (base: int)
+    test_gd2006_valid():
+      115:7 val -> TestEnum (base: TestEnum)
 
 
 test_scripts/diagnostics/validator/type_annotation_errors.gd

@@ -6,7 +6,7 @@ namespace GDShrapt.Semantics.ComponentTests;
 /// <summary>
 /// TDD verification test for type inference.
 /// Generates TYPE_INFERENCE_OUTPUT.txt and compares with TYPE_INFERENCE_VERIFIED.txt.
-/// Test fails until all entries are verified with # OK marker.
+/// Split into per-file tests via DynamicData for granular failure reporting.
 /// </summary>
 [TestClass]
 [TestCategory("ManualVerification")]
@@ -15,129 +15,160 @@ public class TypeInferenceVerificationTest
     private static string OutputPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "TYPE_INFERENCE_OUTPUT.txt");
     private static string VerifiedPath => Path.Combine(IntegrationTestHelpers.GetVerificationRoot(), "TYPE_INFERENCE_VERIFIED.txt");
 
-    [TestMethod]
-    public void AllNodes_MustHaveVerifiedTypes()
+    private static Dictionary<string, TypeVerificationParser.VerifiedEntry> _verifiedLookup = null!;
+    private static bool _initialized;
+
+    [ClassInitialize]
+    public static void Initialize(TestContext context)
     {
-        // 1. Get project
+        if (_initialized) return;
+
         var project = TestProjectFixture.Project;
         var projectPath = TestProjectFixture.ProjectPath;
 
-        // 2. Generate output file
-        var generator = new TypeOutputGenerator();
-        generator.GenerateOutput(project, OutputPath, projectPath);
+        // Always generate output artifact
+        try
+        {
+            var generator = new TypeOutputGenerator();
+            generator.GenerateOutput(project, OutputPath, projectPath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: failed to generate TYPE_INFERENCE_OUTPUT.txt: {ex.Message}");
+        }
 
-        // 3. Parse verification file
+        // Parse verified file
         var parser = new TypeVerificationParser();
         parser.ParseFile(VerifiedPath);
-        var verifiedLookup = parser.GetVerifiedLookup();
+        _verifiedLookup = parser.GetVerifiedLookup();
 
-        // 4. Compare and collect statistics
-        var collector = new TypeNodeCollector();
-        var unverifiedEntries = new List<(string file, TypeNodeCollector.TypedNode node)>();
-        var falsePositives = new List<(string file, TypeNodeCollector.TypedNode node, TypeVerificationParser.VerifiedEntry verified)>();
-        int totalNodes = 0;
-        int verifiedOk = 0;
-        int skipped = 0;
+        // Generate unverified report
+        try
+        {
+            WriteUnverifiedReport(project, projectPath, _verifiedLookup);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: failed to generate unverified report: {ex.Message}");
+        }
+
+        _initialized = true;
+    }
+
+    public static IEnumerable<object[]> GetScriptFiles()
+    {
+        var project = TestProjectFixture.Project;
+        var projectPath = TestProjectFixture.ProjectPath;
 
         foreach (var file in project.ScriptFiles.OrderBy(f => f.FullPath))
         {
-            if (file.FullPath == null)
-                continue;
+            if (file.FullPath == null) continue;
+            var relativePath = GetRelativePath(file.FullPath, projectPath);
+            yield return new object[] { relativePath };
+        }
+    }
 
+    [TestMethod]
+    [DynamicData(nameof(GetScriptFiles), DynamicDataSourceType.Method)]
+    public void TypeInference_File(string relativePath)
+    {
+        var project = TestProjectFixture.Project;
+        var projectPath = TestProjectFixture.ProjectPath;
+        var file = FindFile(project, relativePath, projectPath);
+        if (file == null)
+        {
+            Assert.Inconclusive($"File not found: {relativePath}");
+            return;
+        }
+
+        var collector = new TypeNodeCollector();
+        var nodes = collector.CollectNodes(file);
+
+        var unverified = new List<string>();
+        var falsePositives = new List<string>();
+
+        foreach (var node in nodes)
+        {
+            var key = TypeVerificationParser.CreateKey(relativePath, node.Line, node.Column, node.NodeKind);
+
+            if (!_verifiedLookup.TryGetValue(key, out var verified))
+            {
+                unverified.Add($"  {node.Line}:{node.Column} {node.NodeKind} {node.Name} -> {node.InferredType}");
+            }
+            else if (verified.Status == TypeVerificationParser.VerificationStatus.FP)
+            {
+                falsePositives.Add($"  {node.Line}:{node.Column} FP: expected {verified.Type}, got {node.InferredType}");
+            }
+        }
+
+        var errors = new StringBuilder();
+        if (unverified.Count > 0)
+        {
+            errors.AppendLine($"{unverified.Count} unverified:");
+            foreach (var u in unverified.Take(20))
+                errors.AppendLine(u);
+            if (unverified.Count > 20)
+                errors.AppendLine($"  ... and {unverified.Count - 20} more");
+        }
+        if (falsePositives.Count > 0)
+        {
+            errors.AppendLine($"{falsePositives.Count} false positive(s):");
+            foreach (var fp in falsePositives)
+                errors.AppendLine(fp);
+        }
+
+        if (errors.Length > 0)
+        {
+            Assert.Fail($"{relativePath}:\n{errors}");
+        }
+    }
+
+    [TestMethod]
+    public void TypeInference_Summary()
+    {
+        var project = TestProjectFixture.Project;
+        var projectPath = TestProjectFixture.ProjectPath;
+
+        var collector = new TypeNodeCollector();
+        int total = 0, verifiedOk = 0, skipped = 0, unverifiedCount = 0, fpCount = 0;
+
+        foreach (var file in project.ScriptFiles.OrderBy(f => f.FullPath))
+        {
+            if (file.FullPath == null) continue;
             var relativePath = GetRelativePath(file.FullPath, projectPath);
             var nodes = collector.CollectNodes(file);
 
             foreach (var node in nodes)
             {
-                totalNodes++;
+                total++;
                 var key = TypeVerificationParser.CreateKey(relativePath, node.Line, node.Column, node.NodeKind);
-
-                if (verifiedLookup.TryGetValue(key, out var verified))
+                if (_verifiedLookup.TryGetValue(key, out var verified))
                 {
                     switch (verified.Status)
                     {
-                        case TypeVerificationParser.VerificationStatus.OK:
-                            verifiedOk++;
-                            break;
-                        case TypeVerificationParser.VerificationStatus.FP:
-                            falsePositives.Add((relativePath, node, verified));
-                            break;
-                        case TypeVerificationParser.VerificationStatus.Skip:
-                            skipped++;
-                            break;
-                        default:
-                            unverifiedEntries.Add((relativePath, node));
-                            break;
+                        case TypeVerificationParser.VerificationStatus.OK: verifiedOk++; break;
+                        case TypeVerificationParser.VerificationStatus.FP: fpCount++; break;
+                        case TypeVerificationParser.VerificationStatus.Skip: skipped++; break;
+                        default: unverifiedCount++; break;
                     }
                 }
                 else
                 {
-                    unverifiedEntries.Add((relativePath, node));
+                    unverifiedCount++;
                 }
             }
         }
 
-        // 5. Generate report
-        var report = new StringBuilder();
-        report.AppendLine("TYPE INFERENCE VERIFICATION REPORT");
-        report.AppendLine("==================================");
-        report.AppendLine($"Total nodes:       {totalNodes}");
-        report.AppendLine($"Verified (OK):     {verifiedOk}");
-        report.AppendLine($"Skipped:           {skipped}");
-        report.AppendLine($"Unverified:        {unverifiedEntries.Count}");
-        report.AppendLine($"False Positives:   {falsePositives.Count}");
-        report.AppendLine();
-
-        if (unverifiedEntries.Count > 0)
-        {
-            report.AppendLine("UNVERIFIED ENTRIES (first 50):");
-            report.AppendLine("------------------------------");
-
-            string? lastFile = null;
-            foreach (var (file, node) in unverifiedEntries.Take(50))
-            {
-                if (file != lastFile)
-                {
-                    report.AppendLine();
-                    report.AppendLine(file);
-                    lastFile = file;
-                }
-                report.AppendLine($"  {node.Line}:{node.Column} {node.NodeKind} {node.Name} -> {node.InferredType}");
-            }
-
-            if (unverifiedEntries.Count > 50)
-            {
-                report.AppendLine();
-                report.AppendLine($"... and {unverifiedEntries.Count - 50} more unverified entries");
-            }
-        }
-
-        if (falsePositives.Count > 0)
-        {
-            report.AppendLine();
-            report.AppendLine("FALSE POSITIVES:");
-            report.AppendLine("----------------");
-
-            foreach (var (file, node, verified) in falsePositives)
-            {
-                report.AppendLine($"  {file}:{node.Line}:{node.Column}");
-                report.AppendLine($"    Expected (verified): {verified.Type}");
-                report.AppendLine($"    Actual (inferred):   {node.InferredType}");
-            }
-        }
-
-        Console.WriteLine(report.ToString());
-
-        // 6. Write full unverified report to file for easy copy-paste
-        WriteUnverifiedReport(project, projectPath, verifiedLookup);
-
-        // 7. Assert
-        Assert.AreEqual(0, unverifiedEntries.Count,
-            $"Found {unverifiedEntries.Count} unverified type inference entries. " +
-            $"See TYPE_INFERENCE_OUTPUT.txt and add # OK markers to TYPE_INFERENCE_VERIFIED.txt");
+        Console.WriteLine("TYPE INFERENCE VERIFICATION SUMMARY");
+        Console.WriteLine("===================================");
+        Console.WriteLine($"Total nodes:       {total}");
+        Console.WriteLine($"Verified (OK):     {verifiedOk}");
+        Console.WriteLine($"Skipped:           {skipped}");
+        Console.WriteLine($"Unverified:        {unverifiedCount}");
+        Console.WriteLine($"False Positives:   {fpCount}");
     }
 
-    private void WriteUnverifiedReport(GDScriptProject project, string projectPath, Dictionary<string, TypeVerificationParser.VerifiedEntry> verifiedLookup)
+    private static void WriteUnverifiedReport(GDScriptProject project, string projectPath, Dictionary<string, TypeVerificationParser.VerifiedEntry> verifiedLookup)
     {
         var collector = new TypeNodeCollector();
         var sb = new StringBuilder();
@@ -147,9 +178,7 @@ public class TypeInferenceVerificationTest
 
         foreach (var file in project.ScriptFiles.OrderBy(f => f.FullPath))
         {
-            if (file.FullPath == null)
-                continue;
-
+            if (file.FullPath == null) continue;
             var relativePath = GetRelativePath(file.FullPath, projectPath);
             var nodes = collector.CollectNodes(file);
 
@@ -158,18 +187,14 @@ public class TypeInferenceVerificationTest
             {
                 var key = TypeVerificationParser.CreateKey(relativePath, node.Line, node.Column, node.NodeKind);
                 if (!verifiedLookup.ContainsKey(key))
-                {
                     unverified.Add(node);
-                }
             }
 
             if (unverified.Count > 0)
             {
                 sb.AppendLine(relativePath);
                 foreach (var node in unverified)
-                {
                     sb.AppendLine($"{node.Line}:{node.Column} {node.NodeKind} {node.Name} -> {node.InferredType}");
-                }
                 sb.AppendLine();
             }
         }
@@ -178,18 +203,24 @@ public class TypeInferenceVerificationTest
         File.WriteAllText(unverifiedPath, sb.ToString());
     }
 
-    private string GetRelativePath(string fullPath, string basePath)
+    private static GDScriptFile? FindFile(GDScriptProject project, string relativePath, string projectPath)
     {
-        // Normalize paths to forward slashes and ensure trailing slash on basePath
+        var fullPath = Path.Combine(projectPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        return project.ScriptFiles.FirstOrDefault(f =>
+            f.FullPath != null &&
+            f.FullPath.Replace('\\', '/').EndsWith(relativePath.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string GetRelativePath(string fullPath, string basePath)
+    {
         fullPath = fullPath.Replace('\\', '/');
         basePath = basePath.Replace('\\', '/');
         if (!basePath.EndsWith("/"))
             basePath += "/";
 
         if (fullPath.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
-        {
             return fullPath.Substring(basePath.Length);
-        }
+
         return fullPath;
     }
 }

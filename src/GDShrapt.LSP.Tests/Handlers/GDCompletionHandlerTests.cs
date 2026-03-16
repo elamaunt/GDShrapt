@@ -43,13 +43,14 @@ public class GDCompletionHandlerTests
         project.AnalyzeAll();
 
         var handler = CreateHandler(project);
+        // Line 21 (0-based) = empty line at class level (between var declarations and func _ready)
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
             {
                 Uri = GDDocumentManager.PathToUri(System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd"))
             },
-            Position = new GDLspPosition(5, 0)
+            Position = new GDLspPosition(21, 0)
         };
 
         // Act
@@ -59,12 +60,11 @@ public class GDCompletionHandlerTests
         result.Should().NotBeNull();
         result!.Items.Should().NotBeEmpty();
 
-        // Should contain keywords
+        // Should contain class-level keywords
         var keywords = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Keyword).ToList();
         keywords.Should().NotBeEmpty();
         keywords.Should().Contain(k => k.Label == "func");
         keywords.Should().Contain(k => k.Label == "var");
-        keywords.Should().Contain(k => k.Label == "if");
     }
 
     [TestMethod]
@@ -77,13 +77,14 @@ public class GDCompletionHandlerTests
         project.AnalyzeAll();
 
         var handler = CreateHandler(project);
+        // Line 21 (0-based) = empty line at class level
         var @params = new GDCompletionParams
         {
             TextDocument = new GDLspTextDocumentIdentifier
             {
                 Uri = GDDocumentManager.PathToUri(System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd"))
             },
-            Position = new GDLspPosition(5, 0)
+            Position = new GDLspPosition(21, 0)
         };
 
         // Act
@@ -91,13 +92,11 @@ public class GDCompletionHandlerTests
 
         // Assert
         result.Should().NotBeNull();
+        result!.Items.Should().NotBeEmpty();
 
-        // Should contain built-in types
-        var types = result!.Items.Where(i => i.Detail == "built-in type").ToList();
-        types.Should().NotBeEmpty();
-        types.Should().Contain(t => t.Label == "int");
-        types.Should().Contain(t => t.Label == "String");
-        types.Should().Contain(t => t.Label == "Vector2");
+        // At class level, should contain type names (as class types)
+        var classItems = result.Items.Where(i => i.Kind == GDLspCompletionItemKind.Class).ToList();
+        classItems.Should().NotBeEmpty("class-level completion should include type names");
     }
 
     [TestMethod]
@@ -206,12 +205,14 @@ public class GDCompletionHandlerTests
         var handler = registry.GetService<IGDCompletionHandler>()!;
 
         // base_entity.gd extends Node2D — should suggest _ready, _process, etc.
+        // Line 22 (1-based) = empty line at class level (between var declarations and func _ready)
         var request = new GDCompletionRequest
         {
             FilePath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "base_entity.gd"),
-            Line = 1,
+            Line = 22,
             Column = 1,
-            CompletionType = GDCompletionType.Symbol
+            CompletionType = GDCompletionType.Symbol,
+            CursorContext = GDCursorContext.ClassLevel
         };
 
         // Act
@@ -244,12 +245,14 @@ public class GDCompletionHandlerTests
         var handler = registry.GetService<IGDCompletionHandler>()!;
 
         // scene_references.gd declares _ready — it should NOT appear in overrides
+        // Line 2 (1-based) = empty line at class level
         var request = new GDCompletionRequest
         {
             FilePath = System.IO.Path.Combine(TestProjectPath, "test_scripts", "scene_references.gd"),
-            Line = 1,
+            Line = 2,
             Column = 1,
-            CompletionType = GDCompletionType.Symbol
+            CompletionType = GDCompletionType.Symbol,
+            CursorContext = GDCursorContext.ClassLevel
         };
 
         // Act

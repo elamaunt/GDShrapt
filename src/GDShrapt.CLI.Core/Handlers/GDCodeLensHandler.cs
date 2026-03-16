@@ -164,7 +164,7 @@ public class GDCodeLensHandler : IGDCodeLensHandler
         if (allRefs.IsBridgeConnected && allRefs.PrimaryHierarchyRefCount > 0)
         {
             int totalRelevant = strict + union;
-            int primaryRelevant = Math.Max(0, allRefs.PrimaryHierarchyRefCount - 1);
+            int primaryRelevant = allRefs.PrimaryHierarchyRefCount;
             bridgeExtra = Math.Max(0, totalRelevant - primaryRelevant);
             strict = Math.Max(0, strict - bridgeExtra);
         }
@@ -225,7 +225,9 @@ public class GDCodeLensHandler : IGDCodeLensHandler
                 continue;
             }
 
-            if (!IsRelevantConfidence(r))
+            // Include Strict, Union, and Potential refs in clickable reference list
+            // (Potential refs from bridge files are confirmed duck-typed connections)
+            if (!IsRelevantConfidence(r) && r.Confidence != GDReferenceConfidence.Potential)
                 continue;
 
             var identToken = r.IdentifierToken ?? ResolveIdentifierFromNode(r.Node);

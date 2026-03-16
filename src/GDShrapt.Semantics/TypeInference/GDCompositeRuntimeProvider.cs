@@ -1,4 +1,5 @@
 using GDShrapt.Reader;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,6 +12,7 @@ namespace GDShrapt.Semantics;
 public class GDCompositeRuntimeProvider : IGDRuntimeProvider
 {
     private readonly IGDRuntimeProvider[] _providers;
+    private readonly ConcurrentDictionary<(string, string), bool> _assignabilityCache = new();
 
     /// <summary>
     /// Gets the project types provider if available.
@@ -113,35 +115,32 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
             return false;
 
-        // Same type
         if (sourceType == targetType)
             return true;
 
-        // First, try each provider's built-in IsAssignableTo logic
-        // This handles provider-specific rules (numeric conversion, String<->StringName, etc.)
-        foreach (var provider in _providers)
+        return _assignabilityCache.GetOrAdd((sourceType, targetType), static (key, self) =>
         {
-            if (provider.IsAssignableTo(sourceType, targetType))
-                return true;
-        }
+            foreach (var provider in self._providers)
+            {
+                if (provider.IsAssignableTo(key.Item1, key.Item2))
+                    return true;
+            }
 
-        // If no provider matched, walk inheritance chain using GetBaseType from all providers
-        // This handles cross-provider inheritance (e.g., SceneNodes [project] -> Node2D [Godot] -> Node [Godot])
-        var visited = new HashSet<string>();
-        var current = sourceType;
-        while (!string.IsNullOrEmpty(current))
-        {
-            if (!visited.Add(current))
-                return false; // Cycle detected
+            var current = key.Item1;
+            var remaining = 20;
+            while (!string.IsNullOrEmpty(current) && --remaining > 0)
+            {
+                if (current == key.Item2)
+                    return true;
 
-            if (current == targetType)
-                return true;
+                var baseType = self.GetBaseType(current);
+                if (baseType == current)
+                    break;
+                current = baseType;
+            }
 
-            // Get base type from any provider
-            current = GetBaseType(current);
-        }
-
-        return false;
+            return false;
+        }, this);
     }
 
     public GDRuntimeFunctionInfo? GetGlobalFunction(string name)

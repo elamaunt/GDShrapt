@@ -14,7 +14,11 @@ GDSemanticModel (facade, delegates to services)
     ├── GDContainerTypeService (container profiling)
     ├── GDUnionTypeService (union types, call sites)
     ├── GDDuckTypeService (duck types, narrowing)
-    └── (future: GDExpressionTypeService)
+    └── GDFlowAnalyzer (SSA flow — primary type source for variables)
+
+Note: GDFlowAnalyzer is the primary source for variable types. Type services
+provide supplementary data: container profiles refine bare Array/Dictionary
+from flow, union types track cross-method assignment patterns.
 ```
 
 ## Services
@@ -115,6 +119,12 @@ var narrowed = query.GetNarrowedType(varName, location);
 - [x] All read methods delegate to services
 - [x] Tests passing (4,477+ tests total)
 - [x] GDSemanticModel reduced from 3612 to 3470 lines (-142 lines)
+
+**DataFlow Consolidation (Completed, Phases 0-2):**
+- [x] Variable/container profiles extracted from flow AssignmentHistory
+- [x] GDExpressionTypeService queries flow as primary source for identifiers
+- [x] Class-level profiles aggregated from method flow analyzers
+- [x] Flow is primary, container/union are fallbacks for non-flow expressions
 
 **Phase 7 (Future - Optional):**
 - [ ] Extract GetExpressionType (~300+ lines) to GDExpressionTypeService

@@ -83,6 +83,12 @@ public class GDCompletionRequest
     /// For node path completion, the partial path already typed (e.g., "Player/" for $Player/).
     /// </summary>
     public string? NodePathPrefix { get; init; }
+
+    /// <summary>
+    /// Resolved cursor context (class level, method body, type annotation, etc.).
+    /// When Unknown, the handler will auto-resolve from position.
+    /// </summary>
+    public GDCursorContext CursorContext { get; init; } = GDCursorContext.Unknown;
 }
 
 /// <summary>
@@ -296,4 +302,37 @@ public enum GDCompletionSource
     /// Local scope (parameters, local variables).
     /// </summary>
     Local
+}
+
+/// <summary>
+/// Cursor context for context-aware completion filtering.
+/// </summary>
+public enum GDCursorContext
+{
+    /// <summary>Fallback — auto-resolve from position.</summary>
+    Unknown,
+    /// <summary>Between class members, top of file.</summary>
+    ClassLevel,
+    /// <summary>Inside a method/function body.</summary>
+    MethodBody,
+    /// <summary>After "extends" keyword.</summary>
+    ExtendsClause,
+    /// <summary>After ":" for type (var x: |, param: |, -> |).</summary>
+    TypeAnnotation,
+    /// <summary>Inside parentheses of a function call.</summary>
+    FuncCallArgs,
+    /// <summary>Inside match case pattern.</summary>
+    MatchPattern,
+    /// <summary>Inside a string literal — suppress completions.</summary>
+    StringLiteral,
+    /// <summary>Inside a comment — suppress completions.</summary>
+    Comment,
+    /// <summary>After @export, @onready, etc.</summary>
+    Annotation,
+    /// <summary>After "=" in assignment/initialization.</summary>
+    Assignment,
+    /// <summary>Inside enum {} body.</summary>
+    EnumBody,
+    /// <summary>Inside dictionary key context.</summary>
+    DictionaryKey
 }

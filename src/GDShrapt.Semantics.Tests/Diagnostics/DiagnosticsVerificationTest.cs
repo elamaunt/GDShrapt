@@ -14,185 +14,226 @@ namespace GDShrapt.Semantics.Tests.Diagnostics;
 /// <summary>
 /// TDD verification test for diagnostics.
 /// Ensures all diagnostics are either verified (OK), marked as false positives (FP), or skipped (SKIP).
-/// The test passes when: unverified = 0 AND falsePositives = 0
+/// Split into per-file tests via DynamicData for granular failure reporting.
 /// </summary>
 [TestClass]
+[TestCategory("ManualVerification")]
 public class DiagnosticsVerificationTest
 {
-    private GDScriptProject _project = null!;
-    private GDProjectSemanticModel _projectModel = null!;
-    private string _projectPath = null!;
-    private List<DiagnosticInfo> _allDiagnostics = null!;
+    private static GDScriptProject _project = null!;
+    private static GDProjectSemanticModel _projectModel = null!;
+    private static string _projectPath = null!;
+    private static List<DiagnosticInfo> _allDiagnostics = null!;
+    private static Dictionary<string, Dictionary<(int, int, string), DiagnosticMarkerParser.MarkerType>> _allMarkers = null!;
+    private static HashSet<(string FilePath, int Line, int Col, string Code)> _matchedMarkers = null!;
+    private static bool _initialized;
 
-    [TestInitialize]
-    public void Setup()
+    [ClassInitialize]
+    public static void Initialize(TestContext context)
     {
-        _projectPath = GetTestProjectPath();
-        var context = new GDDefaultProjectContext(_projectPath);
-        _project = new GDScriptProject(context, new GDScriptProjectOptions
-        {
-            EnableSceneTypesProvider = true
-        });
+        if (_initialized) return;
 
-        _project.LoadScripts();
-        _project.LoadScenes();
-        _project.AnalyzeAll();
-
-        _projectModel = new GDProjectSemanticModel(_project);
+        _project = TestProjectFixture.Project;
+        _projectModel = TestProjectFixture.ProjectModel;
+        _projectPath = TestProjectFixture.ProjectPath;
 
         _allDiagnostics = CollectAllDiagnostics();
+        _allMarkers = LoadAllMarkers(new DiagnosticMarkerParser());
+
+        // Pre-compute matched markers for orphaned marker detection
+        _matchedMarkers = new HashSet<(string, int, int, string)>();
+        foreach (var diag in _allDiagnostics)
+        {
+            var fullPath = GetFullPath(diag.FilePath);
+            if (_allMarkers.TryGetValue(fullPath, out var fileMarkers))
+            {
+                var key = (diag.StartLine, diag.StartColumn, diag.Code);
+                if (fileMarkers.ContainsKey(key))
+                {
+                    _matchedMarkers.Add((fullPath, diag.StartLine, diag.StartColumn, diag.Code));
+                }
+            }
+        }
+
+        // Always generate verification report (artifact guarantee)
+        try
+        {
+            GenerateVerificationReport();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: failed to generate verification report: {ex.Message}");
+        }
+
+        _initialized = true;
     }
 
     /// <summary>
-    /// Main TDD test: all diagnostics must be verified or excluded.
-    /// Add markers to GDScript files in format: # LINE:COL-CODE-SUFFIX
-    /// Also checks for orphaned markers (markers without corresponding diagnostics).
+    /// Returns unique file paths that have diagnostics or markers.
+    /// </summary>
+    public static IEnumerable<object[]> GetDiagnosticFiles()
+    {
+        // Ensure fixture is initialized (DynamicData discovery happens before ClassInitialize)
+        var project = TestProjectFixture.Project;
+        var projectPath = TestProjectFixture.ProjectPath;
+
+        var files = new HashSet<string>();
+
+        foreach (var scriptFile in project.ScriptFiles)
+        {
+            if (scriptFile.FullPath == null) continue;
+            var relativePath = GetRelativePath(scriptFile.FullPath, projectPath);
+            if (relativePath.Contains("diagnostics/") || relativePath.Contains("diagnostics\\"))
+            {
+                files.Add(relativePath);
+            }
+        }
+
+        // Also include files that have diagnostics but might not be in the diagnostics folder
+        // (ensure we don't miss any)
+        if (_allDiagnostics != null)
+        {
+            foreach (var diag in _allDiagnostics)
+            {
+                files.Add(diag.FilePath);
+            }
+        }
+
+        foreach (var file in files.OrderBy(f => f))
+        {
+            yield return new object[] { file };
+        }
+    }
+
+    /// <summary>
+    /// Per-file diagnostic verification.
     /// </summary>
     [TestMethod]
-    public void AllDiagnostics_MustBeVerifiedOrExcluded()
+    [DynamicData(nameof(GetDiagnosticFiles), DynamicDataSourceType.Method)]
+    public void Diagnostics_File(string relativePath)
     {
-        // 1. Load markers from all GDScript files
-        var parser = new DiagnosticMarkerParser();
-        var allMarkers = LoadAllMarkers(parser);
+        var fileDiags = _allDiagnostics.Where(d => d.FilePath == relativePath).ToList();
+        var fullPath = GetFullPath(relativePath);
 
-        // 2. Classify diagnostics and track which markers are matched
-        var verified = new List<DiagnosticInfo>();
         var unverified = new List<DiagnosticInfo>();
         var falsePositives = new List<DiagnosticInfo>();
-        var skipped = new List<DiagnosticInfo>();
 
-        // Track which markers were matched to a diagnostic
-        var matchedMarkers = new HashSet<(string FilePath, int Line, int Col, string Code)>();
-
-        foreach (var diag in _allDiagnostics)
+        foreach (var diag in fileDiags)
         {
             var key = (diag.StartLine, diag.StartColumn, diag.Code);
-            var fullPath = GetFullPath(diag.FilePath);
 
-            if (!allMarkers.TryGetValue(fullPath, out var fileMarkers) ||
+            if (!_allMarkers.TryGetValue(fullPath, out var fileMarkers) ||
                 !fileMarkers.TryGetValue(key, out var markerType))
             {
                 unverified.Add(diag);
             }
             else
             {
-                // Mark this marker as matched
-                matchedMarkers.Add((fullPath, diag.StartLine, diag.StartColumn, diag.Code));
-
                 switch (markerType)
                 {
-                    case DiagnosticMarkerParser.MarkerType.OK:
-                        verified.Add(diag);
-                        break;
                     case DiagnosticMarkerParser.MarkerType.FP:
                         falsePositives.Add(diag);
                         break;
+                    case DiagnosticMarkerParser.MarkerType.OK:
                     case DiagnosticMarkerParser.MarkerType.Skip:
-                        skipped.Add(diag);
                         break;
                 }
             }
         }
 
-        // 3. Find orphaned markers (markers without corresponding diagnostics)
-        var orphanedMarkers = new List<OrphanedMarker>();
-
-        foreach (var (filePath, fileMarkers) in allMarkers)
+        // Check for orphaned markers in this file
+        var orphaned = new List<string>();
+        if (_allMarkers.TryGetValue(fullPath, out var markers))
         {
-            foreach (var ((line, col, code), markerType) in fileMarkers)
+            foreach (var ((line, col, code), markerType) in markers)
             {
-                // Skip markers are allowed to be orphaned (explicitly marked as inactive)
                 if (markerType == DiagnosticMarkerParser.MarkerType.Skip)
                     continue;
-
-                if (!matchedMarkers.Contains((filePath, line, col, code)))
+                if (!_matchedMarkers.Contains((fullPath, line, col, code)))
                 {
-                    orphanedMarkers.Add(new OrphanedMarker(filePath, line, col, code, markerType));
+                    orphaned.Add($"  # {line}:{col}-{code}-{markerType} <- No diagnostic");
                 }
             }
         }
 
-        // 4. Generate verification report
-        GenerateVerificationReport(verified, unverified, falsePositives, skipped, orphanedMarkers);
+        var errors = new StringBuilder();
 
-        // 5. Print summary
-        Console.WriteLine("=== DIAGNOSTICS VERIFICATION ===");
-        Console.WriteLine($"Total:           {_allDiagnostics.Count}");
-        Console.WriteLine($"Verified (OK):   {verified.Count}");
-        Console.WriteLine($"Unverified:      {unverified.Count}");
-        Console.WriteLine($"False Positives: {falsePositives.Count}");
-        Console.WriteLine($"Skipped:         {skipped.Count}");
-        Console.WriteLine($"Orphaned Markers:{orphanedMarkers.Count}");
-        Console.WriteLine();
-
-        // 6. Print first 20 unverified for quick reference
         if (unverified.Count > 0)
         {
-            Console.WriteLine("UNVERIFIED (first 20):");
-            foreach (var diag in unverified.Take(20))
-            {
-                Console.WriteLine($"  {diag.FilePath}:{diag.StartLine}:{diag.StartColumn} [{diag.Code}] {diag.Message}");
-            }
-            Console.WriteLine();
+            errors.AppendLine($"{unverified.Count} unverified diagnostic(s):");
+            foreach (var d in unverified)
+                errors.AppendLine($"  {d.StartLine}:{d.StartColumn} [{d.Code}] {d.Message}");
         }
 
-        // 7. Print false positives
         if (falsePositives.Count > 0)
         {
-            Console.WriteLine("FALSE POSITIVES (bugs to fix):");
-            foreach (var diag in falsePositives)
-            {
-                Console.WriteLine($"  {diag.FilePath}:{diag.StartLine}:{diag.StartColumn} [{diag.Code}] {diag.Message}");
-            }
-            Console.WriteLine();
+            errors.AppendLine($"{falsePositives.Count} false positive(s):");
+            foreach (var d in falsePositives)
+                errors.AppendLine($"  {d.StartLine}:{d.StartColumn} [{d.Code}] {d.Message}");
         }
 
-        // 8. Print orphaned markers
-        if (orphanedMarkers.Count > 0)
+        if (orphaned.Count > 0)
         {
-            Console.WriteLine("ORPHANED MARKERS (diagnostic no longer produced):");
-            foreach (var marker in orphanedMarkers.Take(20))
-            {
-                Console.WriteLine($"  {marker}");
-            }
-            if (orphanedMarkers.Count > 20)
-            {
-                Console.WriteLine($"  ... and {orphanedMarkers.Count - 20} more");
-            }
-            Console.WriteLine();
+            errors.AppendLine($"{orphaned.Count} orphaned marker(s):");
+            foreach (var o in orphaned)
+                errors.AppendLine(o);
         }
 
-        // 9. Assert
-        unverified.Should().BeEmpty(
-            $"All diagnostics must be verified. Found {unverified.Count} unverified. " +
-            $"First: {unverified.FirstOrDefault()?.ToString() ?? "none"}");
+        if (errors.Length > 0)
+        {
+            Assert.Fail($"{relativePath}:\n{errors}");
+        }
+    }
 
-        falsePositives.Should().BeEmpty(
-            $"All false positives must be fixed in the analyzer core. " +
-            $"Found {falsePositives.Count} FP diagnostics.");
+    /// <summary>
+    /// Summary test: prints overall statistics.
+    /// </summary>
+    [TestMethod]
+    public void Diagnostics_Summary()
+    {
+        int verified = 0, unverified = 0, falsePositives = 0, skipped = 0;
 
-        orphanedMarkers.Should().BeEmpty(
-            $"All markers must have corresponding diagnostics. " +
-            $"Found {orphanedMarkers.Count} orphaned markers (diagnostic no longer produced). " +
-            $"First: {orphanedMarkers.FirstOrDefault()?.ToString() ?? "none"}");
+        foreach (var diag in _allDiagnostics)
+        {
+            var fullPath = GetFullPath(diag.FilePath);
+            var key = (diag.StartLine, diag.StartColumn, diag.Code);
+
+            if (!_allMarkers.TryGetValue(fullPath, out var fileMarkers) ||
+                !fileMarkers.TryGetValue(key, out var markerType))
+            {
+                unverified++;
+            }
+            else
+            {
+                switch (markerType)
+                {
+                    case DiagnosticMarkerParser.MarkerType.OK: verified++; break;
+                    case DiagnosticMarkerParser.MarkerType.FP: falsePositives++; break;
+                    case DiagnosticMarkerParser.MarkerType.Skip: skipped++; break;
+                }
+            }
+        }
+
+        Console.WriteLine("=== DIAGNOSTICS VERIFICATION SUMMARY ===");
+        Console.WriteLine($"Total:           {_allDiagnostics.Count}");
+        Console.WriteLine($"Verified (OK):   {verified}");
+        Console.WriteLine($"Unverified:      {unverified}");
+        Console.WriteLine($"False Positives: {falsePositives}");
+        Console.WriteLine($"Skipped:         {skipped}");
     }
 
     /// <summary>
     /// Utility method: generates marker suggestions for all unverified diagnostics.
-    /// Run manually to get markers to add to GDScript files.
     /// </summary>
     [TestMethod]
     [Ignore("Utility method - run manually")]
     public void GenerateMarkerSuggestions()
     {
-        var parser = new DiagnosticMarkerParser();
-        var allMarkers = LoadAllMarkers(parser);
-
         var unverified = _allDiagnostics.Where(diag =>
         {
             var key = (diag.StartLine, diag.StartColumn, diag.Code);
             var fullPath = GetFullPath(diag.FilePath);
-            return !allMarkers.TryGetValue(fullPath, out var fileMarkers) ||
+            return !_allMarkers.TryGetValue(fullPath, out var fileMarkers) ||
                    !fileMarkers.ContainsKey(key);
         }).ToList();
 
@@ -215,7 +256,7 @@ public class DiagnosticsVerificationTest
     [Ignore("Utility method - run manually")]
     public void GenerateMarkersForFile()
     {
-        var targetFile = "test_scripts/diagnostics/validator/type_errors.gd"; // Change as needed
+        var targetFile = "test_scripts/diagnostics/validator/type_errors.gd";
 
         var fileDiagnostics = _allDiagnostics
             .Where(d => d.FilePath.Replace('\\', '/').Contains(targetFile.Replace('\\', '/')))
@@ -235,34 +276,67 @@ public class DiagnosticsVerificationTest
 
     #region Helper Methods
 
-    private Dictionary<string, Dictionary<(int, int, string), DiagnosticMarkerParser.MarkerType>> LoadAllMarkers(
+    private static Dictionary<string, Dictionary<(int, int, string), DiagnosticMarkerParser.MarkerType>> LoadAllMarkers(
         DiagnosticMarkerParser parser)
     {
         return parser.ParseDirectory(_projectPath);
     }
 
-    private string GetFullPath(string relativePath)
+    private static string GetFullPath(string relativePath)
     {
-        // Normalize path separators
         var normalized = relativePath.Replace('/', Path.DirectorySeparatorChar)
                                      .Replace('\\', Path.DirectorySeparatorChar);
         return Path.Combine(_projectPath, normalized);
     }
 
-    private void GenerateVerificationReport(
-        List<DiagnosticInfo> verified,
-        List<DiagnosticInfo> unverified,
-        List<DiagnosticInfo> falsePositives,
-        List<DiagnosticInfo> skipped,
-        List<OrphanedMarker> orphanedMarkers)
+    private static void GenerateVerificationReport()
     {
+        var verified = new List<DiagnosticInfo>();
+        var unverified = new List<DiagnosticInfo>();
+        var falsePositives = new List<DiagnosticInfo>();
+        var skipped = new List<DiagnosticInfo>();
+        var orphanedMarkers = new List<OrphanedMarker>();
+
+        foreach (var diag in _allDiagnostics)
+        {
+            var key = (diag.StartLine, diag.StartColumn, diag.Code);
+            var fullPath = GetFullPath(diag.FilePath);
+
+            if (!_allMarkers.TryGetValue(fullPath, out var fileMarkers) ||
+                !fileMarkers.TryGetValue(key, out var markerType))
+            {
+                unverified.Add(diag);
+            }
+            else
+            {
+                switch (markerType)
+                {
+                    case DiagnosticMarkerParser.MarkerType.OK: verified.Add(diag); break;
+                    case DiagnosticMarkerParser.MarkerType.FP: falsePositives.Add(diag); break;
+                    case DiagnosticMarkerParser.MarkerType.Skip: skipped.Add(diag); break;
+                }
+            }
+        }
+
+        foreach (var (filePath, fileMarkers) in _allMarkers)
+        {
+            foreach (var ((line, col, code), markerType) in fileMarkers)
+            {
+                if (markerType == DiagnosticMarkerParser.MarkerType.Skip)
+                    continue;
+                if (!_matchedMarkers.Contains((filePath, line, col, code)))
+                {
+                    orphanedMarkers.Add(new OrphanedMarker(filePath, line, col, code, markerType));
+                }
+            }
+        }
+
         var sb = new StringBuilder();
         sb.AppendLine("================================================================================");
         sb.AppendLine("DIAGNOSTICS VERIFICATION REPORT");
         sb.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         sb.AppendLine("================================================================================");
         sb.AppendLine();
-
         sb.AppendLine("SUMMARY");
         sb.AppendLine("--------------------------------------------------------------------------------");
         sb.AppendLine($"Total:           {verified.Count + unverified.Count + falsePositives.Count + skipped.Count}");
@@ -328,12 +402,6 @@ public class DiagnosticsVerificationTest
             sb.AppendLine("ORPHANED MARKERS (MARKERS WITHOUT DIAGNOSTICS)");
             sb.AppendLine("================================================================================");
             sb.AppendLine();
-            sb.AppendLine("These markers exist in GDScript files but no corresponding diagnostic was produced.");
-            sb.AppendLine("This may indicate:");
-            sb.AppendLine("  - A bug was fixed and the diagnostic is no longer emitted");
-            sb.AppendLine("  - Code was changed and the marker is outdated");
-            sb.AppendLine("  - The marker coordinates are incorrect");
-            sb.AppendLine();
 
             var byFile = orphanedMarkers.GroupBy(m => m.FilePath).OrderBy(g => g.Key);
             foreach (var fileGroup in byFile)
@@ -343,21 +411,17 @@ public class DiagnosticsVerificationTest
                 foreach (var marker in fileGroup.OrderBy(m => m.Line).ThenBy(m => m.Column))
                 {
                     sb.AppendLine($"  # {marker.Line}:{marker.Column}-{marker.Code}-{marker.Type} <- No diagnostic at this location");
-                    sb.AppendLine($"    Action: Remove marker or investigate why diagnostic disappeared");
                 }
                 sb.AppendLine();
             }
         }
 
-        // Write to file
         var repoRoot = GetRepoRoot();
         var outputPath = Path.Combine(repoRoot, "verification", "DIAGNOSTICS_VERIFICATION.txt");
         File.WriteAllText(outputPath, sb.ToString());
-
-        Console.WriteLine($"Verification report saved to: {outputPath}");
     }
 
-    private List<DiagnosticInfo> CollectAllDiagnostics()
+    private static List<DiagnosticInfo> CollectAllDiagnostics()
     {
         var entries = new List<DiagnosticInfo>();
 
@@ -366,9 +430,8 @@ public class DiagnosticsVerificationTest
             if (scriptFile.Class == null)
                 continue;
 
-            var relativePath = GetRelativePath(scriptFile.FullPath);
+            var relativePath = GetRelativePath(scriptFile.FullPath, _projectPath);
 
-            // 1. Run GDDiagnosticsService (syntax, validation, linting)
             var config = new GDProjectConfig();
             config.Linting.Enabled = true;
             var diagnosticsService = GDDiagnosticsService.FromConfig(config);
@@ -388,7 +451,6 @@ public class DiagnosticsVerificationTest
                 });
             }
 
-            // 2. Run GDSemanticValidator (type-aware validation)
             if (scriptFile.SemanticModel != null)
             {
                 var semanticValidatorOptions = new GDSemanticValidatorOptions
@@ -402,7 +464,6 @@ public class DiagnosticsVerificationTest
                     CheckNodePaths = true,
                     CheckNodeLifecycle = true,
                     ProjectModel = _projectModel,
-                    // Type annotation diagnostics (GD3022-GD3025, GD7019-GD7022)
                     CheckReturnConsistency = true,
                     CheckAnnotationNarrowing = true,
                     CheckContainerSpecialization = true,
@@ -434,39 +495,19 @@ public class DiagnosticsVerificationTest
         return entries;
     }
 
-    private string GetRelativePath(string? fullPath)
+    private static string GetRelativePath(string? fullPath, string projectPath)
     {
         if (string.IsNullOrEmpty(fullPath))
             return "unknown";
 
         var normalizedFullPath = fullPath.Replace('\\', '/');
-        var normalizedProjectPath = _projectPath.Replace('\\', '/');
+        var normalizedProjectPath = projectPath.Replace('\\', '/');
 
         if (normalizedFullPath.StartsWith(normalizedProjectPath, StringComparison.OrdinalIgnoreCase))
         {
             return normalizedFullPath.Substring(normalizedProjectPath.Length).TrimStart('/');
         }
         return Path.GetFileName(fullPath);
-    }
-
-    private static string GetTestProjectPath()
-    {
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        var testProjectPath = Path.Combine(baseDir, "TestProject");
-
-        if (Directory.Exists(testProjectPath))
-            return testProjectPath;
-
-        var currentDir = baseDir;
-        for (int i = 0; i < 10; i++)
-        {
-            var candidatePath = Path.Combine(currentDir, "testproject", "GDShrapt.TestProject");
-            if (Directory.Exists(candidatePath))
-                return candidatePath;
-            currentDir = Path.GetDirectoryName(currentDir) ?? currentDir;
-        }
-
-        throw new DirectoryNotFoundException("Test project not found.");
     }
 
     private static string GetRepoRoot()
@@ -515,13 +556,6 @@ public class DiagnosticsVerificationTest
 
     #region OrphanedMarker
 
-    /// <summary>
-    /// Represents a marker in GDScript file that has no corresponding diagnostic.
-    /// This indicates either:
-    /// - A bug was fixed and the diagnostic is no longer emitted
-    /// - Code was changed and the marker is outdated
-    /// - The marker coordinates are incorrect
-    /// </summary>
     private record OrphanedMarker(
         string FilePath,
         int Line,

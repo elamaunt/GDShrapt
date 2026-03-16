@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.CLI.Tests;
@@ -11,6 +12,16 @@ namespace GDShrapt.CLI.Tests;
 /// </summary>
 public static class TestProjectHelper
 {
+    private static readonly Lazy<GDScriptProject> _cachedTestProject =
+        new(static () => GDProjectLoader.LoadProject(GetTestProjectPath()),
+        LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>
+    /// Returns a cached, read-only test project instance.
+    /// Do NOT mutate the returned project — it is shared across all tests.
+    /// </summary>
+    public static GDScriptProject GetCachedTestProject() => _cachedTestProject.Value;
+
     /// <summary>
     /// Gets the path to the TestProject fixture.
     /// The path is relative to the test assembly location.

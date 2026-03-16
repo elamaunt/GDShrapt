@@ -100,7 +100,7 @@ internal sealed class GDParameterTypeAnalyzer
         if (!constraints.TryGetValue(paramName, out var paramConstraints) || !paramConstraints.HasConstraints)
             return;
 
-        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? new GDGodotTypesProvider());
+        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? GDGodotTypesProvider.Shared);
         var inferredType = resolver.ResolveFromConstraints(paramConstraints);
 
         if (inferredType.Confidence == GDTypeConfidence.Unknown)

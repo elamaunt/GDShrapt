@@ -75,6 +75,31 @@ public class GDFixProvider : IGDFixProvider
                 foreach (var fix in CreateDeclareVariableFixes(node))
                     yield return fix;
                 break;
+
+            case "GD3022": // AnnotationWiderThanInferred
+                foreach (var fix in CreateNarrowAnnotationFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD7022": // RedundantAnnotation
+                foreach (var fix in CreateRemoveAnnotationFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD7019": // TypeWideningAssignment
+                foreach (var fix in CreateAddTypeAnnotationFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD3023": // InconsistentReturnTypes
+                foreach (var fix in CreateAddReturnTypeFixes(node))
+                    yield return fix;
+                break;
+
+            case "GD3024": // MissingReturnInBranch
+                foreach (var fix in CreateAddReturnStatementFixes(node))
+                    yield return fix;
+                break;
         }
     }
 
@@ -196,6 +221,176 @@ public class GDFixProvider : IGDFixProvider
             $"{new string('\t', indent)}var {varName}\n"
         ).WithKind(GDFixKind.DeclareVariable);
     }
+
+    #region Annotation & Type Fixes
+
+    /// <summary>
+    /// GD3022: Replace wider annotation with inferred type.
+    /// The diagnostic node is the GDTypeNode with the annotation.
+    /// </summary>
+    private IEnumerable<GDFixDescriptor> CreateNarrowAnnotationFixes(GDNode node)
+    {
+        if (node is not GDTypeNode typeNode)
+            yield break;
+
+        // Find the variable declaration to get the initializer type
+        var parent = node.Parent as GDNode;
+        GDExpression? initializer = null;
+
+        if (parent is GDVariableDeclaration varDecl)
+            initializer = varDecl.Initializer;
+        else if (parent is GDVariableDeclarationStatement varStmt)
+            initializer = varStmt.Initializer;
+
+        if (initializer == null)
+            yield break;
+
+        // Extract the actual type name from the type node for position info
+        var line = typeNode.StartLine + 1; // 1-based
+        var startCol = typeNode.StartColumn;
+        var endCol = typeNode.EndColumn + 1;
+
+        // We need the inferred type name from the diagnostic message
+        // Since we don't have the semantic model here, suggest removing the annotation
+        // and letting type inference work
+        yield return GDTextEditFixDescriptor.Remove(
+            "Remove wider type annotation",
+            line,
+            startCol,
+            endCol
+        ).WithKind(GDFixKind.RemoveText);
+    }
+
+    /// <summary>
+    /// GD7022: Remove redundant annotation.
+    /// The diagnostic node is the GDTypeNode.
+    /// </summary>
+    private IEnumerable<GDFixDescriptor> CreateRemoveAnnotationFixes(GDNode node)
+    {
+        if (node is not GDTypeNode typeNode)
+            yield break;
+
+        // Find the colon before the type node too
+        var parent = node.Parent;
+        var line = typeNode.StartLine + 1;
+
+        // Remove the type annotation including the colon and any spaces before it
+        // The colon is part of the variable declaration form, before the type node
+        var startCol = typeNode.StartColumn;
+        var endCol = typeNode.EndColumn + 1;
+
+        // Walk back to find the colon
+        if (parent is GDVariableDeclaration or GDVariableDeclarationStatement)
+        {
+            // The colon is typically right before the type with optional spaces
+            // Just remove the type node for safety
+            yield return GDTextEditFixDescriptor.Remove(
+                "Remove redundant type annotation",
+                line,
+                startCol,
+                endCol
+            ).WithKind(GDFixKind.RemoveText);
+        }
+    }
+
+    /// <summary>
+    /// GD7019: Suggest adding explicit type annotation.
+    /// The diagnostic node is the assignment expression or variable declaration.
+    /// </summary>
+    private IEnumerable<GDFixDescriptor> CreateAddTypeAnnotationFixes(GDNode node)
+    {
+        // The node could be a variable declaration or assignment
+        GDTypeNode? typeNode = null;
+        GDIdentifier? identifier = null;
+
+        if (node is GDVariableDeclaration varDecl)
+        {
+            typeNode = varDecl.Type;
+            identifier = varDecl.Identifier;
+        }
+        else if (node is GDVariableDeclarationStatement varStmt)
+        {
+            typeNode = varStmt.Type;
+            identifier = varStmt.Identifier;
+        }
+
+        // If there's already a type annotation, suggest narrowing it
+        if (typeNode != null)
+        {
+            var line = typeNode.StartLine + 1;
+            var startCol = typeNode.StartColumn;
+            var endCol = typeNode.EndColumn + 1;
+
+            yield return GDTextEditFixDescriptor.Remove(
+                "Remove type annotation to use inferred type",
+                line,
+                startCol,
+                endCol
+            ).WithKind(GDFixKind.RemoveText);
+        }
+    }
+
+    /// <summary>
+    /// GD3023: Suggest adding return type annotation to method.
+    /// The diagnostic node is the method declaration or return statement.
+    /// </summary>
+    private IEnumerable<GDFixDescriptor> CreateAddReturnTypeFixes(GDNode node)
+    {
+        // Walk up to find the containing method
+        var current = node;
+        while (current != null && current is not GDMethodDeclaration)
+            current = current.Parent as GDNode;
+
+        if (current is not GDMethodDeclaration methodDecl)
+            yield break;
+
+        // If method already has a return type, skip
+        if (methodDecl.ReturnType != null)
+            yield break;
+
+        // Find where to insert "-> ReturnType" (after the closing paren)
+        var closeParen = methodDecl.CloseBracket;
+        if (closeParen == null)
+            yield break;
+
+        var line = closeParen.StartLine + 1;
+        var insertCol = closeParen.EndColumn + 1;
+
+        yield return GDTextEditFixDescriptor.Insert(
+            "Add return type annotation",
+            line,
+            insertCol,
+            " -> Variant"
+        ).WithKind(GDFixKind.InsertText);
+    }
+
+    /// <summary>
+    /// GD3024: Add missing return statement.
+    /// The diagnostic node is the method declaration.
+    /// </summary>
+    private IEnumerable<GDFixDescriptor> CreateAddReturnStatementFixes(GDNode node)
+    {
+        // Walk up to find the containing method
+        var current = node;
+        while (current != null && current is not GDMethodDeclaration)
+            current = current.Parent as GDNode;
+
+        if (current is not GDMethodDeclaration methodDecl)
+            yield break;
+
+        // Add return at the end of the method body
+        var indent = GetIndentLevel(methodDecl) + 1;
+        var endLine = methodDecl.EndLine + 1; // 1-based, after last line
+
+        yield return GDTextEditFixDescriptor.Insert(
+            "Add return statement",
+            endLine,
+            0,
+            $"{new string('\t', indent)}return\n"
+        ).WithKind(GDFixKind.InsertText);
+    }
+
+    #endregion
 
     #region Helper Methods
 

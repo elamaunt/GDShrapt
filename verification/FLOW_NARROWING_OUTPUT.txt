@@ -726,6 +726,9 @@ test_scripts/diagnostics/validator/scope_errors.gd
   test_gd2003_suppressed()
     83:7 suppressed_dup -> int (base: int)
 
+  test_gd2006_valid()
+    115:7 val -> TestEnum (base: TestEnum)
+
 test_scripts/diagnostics/validator/type_annotation_errors.gd
   test_gd3023_valid_same_type()
     14:4 flag -> bool (base: bool)
@@ -3115,4 +3118,4 @@ test_scripts/validation_edge_cases.gd
   test_stringname()
     62:17 sn -> String (base: StringName)
 
-# Summary: 2000 narrowings in 53 files
+# Summary: 2001 narrowings in 53 files

@@ -15,9 +15,13 @@ This folder contains the core semantic analysis engine for GDScript. It provides
 GDProjectSemanticModel (entry point)
     └── GDSemanticModel (per-file)
             ├── GDSemanticReferenceCollector (builds the model)
-            │       ├── GDFlowAnalyzer (SSA-style flow analysis)
+            │       ├── GDFlowAnalyzer (SSA-style flow analysis — PRIMARY TYPE SOURCE)
+            │       │       └── GDFlowVariableType (dual-type: DeclaredType + CurrentType)
+            │       │               ├── AssignmentHistory (append-only, survives SSA)
+            │       │               ├── GDTypeOrigin (per-type provenance tracking)
+            │       │               └── GDNarrowingConstraint (type guard tracking)
             │       ├── GDDuckTypeCollector (duck typing)
-            │       └── GDVariableUsageCollector (union type inference)
+            │       └── GDVariableUsageCollector (union type inference, supplementary)
             │
             ├── GDNodeTypeAnalyzer (type diff for any node)
             │       ├── GDParameterTypeAnalyzer (parameter types)
@@ -25,6 +29,16 @@ GDProjectSemanticModel (entry point)
             │
             └── GDInferenceCycleDetector (cross-method cycles)
 ```
+
+### DataFlow as Primary Type Source
+
+Flow analysis is the **single source of truth** for variable types within method bodies. All type queries for identifiers go through flow analysis first:
+
+**Type resolution priority:**
+1. **Flow analysis** — SSA-style type at specific program point (highest priority)
+2. **Container profile refinement** — when flow returns untyped container (`Array`, `Dictionary`), refines with element types from container usage profiling
+3. **Call-site parameter injection** — for untyped parameters, union of types passed by callers
+4. **Declared type / union type** — additional fallbacks
 
 ## Key Classes
 
@@ -40,7 +54,7 @@ GDProjectSemanticModel (entry point)
 - **Position (delegates to GDPositionFinder):** `GetNodeAtPosition(line, column)`, `GetIdentifierAtPosition(line, column)`, `GetTokenAtPosition(line, column)`
 - **References:** `GetReferencesTo(GDSymbolInfo)`, `GetReferencesTo(string)`
 - **Symbol filters:** `GetSymbolsOfKind()`, `GetMethods()`, `GetVariables()`, `GetSignals()`, `GetConstants()`, `GetEnums()`, `GetInnerClasses()` — all return `IReadOnlyList<GDSymbolInfo>` (cached via `GDSymbolRegistry`). `GetDeclaration()`
-- **Type queries:** `GetTypeForNode(node)`, `GetExpressionType(expr)`, `GetFlowVariableType()`, `GetFlowStateAtLocation()`
+- **Type queries:** `GetTypeForNode(node)`, `GetExpressionType(expr)`, `GetVariableTypeAt(varName, location)` (preferred), `GetFlowVariableType()` (obsolete, delegates to `GetVariableTypeAt`), `GetFlowStateAtLocation()`, `IsVariablePotentiallyNull(varName, location)`
 - **Union/Duck:** `GetUnionType(name)`, `GetDuckType(name)`, `ShouldSuppressDuckConstraints()`
 - **Confidence:** `GetMemberAccessConfidence()`, `GetIdentifierConfidence()`, `GetConfidenceReason()`
 - **Type inference:** `InferParameterTypes(string methodName)` (preferred), `InferParameterTypes(GDMethodDeclaration)` (kept public for cross-assembly callers), `AnalyzeMethodReturns(string methodName)` (preferred), `AnalyzeMethodReturns(GDMethodDeclaration)`, `GetTypeDiffForNode(node)`
@@ -100,33 +114,40 @@ Most internal methods (scope queries, nullability, onready, cross-method flow, l
 
 ### GDFlowAnalyzer
 
-**Responsibility:** Flow-sensitive type analysis within a method. Tracks variable types through assignments and control flow (SSA-style).
+**Responsibility:** SSA-style flow-sensitive type analysis within a method. **Primary source of truth** for variable types. Tracks variable types through assignments and control flow with full provenance.
 
 **Public API:**
+- `SetFilePath(filePath)` — Set file path for origin tracking
 - `Analyze(GDMethodDeclaration)` — Analyze a method
-- `GetTypeAtLocation(varName, node)` → `string?` — Get variable type at specific location
-- `GetStateAtLocation(node)` → `GDFlowState?` — Get full flow state at location
-- `NodeStates` — All computed flow states
-- `FinalState` — State after analysis
+- `AnalyzeScope(GDNode)` — Analyze method-like scope (getter/setter)
+- `NodeStates: IReadOnlyDictionary<GDNode, GDFlowState>` — Computed states for all AST nodes
+- `FinalState: GDFlowState` — State after analysis
+- `InitialState: GDFlowState?` — State at method entry (after parameter initialization)
 
 **Flow Handling:**
-- **If/Elif/Else**: Creates child states per branch, merges on exit
-- **For/While loops**: Fixed-point iteration (max 10 iterations)
-- **Match statements**: Per-case flow states
-- **Lambdas**: Captures flow state at definition time
-- **Type narrowing**: `x is Type` checks narrow variable type
+- **If/Elif/Else**: Creates child states per branch, merges on exit (union of types)
+- **For/While loops**: Fixed-point iteration (max 10 iterations via `ComputeLoopFixedPoint()`)
+- **Match statements**: Per-case flow states with pattern-based narrowing; `_matchSubjectStack` tracks match subject for binding type inference
+- **Lambdas**: Captures flow state at definition time (not invocation time)
+- **Type narrowing**: `x is Type`, `typeof()`, `assert()`, null checks
 
-**Fixed-Point Analysis:**
-- `ComputeLoopFixedPoint()` iterates until types stabilize
-- `MaxFixedPointIterations = 10` prevents infinite loops
-
-**State Stack:**
+**Internal State:**
+- `_currentState: GDFlowState` — Current state during traversal
 - `_stateStack` — Parent states for branch merging
 - `_branchStatesStack` — Collects branch end states
-- `_matchSubjectStack` — Match subject expressions for binding type inference
+- `_containerProfiles` — Container usage profiles for element type inference
+- `_reassignedVariables: HashSet<string>` — Variables reassigned after declaration
+- `_parameterNames: HashSet<string>` — Parameter names (excluded from profiles)
+- `_classMemberNames: HashSet<string>` — Class members accessed during flow (for cross-method aggregation)
+
+**Key Internal Methods:**
+- `CollectContainerProfiles(scope)` — Extract container profiles for narrowing
+- `ResolveSemanticType(expr)` → `GDSemanticType?` — Resolve RHS type with fallback
+- `CreateOrigin(kind, node, confidence)` → `GDTypeOrigin` — Factory for provenance tracking
+- `InferOriginKindFromExpression(expr, fallback)` → `GDTypeOriginKind` — Infer origin from AST context
 
 **Interactions:**
-- Used by: `GDSemanticModel` (via `_flowAnalyzers` cache)
+- Used by: `GDSemanticModel` (via `_flowAnalyzers` cache), validators (via `GetFlowVariableType()` / `GetVariableTypeAt()`)
 - Uses: `GDTypeInferenceEngine` for RHS type inference
 
 ---
@@ -295,6 +316,91 @@ All other methods (cross-file symbol resolution, type inference, signal queries,
 
 ---
 
+## DataFlow Infrastructure
+
+Core data types for flow analysis, defined in `GDShrapt.Abstractions`:
+
+### GDFlowVariableType
+
+Represents the type state of a single variable at a program point. Tracks **both** the declared annotation and the flow-inferred type.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `DeclaredType` | `GDSemanticType?` | From annotation, **immutable** through variable lifetime |
+| `CurrentType` | `GDUnionType` | SSA-replaced on each assignment |
+| `IsNarrowed` | `bool` | Type guard active (`if x is Type`) |
+| `NarrowedFromType` | `GDSemanticType?` | Narrowing type (temporary, cleared on assignment) |
+| `IsGuaranteedNonNull` | `bool` | Set after null/truthiness checks |
+| `IsPotentiallyNull` | `bool` | Default true for reference types |
+| `DuckType` | `GDDuckType?` | Duck-type constraints from `has_method`/`has`/`has_signal` |
+| `AssignmentHistory` | `IReadOnlyList<GDFlowAssignmentRecord>` | Append-only, survives SSA replacements |
+| `ActiveNarrowings` | `IReadOnlyList<GDNarrowingConstraint>` | Active narrowing constraints |
+| `EscapePoints` | `IReadOnlyList<GDEscapePoint>` | Where data escaped analysis |
+| `EffectiveType` | `GDSemanticType` | Priority: narrowed > current > declared > Variant |
+
+### GDFlowAssignmentRecord
+
+Lightweight struct recording each assignment observation:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Type` | `GDSemanticType` | Assigned type |
+| `Kind` | `GDTypeOriginKind` | Origin category |
+| `Confidence` | `GDTypeOriginConfidence` | How confident |
+| `Line` | `int` | 0-based line |
+| `Column` | `int` | 0-based column |
+
+### GDTypeOriginKind (26 values)
+
+| Category | Values |
+|----------|--------|
+| Explicit sources | `Declaration`, `Initialization`, `Assignment`, `CompoundAssignment` |
+| Parameters | `ParameterDeclaration`, `ParameterCallSite`, `SignalParameter` |
+| Call results | `CallSiteReturn`, `ReflectionCallSite` |
+| Literals & access | `Literal`, `MemberAccess`, `IndexerAccess` |
+| Scene/resource | `SceneInjection`, `PreloadInjection`, `InstantiateInjection`, `GroupInjection` |
+| Narrowing | `IsCheckNarrowing`, `NullCheckNarrowing`, `CastNarrowing`, `TypeOfNarrowing`, `AssertNarrowing`, `MatchPatternNarrowing` |
+| Other | `ForLoopIterator`, `DefaultValue`, `ContainerElement`, `Unknown` |
+
+### GDTypeOriginConfidence (4 levels)
+
+| Level | Meaning | Source |
+|-------|---------|--------|
+| `Exact` | Explicit type annotation | `var x: int`, parameter annotation |
+| `Inferred` | From assignment or constructor | `x = Vector2()`, call return |
+| `DuckTyped` | Type from constraint matching | Duck-type resolution |
+| `Heuristic` | Name-match or fallback | Lowest confidence |
+
+### GDTypeOrigin
+
+Full provenance record attached to types in `GDUnionType`:
+- `Kind`, `Confidence`, `Location: GDFlowLocation`, `Upstream: GDTypeOrigin?` (chain), `Description`, `Value`, `ObjectState`, `EscapePoint`
+
+### GDNarrowingConstraint
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `Kind` | `GDNarrowingKind` | `IsCheck`, `NullCheck`, `AsCast`, `TypeOfCheck`, `AssertCheck`, `MatchPattern`, `HasMethodCheck`, `HasPropertyCheck`, `HasSignalCheck` |
+| `NarrowedToType` | `GDSemanticType` | Type after narrowing |
+| `Location` | `GDFlowLocation` | Source location |
+
+### GDFlowState
+
+State of **all variables** at a program point:
+
+| Method | Purpose |
+|--------|---------|
+| `DeclareVariable(name, declaredType, initType, declOrigin, initOrigin)` | Declare with optional annotation |
+| `SetVariableType(name, type, origin)` | SSA-replace current type |
+| `NarrowType(name, toType, constraint)` | Apply type narrowing |
+| `GetVariableType(name)` → `GDFlowVariableType?` | Query (searches parent chain) |
+| `CreateChild()` → `GDFlowState` | Child state for branch |
+| `MergeBranches(ifBranch, elseBranch, parent)` | Merge two branches |
+| `MarkNonNull(name)` / `MarkPotentiallyNull(name)` | Nullable tracking |
+| `RequireMethod/Property/Signal(name, memberName)` | Duck-type constraints |
+
+---
+
 ## Data Classes
 
 ### GDSymbolInfo
@@ -347,7 +453,7 @@ Collects class-level Variant variables for union type inference.
 Tracks container usage (Array/Dictionary operations) for element type inference.
 
 ### GDVariableUsageCollector
-Tracks variable assignments to infer union types.
+Tracks variable assignments to infer union types. Supplementary to flow analysis — flow `AssignmentHistory` is the primary source for variable profiles within methods. This collector handles cases outside method flow scope.
 
 ### GDSignalConnectionCollector
 Collects signal.connect() calls for inter-procedural analysis.

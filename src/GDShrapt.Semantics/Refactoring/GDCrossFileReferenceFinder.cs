@@ -183,14 +183,13 @@ public class GDCrossFileReferenceFinder
         // stored separately in the semantic model's member access index
         foreach (var (callerType, memberRefs) in semanticModel.GetAllMemberAccessesForMember(memberName))
         {
-            if (!IsTypeCompatible(callerType, declaringTypeName))
+            var isVariantCaller = callerType == GDWellKnownTypes.Variant;
+            if (!isVariantCaller && !IsTypeCompatible(callerType, declaringTypeName))
                 continue;
 
             // For duck-typed access (Variant caller), check data-flow proof:
             // upgrade to Union if the declaring type appears in the variable's union type,
             // otherwise mark as Potential (duck-typed, no proof).
-            var isVariantCaller = callerType == GDWellKnownTypes.Variant;
-
             foreach (var maRef in memberRefs)
             {
                 if (maRef.ReferenceNode == null)
@@ -198,6 +197,7 @@ public class GDCrossFileReferenceFinder
 
                 var confidence = GDReferenceConfidence.Strict;
 
+                string? duckVarName = null;
                 if (isVariantCaller)
                 {
                     confidence = GDReferenceConfidence.Potential;
@@ -207,11 +207,11 @@ public class GDCrossFileReferenceFinder
 
                     if (memberAccessNode != null)
                     {
-                        var varName = GetRootVariableName(memberAccessNode.CallerExpression);
-                        if (!string.IsNullOrEmpty(varName))
+                        duckVarName = GetRootVariableName(memberAccessNode.CallerExpression);
+                        if (!string.IsNullOrEmpty(duckVarName))
                         {
                             var flowConfidence = DetermineFlowBasedConfidence(
-                                semanticModel.GetVariableTypeAt(varName, memberAccessNode), declaringTypeName);
+                                semanticModel.GetVariableTypeAt(duckVarName, memberAccessNode), declaringTypeName);
                             if (flowConfidence != null)
                                 confidence = flowConfidence.Value;
                         }
@@ -225,13 +225,17 @@ public class GDCrossFileReferenceFinder
                 if (!seen.Add((line, col)))
                     continue;
 
+                var reason = isVariantCaller && !string.IsNullOrEmpty(duckVarName)
+                    ? $"Duck-typed access on '{duckVarName}'"
+                    : $"Member access via '{callerType}.{memberName}'";
+
                 yield return new GDCrossFileReference(
                     script,
                     maRef.ReferenceNode,
                     line,
                     col,
                     confidence,
-                    $"Member access via '{callerType}.{memberName}'");
+                    reason);
             }
         }
 

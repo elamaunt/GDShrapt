@@ -10,17 +10,22 @@ This library provides semantic validation that goes beyond syntax checking. It u
 
 ```
 GDSemanticValidator (orchestrator)
-├── GDTypeValidator             - Return types, operators, assignments
-├── GDMemberAccessValidator     - Property/method resolution, duck typing
-├── GDArgumentTypeValidator     - Call argument types
-├── GDIndexerValidator          - Indexer key types (Array/Dictionary/String)
-├── GDSemanticSignalValidator   - Signal parameter types (emit_signal)
-├── GDGenericTypeValidator      - Generic type parameters (Array[T], Dictionary[K,V])
-├── GDNullableAccessValidator   - Null access (GD7005-7009) + conditional node (GD7017)
-├── GDRedundantGuardValidator   - Redundant type guards (GD7010-7014)
-├── GDDynamicCallValidator      - Dynamic call/get/set (GD7015-7016)
-├── GDSceneNodeValidator        - Node path validation (GD4011, GD4012) [requires ProjectModel]
-└── GDNodeLifecycleValidator    - Node access lifecycle (GD7018)
+├── GDTypeValidator                    - Return types, operators, assignments
+├── GDMemberAccessValidator            - Property/method resolution, duck typing
+├── GDArgumentTypeValidator            - Call argument types
+├── GDIndexerValidator                 - Indexer key types (Array/Dictionary/String)
+├── GDSemanticSignalValidator          - Signal parameter types (emit_signal)
+├── GDGenericTypeValidator             - Generic type parameters (Array[T], Dictionary[K,V])
+├── GDNullableAccessValidator          - Null access (GD7005-7009) + conditional node (GD7017)
+├── GDRedundantGuardValidator          - Redundant type guards (GD7010-7014)
+├── GDDynamicCallValidator             - Dynamic call/get/set (GD7015-7016)
+├── GDSceneNodeValidator               - Node path validation (GD4011, GD4012) [requires ProjectModel]
+├── GDNodeLifecycleValidator           - Node access lifecycle (GD7018)
+├── GDReturnConsistencyValidator       - Return type consistency (GD3023, GD3024)
+├── GDAnnotationNarrowingValidator     - Annotation quality (GD3022, GD7022)
+├── GDTypeWideningValidator            - Assignment widening (GD7019)
+├── GDContainerSpecializationValidator - Container specialization (GD3025, GD7021)
+└── GDParameterTypeHintValidator       - Parameter type consensus (GD7020)
 ```
 
 ## Entry Point
@@ -104,6 +109,45 @@ Validates node access lifecycle:
 - Skips `const` declarations and `@onready` variables
 - Uses inner `GDNodeAccessDetector` visitor to walk initializer expressions
 
+### GDReturnConsistencyValidator
+
+Validates return type consistency and completeness:
+- All return statements match declared return type annotation (GD3023)
+- All code paths return when return type annotation exists (GD3024)
+- Uses `AnalyzeMethodReturns()` for return path analysis
+- Skips Variant-annotated methods
+
+### GDAnnotationNarrowingValidator
+
+Validates annotation quality using flow data:
+- Annotation wider than inferred type: `var enemy: Node = Sprite2D.new()` (GD3022)
+- Redundant annotation on literal: `var x: int = 5` (GD7022)
+- Enriches messages with origin provenance via `flowVar.CurrentType.GetOrigins()`
+- False positive guards: null initializers, numeric conversions, Variant annotations, containers
+
+### GDTypeWideningValidator
+
+Detects assignments that widen a typed variable:
+- `sprite: Sprite2D = get_node("X")` widens to Node (GD7019)
+- Reads `flowVar.DeclaredType` vs assigned type
+- Enriches messages with origin provenance
+- Skips numeric conversions (int ↔ float implicit)
+
+### GDContainerSpecializationValidator
+
+Suggests container type specialization:
+- Bare `Array`/`Dictionary` could be specialized: `var scores: Array` → `Array[int]` (GD3025)
+- For-loop over untyped Array with typed element usage (GD7021)
+- Reads `flowVar.DeclaredType.IsArray` to check existing specialization
+
+### GDParameterTypeHintValidator
+
+Suggests parameter type annotations from call-site consensus:
+- All callers pass same type for untyped parameter → suggest annotation (GD7020)
+- Skips already-annotated parameters (`param.Type != null`)
+- Skips `_`-prefixed parameters
+- Off by default (`CheckParameterTypeHints = false`)
+
 ### GD7017 ConditionalNodeAccess (in GDNullableAccessValidator)
 
 Extends `GDNullableAccessValidator` to check node access expressions:
@@ -131,6 +175,10 @@ Extends `GDNullableAccessValidator` to check node access expressions:
 | **GD3016** | WrongGenericParameterCount | Wrong number of type params |
 | **GD3017** | InvalidGenericArgument | Unknown type as generic arg |
 | **GD3018** | DictionaryKeyNotHashable | Key type not hashable |
+| **GD3022** | AnnotationWiderThanInferred | Annotation wider than inferred type |
+| **GD3023** | InconsistentReturnTypes | Return types differ across branches |
+| **GD3024** | MissingReturnInBranch | Non-void function missing return in branch |
+| **GD3025** | ContainerMissingSpecialization | Bare Array/Dictionary could be specialized |
 
 ### Call Errors (4xxx)
 
@@ -156,6 +204,10 @@ Extends `GDNullableAccessValidator` to check node access expressions:
 | GD7015-7016 | Dynamic* | Dynamic call/get/set validation |
 | **GD7017** | ConditionalNodeAccess | Node may be absent (Hint) |
 | **GD7018** | NodeAccessBeforeReady | $Node without @onready (Warning) |
+| **GD7019** | TypeWideningAssignment | Assignment widens typed variable |
+| **GD7020** | CallSiteParameterTypeConsensus | All callers pass same type (off by default) |
+| **GD7021** | UntypedContainerElementAccess | For-loop over untyped Array (off by default) |
+| **GD7022** | RedundantAnnotation | Annotation obvious from literal (off by default) |
 
 #### GD7003 Warning Logic
 
@@ -186,6 +238,21 @@ if (confidence == GDReferenceConfidence.NameMatch)
 
 **See:** `GDShrapt.Semantics/Analysis/CLAUDE.md` for detailed duck-type inference algorithm.
 
+## Flow Analysis Integration
+
+Validators access flow analysis through `GDSemanticModel` to make flow-sensitive diagnostic decisions:
+
+| Validator | Flow API | Properties Read | Diagnostics |
+|-----------|----------|----------------|-------------|
+| `GDNullableAccessValidator` | `IsVariablePotentiallyNull()` | Nullable flags, lifecycle | GD7005-7009, GD7017 |
+| `GDRedundantGuardValidator` | `GetFlowVariableType()`, `GetInitialFlowVariableType()` | `DeclaredType`, `IsNarrowed`, `NarrowedFromType`, `IsGuaranteedNonNull`, `DuckType` | GD7010-7014 |
+| `GDTypeWideningValidator` | `GetFlowVariableType()` | `DeclaredType` vs assigned type, `CurrentType.GetOrigins()` | GD7019 |
+| `GDAnnotationNarrowingValidator` | `GetFlowVariableType()` | `CurrentType.GetOrigins()` for provenance | GD3022, GD7022 |
+| `GDContainerSpecializationValidator` | `GetFlowVariableType()` | `DeclaredType.IsArray` | GD3025, GD7021 |
+| `GDTypeValidator` | `GetFlowVariableType()` | `CurrentType.GetOrigins()` for enrichment | GD3001-3004 |
+
+**Key pattern:** Validators read `DeclaredType` (immutable annotation) and `CurrentType` (SSA-replaced flow type) to compare declared intent with actual runtime behavior. `CurrentType.GetOrigins()` enriches diagnostic messages with provenance ("from get_node() at line X").
+
 ## Options
 
 ```csharp
@@ -198,8 +265,15 @@ public class GDSemanticValidatorOptions
     public bool CheckSignalTypes { get; set; } = true;
     public bool CheckGenericTypes { get; set; } = true;
     public bool CheckDynamicCalls { get; set; } = true;
-    public bool CheckNodePaths { get; set; } = true;      // GD4011, GD4012
-    public bool CheckNodeLifecycle { get; set; } = true;   // GD7018
+    public bool CheckNodePaths { get; set; } = true;               // GD4011, GD4012
+    public bool CheckNodeLifecycle { get; set; } = true;            // GD7018
+    public bool CheckReturnConsistency { get; set; } = true;        // GD3023, GD3024
+    public bool CheckAnnotationNarrowing { get; set; } = true;      // GD3022
+    public bool CheckContainerSpecialization { get; set; } = true;   // GD3025
+    public bool CheckTypeWidening { get; set; } = true;             // GD7019
+    public bool CheckParameterTypeHints { get; set; } = false;      // GD7020 (off by default)
+    public bool CheckUntypedContainerAccess { get; set; } = false;  // GD7021 (off by default)
+    public bool CheckRedundantAnnotations { get; set; } = false;    // GD7022 (off by default)
 
     public bool EnableCommentSuppression { get; set; } = true;
 
@@ -207,6 +281,9 @@ public class GDSemanticValidatorOptions
     public GDDiagnosticSeverity ArgumentTypeSeverity { get; set; } = Warning;
     public GDDiagnosticSeverity SignalTypeSeverity { get; set; } = Warning;
     public GDDiagnosticSeverity NodePathSeverity { get; set; } = Warning;
+    public GDDiagnosticSeverity AnnotationNarrowingSeverity { get; set; } = Hint;
+    public GDDiagnosticSeverity ContainerSpecializationSeverity { get; set; } = Hint;
+    public GDDiagnosticSeverity ParameterTypeHintSeverity { get; set; } = Hint;
 
     // Project model (null = skip scene/resource validation)
     public GDProjectSemanticModel? ProjectModel { get; set; }
@@ -273,6 +350,10 @@ Validation/
 ├── Level2_Indexers/         - Indexer key type validation
 ├── Level3_Signals/          - Signal parameter type validation
 ├── Level4_Generics/         - Generic type parameter validation
+├── Level5_NullSafety/       - Nullable access, redundant guards
+├── Level6_SceneNodes/       - Node path, lifecycle validation
+├── Level7_DynamicCalls/     - Dynamic call/get/set validation
+├── Level8_TypeAnnotations/  - Annotation quality, widening, container specialization
 └── ArgumentTypeValidatorTests.cs
 ```
 
@@ -297,4 +378,4 @@ dotnet test --filter "Name=AllDiagnostics_MustBeVerifiedOrExcluded"
 - Total/Verified/Unverified/FP counts
 - Details for each unverified or false positive
 
-**Current Status:** 1065 diagnostics verified (Validator + Linter + Semantics)
+**Current Status:** 1,122 diagnostics verified (Validator + Linter + Semantics)

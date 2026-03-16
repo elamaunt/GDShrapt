@@ -14,9 +14,20 @@ namespace GDShrapt.Semantics;
 /// </summary>
 public class GDGodotTypesProvider : IGDRuntimeProvider
 {
+    private static readonly Lazy<GDGodotTypesProvider> _sharedInstance =
+        new(static () => new GDGodotTypesProvider(), LazyThreadSafetyMode.ExecutionAndPublication);
+
+    /// <summary>
+    /// Shared singleton instance using the default manifest.
+    /// Godot types are immutable, so a single instance is safe to share.
+    /// </summary>
+    public static GDGodotTypesProvider Shared => _sharedInstance.Value;
+
     private readonly GDAssemblyData? _assemblyData;
     private readonly ConcurrentDictionary<string, GDTypeData> _typeCache = new();
     private readonly ConcurrentDictionary<string, byte> _knownTypes = new(); // byte as placeholder for thread-safe set
+    private readonly ConcurrentDictionary<string, string?> _baseTypeCache = new();
+    private readonly ConcurrentDictionary<(string, string), bool> _assignabilityCache = new();
 
     public GDGodotTypesProvider()
     {
@@ -409,18 +420,19 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return null;
 
-        if (_typeCache.TryGetValue(typeName, out var typeData))
+        return _baseTypeCache.GetOrAdd(typeName, static (key, cache) =>
         {
-            var baseType = typeData.GDScriptBaseTypeName;
-            if (baseType != null)
-                baseType = NormalizeCSharpTypeName(baseType);
-            // Prevent self-referential base type (Object -> Object creates infinite loop)
-            if (baseType == typeName)
-                return null;
-            return baseType;
-        }
-
-        return null;
+            if (cache.TryGetValue(key, out var typeData))
+            {
+                var baseType = typeData.GDScriptBaseTypeName;
+                if (baseType != null)
+                    baseType = NormalizeCSharpTypeName(baseType);
+                if (baseType == key)
+                    return null;
+                return baseType;
+            }
+            return null;
+        }, _typeCache);
     }
 
     public bool IsAssignableTo(string sourceType, string targetType)
@@ -428,39 +440,35 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(sourceType) || string.IsNullOrEmpty(targetType))
             return false;
 
-        // Same type
         if (sourceType == targetType)
             return true;
 
-        // Null can be assigned to any reference type
         if (sourceType == "null")
             return true;
 
-        // Variant accepts anything
         if (targetType == GDWellKnownTypes.Variant)
             return true;
 
-        // Variant as source can be assigned to any type (runtime type check will occur)
         if (sourceType == GDWellKnownTypes.Variant)
             return true;
 
-        // Check implicit conversions from TypesMap traits (int→float, String↔StringName, Array↔PackedArrays, enum→int)
+        return _assignabilityCache.GetOrAdd((sourceType, targetType), static (key, self) => self.IsAssignableToCore(key.Item1, key.Item2), this);
+    }
+
+    private bool IsAssignableToCore(string sourceType, string targetType)
+    {
         if (CheckImplicitConversion(sourceType, targetType))
             return true;
 
-        // int → any enum type
         if (sourceType == "int" && _typeCache.TryGetValue(targetType, out var targetData) && targetData.IsEnum)
             return true;
 
-        // Extract base type names for generics (Array[int] -> Array)
         var sourceBaseTypeName = ExtractBaseTypeName(sourceType);
         var targetBaseTypeName = ExtractBaseTypeName(targetType);
 
-        // Generic type is assignable to its non-generic base (Array[int] -> Array)
         if (sourceBaseTypeName == targetBaseTypeName && sourceBaseTypeName != sourceType)
             return true;
 
-        // Generic Array[T] → PackedArray with matching element type
         if (sourceBaseTypeName == "Array" && sourceBaseTypeName != sourceType)
         {
             if (_typeCache.TryGetValue(targetType, out var td) &&
@@ -473,17 +481,15 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Check inheritance chain with cycle protection
-        var visited = new HashSet<string>();
         var currentType = sourceBaseTypeName;
-        while (!string.IsNullOrEmpty(currentType) && visited.Add(currentType))
+        var remaining = 20;
+        while (!string.IsNullOrEmpty(currentType) && --remaining > 0)
         {
             if (currentType == targetBaseTypeName)
                 return true;
 
             var baseType = GetBaseType(currentType);
 
-            // Stop if base type is the same as current (self-referential)
             if (baseType == currentType)
                 break;
 

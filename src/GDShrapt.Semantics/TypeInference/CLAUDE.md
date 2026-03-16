@@ -80,13 +80,16 @@ InferTypeNode(expression):
   2. Check recursion guard → return "Variant" if cycling
   3. Match expression type:
      - Literal → literal type
-     - Identifier → scope lookup
+     - Identifier → flow analysis first (SSA type at location),
+                     then scope chain fallback: local > parameter > class > inherited
      - MemberAccess → resolve receiver type + member lookup
      - Call → resolve callee return type
      - BinaryOp → operator result type
   4. Cache result
   5. Return type
 ```
+
+**Note:** For identifiers, `GDFlowAnalyzer.GetTypeAtLocation()` is the primary source. Flow analysis tracks type annotations as `DeclaredType` with `Exact` confidence, and refines `CurrentType` through assignments and narrowing. The type inference engine is used as a fallback and for non-identifier expressions.
 
 ### Backward Inference (expected type → constraints)
 

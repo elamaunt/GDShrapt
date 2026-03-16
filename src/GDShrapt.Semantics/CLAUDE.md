@@ -1,6 +1,6 @@
 # GDShrapt.Semantics
 
-Project-level semantic analysis, type inference, and refactoring services.
+Project-level semantic analysis, type inference, and refactoring services. DataFlow (SSA-style flow analysis) is the **primary source of truth** for variable types — annotations provide `Exact` confidence as initial state, flow tracks assignments and narrowing.
 
 ## Folder Documentation
 
@@ -27,7 +27,9 @@ Access through `file.SemanticModel?.Method()`.
 | Method | Purpose |
 |--------|---------|
 | `GetTypeForNode()` | Infer type for AST node |
-| `GetFlowVariableType()` | Get variable type at specific point |
+| `GetVariableTypeAt()` | Get variable type at specific point (preferred) |
+| `GetFlowVariableType()` | Get variable type at specific point (obsolete, delegates to `GetVariableTypeAt`) |
+| `IsVariablePotentiallyNull()` | Check if variable is potentially null at location |
 | `FindSymbol()` / `FindSymbols()` | Find symbol by name (`IReadOnlyList`) |
 | `Symbols` / `GetSymbolsOfKind()` / `GetMethods()` / etc. | Symbol enumeration (`IReadOnlyList`, cached) |
 | `GetSymbolAtPosition()` / `GetSymbolForNode()` | Symbol at position/node |

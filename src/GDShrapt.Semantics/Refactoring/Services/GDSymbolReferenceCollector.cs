@@ -211,6 +211,24 @@ public class GDSymbolReferenceCollector
             }
         }
 
+        // Validate bridge via call-site analysis: bridge methods must have call sites
+        // with arguments from 2+ hierarchies
+        if (hasBridge)
+        {
+            // Skip expensive call-site validation for common virtual methods
+            // (many unrelated classes override _process/_ready — not a real bridge)
+            if (hierarchyRoots.Count > 3 || IsBuiltinVirtualMethod(symbolName))
+            {
+                hasBridge = false;
+            }
+            else
+            {
+                var bridgeFileSet = CollectBridgeFiles(perHierarchyExternalFiles);
+                hasBridge = ValidateBridgeCallSites(
+                    bridgeFileSet, symbolName, hierarchyRoots, perHierarchyRefs);
+            }
+        }
+
         if (hasBridge)
         {
             // Bridge detected: merge all hierarchy refs into single Primary
@@ -224,7 +242,20 @@ public class GDSymbolReferenceCollector
                         mergedRefs.Add(r);
                 mergedWarnings.AddRange(refs.StringWarnings);
             }
-            int primaryRefCount = perHierarchyRefs[primaryIndex].References.Count;
+
+            // Count only relevant refs from primary hierarchy (Strict+Union, excluding own declaration)
+            var primaryDecl = perHierarchyRefs[primaryIndex].DeclaringScript;
+            int primaryRefCount = 0;
+            foreach (var r in perHierarchyRefs[primaryIndex].References)
+            {
+                if (r.Kind == GDSymbolReferenceKind.Declaration && !r.IsOverride
+                    && r.FilePath != null && primaryDecl?.FullPath != null
+                    && r.FilePath.Equals(primaryDecl.FullPath, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (r.Confidence == GDReferenceConfidence.Strict || r.Confidence == GDReferenceConfidence.Union)
+                    primaryRefCount++;
+            }
+
             var merged = new GDSymbolReferences(
                 perHierarchyRefs[primaryIndex].Symbol,
                 perHierarchyRefs[primaryIndex].DeclaringScript,
@@ -1069,4 +1100,208 @@ public class GDSymbolReferenceCollector
             null,
             Array.Empty<GDSymbolReference>(),
             Array.Empty<GDRenameWarning>());
+
+    private bool IsBuiltinVirtualMethod(string symbolName)
+    {
+        if (_projectModel?.TypeSystem == null) return false;
+
+        // Virtual methods inherited from built-in types (Node, Object, etc.)
+        // are overridden by many unrelated classes — not a bridge pattern
+        var provider = GetRuntimeProvider();
+        if (provider == null) return false;
+
+        var member = provider.GetMember("Node", symbolName)
+                  ?? provider.GetMember("Object", symbolName)
+                  ?? provider.GetMember("Resource", symbolName)
+                  ?? provider.GetMember("RefCounted", symbolName);
+        return member != null && member.Kind == GDRuntimeMemberKind.Method;
+    }
+
+    private static HashSet<string> CollectBridgeFiles(List<HashSet<string>> perHierarchyExternalFiles)
+    {
+        var bridgeFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < perHierarchyExternalFiles.Count; i++)
+            for (int j = i + 1; j < perHierarchyExternalFiles.Count; j++)
+                foreach (var f in perHierarchyExternalFiles[i])
+                    if (perHierarchyExternalFiles[j].Contains(f))
+                        bridgeFiles.Add(f);
+        return bridgeFiles;
+    }
+
+    private bool ValidateBridgeCallSites(
+        HashSet<string> bridgeFiles,
+        string symbolName,
+        List<(GDScriptFile Script, GDSymbolInfo Symbol)> hierarchyRoots,
+        List<GDSymbolReferences> perHierarchyRefs)
+    {
+        if (_projectModel?.TypeSystem == null) return true;
+
+        foreach (var bridgeFilePath in bridgeFiles)
+        {
+            var bridgeScript = _project.ScriptFiles
+                .FirstOrDefault(s => s.FullPath != null &&
+                    s.FullPath.Equals(bridgeFilePath, StringComparison.OrdinalIgnoreCase));
+            if (bridgeScript == null) continue;
+
+            var bridgeTypeName = bridgeScript.TypeName;
+            if (string.IsNullOrEmpty(bridgeTypeName)) continue;
+
+            var bridgeMethods = FindBridgeMethodsWithDuckRef(
+                bridgeFilePath, symbolName, perHierarchyRefs);
+
+            foreach (var methodName in bridgeMethods)
+            {
+                var coveredHierarchies = new HashSet<int>();
+
+                // Try cached registry first (O(1)), fallback to AST scan
+                var registry = _project.CallSiteRegistry;
+                if (registry != null)
+                {
+                    var callers = registry.GetCallersOf(bridgeTypeName, methodName);
+                    if (callers.Count == 0) continue;
+
+                    foreach (var caller in callers)
+                    {
+                        var callExpr = caller.CallExpression;
+                        if (callExpr?.Parameters == null) continue;
+
+                        var sourceScript = _project.ScriptFiles
+                            .FirstOrDefault(s => s.FullPath != null &&
+                                s.FullPath.Equals(caller.SourceFilePath, StringComparison.OrdinalIgnoreCase));
+                        var model = sourceScript != null ? _projectModel.ResolveModel(sourceScript) : null;
+
+                        CheckCallArguments(callExpr.Parameters, model, hierarchyRoots, coveredHierarchies);
+                        if (coveredHierarchies.Count >= 2) return true;
+                    }
+                }
+                else
+                {
+                    // Fallback: scan project scripts for calls to bridgeTypeName.methodName
+                    bool foundAnyCaller = false;
+                    foreach (var script in _project.ScriptFiles)
+                    {
+                        if (script.Class == null || script.FullPath == null) continue;
+                        if (bridgeFiles.Contains(script.FullPath)) continue;
+
+                        var model = _projectModel.ResolveModel(script);
+                        if (model == null) continue;
+
+                        foreach (var callExpr in FindCallsToMethod(script.Class, bridgeTypeName, methodName, model))
+                        {
+                            foundAnyCaller = true;
+                            CheckCallArguments(callExpr.Parameters, model, hierarchyRoots, coveredHierarchies);
+                            if (coveredHierarchies.Count >= 2) return true;
+                        }
+                    }
+                    if (!foundAnyCaller) continue;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void CheckCallArguments(
+        GDExpressionsList? parameters,
+        GDSemanticModel? model,
+        List<(GDScriptFile Script, GDSymbolInfo Symbol)> hierarchyRoots,
+        HashSet<int> coveredHierarchies)
+    {
+        if (parameters == null) return;
+
+        foreach (var argExpr in parameters)
+        {
+            string? argTypeName = null;
+            if (model != null)
+            {
+                var argType = model.InferSemanticTypeForExpression(argExpr);
+                if (argType != null && !argType.IsVariant)
+                    argTypeName = argType.DisplayName;
+            }
+            if (string.IsNullOrEmpty(argTypeName)) continue;
+
+            for (int h = 0; h < hierarchyRoots.Count; h++)
+            {
+                var rootTypeName = hierarchyRoots[h].Script.TypeName;
+                if (rootTypeName != null &&
+                    _projectModel!.TypeSystem.IsAssignableTo(argTypeName, rootTypeName))
+                {
+                    coveredHierarchies.Add(h);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static List<GDCallExpression> FindCallsToMethod(
+        GDClassDeclaration classDecl, string typeName, string methodName, GDSemanticModel model)
+    {
+        var results = new List<GDCallExpression>();
+        var visitor = new BridgeCallFinder(typeName, methodName, model, results);
+        classDecl.WalkIn(visitor);
+        return results;
+    }
+
+    private sealed class BridgeCallFinder : GDVisitor
+    {
+        private readonly string _typeName;
+        private readonly string _methodName;
+        private readonly GDSemanticModel _model;
+        private readonly List<GDCallExpression> _results;
+
+        public BridgeCallFinder(string typeName, string methodName,
+            GDSemanticModel model, List<GDCallExpression> results)
+        {
+            _typeName = typeName;
+            _methodName = methodName;
+            _model = model;
+            _results = results;
+        }
+
+        public override void Left(GDCallExpression callExpr)
+        {
+            // Match pattern: expr.methodName(args) where expr type is bridgeTypeName
+            if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp
+                && memberOp.Identifier?.Sequence == _methodName
+                && memberOp.CallerExpression != null)
+            {
+                var callerType = _model.InferSemanticTypeForExpression(memberOp.CallerExpression);
+                if (callerType != null && !callerType.IsVariant
+                    && callerType.DisplayName == _typeName)
+                {
+                    _results.Add(callExpr);
+                }
+            }
+        }
+    }
+
+    private static HashSet<string> FindBridgeMethodsWithDuckRef(
+        string bridgeFilePath, string symbolName,
+        List<GDSymbolReferences> perHierarchyRefs)
+    {
+        var methods = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var hierarchyRefs in perHierarchyRefs)
+        {
+            foreach (var r in hierarchyRefs.References)
+            {
+                if (r.FilePath == null || !r.FilePath.Equals(bridgeFilePath, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (r.Confidence != GDReferenceConfidence.Potential && r.Confidence != GDReferenceConfidence.NameMatch)
+                    continue;
+
+                var node = r.Node;
+                while (node != null)
+                {
+                    if (node is GDMethodDeclaration method)
+                    {
+                        if (method.Identifier?.Sequence != null)
+                            methods.Add(method.Identifier.Sequence);
+                        break;
+                    }
+                    node = node.Parent as GDNode;
+                }
+            }
+        }
+        return methods;
+    }
 }

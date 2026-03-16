@@ -81,14 +81,14 @@ Potential edits (7):
     92:22 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
   test_scripts/duck_caller.gd:
     12:25 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
-    13:11 take_damage -> take_damage_renamed [Potential] (Member access via 'Variant.take_damage')
+    13:11 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'entity')
   test_scripts/duck_typing_advanced.gd:
-    26:22 take_damage -> take_damage_renamed [Potential] (Member access via 'Variant.take_damage')
+    26:22 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'target')
   test_scripts/extended_class.gd:
     30:24 take_damage -> take_damage_renamed [Potential] (has_method("take_damage") string literal)
     31:16 take_damage -> take_damage_renamed [Potential] (call("take_damage") string literal)
   test_scripts/polymorphic_interfaces.gd:
-    41:5 take_damage -> take_damage_renamed [Potential] (Member access via 'Variant.take_damage')
+    41:5 take_damage -> take_damage_renamed [Potential] (Duck-typed access on 'e')
 
 ---
 

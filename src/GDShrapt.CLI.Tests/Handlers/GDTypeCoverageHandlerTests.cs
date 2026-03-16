@@ -17,14 +17,13 @@ public class GDTypeCoverageHandlerTests
     [TestInitialize]
     public void Setup()
     {
-        _project = TestProjectHelper.LoadTestProject();
+        _project = TestProjectHelper.GetCachedTestProject();
         _handler = new GDTypeCoverageHandler(new GDProjectSemanticModel(_project));
     }
 
     [TestCleanup]
     public void Cleanup()
     {
-        _project?.Dispose();
     }
 
     // === AnalyzeFile Tests ===

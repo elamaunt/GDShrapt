@@ -244,9 +244,16 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
             }
         }
 
-        // Check cache
-        if (_nodeTypes.TryGetValue(expression, out var cachedType))
+        // Check cache — skip for member expressions that reference methods (not direct calls),
+        // because cache stores return type but we need Callable signature
+        bool skipCache = expression is GDMemberOperatorExpression skipMemberExpr
+            && !(skipMemberExpr.Parent is GDCallExpression skipCall
+                && skipCall.CallerExpression == skipMemberExpr);
+
+        if (!skipCache && _nodeTypes.TryGetValue(expression, out var cachedType))
+        {
             return cachedType;
+        }
 
         // Recursion guard
         if (_expressionTypeInProgress.Contains(expression))
@@ -366,7 +373,16 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 {
                     var memberInfo = FindMemberWithInheritance(callerType, memberName);
                     if (memberInfo != null)
+                    {
+                        if (memberInfo.Kind == GDRuntimeMemberKind.Method)
+                        {
+                            bool isCalledDirectly = memberExpr.Parent is GDCallExpression call
+                                && call.CallerExpression == memberExpr;
+                            if (!isCalledDirectly)
+                                return BuildCallableSignatureString(memberInfo);
+                        }
                         return memberInfo.Type;
+                    }
                 }
             }
         }
@@ -688,6 +704,37 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
 
     private GDRuntimeMemberInfo? FindMemberWithInheritance(string? typeName, string? memberName)
         => _memberResolver.FindMember(typeName, memberName);
+
+    private static string BuildCallableSignatureString(GDRuntimeMemberInfo memberInfo)
+    {
+        var paramParts = new List<string>();
+        if (memberInfo.Parameters != null)
+        {
+            foreach (var param in memberInfo.Parameters)
+                paramParts.Add(!string.IsNullOrEmpty(param.Type) ? param.Type : "Variant");
+        }
+        else if (memberInfo.MaxArgs > 0 || memberInfo.IsVarArgs)
+        {
+            for (int i = 0; i < Math.Max(memberInfo.MinArgs, 1); i++)
+                paramParts.Add("Variant");
+        }
+
+        var paramsStr = string.Join(", ", paramParts);
+        if (memberInfo.IsVarArgs && !string.IsNullOrEmpty(paramsStr))
+            paramsStr += "...";
+        else if (memberInfo.IsVarArgs)
+            paramsStr = "Variant...";
+
+        var returnStr = "";
+        if (!string.IsNullOrEmpty(memberInfo.Type)
+            && memberInfo.Type != "void"
+            && !GDSemanticType.FromRuntimeTypeName(memberInfo.Type).IsVariant)
+        {
+            returnStr = $" -> {memberInfo.Type}";
+        }
+
+        return $"Callable({paramsStr}){returnStr}";
+    }
 
     private GDContainerElementType? GetContainerTypeForExpression(GDExpression? expr)
     {
@@ -1068,7 +1115,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
             return GDInferredParameterType.Unknown(paramName);
 
         // Resolve constraints to type
-        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? new GDGodotTypesProvider());
+        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? GDGodotTypesProvider.Shared);
         return resolver.ResolveFromConstraints(paramConstraints);
     }
 
@@ -1147,7 +1194,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
 
         // Analyze all parameter usage at once
         var constraints = GDParameterUsageAnalyzer.AnalyzeMethod(method, _runtimeProvider);
-        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? new GDGodotTypesProvider());
+        var resolver = new GDParameterTypeResolver(_runtimeProvider ?? GDGodotTypesProvider.Shared);
 
         foreach (var param in method.Parameters)
         {
