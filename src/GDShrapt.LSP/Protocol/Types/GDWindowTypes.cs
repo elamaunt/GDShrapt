@@ -67,3 +67,45 @@ public class GDSetTraceParams
     [JsonPropertyName("value")]
     public string Value { get; set; } = "off";
 }
+
+/// <summary>
+/// Parameters for window/workDoneProgress/create request.
+/// </summary>
+public class GDWorkDoneProgressCreateParams
+{
+    [JsonPropertyName("token")]
+    public string Token { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Parameters for $/progress notification.
+/// </summary>
+public class GDProgressParams
+{
+    [JsonPropertyName("token")]
+    public string Token { get; set; } = string.Empty;
+
+    [JsonPropertyName("value")]
+    public GDWorkDoneProgressValue Value { get; set; } = new();
+}
+
+/// <summary>
+/// Value payload for WorkDoneProgress notifications.
+/// </summary>
+public class GDWorkDoneProgressValue
+{
+    [JsonPropertyName("kind")]
+    public string Kind { get; set; } = "begin";
+
+    [JsonPropertyName("title")]
+    public string? Title { get; set; }
+
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+
+    [JsonPropertyName("percentage")]
+    public int? Percentage { get; set; }
+
+    [JsonPropertyName("cancellable")]
+    public bool? Cancellable { get; set; }
+}

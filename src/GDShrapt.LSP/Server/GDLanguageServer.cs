@@ -153,31 +153,22 @@ public class GDLanguageServer : IGDLanguageServer
                     foreach (var _ in project.ScriptFiles) scriptCount++;
                     _ = _logger?.InfoAsync($"[initialize] loaded {scriptCount} scripts, initializing registry...");
 
-                    // Initialize service registry with base module
+                    // Initialize service registry with deferred analysis (non-blocking).
+                    // Handlers are created immediately but return null/empty until AnalyzeAll() runs in background.
                     // NOTE: Pro module is NOT loaded in LSP (by design - Strict mode only)
                     _registry = new GDServiceRegistry();
                     try
                     {
-                        _registry.LoadModules(project, new GDBaseModule());
+                        _registry.LoadModules(project, new GDBaseModule(deferAnalysis: true));
                         var projectModel = _registry.GetService<GDProjectSemanticModel>();
                         _documentManager.SetProjectModel(projectModel);
                         _diagnosticPublisher.SetProjectModel(projectModel);
-                        _ = _logger?.InfoAsync($"[initialize] registry initialized successfully");
+                        _ = _logger?.InfoAsync($"[initialize] registry initialized (analysis deferred)");
                     }
                     catch (Exception moduleEx)
                     {
                         _ = _logger?.ErrorAsync($"[initialize] LoadModules failed: {moduleEx}");
                     }
-
-                    // Check semantic model status after module loading
-                    var analyzedCount = 0;
-                    var totalCount = 0;
-                    foreach (var s in project.ScriptFiles)
-                    {
-                        totalCount++;
-                        if (s.SemanticModel != null) analyzedCount++;
-                    }
-                    _ = _logger?.InfoAsync($"[initialize] semantic models: {analyzedCount}/{totalCount}");
 
                     project = null; // Successfully transferred ownership
                 }
@@ -274,20 +265,57 @@ public class GDLanguageServer : IGDLanguageServer
             _project.SceneScriptsChanged += OnSceneScriptsChanged;
         }
 
-        // Start background analysis after initialization completes
-        // This prevents blocking the initialize request and allows the client to proceed
+        // Start background analysis with progress reporting
         if (_project != null)
         {
             _ = Task.Run(async () =>
             {
+                // Create progress token for VS Code progress bar
+                var progressToken = "gdshrapt-analysis";
+                var progressSupported = false;
                 try
                 {
-                    // Run analysis in background
+                    if (_transport != null)
+                    {
+                        using var progressCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                        await _transport.SendRequestAsync<GDWorkDoneProgressCreateParams, object?>(
+                            "window/workDoneProgress/create",
+                            new GDWorkDoneProgressCreateParams { Token = progressToken },
+                            progressCts.Token).ConfigureAwait(false);
+                        progressSupported = true;
+                    }
+                }
+                catch
+                {
+                    // Client may not support work done progress — continue without it
+                }
+
+                if (progressSupported)
+                    await SendProgressAsync(progressToken, "begin", title: "GDShrapt: Analyzing project...", percentage: 0).ConfigureAwait(false);
+
+                try
+                {
+                    // Phase 1: Per-file semantic analysis
                     _project.AnalyzeAll();
+
+                    if (progressSupported)
+                        await SendProgressAsync(progressToken, "report", message: "Building cross-file index...", percentage: 60).ConfigureAwait(false);
+
+                    // Phase 1 complete — hover, completion, diagnostics, go-to-def now fully functional
+                    _documentManager?.SetInitialAnalysisComplete();
+
+                    // Publish diagnostics for open documents
+                    if (_diagnosticPublisher != null && _documentManager != null)
+                        await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
+
+                    // Phase 2: Cross-file enrichment (references, rename, CodeLens)
                     _project.BuildCallSiteRegistry();
                     _project.EnrichWithCallSiteAnalysis();
                     _project.ResolveTresClassNames();
                     GDProjectInitializer.InjectSceneSignalConnections(_project);
+
+                    if (progressSupported)
+                        await SendProgressAsync(progressToken, "report", message: "Finalizing...", percentage: 95).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -295,17 +323,10 @@ public class GDLanguageServer : IGDLanguageServer
                 }
                 finally
                 {
-                    // Mark analysis complete so document manager can eagerly rebuild models on edits
-                    _documentManager?.SetInitialAnalysisComplete();
-
-                    // Signal that analysis is complete (even if it failed partially)
-                    // This unblocks any pending diagnostic publish requests
                     _analysisComplete?.TrySetResult(true);
-                }
 
-                if (_diagnosticPublisher != null && _documentManager != null)
-                {
-                    await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
+                    if (progressSupported)
+                        await SendProgressAsync(progressToken, "end", message: "Analysis complete").ConfigureAwait(false);
                 }
 
                 // Refresh CodeLens after analysis completes so reference counts are accurate
@@ -607,6 +628,28 @@ public class GDLanguageServer : IGDLanguageServer
         sw.Stop();
 
         GDLspPerformanceTrace.Log("hover", $"END {filename} {sw.ElapsedMilliseconds}ms L{@params.Position.Line}:{@params.Position.Character} hasResult={result != null}");
+
+        // When analysis is still in progress and handler returned null, show a loading indicator
+        if (result == null && _analysisComplete != null && !_analysisComplete.Task.IsCompleted)
+        {
+            var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
+            var script = _project?.GetScript(filePath);
+            if (script?.Class != null)
+            {
+                if (script.Class.TryGetTokenByPosition(@params.Position.Line, @params.Position.Character, out var token) && token != null)
+                {
+                    return new GDLspHover
+                    {
+                        Contents = GDLspMarkupContent.Markdown($"`{token}`\n\n*\u23f3 Analysis in progress...*")
+                    };
+                }
+            }
+
+            return new GDLspHover
+            {
+                Contents = GDLspMarkupContent.Markdown("*\u23f3 Analysis in progress...*")
+            };
+        }
 
         return result;
     }
@@ -965,6 +1008,28 @@ public class GDLanguageServer : IGDLanguageServer
             @params.Verbose = verbose;
 
         return _transport.SendNotificationAsync("$/logTrace", @params);
+    }
+
+    private async Task SendProgressAsync(string token, string kind, string? title = null, string? message = null, int? percentage = null)
+    {
+        if (_transport == null) return;
+        try
+        {
+            var value = new GDWorkDoneProgressValue { Kind = kind };
+            if (title != null) value.Title = title;
+            if (message != null) value.Message = message;
+            if (percentage.HasValue) value.Percentage = percentage.Value;
+
+            await _transport.SendNotificationAsync("$/progress", new GDProgressParams
+            {
+                Token = token,
+                Value = value
+            }).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Best-effort: client may not support progress
+        }
     }
 
     private async Task ShowCriticalErrorAsync(string message)

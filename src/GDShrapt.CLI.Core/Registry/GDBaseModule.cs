@@ -9,14 +9,25 @@ namespace GDShrapt.CLI.Core;
 /// </summary>
 public sealed class GDBaseModule : IGDModule
 {
+    private readonly bool _deferAnalysis;
+
+    public GDBaseModule(bool deferAnalysis = false)
+    {
+        _deferAnalysis = deferAnalysis;
+    }
+
     /// <inheritdoc />
     public int Priority => 0;
 
     /// <inheritdoc />
     public void Configure(IGDServiceRegistry registry, GDScriptProject project)
     {
-        // Project semantic model (shared across handlers that need cross-file analysis)
-        var projectModel = project.AnalyzeAndBuildProjectModel();
+        // When deferAnalysis is true (LSP mode), create project model without running AnalyzeAll().
+        // GDProjectSemanticModel uses Lazy<T> — safe to construct before analysis.
+        // Handlers will return null/empty until SemanticModel is populated.
+        var projectModel = _deferAnalysis
+            ? new GDProjectSemanticModel(project)
+            : project.AnalyzeAndBuildProjectModel();
         registry.Register<GDProjectSemanticModel>(projectModel);
 
         // Code intelligence (registered first — used by other handlers)
