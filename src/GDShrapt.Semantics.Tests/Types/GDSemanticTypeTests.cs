@@ -57,8 +57,8 @@ public class GDSemanticTypeTests
             new GDSimpleSemanticType("String")
         });
 
-        // DisplayName sorts alphabetically
-        union.DisplayName.Should().Be("int | String");
+        // DisplayName sorts by StringComparer.Ordinal (uppercase before lowercase)
+        union.DisplayName.Should().Be("String|int");
     }
 
     [TestMethod]
@@ -318,6 +318,138 @@ public class GDSemanticTypeTests
         result.Should().BeOfType<GDUnionSemanticType>();
         var union = (GDUnionSemanticType)result;
         union.Types.Should().HaveCount(3);
+    }
+
+    #endregion
+
+    #region GDUnionType Container Simplification Tests
+
+    [TestMethod]
+    public void ToSemanticType_MergesDictionariesWithSameKeyType()
+    {
+        var union = new GDUnionType();
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("int"), new GDSimpleSemanticType("String")));
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("Array"), new GDSimpleSemanticType("String")));
+
+        var result = union.ToSemanticType();
+
+        result.Should().BeOfType<GDContainerSemanticType>();
+        var dict = (GDContainerSemanticType)result;
+        dict.IsDictionary.Should().BeTrue();
+        dict.KeyType!.DisplayName.Should().Be("String");
+        dict.ElementType.Should().BeOfType<GDUnionSemanticType>();
+        dict.ElementType.DisplayName.Should().Contain("int");
+        dict.ElementType.DisplayName.Should().Contain("Array");
+    }
+
+    [TestMethod]
+    public void ToSemanticType_MergesDictionariesWithSameKeyType_AndNull()
+    {
+        var union = new GDUnionType();
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("int"), new GDSimpleSemanticType("String")));
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("Array"), new GDSimpleSemanticType("String")));
+        union.AddType(GDNullSemanticType.Instance);
+
+        var result = union.ToSemanticType();
+
+        result.Should().BeOfType<GDUnionSemanticType>();
+        var resultUnion = (GDUnionSemanticType)result;
+        resultUnion.Types.Should().HaveCount(2);
+
+        var dict = resultUnion.Types.OfType<GDContainerSemanticType>().Single();
+        dict.IsDictionary.Should().BeTrue();
+        dict.KeyType!.DisplayName.Should().Be("String");
+
+        resultUnion.Types.OfType<GDNullSemanticType>().Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public void ToSemanticType_DoesNotMergeDictionariesWithDifferentKeyTypes()
+    {
+        var union = new GDUnionType();
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("int"), new GDSimpleSemanticType("String")));
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("float"), new GDSimpleSemanticType("int")));
+
+        var result = union.ToSemanticType();
+
+        result.Should().BeOfType<GDUnionSemanticType>();
+        var resultUnion = (GDUnionSemanticType)result;
+        resultUnion.Types.OfType<GDContainerSemanticType>().Should().HaveCount(2);
+    }
+
+    [TestMethod]
+    public void ToSemanticType_MergesArraysWithDifferentElementTypes()
+    {
+        var union = new GDUnionType();
+        union.AddType(new GDContainerSemanticType(false, new GDSimpleSemanticType("int")));
+        union.AddType(new GDContainerSemanticType(false, new GDSimpleSemanticType("String")));
+
+        var result = union.ToSemanticType();
+
+        result.Should().BeOfType<GDContainerSemanticType>();
+        var arr = (GDContainerSemanticType)result;
+        arr.IsArray.Should().BeTrue();
+        arr.ElementType.Should().BeOfType<GDUnionSemanticType>();
+        arr.ElementType.DisplayName.Should().Contain("int");
+        arr.ElementType.DisplayName.Should().Contain("String");
+    }
+
+    [TestMethod]
+    public void ToSemanticType_SingleDictionary_NoChange()
+    {
+        var union = new GDUnionType();
+        union.AddType(new GDContainerSemanticType(true, new GDSimpleSemanticType("int"), new GDSimpleSemanticType("String")));
+        union.AddType(new GDSimpleSemanticType("float"));
+
+        var result = union.ToSemanticType();
+
+        result.Should().BeOfType<GDUnionSemanticType>();
+        var resultUnion = (GDUnionSemanticType)result;
+        resultUnion.Types.Should().HaveCount(2);
+        resultUnion.Types.OfType<GDContainerSemanticType>().Single().ElementType.DisplayName.Should().Be("int");
+    }
+
+    #endregion
+
+    #region GDUnionSemanticType Null Deduplication Tests
+
+    [TestMethod]
+    public void GDUnionSemanticType_DeduplicatesNullTypes()
+    {
+        var union = new GDUnionSemanticType(new GDSemanticType[]
+        {
+            new GDSimpleSemanticType("int"),
+            GDNullSemanticType.Instance,
+            GDNullSemanticType.Instance
+        });
+
+        union.Types.Should().HaveCount(2);
+        union.Types.OfType<GDNullSemanticType>().Should().HaveCount(1);
+    }
+
+    [TestMethod]
+    public void GDUnionSemanticType_DeduplicatesSameTypes()
+    {
+        var union = new GDUnionSemanticType(new GDSemanticType[]
+        {
+            new GDSimpleSemanticType("int"),
+            new GDSimpleSemanticType("int"),
+            new GDSimpleSemanticType("String")
+        });
+
+        union.Types.Should().HaveCount(2);
+    }
+
+    [TestMethod]
+    public void ToSemanticType_NullNotDuplicated()
+    {
+        var union = new GDUnionType();
+        union.AddType(GDNullSemanticType.Instance);
+        union.AddType(GDNullSemanticType.Instance);
+
+        var result = union.ToSemanticType();
+
+        result.Should().BeOfType<GDNullSemanticType>();
     }
 
     #endregion

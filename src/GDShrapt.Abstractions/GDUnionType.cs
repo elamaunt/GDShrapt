@@ -67,13 +67,13 @@ public class GDUnionType
         GDVariantSemanticType.Instance;
 
     /// <summary>
-    /// Gets the union type name: single type if one, or "A|B|C" format if multiple.
+    /// Gets the union type name: single type if one, or "A | B | C" format if multiple.
     /// Unlike EffectiveType, this preserves union information instead of falling back to Variant.
+    /// Uses ToSemanticType() to apply container simplification (e.g., merging dictionaries with same key type).
     /// </summary>
     public string UnionTypeName =>
-        IsSingleType ? Types.First().DisplayName :
         IsEmpty ? "Variant" :
-        string.Join("|", Types.Select(t => t.DisplayName).OrderBy(n => n, StringComparer.Ordinal));
+        ToSemanticType().DisplayName;
 
     /// <summary>
     /// Adds a type to the union.
@@ -228,6 +228,14 @@ public class GDUnionType
             if (type is GDNullSemanticType && targetType is not GDNullSemanticType)
                 continue;
 
+            // Variant is compatible with any target type - narrow to target
+            if (type.IsVariant)
+            {
+                result.Types.Add(targetType);
+                CopyOriginsForType(this, type, result, targetType);
+                continue;
+            }
+
             if (type.Equals(targetType))
             {
                 result.Types.Add(type);
@@ -328,12 +336,99 @@ public class GDUnionType
 
     /// <summary>
     /// Converts to an immutable GDSemanticType.
+    /// Merges container types with matching keys/structure (e.g., Dictionary[String, int] | Dictionary[String, Array] → Dictionary[String, Array | int]).
     /// </summary>
     public GDSemanticType ToSemanticType()
     {
         if (IsEmpty) return GDVariantSemanticType.Instance;
         if (IsSingleType) return Types.First();
-        return new GDUnionSemanticType(Types);
+
+        var simplified = SimplifyContainerTypes(Types);
+        if (simplified.Count == 1) return simplified[0];
+        return new GDUnionSemanticType(simplified);
+    }
+
+    private static List<GDSemanticType> SimplifyContainerTypes(HashSet<GDSemanticType> types)
+    {
+        var result = new List<GDSemanticType>();
+        var dictGroups = new Dictionary<string, List<GDContainerSemanticType>>();
+        var arrayTypes = new List<GDContainerSemanticType>();
+
+        foreach (var type in types)
+        {
+            if (type is GDContainerSemanticType container)
+            {
+                if (container.IsDictionary)
+                {
+                    var keyName = container.KeyType?.DisplayName ?? "Variant";
+                    if (!dictGroups.TryGetValue(keyName, out var group))
+                    {
+                        group = new List<GDContainerSemanticType>();
+                        dictGroups[keyName] = group;
+                    }
+                    group.Add(container);
+                }
+                else if (container.IsArray)
+                {
+                    arrayTypes.Add(container);
+                }
+                else
+                {
+                    result.Add(type);
+                }
+            }
+            else
+            {
+                result.Add(type);
+            }
+        }
+
+        foreach (var kv in dictGroups)
+        {
+            var dicts = kv.Value;
+            if (dicts.Count == 1)
+            {
+                result.Add(dicts[0]);
+            }
+            else
+            {
+                var mergedValues = MergeElementTypes(dicts.Select(d => d.ElementType));
+                var keyType = dicts[0].KeyType ?? GDVariantSemanticType.Instance;
+                result.Add(new GDContainerSemanticType(true, mergedValues, keyType));
+            }
+        }
+
+        if (arrayTypes.Count == 1)
+        {
+            result.Add(arrayTypes[0]);
+        }
+        else if (arrayTypes.Count > 1)
+        {
+            var mergedElements = MergeElementTypes(arrayTypes.Select(a => a.ElementType));
+            result.Add(new GDContainerSemanticType(false, mergedElements));
+        }
+
+        return result;
+    }
+
+    private static GDSemanticType MergeElementTypes(IEnumerable<GDSemanticType> elementTypes)
+    {
+        var allTypes = new HashSet<GDSemanticType>();
+        foreach (var et in elementTypes)
+        {
+            if (et is GDUnionSemanticType union)
+            {
+                foreach (var ut in union.Types)
+                    allTypes.Add(ut);
+            }
+            else
+            {
+                allTypes.Add(et);
+            }
+        }
+
+        if (allTypes.Count == 1) return allTypes.First();
+        return new GDUnionSemanticType(allTypes);
     }
 
     private void ThrowIfFrozen()

@@ -150,6 +150,36 @@ public class GDAddTypeAnnotationsService
             return;
 
         var isUnion = inferredType.TypeName is GDUnionSemanticType;
+        var isInformationalOnly = isUnion;
+
+        // Try to resolve union to common base type
+        if (isUnion && inferredType.TypeName is GDUnionSemanticType unionSemType)
+        {
+            var runtimeProvider = file.SemanticModel?.RuntimeProvider;
+            if (runtimeProvider != null)
+            {
+                var nonNullTypes = unionSemType.GetNonNullTypes()
+                    .Select(t => t.DisplayName)
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
+
+                if (nonNullTypes.Count > 1)
+                {
+                    var commonBase = GDUnionTypeHelper.FindCommonBaseType(nonNullTypes, runtimeProvider);
+                    if (commonBase != null)
+                    {
+                        inferredType = GDInferredType.FromType(
+                            commonBase,
+                            GDTypeConfidence.Medium,
+                            $"Common base of {string.Join(", ", nonNullTypes)}");
+                        typeName = commonBase;
+                        isUnion = false;
+                        isInformationalOnly = false;
+                    }
+                }
+            }
+        }
+
         var richParamType = context.GetRichParameterType(helper);
 
         GDTextEdit edit;
@@ -198,7 +228,7 @@ public class GDAddTypeAnnotationsService
             context.GetTarget(),
             edit)
         {
-            IsInformationalOnly = isUnion,
+            IsInformationalOnly = isInformationalOnly,
             SourceParameterType = richParamType,
             IsTypeUpdate = isUpdate,
             PreviousType = isUpdate ? existingType : null,
@@ -446,9 +476,51 @@ public class GDAddTypeAnnotationsService
             return;
         }
 
-        // Skip if returns disagree (union of different types)
+        // Try to resolve disagreeing return types to common base
         if (nonNullTypes!.Count > 1)
+        {
+            if (runtimeProvider != null)
+            {
+                var typeNames = nonNullTypes.Select(t => t.DisplayName)
+                    .Where(t => !string.IsNullOrEmpty(t))
+                    .ToList();
+
+                var commonBase = GDUnionTypeHelper.FindCommonBaseType(typeNames, runtimeProvider);
+                if (commonBase != null)
+                {
+                    var cbConfidence = returnUnion.AllHighConfidence
+                        ? GDTypeConfidence.High
+                        : GDTypeConfidence.Medium;
+
+                    var cbInferred = GDInferredType.FromType(commonBase, cbConfidence,
+                        $"Common base of return types: {string.Join(", ", typeNames)}");
+
+                    if (cbInferred.Confidence <= options.MinimumConfidence)
+                    {
+                        var cbEdit = new GDTextEdit(
+                            file.FullPath,
+                            colon.StartLine + 1,
+                            colon.StartColumn + 1,
+                            "",
+                            $" -> {commonBase}");
+
+                        annotations.Add(new GDTypeAnnotationPlan(
+                            file.FullPath,
+                            identifier.Sequence ?? "func",
+                            identifier.StartLine + 1,
+                            identifier.StartColumn + 1,
+                            cbInferred,
+                            TypeAnnotationTarget.ReturnType,
+                            cbEdit)
+                        {
+                            MethodName = identifier.Sequence,
+                            SourceReturnInfo = returnInfo
+                        });
+                    }
+                }
+            }
             return;
+        }
 
         var returnType = nonNullTypes[0];
         var typeName = returnType.DisplayName;

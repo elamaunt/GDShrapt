@@ -17,6 +17,10 @@ internal static class GDTypeInferenceUtilities
         if (string.IsNullOrEmpty(typeName))
             return null;
 
+        // Union type strings (e.g., "int|Variant") cannot be represented as GDTypeNode
+        if (GDGenericTypeHelper.IsUnionType(typeName))
+            return CreateVariantTypeNode();
+
         if (GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType { IsArray: true } arrayCt)
         {
             var innerType = CreateSimpleType(arrayCt.ElementType.DisplayName);

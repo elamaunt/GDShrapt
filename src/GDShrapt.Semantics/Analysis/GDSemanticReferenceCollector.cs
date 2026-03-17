@@ -801,7 +801,10 @@ internal class GDSemanticReferenceCollector : GDVisitor
             return;
         }
 
-        var callerType = NormalizeTypeName(_typeEngine?.InferSemanticType(callerExpr)?.DisplayName);
+        var callerSemanticType = _typeEngine?.InferSemanticType(callerExpr);
+        var callerType = callerSemanticType?.IsSignal == true
+            ? "Signal"
+            : NormalizeTypeName(callerSemanticType?.DisplayName);
 
         // RC5: "self" literal → resolve to actual script type name
         if (callerType == GDWellKnownTypes.Self)
@@ -971,7 +974,10 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var methodName = memberOp.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(methodName))
                 {
-                    var callerType = NormalizeTypeName(_typeEngine?.InferSemanticType(memberOp.CallerExpression)?.DisplayName);
+                    var callerSemType = _typeEngine?.InferSemanticType(memberOp.CallerExpression);
+                    var callerType = callerSemType?.IsSignal == true
+                        ? "Signal"
+                        : NormalizeTypeName(callerSemType?.DisplayName);
                     if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant)
                     {
                         var symbolInfo = ResolveMemberOnType(callerType, methodName);

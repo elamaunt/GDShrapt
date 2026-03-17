@@ -202,6 +202,9 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                             if (containerType != null && containerType.HasElementTypes)
                                 return containerType.ToString();
                         }
+                        // Signal with signature → return base "Signal" for string API
+                        if (flowType.IsSignal)
+                            return "Signal";
                         return flowType.DisplayName;
                     }
                 }
@@ -298,6 +301,9 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                             if (containerType != null && containerType.HasElementTypes)
                                 return containerType.ToString();
                         }
+                        // Signal with signature → return base "Signal" for string API
+                        if (flowType.IsSignal)
+                            return "Signal";
                         return flowType.DisplayName;
                     }
                 }

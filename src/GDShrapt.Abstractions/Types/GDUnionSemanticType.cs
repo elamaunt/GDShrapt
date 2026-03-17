@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Reader;
@@ -18,7 +19,7 @@ public class GDUnionSemanticType : GDSemanticType
     public IReadOnlyList<GDSemanticType> Types => _types;
 
     public override string DisplayName =>
-        string.Join(" | ", _types.Select(t => t.DisplayName).OrderBy(n => n));
+        string.Join("|", _types.Select(t => t.DisplayName).OrderBy(n => n, StringComparer.Ordinal));
 
     public override bool IsUnion => true;
 
@@ -26,7 +27,7 @@ public class GDUnionSemanticType : GDSemanticType
 
     public GDUnionSemanticType(IEnumerable<GDSemanticType> types)
     {
-        _types = types?.ToList() ?? new List<GDSemanticType>();
+        _types = types?.Distinct().ToList() ?? new List<GDSemanticType>();
     }
 
     public override bool IsAssignableTo(GDSemanticType other, IGDRuntimeProvider? provider)

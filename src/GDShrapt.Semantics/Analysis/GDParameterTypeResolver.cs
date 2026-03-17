@@ -16,6 +16,10 @@ internal class GDParameterTypeResolver
     private readonly GDTypeConfidence _minDuckTypeConfidence;
     private HashSet<string>? _cachedCommonArrayMethods;
 
+    private const int CollapseThreshold = 10;
+    private const int EnumCollapseMinCount = 3;
+    private const int MaxDisplayedTypes = 5;
+
     // Types that are iterable in GDScript
     private static readonly HashSet<string> IterableTypes = new()
     {
@@ -250,6 +254,8 @@ internal class GDParameterTypeResolver
         if (candidates.Count == 0)
             return GDInferredParameterType.Unknown(paramName);
 
+        candidates = CollapseCandidates(candidates);
+
         // Group by type
         var grouped = candidates.GroupBy(c => c.Type).ToList();
 
@@ -271,6 +277,57 @@ internal class GDParameterTypeResolver
         // Multiple types - return Union with members
         var minConfidence = candidates.Min(c => c.Confidence);
         return GDInferredParameterType.UnionWithMembers(paramName, unionMembers, minConfidence, sourceConstraints);
+    }
+
+    internal List<(string Type, GDTypeConfidence Confidence, string Reason)> CollapseCandidates(
+        List<(string Type, GDTypeConfidence Confidence, string Reason)> candidates)
+    {
+        if (candidates.Count <= CollapseThreshold)
+            return candidates;
+
+        var enums = new List<(string Type, GDTypeConfidence Confidence, string Reason)>();
+        var others = new List<(string Type, GDTypeConfidence Confidence, string Reason)>();
+
+        foreach (var c in candidates)
+        {
+            if (_runtimeProvider.GetTypeInfo(c.Type)?.IsEnum == true)
+                enums.Add(c);
+            else
+                others.Add(c);
+        }
+
+        if (enums.Count >= EnumCollapseMinCount)
+        {
+            var minConf = enums.Min(e => e.Confidence);
+            others.Add(($"(+{enums.Count} enums)", minConf, $"collapsed {enums.Count} enum types"));
+        }
+        else
+        {
+            others.AddRange(enums);
+        }
+
+        if (others.Count > MaxDisplayedTypes)
+        {
+            var sorted = others
+                .Where(c => !c.Type.StartsWith("(+"))
+                .OrderBy(c => c.Confidence)
+                .ToList();
+
+            var summaries = others.Where(c => c.Type.StartsWith("(+")).ToList();
+            var top = sorted.Take(MaxDisplayedTypes).ToList();
+            var rest = sorted.Skip(MaxDisplayedTypes).ToList();
+
+            if (rest.Count > 0)
+            {
+                var minConf = rest.Min(r => r.Confidence);
+                top.Add(($"(+{rest.Count} more)", minConf, $"collapsed {rest.Count} types"));
+            }
+
+            top.AddRange(summaries);
+            return top;
+        }
+
+        return others;
     }
 
     /// <summary>
@@ -505,6 +562,10 @@ internal class GDParameterTypeResolver
         string candidateType,
         GDParameterConstraints constraints)
     {
+        // Rule 0: Enum types -> always Low (synthetic static methods, not instance duck-typing)
+        if (typesProvider.IsEnumType(candidateType))
+            return GDTypeConfidence.Low;
+
         // Rule 2: Singleton & Internal -> always Low
         if (IsSingletonOrInternal(candidateType))
             return GDTypeConfidence.Low;

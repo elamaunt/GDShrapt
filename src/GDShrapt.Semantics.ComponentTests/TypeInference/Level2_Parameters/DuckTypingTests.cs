@@ -590,6 +590,59 @@ func process(node):
             $"Multiple Node methods should infer type containing Node. Got: {inferredType.TypeName.DisplayName}");
     }
 
+    [TestMethod]
+    public void InferParameterType_WithSizeMethod_DoesNotIncludeEnums()
+    {
+        var code = @"
+func process(data):
+    var n = data.size()
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var method = classDecl.Methods.FirstOrDefault(m => m.Identifier?.Sequence == "process");
+        Assert.IsNotNull(method);
+        var param = method.Parameters?.FirstOrDefault();
+        Assert.IsNotNull(param);
+
+        var inferredType = model.InferParameterType(param);
+        var typeName = inferredType.TypeName.DisplayName;
+
+        var typeCount = typeName.Split('|').Length;
+        Assert.IsTrue(typeCount < 30,
+            $"size() duck-type should not explode to {typeCount} types (enum contamination). Got: {typeName}");
+        Assert.IsFalse(typeName.Contains("ActionMode"),
+            $"Enum types should not appear in duck-type inference for size(). Got: {typeName}");
+    }
+
+    [TestMethod]
+    public void InferParameterType_WithHasMethod_DoesNotIncludeEnums()
+    {
+        var code = @"
+func process(container):
+    if container.has(""key""):
+        pass
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var method = classDecl.Methods.FirstOrDefault(m => m.Identifier?.Sequence == "process");
+        Assert.IsNotNull(method);
+        var param = method.Parameters?.FirstOrDefault();
+        Assert.IsNotNull(param);
+
+        var inferredType = model.InferParameterType(param);
+        var typeName = inferredType.TypeName.DisplayName;
+
+        var typeCount = typeName.Split('|').Length;
+        Assert.IsTrue(typeCount < 30,
+            $"has() duck-type should not explode to {typeCount} types (enum contamination). Got: {typeName}");
+        Assert.IsFalse(typeName.Contains("BlendMode"),
+            $"Enum types should not appear in duck-type inference for has(). Got: {typeName}");
+    }
+
     #endregion
 
     #region Explicit Type Annotation - No Duck Typing
@@ -749,7 +802,248 @@ func check(obj):
 
     #endregion
 
+    #region CollapseCandidates Boundary Tests
+
+    [TestMethod]
+    public void CollapseCandidates_AtThreshold_NoCollapse()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 3, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 7, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        Assert.AreEqual(10, result.Count, "Should not collapse when count <= threshold (10)");
+        Assert.IsFalse(result.Any(r => r.Type.StartsWith("(+")), "No summary entries expected");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_EnumTypesAreRecognized()
+    {
+        var provider = CreateRuntimeProvider();
+        var enumTypes = GetGodotEnumTypes();
+        Assert.IsTrue(enumTypes.Length > 20, $"Should have many enum types, got {enumTypes.Length}");
+
+        // Verify first few enum types are recognized
+        for (int i = 0; i < System.Math.Min(5, enumTypes.Length); i++)
+        {
+            var info = provider.GetTypeInfo(enumTypes[i]);
+            Assert.IsNotNull(info, $"GetTypeInfo should find '{enumTypes[i]}'");
+            Assert.IsTrue(info.IsEnum, $"'{enumTypes[i]}' should be recognized as enum, IsEnum={info.IsEnum}");
+        }
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_NonEnumTypesNotEnums()
+    {
+        var provider = CreateRuntimeProvider();
+        foreach (var typeName in NonEnumTypes)
+        {
+            var info = provider.GetTypeInfo(typeName);
+            if (info != null)
+            {
+                Assert.IsFalse(info.IsEnum, $"'{typeName}' should NOT be an enum, but IsEnum={info.IsEnum}");
+            }
+        }
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_AboveThreshold_CollapsesEnums()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 4, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 7, otherConfidence: GDTypeConfidence.High);
+
+        Assert.AreEqual(11, candidates.Count, $"Should have 11 candidates");
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        // 4 enums → enum summary, 7 others > MaxDisplayedTypes(5) → top 5 + (+2 more) + (+4 enums) = 7
+        Assert.AreEqual(7, result.Count, "top 5 + (+2 more) + (+4 enums) = 7");
+        Assert.IsTrue(result.Any(r => r.Type == "(+4 enums)"), "Should have enum summary");
+        Assert.IsTrue(result.Any(r => r.Type == "(+2 more)"), "Should have overflow summary");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_FewerThan3Enums_NoEnumCollapse()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 2, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 11, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        Assert.IsFalse(result.Any(r => r.Type.Contains("enums")), "Should not collapse < 3 enums");
+        Assert.IsTrue(result.Any(r => r.Type.Contains("more")), "Should have 'more' summary for overflow");
+        var topNonSummary = result.Where(r => !r.Type.StartsWith("(+")).ToList();
+        Assert.AreEqual(5, topNonSummary.Count, "Should keep top 5");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_AllEnums_SingleSummary()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 20, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 0, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        Assert.AreEqual(1, result.Count, "All enums should collapse to single summary");
+        Assert.AreEqual("(+20 enums)", result[0].Type);
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_NoEnums_TopNPlusMore()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 0, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 15, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        var topNonSummary = result.Where(r => !r.Type.StartsWith("(+")).ToList();
+        Assert.AreEqual(5, topNonSummary.Count, "Should keep top 5");
+        Assert.IsTrue(result.Any(r => r.Type == "(+10 more)"), "Should have (+10 more) summary");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_EnumsCollapsed_OthersUnderMax_NoMoreSummary()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 3, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 8, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        // 3 enums → enum summary, 8 others > MaxDisplayedTypes(5) → top 5 + (+3 more) + (+3 enums) = 7
+        Assert.AreEqual(7, result.Count, "top 5 + (+3 more) + (+3 enums) = 7");
+        Assert.IsTrue(result.Any(r => r.Type == "(+3 enums)"), "Should have enum summary");
+        Assert.IsTrue(result.Any(r => r.Type == "(+3 more)"), "Should have overflow summary");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_EnumsCollapsed_OthersOverMax_BothSummaries()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 3, enumConfidence: GDTypeConfidence.Low,
+            otherCount: 20, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        Assert.IsTrue(result.Any(r => r.Type == "(+3 enums)"), "Should have enum summary");
+        Assert.IsTrue(result.Any(r => r.Type == "(+15 more)"), "Should have (+15 more) summary");
+        var topNonSummary = result.Where(r => !r.Type.StartsWith("(+")).ToList();
+        Assert.AreEqual(5, topNonSummary.Count, "Should keep top 5");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_ConfidencePreserved()
+    {
+        var resolver = CreateResolver();
+        var candidates = CreateCandidates(
+            enumCount: 5, enumConfidence: GDTypeConfidence.Medium,
+            otherCount: 7, otherConfidence: GDTypeConfidence.High);
+
+        var result = resolver.CollapseCandidates(candidates);
+
+        var enumSummary = result.FirstOrDefault(r => r.Type.Contains("enums"));
+        Assert.AreEqual(GDTypeConfidence.Medium, enumSummary.Confidence,
+            "Enum summary should have min confidence of collapsed enums");
+    }
+
+    [TestMethod]
+    public void CollapseCandidates_Integration_SizeMethod()
+    {
+        var code = @"
+func process(data):
+    var n = data.size()
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        Assert.IsNotNull(classDecl);
+        Assert.IsNotNull(model);
+
+        var method = classDecl.Methods.FirstOrDefault(m => m.Identifier?.Sequence == "process");
+        Assert.IsNotNull(method);
+        var param = method.Parameters?.FirstOrDefault();
+        Assert.IsNotNull(param);
+
+        var inferredType = model.InferParameterType(param);
+        var typeName = inferredType.TypeName.DisplayName;
+
+        // Should not contain individual enum names
+        Assert.IsFalse(typeName.Contains("ActionMode"),
+            $"Individual enum types should not appear. Got: {typeName}");
+
+        // Total types in display should be reasonable
+        var parts = typeName.Split('|');
+        Assert.IsTrue(parts.Length <= 10,
+            $"Display should be compact after collapsing. Got {parts.Length} parts: {typeName}");
+    }
+
+    #endregion
+
     #region Helper Methods
+
+    private static GDCompositeRuntimeProvider CreateRuntimeProvider()
+    {
+        return new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
+    }
+
+    private static GDParameterTypeResolver CreateResolver()
+    {
+        return new GDParameterTypeResolver(CreateRuntimeProvider());
+    }
+
+    private static string[]? _cachedGodotEnumTypes;
+    private static string[] GetGodotEnumTypes()
+    {
+        if (_cachedGodotEnumTypes != null)
+            return _cachedGodotEnumTypes;
+
+        var provider = new GDGodotTypesProvider();
+        var enumTypes = new System.Collections.Generic.List<string>();
+        foreach (var typeName in provider.GetAllTypes())
+        {
+            if (provider.IsEnumType(typeName))
+                enumTypes.Add(typeName);
+        }
+        _cachedGodotEnumTypes = enumTypes.ToArray();
+        return _cachedGodotEnumTypes;
+    }
+
+    private static readonly string[] NonEnumTypes = new[]
+    {
+        "Array", "Dictionary", "String", "PackedByteArray", "PackedStringArray",
+        "PackedInt32Array", "PackedFloat32Array", "PackedVector2Array", "Node",
+        "Node2D", "Control", "Sprite2D", "Camera2D", "Timer", "Label",
+        "AnimatedSprite2D", "AudioStreamPlayer", "Area2D", "CollisionShape2D",
+        "RigidBody2D"
+    };
+
+    private static List<(string Type, GDTypeConfidence Confidence, string Reason)> CreateCandidates(
+        int enumCount, GDTypeConfidence enumConfidence,
+        int otherCount, GDTypeConfidence otherConfidence)
+    {
+        var candidates = new List<(string Type, GDTypeConfidence Confidence, string Reason)>();
+        var godotEnums = GetGodotEnumTypes();
+
+        for (int i = 0; i < enumCount && i < godotEnums.Length; i++)
+            candidates.Add((godotEnums[i], enumConfidence, "duck match"));
+
+        for (int i = 0; i < otherCount && i < NonEnumTypes.Length; i++)
+            candidates.Add((NonEnumTypes[i], otherConfidence, "duck match"));
+
+        return candidates;
+    }
 
     private static (GDClassDeclaration?, GDSemanticModel?) AnalyzeCode(string code)
     {

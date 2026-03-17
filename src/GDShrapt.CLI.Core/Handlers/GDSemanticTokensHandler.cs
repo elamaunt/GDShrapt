@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
@@ -35,6 +36,18 @@ public class GDSemanticTokensHandler : IGDSemanticTokensHandler
             var declToken = symbol.DeclarationIdentifier;
             if (declToken != null)
             {
+                var isAbstract = false;
+                var isOverride = false;
+
+                if (symbol.Kind == GDSymbolKind.Method && symbol.Symbol?.Declaration is GDMethodDeclaration methodDecl)
+                {
+                    isAbstract = methodDecl.AttributesDeclaredBefore
+                        .Any(attr => attr.Attribute?.IsAbstract() == true);
+
+                    if (!isAbstract)
+                        isOverride = IsMethodOverride(model, symbol.Name);
+                }
+
                 tokens.Add(new GDClassifiedToken
                 {
                     Line = declToken.StartLine,
@@ -44,7 +57,9 @@ public class GDSemanticTokensHandler : IGDSemanticTokensHandler
                     IsDeclaration = true,
                     IsReadonly = symbol.Kind == GDSymbolKind.Constant,
                     IsStatic = symbol.Symbol is { IsStatic: true },
-                    IsWrite = false
+                    IsWrite = false,
+                    IsAbstract = isAbstract,
+                    IsOverride = isOverride
                 });
             }
 
@@ -111,5 +126,43 @@ public class GDSemanticTokensHandler : IGDSemanticTokensHandler
         }
 
         return deduped;
+    }
+
+    private bool IsMethodOverride(GDSemanticModel model, string? methodName)
+    {
+        if (string.IsNullOrEmpty(methodName))
+            return false;
+
+        var provider = model.RuntimeProvider;
+        if (provider == null)
+            return false;
+
+        var baseType = model.BaseTypeName;
+        var visited = new HashSet<string>();
+
+        while (!string.IsNullOrEmpty(baseType) && visited.Add(baseType))
+        {
+            // Check built-in types
+            var member = provider.GetMember(baseType, methodName);
+            if (member != null && member.Kind == GDRuntimeMemberKind.Method)
+                return true;
+
+            // Check project scripts
+            var baseScript = _project.GetScriptByTypeName(baseType);
+            if (baseScript != null)
+            {
+                var baseModel = _projectModel?.ResolveModel(baseScript);
+                if (baseModel != null)
+                {
+                    var symbols = baseModel.FindSymbols(methodName);
+                    if (symbols.Any(s => s.Kind == GDSymbolKind.Method))
+                        return true;
+                }
+            }
+
+            baseType = provider.GetBaseType(baseType);
+        }
+
+        return false;
     }
 }

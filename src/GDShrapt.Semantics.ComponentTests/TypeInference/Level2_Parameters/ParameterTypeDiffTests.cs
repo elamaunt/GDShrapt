@@ -340,8 +340,7 @@ func test(x):
     [TestMethod]
     public void ParameterTypeDiff_Create_WithVariant_ExpectedIsEmpty()
     {
-        // Arrange - Variant is intentionally NOT added to unions (it means "any type")
-        // So AddType("Variant") results in an empty union
+        // Arrange - Variant is filtered out (means "type unknown")
         var expected = new GDUnionType();
         expected.AddTypeName("Variant");
 
@@ -353,11 +352,8 @@ func test(x):
         // Act
         var diff = GDParameterTypeDiff.Create("param", expected, actual);
 
-        // Assert - Variant not stored in union, so expected is empty
-        Assert.IsTrue(diff.ExpectedIsEmpty, "Variant should not be stored in union");
-        // When expected is empty, we can't compare, so all actual are unexpected
-        Assert.AreEqual(3, diff.UnexpectedTypes.Count,
-            "With empty expected, actual types have nothing to match against");
+        // Assert - Variant is filtered, expected is empty
+        Assert.IsTrue(diff.ExpectedIsEmpty, "Variant should be filtered from union");
     }
 
     [TestMethod]

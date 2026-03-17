@@ -733,7 +733,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             string? inferredType = null;
             if (!unionType.IsEmpty)
             {
-                inferredType = unionType.EffectiveType.DisplayName;
+                inferredType = unionType.UnionTypeName;
             }
 
             // Thread-safe update of method properties
@@ -741,7 +741,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             {
                 if (!method.ReturnTypeInferred)
                 {
-                    if (!string.IsNullOrEmpty(inferredType) && inferredType != "Variant" && inferredType != "null")
+                    if (!string.IsNullOrEmpty(inferredType) && inferredType != "null")
                     {
                         method.ReturnTypeName = inferredType;
                     }

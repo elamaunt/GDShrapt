@@ -166,6 +166,10 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
+        // Normalize Signal type with signature to base "Signal" for member lookup
+        if (typeName.StartsWith("Signal("))
+            typeName = "Signal";
+
         var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
 
         // Variant can have any properties (duck typing)
@@ -217,6 +221,10 @@ public class GDMemberAccessValidator : GDValidationVisitor
     {
         if (string.IsNullOrEmpty(typeName))
             return;
+
+        // Normalize Signal type with signature to base "Signal" for member lookup
+        if (typeName == "Signal" || typeName.StartsWith("Signal("))
+            typeName = "Signal";
 
         var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
 

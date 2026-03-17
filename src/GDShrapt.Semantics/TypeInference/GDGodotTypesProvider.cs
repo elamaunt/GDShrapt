@@ -1125,6 +1125,14 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         return false;
     }
 
+    public bool IsEnumType(string typeName)
+    {
+        if (string.IsNullOrEmpty(typeName))
+            return false;
+
+        return _typeCache.TryGetValue(typeName, out var typeData) && typeData.IsEnum;
+    }
+
     /// <inheritdoc/>
     public string? GetFloatVectorVariant(string integerVectorType)
     {

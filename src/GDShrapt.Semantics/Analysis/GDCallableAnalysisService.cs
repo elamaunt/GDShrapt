@@ -238,7 +238,7 @@ internal class GDCallableAnalysisService
         {
             if (paramTypes.TryGetValue(i, out var unionType))
             {
-                parameterTypes.Add(unionType.EffectiveType);
+                parameterTypes.Add(unionType.ToSemanticType());
             }
             else
             {

@@ -1454,6 +1454,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (effective == null || effective.IsVariant)
             return null;
 
+        // Signal with signature → return base "Signal" for string API
+        if (effective.IsSignal)
+            return "Signal";
+
         return effective.DisplayName;
     }
 

@@ -27,9 +27,6 @@ internal static class GDUnionTypeHelper
         if (type1 == type2)
             return type1;
 
-        if (GDSemanticType.FromRuntimeTypeName(type1).IsVariant || GDSemanticType.FromRuntimeTypeName(type2).IsVariant)
-            return "Variant";
-
         var types1 = ParseUnionString(type1);
         var types2 = ParseUnionString(type2);
         var combined = types1.Union(types2).Distinct().OrderBy(t => t).ToList();
@@ -50,9 +47,6 @@ internal static class GDUnionTypeHelper
         {
             if (string.IsNullOrEmpty(type))
                 continue;
-
-            if (GDSemanticType.FromRuntimeTypeName(type).IsVariant)
-                return "Variant";
 
             foreach (var subType in ParseUnionString(type))
             {

@@ -43,7 +43,7 @@ public class UnionTypeTests
     }
 
     [TestMethod]
-    public void UnionType_AddVariant_Ignored()
+    public void UnionType_AddVariant_Filtered()
     {
         // Arrange
         var union = new GDUnionType();
@@ -51,7 +51,7 @@ public class UnionTypeTests
         // Act
         union.AddTypeName("Variant", isHighConfidence: true);
 
-        // Assert
+        // Assert - Variant is filtered out (means "type unknown", not a concrete type)
         Assert.IsTrue(union.IsEmpty);
         Assert.AreEqual(0, union.Types.Count);
     }
@@ -374,14 +374,14 @@ public class UnionTypeTests
     }
 
     [TestMethod]
-    public void UnionTypeName_IgnoresVariant()
+    public void UnionTypeName_VariantFiltered()
     {
         // Arrange
         var union = new GDUnionType();
         union.AddTypeName("int", isHighConfidence: true);
-        union.AddTypeName("Variant", isHighConfidence: true); // Should be ignored
+        union.AddTypeName("Variant", isHighConfidence: true);
 
-        // Assert
+        // Assert - Variant is filtered, only int remains
         Assert.AreEqual("int", union.UnionTypeName);
     }
 

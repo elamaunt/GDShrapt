@@ -527,11 +527,16 @@ namespace GDShrapt.Semantics
                 return BuildCallableSemanticTypeForLambda(lambda);
 
             // Method reference (identifier resolving to method) → GDCallableSemanticType
+            // Signal reference (identifier resolving to signal) → GDSignalSemanticType
             if (expression is GDIdentifierExpression identExpr)
             {
                 var callableType = TryBuildCallableForIdentifier(identExpr);
                 if (callableType != null)
                     return callableType;
+
+                var signalType = TryBuildSignalForIdentifier(identExpr);
+                if (signalType != null)
+                    return signalType;
             }
 
             // Member method reference (obj.method without call) → GDCallableSemanticType
@@ -889,6 +894,13 @@ namespace GDShrapt.Semantics
                 if (symbol.Kind == GDSymbolKind.Method)
                 {
                     return CreateSimpleType("Callable");
+                }
+
+                // Handle signal reference - signal used without emit/await returns Signal
+                // Full signature (Signal(value: int, name: String)) is available via InferSemanticType/GetSemanticTypeForNode
+                if (symbol.Kind == GDSymbolKind.Signal)
+                {
+                    return CreateSimpleType("Signal");
                 }
 
                 // Prefer TypeNode if available (has generic type info)
@@ -1667,6 +1679,163 @@ namespace GDShrapt.Semantics
 
         #endregion
 
+        #region Signal Semantic Type Builders
+
+        private GDSignalSemanticType TryBuildSignalForIdentifier(GDIdentifierExpression identExpr)
+        {
+            var name = identExpr.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            GDSymbol symbol = null;
+            if (_scopes != null)
+                symbol = _scopes.Lookup(name);
+            if (symbol == null && _symbolLookupFallback != null)
+                symbol = _symbolLookupFallback(name, identExpr);
+
+            if (symbol?.Kind == GDSymbolKind.Signal && symbol.Declaration is GDSignalDeclaration signalDecl)
+                return BuildSignalSemanticType(signalDecl);
+
+            // Check class members
+            var classDecl = identExpr.RootClassDeclaration;
+            if (classDecl != null)
+            {
+                foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
+                {
+                    if (member is GDSignalDeclaration sd && sd.Identifier?.Sequence == name)
+                        return BuildSignalSemanticType(sd);
+                }
+            }
+
+            return null;
+        }
+
+        private GDSignalSemanticType BuildSignalSemanticType(GDSignalDeclaration signalDecl)
+        {
+            if (signalDecl.Parameters == null || !System.Linq.Enumerable.Any(signalDecl.Parameters))
+                return new GDSignalSemanticType();
+
+            var paramTypes = new List<GDSemanticType>();
+            var paramNames = new List<string>();
+            int paramIndex = 0;
+
+            foreach (var param in signalDecl.Parameters)
+            {
+                paramNames.Add(param.Identifier?.Sequence);
+                var typeName = param.Type?.BuildName();
+
+                if (!string.IsNullOrEmpty(typeName))
+                {
+                    paramTypes.Add(GDSemanticType.FromRuntimeTypeName(typeName));
+                }
+                else if (param.DefaultValue != null)
+                {
+                    var inferred = InferTypeNode(param.DefaultValue)?.BuildName();
+                    paramTypes.Add(!string.IsNullOrEmpty(inferred) && inferred != "null"
+                        ? GDSemanticType.FromRuntimeTypeName(inferred)
+                        : GDVariantSemanticType.Instance);
+                }
+                else
+                {
+                    var emitType = InferSignalParamFromEmit(signalDecl, paramIndex);
+                    paramTypes.Add(emitType ?? GDVariantSemanticType.Instance);
+                }
+
+                paramIndex++;
+            }
+
+            return new GDSignalSemanticType(paramTypes, paramNames);
+        }
+
+        private GDSemanticType InferSignalParamFromEmit(GDSignalDeclaration signalDecl, int paramIndex)
+        {
+            var signalName = signalDecl.Identifier?.Sequence;
+            if (string.IsNullOrEmpty(signalName))
+                return null;
+
+            var classDecl = signalDecl.RootClassDeclaration;
+            if (classDecl == null)
+                return null;
+
+            var collectedTypes = new HashSet<GDSemanticType>();
+
+            foreach (var member in classDecl.Members ?? System.Linq.Enumerable.Empty<GDClassMember>())
+            {
+                if (member is not GDMethodDeclaration method)
+                    continue;
+
+                CollectEmitTypesFromStatements(method.Statements, signalName, paramIndex, collectedTypes);
+            }
+
+            if (collectedTypes.Count == 0) return null;
+            if (collectedTypes.Count == 1) return collectedTypes.First();
+            return new GDUnionSemanticType(collectedTypes);
+        }
+
+        private void CollectEmitTypesFromStatements(GDStatementsList statements, string signalName, int paramIndex, HashSet<GDSemanticType> collectedTypes)
+        {
+            if (statements == null)
+                return;
+
+            foreach (var stmt in statements)
+            {
+                if (stmt is GDExpressionStatement exprStmt)
+                {
+                    CollectEmitTypeFromExpression(exprStmt.Expression, signalName, paramIndex, collectedTypes);
+                }
+                else if (stmt is GDIfStatement ifStmt)
+                {
+                    CollectEmitTypesFromStatements(ifStmt.IfBranch?.Statements, signalName, paramIndex, collectedTypes);
+                    CollectEmitTypesFromStatements(ifStmt.ElseBranch?.Statements, signalName, paramIndex, collectedTypes);
+                    if (ifStmt.ElifBranchesList != null)
+                    {
+                        foreach (var elif in ifStmt.ElifBranchesList)
+                            CollectEmitTypesFromStatements(elif?.Statements, signalName, paramIndex, collectedTypes);
+                    }
+                }
+                else if (stmt is GDForStatement forStmt)
+                {
+                    CollectEmitTypesFromStatements(forStmt.Statements, signalName, paramIndex, collectedTypes);
+                }
+                else if (stmt is GDWhileStatement whileStmt)
+                {
+                    CollectEmitTypesFromStatements(whileStmt.Statements, signalName, paramIndex, collectedTypes);
+                }
+            }
+        }
+
+        private void CollectEmitTypeFromExpression(GDExpression expr, string signalName, int paramIndex, HashSet<GDSemanticType> collectedTypes)
+        {
+            // Pattern: signal_name.emit(arg0, arg1, ...)
+            if (expr is GDCallExpression callExpr &&
+                callExpr.CallerExpression is GDMemberOperatorExpression memberExpr &&
+                memberExpr.Identifier?.Sequence == "emit" &&
+                memberExpr.CallerExpression is GDIdentifierExpression identExpr &&
+                identExpr.Identifier?.Sequence == signalName)
+            {
+                var args = callExpr.Parameters;
+                if (args != null)
+                {
+                    int argIndex = 0;
+                    foreach (var arg in args)
+                    {
+                        if (argIndex == paramIndex)
+                        {
+                            var argType = InferTypeNode(arg)?.BuildName();
+                            if (!string.IsNullOrEmpty(argType))
+                            {
+                                collectedTypes.Add(GDSemanticType.FromRuntimeTypeName(argType));
+                            }
+                            break;
+                        }
+                        argIndex++;
+                    }
+                }
+            }
+        }
+
+        #endregion
+
         /// <summary>
         /// Infers the Callable type for a lambda expression.
         /// Returns just "Callable" for GDTypeNode since GDScript parser
@@ -2425,22 +2594,7 @@ namespace GDShrapt.Semantics
             }
             else if (node is GDSignalDeclaration signalDecl)
             {
-                var parameters = signalDecl.Parameters;
-                if (parameters == null || !System.Linq.Enumerable.Any(parameters))
-                {
-                    result = new GDSimpleSemanticType("Signal");
-                }
-                else
-                {
-                    var paramStrings = new List<string>();
-                    foreach (var param in parameters)
-                    {
-                        var paramName = param.Identifier?.Sequence ?? "?";
-                        var paramType = param.Type?.BuildName() ?? GDWellKnownTypes.Variant;
-                        paramStrings.Add($"{paramName}: {paramType}");
-                    }
-                    result = new GDSimpleSemanticType($"Signal({string.Join(", ", paramStrings)})");
-                }
+                result = BuildSignalSemanticType(signalDecl);
             }
             else if (node is GDEnumDeclaration enumDecl)
             {

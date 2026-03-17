@@ -93,7 +93,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 - `GDScriptFile` - Individual script with `Class` (AST), `Analyzer` (semantic model), `Reload()`
 - `GDSemanticModel` - Single-file type inference: `GetTypeForExpression()`, `GetTypeForNode()`, `FindReferences()`, `GetSymbolInfo()`, `GetMemberAccessConfidence()`
 - `GDProjectSemanticModel` - Cross-file analysis with incremental updates, `SceneFlow`, `ResourceFlow`
-- Type inference: `GDTypeInferenceSource`, `GDDuckTypeResolver`, `GDParameterTypeResolver`, `GDMethodSignatureInferenceEngine`, `GDUnionTypeResolver`
+- Type inference: `GDTypeInferenceSource`, `GDDuckTypeResolver`, `GDParameterTypeResolver`, `GDMethodSignatureInferenceEngine`, `GDUnionTypeResolver`. Union-first: type conflicts build `GDUnionSemanticType` preserving concrete types instead of Variant fallback. `GDUnionTypeHelper.FindCommonBaseType()` resolves common ancestor for hierarchy-related unions
 - Duck-type inference: `GDParameterUsageAnalyzer` (collects constraints), `GDParameterTypeResolver` (resolves to types via TypesMap)
 - `GDFlowAnalyzer` - SSA-style flow analyzer — **primary type source** for variables. Tracks `DeclaredType` (annotation, immutable) and `CurrentType` (SSA-replaced) with full provenance via `GDTypeOrigin` (`GDTypeOriginKind`, `GDTypeOriginConfidence`). See `Analysis/CLAUDE.md` for DataFlow Infrastructure details
 - `GDDiagnosticsService` - Unified validation + linting pipeline
@@ -143,7 +143,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 **LSP** - Language Server Protocol 3.17
 - `GDLanguageServer` - Main server: `InitializeAsync()`, `RunAsync()`
-- Handlers: `GDDefinitionHandler`, `GDReferencesHandler`, `GDHoverHandler`, `GDDocumentSymbolHandler`, `GDCompletionHandler`, `GDRenameHandler`, `GDFormattingHandler`
+- Handlers: `GDDefinitionHandler`, `GDReferencesHandler`, `GDHoverHandler`, `GDDocumentSymbolHandler`, `GDCompletionHandler`, `GDRenameHandler`, `GDFormattingHandler`, `GDLspSemanticTokensHandler` (10 token types, 6 modifiers including `abstract`/`defaultLibrary` for override detection), `GDLspDocumentHighlightHandler`, `GDLspSignatureHelpHandler`, `GDLspInlayHintHandler`, `GDLspCodeActionHandler`
 - `GDDocumentManager` - Open document tracking
 - `GDDiagnosticPublisher` - Real-time diagnostics
 - Transports: `GDStdioJsonRpcTransport`, `GDSocketJsonRpcTransport`
@@ -205,7 +205,7 @@ Solution: `src/GDShrapt.sln`. Tests use MSTest with FluentAssertions.
 
 ## Testing
 
-Test projects mirror component structure. Total: 5,499+ tests (including semantic stress tests and benchmarks).
+Test projects mirror component structure. Total: 7,800+ tests (including semantic stress tests and benchmarks).
 
 Assertion helpers (`GDShrapt.Tests.Common`):
 - `AssertHelper.CompareCodeStrings()` - Compare ignoring whitespace

@@ -55,6 +55,11 @@ public abstract class GDSemanticType
     public virtual bool IsCallable => false;
 
     /// <summary>
+    /// Gets whether this type is a Signal type.
+    /// </summary>
+    public virtual bool IsSignal => false;
+
+    /// <summary>
     /// Gets whether this type is a union type.
     /// </summary>
     public virtual bool IsUnion => false;
@@ -223,9 +228,10 @@ public abstract class GDSemanticType
         if (type1.Equals(type2))
             return type1;
 
-        // If either is Variant, result is Variant
-        if (type1.IsVariant || type2.IsVariant)
-            return GDVariantSemanticType.Instance;
+        if (type1.IsVariant)
+            return type1;
+        if (type2.IsVariant)
+            return type2;
 
         var types = new List<GDSemanticType>();
 

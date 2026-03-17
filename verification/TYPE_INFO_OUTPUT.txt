@@ -18046,8 +18046,8 @@ test_scripts/signal_callback_chains.gd
 
   242:2 Variable subscription
     declared: (none)
-    inferred: Dictionary[String, bool | Variant]
-    effective: Dictionary[String, bool | Variant]
+    inferred: Dictionary[String, Variant|bool]
+    effective: Dictionary[String, Variant|bool]
     confidence: Medium
     nullable: no
 
@@ -18060,8 +18060,8 @@ test_scripts/signal_callback_chains.gd
 
   251:18 Parameter subscription
     declared: (none)
-    inferred: Dictionary[String, bool | Variant]
-    effective: Dictionary[String, bool | Variant]
+    inferred: Dictionary[String, Variant|bool]
+    effective: Dictionary[String, Variant|bool]
     confidence: Medium
     nullable: no
 
@@ -22942,8 +22942,8 @@ test_scripts/union_types_complex.gd
 
   128:0 Variable mixed_array
     declared: (none)
-    inferred: Array[Array[int] | Dictionary[String, int] | float | int | String]
-    effective: Array[Array[int] | Dictionary[String, int] | float | int | String]
+    inferred: Array[Array[int]|Dictionary[String, int]|String|float|int]
+    effective: Array[Array[int]|Dictionary[String, int]|String|float|int]
     confidence: Medium
     nullable: no
 
@@ -23005,8 +23005,8 @@ test_scripts/union_types_complex.gd
 
   164:0 Variable config
     declared: (none)
-    inferred: Dictionary[String, Array[String] | bool | Dictionary[String, String] | float | int | String]
-    effective: Dictionary[String, Array[String] | bool | Dictionary[String, String] | float | int | String]
+    inferred: Dictionary[String, Array[String]|Dictionary[String, String]|String|bool|float|int]
+    effective: Dictionary[String, Array[String]|Dictionary[String, String]|String|bool|float|int]
     confidence: Medium
     nullable: no
 

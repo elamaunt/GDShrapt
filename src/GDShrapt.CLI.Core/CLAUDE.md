@@ -48,7 +48,7 @@ var handler = registry.GetService<IGDRenameHandler>();  // Returns Pro if loaded
 | `GDInlayHintHandler` | `IGDInlayHintHandler` | Inlay hints |
 | `GDTypeFlowHandler` | `IGDTypeFlowHandler` | Type flow visualization |
 | `GDHighlightHandler` | `IGDHighlightHandler` | Document highlight |
-| `GDSemanticTokensHandler` | `IGDSemanticTokensHandler` | Semantic token classification |
+| `GDSemanticTokensHandler` | `IGDSemanticTokensHandler` | Semantic token classification with override/abstract method detection |
 
 ## Pro Handlers (3)
 

@@ -42,6 +42,12 @@ int lspCharacter = cliColumn - 1;
 **Completion triggers:** `.`, `:`, `(`
 **Signature help triggers:** `(`, `,`
 
+**Semantic token legend:**
+- 10 token types: `variable`, `parameter`, `property`, `function`, `class`, `enum`, `enumMember`, `event`, `decorator`, `type`
+- 6 modifiers: `declaration` (bit 0), `readonly` (bit 1), `static` (bit 2), `modification` (bit 3), `abstract` (bit 4), `defaultLibrary` (bit 5)
+- `abstract` modifier: methods with `@abstract` annotation → italic in most themes
+- `defaultLibrary` modifier: methods overriding base class methods (built-in Godot virtuals or project scripts) → subtle accent
+
 ## Important Notes
 
 - **LSP = Strict mode only** — Pro module is NOT loaded in LSP (by design)

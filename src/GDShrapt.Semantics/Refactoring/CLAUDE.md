@@ -33,7 +33,7 @@ GDProResult Execute(plan);                              // Pro
 | `GDRenameService` | Cross-file | Strict/Potential |
 | `GDFindReferencesService` | Cross-file | Strict/Potential |
 | `GDGoToDefinitionService` | Single-file | Strict |
-| `GDAddTypeAnnotationsService` | Single-file | - |
+| `GDAddTypeAnnotationsService` | Single-file | Common base from union |
 | `GDAddTypeAnnotationService` | Single-file | - |
 | `GDReorderMembersService` | Single-file | - |
 | `GDExtractMethodService` | Single-file | - |
@@ -97,6 +97,14 @@ Extracts selected statements into new method.
 **Pro (batch):**
 - `GDBatchAddTypeAnnotationsResult` (Pro only)
 - `GDBatchReorderMembersResult` (Pro only)
+
+## Union → Common Base Type Resolution
+
+`GDAddTypeAnnotationsService` resolves union types to common base types when all union members share a hierarchy:
+- `Sprite2D | AnimatedSprite2D` → `Node2D` (real annotation at `Medium` confidence)
+- Uses `GDUnionTypeHelper.FindCommonBaseType()` via `IGDRuntimeProvider` inheritance chain
+- Skips `Object`, `Variant`, `RefCounted` as too generic
+- Applies to both variable and return type annotations
 
 ## Known Limitations
 

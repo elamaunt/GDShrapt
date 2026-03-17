@@ -30,6 +30,8 @@ public class GDLspSemanticTokensHandler
     private const int ModReadonly = 1 << 1;
     private const int ModStatic = 1 << 2;
     private const int ModModification = 1 << 3;
+    private const int ModAbstract = 1 << 4;
+    private const int ModDefaultLibrary = 1 << 5;
 
     public static readonly string[] TokenTypes =
     [
@@ -47,10 +49,12 @@ public class GDLspSemanticTokensHandler
 
     public static readonly string[] TokenModifiers =
     [
-        "declaration",   // bit 0
-        "readonly",      // bit 1
-        "static",        // bit 2
-        "modification"   // bit 3
+        "declaration",     // bit 0
+        "readonly",        // bit 1
+        "static",          // bit 2
+        "modification",    // bit 3
+        "abstract",        // bit 4
+        "defaultLibrary"   // bit 5
     ];
 
     private readonly IGDSemanticTokensHandler _handler;
@@ -115,6 +119,8 @@ public class GDLspSemanticTokensHandler
         if (t.IsReadonly) modifiers |= ModReadonly;
         if (t.IsStatic) modifiers |= ModStatic;
         if (t.IsWrite) modifiers |= ModModification;
+        if (t.IsAbstract) modifiers |= ModAbstract;
+        if (t.IsOverride) modifiers |= ModDefaultLibrary;
         return modifiers;
     }
 }

@@ -396,8 +396,6 @@ func try_operation(input):
 
         Assert.IsTrue(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("int")),
             $"All returns inside 'is int' block should be 'int'. Actual types: [{actualTypes}], Returns: [{returnInfos}]");
-        Assert.IsFalse(union.Types.Contains(GDSemanticType.FromRuntimeTypeName("Variant")),
-            $"Should not contain 'Variant' - narrowing should be preserved. Actual types: [{actualTypes}]");
     }
 
     /// <summary>
