@@ -336,7 +336,7 @@ test_scripts/cyclic_inference.gd
     duck-typed: yes
 
   30:23 Parameter data in transform_stage_1
-    inferred-type: Array[<Derivable>]|String|int
+    inferred-type: Array|String|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -363,7 +363,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   75:16 Parameter context in state_idle
-    inferred-type: (+19 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary|PackedStringArray
+    inferred-type: Array|Dictionary|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -385,7 +385,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   90:22 Parameter data in state_processing
-    inferred-type: Array[<Derivable>]
+    inferred-type: Array
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -407,7 +407,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   108:18 Parameter item in process_item
-    inferred-type: Dictionary[String, <Derivable>]|String|int
+    inferred-type: Dictionary[String, Variant]|String|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -488,7 +488,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   180:16 Parameter node in visit_node
-    inferred-type: (+19 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -507,7 +507,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   192:28 Parameter root in traverse_and_transform
-    inferred-type: (+19 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -543,7 +543,7 @@ test_scripts/cyclic_inference.gd
     union: yes
 
   243:16 Parameter tokens in parse_expr
-    inferred-type: (+18 more)|Array|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary
+    inferred-type: Array|Dictionary
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -558,7 +558,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   270:16 Parameter tokens in parse_term
-    inferred-type: (+18 more)|Array|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary
+    inferred-type: Array|Dictionary
     confidence: Medium
     reason: union from type checks
     duck-typed: yes
@@ -573,7 +573,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   297:18 Parameter tokens in parse_factor
-    inferred-type: (+20 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|Dictionary|float|int
+    inferred-type: Array|Dictionary|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -729,7 +729,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
       signals: (none)
 
   51:31 Parameter obj in test_gd7003_valid_guarded
-    inferred-type: Array[<Derivable>]
+    inferred-type: Array
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -904,7 +904,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   152:21 Parameter action in _execute_action
-    inferred-type: Callable|Dictionary[Variant, <Derivable>]|Object|String
+    inferred-type: Callable|Dictionary|Object|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -915,7 +915,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   167:26 Parameter action_dict in _execute_dict_action
-    inferred-type: (+19 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -926,7 +926,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   175:20 Parameter data in transform_data
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]
+    inferred-type: Array|Dictionary
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -954,7 +954,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   216:20 Parameter value in _step_validate
-    inferred-type: Array[<Derivable>]|Dictionary|String|StringName|int
+    inferred-type: Array|Dictionary|String|StringName|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -965,7 +965,7 @@ test_scripts/duck_typing_advanced.gd
       signals: (none)
 
   226:21 Parameter value in _step_transform
-    inferred-type: Array[<Derivable>]|Observable|SignalCallbackChains.Observable|float|int
+    inferred-type: Array|Observable|SignalCallbackChains.Observable|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1234,7 +1234,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   172:24 Parameter data in _deserialize_value
-    inferred-type: (+25 more)|Array[<Derivable>]|Dictionary[Variant, <Derivable>]|PackedStringArray|float|int
+    inferred-type: Array|Dictionary|PackedStringArray|String|bool|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1694,7 +1694,7 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   247:43 Parameter overrides in create_from_archetype
-    inferred-type: (+18 more)|Array|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary
+    inferred-type: Array|Dictionary
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1920,7 +1920,7 @@ test_scripts/game_patterns.gd
     union: yes
 
   43:23 Parameter item in get_item_property
-    inferred-type: Dictionary[Variant, <Derivable>]|Object
+    inferred-type: Dictionary|Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1935,7 +1935,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   52:23 Parameter item in set_item_property
-    inferred-type: Dictionary[Variant, <Derivable>]|Object
+    inferred-type: Dictionary|Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1978,7 +1978,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   97:17 Parameter dialog_data in load_dialog
-    inferred-type: Dictionary[Variant, <Derivable>]|String
+    inferred-type: Dictionary|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2063,7 +2063,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   346:28 Parameter template in _apply_effect_template
-    inferred-type: Dictionary[String, <Derivable>]|int
+    inferred-type: Dictionary[String, Variant]|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2142,7 +2142,7 @@ test_scripts/game_patterns.gd
     duck-typed: yes
 
   530:22 Parameter value in _serialize_value
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|Vector2|Vector3|bool|float|int
+    inferred-type: Array|Dictionary|String|Vector2|Vector3|bool|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2165,7 +2165,7 @@ test_scripts/game_patterns.gd
     duck-typed: yes
 
   558:24 Parameter value in _deserialize_value
-    inferred-type: (+21 more)|Array[<Derivable>]|Dictionary[String, <Derivable>]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2338,7 +2338,7 @@ test_scripts/local_variables.gd
     confidence: Unknown
 
   150:26 Parameter value in type_narrowing_local
-    inferred-type: (+19 more)|Array[<Derivable>]|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary[Variant, <Derivable>]
+    inferred-type: Array|Dictionary
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2406,7 +2406,7 @@ test_scripts/method_chains.gd
     reason: explicit type annotation
 
   105:17 Parameter input in mixed_chain
-    inferred-type: Array[<Derivable>]|Dictionary[String, <Derivable>]|String
+    inferred-type: Array|Dictionary[String, Variant]|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2651,7 +2651,7 @@ test_scripts/polymorphic_interfaces.gd
     confidence: Unknown
 
   271:20 Parameter value in _get_type_name
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|Vector2|Vector3|float|int
+    inferred-type: Array|Dictionary|String|Vector2|Vector3|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3575,7 +3575,7 @@ test_scripts/todo_examples.gd
 
 test_scripts/type_guards.gd
   8:19 Parameter value in process_value
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|int
+    inferred-type: Array|Dictionary|String|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3586,7 +3586,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   28:24 Parameter data in nested_type_guards
-    inferred-type: Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, Variant]
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -3596,7 +3596,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   44:25 Parameter value in type_guard_with_and
-    inferred-type: Array[<Derivable>]|Dictionary[String|int, <Derivable>]|String
+    inferred-type: Array|Dictionary[String|int, Variant]|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3618,11 +3618,8 @@ test_scripts/type_guards.gd
       signals: (none)
 
   74:24 Parameter data in early_return_guard
-    inferred-type: (+16 more)|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|DiagnosticsTest_NamingRules.invalid_enum|ValidEnum
-    confidence: Medium
-    reason: union from type checks
-    duck-typed: yes
-    union: yes
+    inferred-type: Variant
+    confidence: Unknown
     duck-constraints:
       methods: has(-1), keys(-1)
       properties: has, keys
@@ -3653,7 +3650,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   132:23 Parameter value in custom_type_guard
-    inferred-type: Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, Variant]
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -3663,7 +3660,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   137:24 Parameter value in using_custom_guard
-    inferred-type: Dictionary[String, <Derivable>]|Object
+    inferred-type: Dictionary[String, Variant]|Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3683,18 +3680,15 @@ test_scripts/type_guards.gd
       signals: (none)
 
   172:19 Parameter value in negated_guard
-    inferred-type: (+16 more)|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|DiagnosticsTest_NamingRules.invalid_enum|ValidEnum
-    confidence: Medium
-    reason: union from type checks
-    duck-typed: yes
-    union: yes
+    inferred-type: Variant
+    confidence: Unknown
     duck-constraints:
       methods: length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
       properties: length, size, keys, is_empty, has, to_upper, front
       signals: (none)
 
   182:20 Parameter data in guard_in_while
-    inferred-type: Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, Variant]
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -3704,7 +3698,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   191:30 Parameter value in multiple_guards_same_var
-    inferred-type: Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, Variant]
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -3714,7 +3708,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   207:28 Parameter value in guard_with_method_call
-    inferred-type: Array[<Derivable>]
+    inferred-type: Array
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -3743,11 +3737,10 @@ test_scripts/type_guards.gd
       signals: (none)
 
   249:23 Parameter value in assert_type_guard
-    inferred-type: (+18 more)|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary[Variant, <Derivable>]
+    inferred-type: Dictionary
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
       properties: length, size, keys, is_empty, has, to_upper, front
@@ -3765,11 +3758,10 @@ test_scripts/type_guards.gd
       signals: (none)
 
   262:23 Parameter outer in guard_propagation
-    inferred-type: (+18 more)|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|Dictionary[Variant, <Derivable>]
+    inferred-type: Dictionary
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: keys(-1)
       properties: keys
@@ -3834,7 +3826,7 @@ test_scripts/union_returns.gd
     reason: explicit type annotation
 
   73:19 Parameter input in process_input
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|float|int
+    inferred-type: Array|Dictionary|String|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3881,7 +3873,7 @@ test_scripts/union_returns.gd
     reason: explicit type annotation
 
   139:42 Parameter data in exception_pattern
-    inferred-type: Dictionary[String, <Derivable>]|Object
+    inferred-type: Dictionary[String, Variant]|Object
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3929,7 +3921,7 @@ test_scripts/union_returns.gd
     reason: explicit type annotation
 
   202:20 Parameter input in validate_input
-    inferred-type: Dictionary[String, <Derivable>]
+    inferred-type: Dictionary[String, Variant]
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -3974,7 +3966,7 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   58:21 Parameter value in process_by_type
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|float|int
+    inferred-type: Array|Dictionary|String|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4019,7 +4011,7 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   147:25 Parameter item in _process_mixed_item
-    inferred-type: Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|float|int
+    inferred-type: Array|Dictionary|String|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4046,7 +4038,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   186:21 Parameter data in safe_get_nested
-    inferred-type: Array[<Derivable>]|Dictionary[int, <Derivable>]
+    inferred-type: Array|Dictionary[int, Variant]
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4169,7 +4161,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   300:21 Parameter params in _compute_result
-    inferred-type: Array[<Derivable>]|String|int
+    inferred-type: Array|String|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4206,7 +4198,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   326:25 Parameter value in process_with_guards
-    inferred-type: Array[<Derivable>]
+    inferred-type: Array
     confidence: High
     reason: single type from constraints
     duck-typed: yes
@@ -4216,7 +4208,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   340:26 Parameter data in validate_and_process
-    inferred-type: (+18 more)|Array|DiagnosticsTest_NamingRules.InvalidEnumValues|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnumValues|PackedStringArray
+    inferred-type: Array|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes

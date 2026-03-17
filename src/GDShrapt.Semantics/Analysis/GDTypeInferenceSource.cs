@@ -136,7 +136,7 @@ internal enum GDInferenceKind
 }
 
 /// <summary>
-/// A type member in a union with its inference source and derivability information.
+/// A type member in a union with its inference source information.
 /// </summary>
 internal class GDUnionTypeMember
 {
@@ -156,12 +156,12 @@ internal class GDUnionTypeMember
     public GDTypeInferenceSource? Source { get; init; }
 
     /// <summary>
-    /// Key type info for containers (with source and derivability).
+    /// Key type info for containers.
     /// </summary>
     public GDGenericTypeSlot? KeyType { get; init; }
 
     /// <summary>
-    /// Value/element type info for containers (with source and derivability).
+    /// Value/element type info for containers.
     /// </summary>
     public GDGenericTypeSlot? ValueType { get; init; }
 
@@ -172,33 +172,14 @@ internal class GDUnionTypeMember
 }
 
 /// <summary>
-/// Represents a generic type slot (key or value type) with its inference source
-/// and derivability marker.
+/// Represents a generic type slot (key or value type) with its inference source.
 /// </summary>
 internal class GDGenericTypeSlot
 {
     /// <summary>
     /// The type name. Can be a union like "int | String".
-    /// If derivable, this shows current best guess.
     /// </summary>
     public string TypeName { get; init; } = "Variant";
-
-    /// <summary>
-    /// Whether this type can be inferred further with more analysis.
-    /// When true, displays as "&lt;Derivable&gt;" or "TypeName?" in UI.
-    /// </summary>
-    public bool IsDerivable { get; init; }
-
-    /// <summary>
-    /// The AST node that can provide more type information.
-    /// Clicking on &lt;Derivable&gt; navigates to this node.
-    /// </summary>
-    public GDNode? DerivableSourceNode { get; init; }
-
-    /// <summary>
-    /// Human-readable reason why this is derivable.
-    /// </summary>
-    public string? DerivableReason { get; init; }
 
     /// <summary>
     /// The sources that contributed to this type inference.
@@ -217,19 +198,6 @@ internal class GDGenericTypeSlot
         => new() { TypeName = typeName, Confidence = confidence };
 
     /// <summary>
-    /// Creates a derivable slot (type can be inferred further).
-    /// </summary>
-    public static GDGenericTypeSlot Derivable(GDNode? sourceNode, string? reason = null, string currentGuess = "Variant")
-        => new()
-        {
-            TypeName = currentGuess,
-            IsDerivable = true,
-            DerivableSourceNode = sourceNode,
-            DerivableReason = reason ?? "can be inferred from further analysis",
-            Confidence = GDTypeConfidence.Low
-        };
-
-    /// <summary>
     /// Creates a Variant slot (completely unknown).
     /// </summary>
     public static GDGenericTypeSlot Variant()
@@ -237,25 +205,9 @@ internal class GDGenericTypeSlot
 
     /// <summary>
     /// Formats the type for display.
-    /// If derivable, shows "&lt;Derivable&gt;" marker.
     /// </summary>
     public string ToDisplayString()
     {
-        if (IsDerivable)
-            return $"<Derivable>";
-        return TypeName;
-    }
-
-    /// <summary>
-    /// Formats the type with derivable marker inline.
-    /// E.g., "int | &lt;Derivable&gt;" or "Node?"
-    /// </summary>
-    public string ToDisplayStringWithMarker()
-    {
-        if (IsDerivable && TypeName != "Variant")
-            return $"{TypeName}?";
-        if (IsDerivable)
-            return "<Derivable>";
         return TypeName;
     }
 }

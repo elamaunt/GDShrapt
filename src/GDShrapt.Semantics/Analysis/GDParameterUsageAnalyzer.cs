@@ -422,15 +422,6 @@ internal class GDParameterUsageAnalyzer : GDVisitor
             // Add possible type with source for navigation
             var source = GDTypeInferenceSource.FromTypeCheck(dualOp, typeName);
             _paramConstraints[paramName].AddPossibleTypeWithSource(semanticType, source);
-
-            // For Dictionary and Array, mark value as derivable if not already known
-            if (GDWellKnownTypes.IsContainerType(typeName))
-            {
-                _paramConstraints[paramName].MarkValueDerivable(
-                    semanticType,
-                    dualOp,
-                    "value type can be inferred from return statements or further usage");
-            }
         }
     }
 

@@ -194,7 +194,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         var info = new GDProjectTypeInfo
         {
             Name = enumName,
-            BaseTypeName = "int"
+            BaseTypeName = "int",
+            IsEnum = true
         };
 
         if (enumDecl.Values != null)
@@ -487,7 +488,8 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         return new GDRuntimeTypeInfo(projectType.Name, projectType.BaseTypeName)
         {
             Members = members,
-            IsAbstract = projectType.IsAbstract
+            IsAbstract = projectType.IsAbstract,
+            IsEnum = projectType.IsEnum
         };
     }
 
@@ -990,6 +992,7 @@ public class GDProjectTypeInfo
     public string? ScriptPath { get; init; }
     public string? BaseTypeName { get; init; }
     public bool IsAbstract { get; init; }
+    public bool IsEnum { get; init; }
     public Dictionary<string, GDProjectMethodInfo> Methods { get; } = new();
     public Dictionary<string, GDProjectPropertyInfo> Properties { get; } = new();
     public Dictionary<string, GDProjectSignalInfo> Signals { get; } = new();

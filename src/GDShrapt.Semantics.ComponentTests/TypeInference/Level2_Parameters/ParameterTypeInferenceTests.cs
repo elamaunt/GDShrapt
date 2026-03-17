@@ -454,7 +454,7 @@ func process_data(items, callback):
 
     #endregion
 
-    #region Union Members and Derivable Tests
+    #region Union Members Tests
 
     [TestMethod]
     public void InferParameterType_UnionType_HasDetailedMembers()
@@ -491,7 +491,7 @@ func process(data):
     }
 
     [TestMethod]
-    public void InferParameterType_Derivable_HasDerivableSlots()
+    public void InferParameterType_Dictionary_HasValueSlot()
     {
         // Arrange - Dictionary type check without known value type
         var code = @"
@@ -519,13 +519,10 @@ func process(data):
         var dictMember = inferred.UnionMembers.FirstOrDefault(m => m.BaseType == "Dictionary");
         Assert.IsNotNull(dictMember, "Should have Dictionary member");
 
-        // ValueType may be Variant or derivable
+        // ValueType should be Variant when element type is unknown
         if (dictMember.ValueType != null)
         {
-            // Either we know the type or it's derivable
             Assert.IsTrue(
-                dictMember.ValueType.TypeName == "Variant" ||
-                dictMember.ValueType.IsDerivable ||
                 !string.IsNullOrEmpty(dictMember.ValueType.TypeName),
                 "Dictionary value slot should have type info");
         }

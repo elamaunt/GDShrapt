@@ -1912,7 +1912,7 @@ test_scripts/cyclic_inference.gd
 25:8 GDIdentifierExpression input -> Variant
 25:16 GDNumberExpression 10 -> int
 30:0 Method transform_stage_1 -> Variant
-30:23 Parameter data -> Array[<Derivable>]|String|int
+30:23 Parameter data -> Array|String|int
 32:4 GDDualOperatorExpression dataIsString -> bool
 32:4 GDIdentifierExpression data -> Variant
 32:12 GDIdentifierExpression String -> String
@@ -1995,7 +1995,7 @@ test_scripts/cyclic_inference.gd
 67:23 GDNumberExpression 1 -> int
 72:0 Variable state_machine_value -> Variant
 75:0 Method state_idle -> Dictionary[String, String]|Dictionary[String, null]
-75:16 Parameter context -> (+19 more)|Array|DiagnosticsTest_NamingRules.ValidEnum|Dictionary|PackedStringArray|invalid_enum
+75:16 Parameter context -> Array|Dictionary|PackedStringArray
 77:4 GDCallExpression context.has() -> bool
 77:4 GDMemberOperatorExpression context.has -> Variant
 77:4 GDIdentifierExpression context -> Variant
@@ -2027,7 +2027,7 @@ test_scripts/cyclic_inference.gd
 87:8 GDIdentifierExpression state_idle -> Callable
 87:19 GDIdentifierExpression context -> Variant
 90:0 Method state_processing -> Dictionary[String, String]
-90:22 Parameter data -> Array[<Derivable>]
+90:22 Parameter data -> Array
 92:4 GDDualOperatorExpression dataIsArray -> bool
 92:4 GDIdentifierExpression data -> Variant
 92:12 GDIdentifierExpression Array -> Array
@@ -2066,7 +2066,7 @@ test_scripts/cyclic_inference.gd
 105:27 GDStringExpression "message" -> String
 105:38 GDIdentifierExpression message -> Variant
 108:0 Method process_item -> Variant|float|int
-108:18 Parameter item -> Dictionary[String, <Derivable>]|String|int
+108:18 Parameter item -> Dictionary[String, Variant]|String|int
 110:4 GDDualOperatorExpression itemIsDictionary -> bool
 110:4 GDIdentifierExpression item -> Variant
 110:12 GDIdentifierExpression Dictionary -> Dictionary
@@ -2213,7 +2213,7 @@ test_scripts/cyclic_inference.gd
 175:8 GDIdentifierExpression z_val -> Variant
 175:16 GDNumberExpression 2 -> int
 180:0 Method visit_node -> void
-180:16 Parameter node -> (+19 more)|Array|DiagnosticsTest_NamingRules.ValidEnum|Dictionary[String, Variant]|PackedStringArray|invalid_enum
+180:16 Parameter node -> Array|Dictionary[String, Variant]|PackedStringArray
 180:22 Parameter visitor -> Variant
 182:1 Variable result -> Variant
 182:14 GDCallExpression visitor.visit() -> Variant
@@ -2243,7 +2243,7 @@ test_scripts/cyclic_inference.gd
 189:1 GDReturnExpression return result -> Variant
 189:8 GDIdentifierExpression result -> Variant
 192:0 Method traverse_and_transform -> Dictionary[String, Variant]
-192:28 Parameter root -> (+19 more)|Array|DiagnosticsTest_NamingRules.ValidEnum|Dictionary[String, Variant]|PackedStringArray|invalid_enum
+192:28 Parameter root -> Array|Dictionary[String, Variant]|PackedStringArray
 192:34 Parameter transformer -> CyclesTest
 194:1 Variable new_node -> Dictionary[String, Variant]
 194:16 GDCallExpression transformer.transform() -> Dictionary[String, Variant]
@@ -2361,7 +2361,7 @@ test_scripts/cyclic_inference.gd
 238:1 GDReturnExpression return current -> Variant
 238:8 GDIdentifierExpression current -> Variant
 243:0 Method parse_expr -> Dictionary[String, Variant]|null
-243:16 Parameter tokens -> (+18 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|Dictionary|invalid_enum
+243:16 Parameter tokens -> Array|Dictionary
 243:24 Parameter pos -> Variant
 245:1 Variable result -> Variant
 245:14 GDCallExpression parse_term() -> Variant
@@ -2438,7 +2438,7 @@ test_scripts/cyclic_inference.gd
 267:25 GDStringExpression "pos" -> String
 267:32 GDIdentifierExpression new_pos -> Variant
 270:0 Method parse_term -> Dictionary[String, Variant]|null
-270:16 Parameter tokens -> (+18 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|Dictionary|invalid_enum
+270:16 Parameter tokens -> Array|Dictionary
 270:24 Parameter pos -> Variant
 272:1 Variable result -> Variant
 272:14 GDCallExpression parse_factor() -> Variant
@@ -2515,7 +2515,7 @@ test_scripts/cyclic_inference.gd
 294:25 GDStringExpression "pos" -> String
 294:32 GDIdentifierExpression new_pos -> Variant
 297:0 Method parse_factor -> Dictionary[String, Variant]|null
-297:18 Parameter tokens -> (+20 more)|Array|DiagnosticsTest_NamingRules.ValidEnum|Dictionary|float|int
+297:18 Parameter tokens -> Array|Dictionary|float|int
 297:26 Parameter pos -> Variant
 299:4 GDDualOperatorExpression posMoreThanOrEqualtokens.size() -> bool
 299:4 GDIdentifierExpression pos -> Variant
@@ -3932,7 +3932,7 @@ test_scripts/diagnostics/validator/duck_typing_errors.gd
 47:1 GDIdentifierExpression arr -> Array
 47:12 GDNumberExpression 4 -> int
 51:0 Method test_gd7003_valid_guarded -> void
-51:31 Parameter obj -> Array[<Derivable>]
+51:31 Parameter obj -> Array
 52:4 GDDualOperatorExpression objIsArray -> bool
 52:4 GDIdentifierExpression obj -> Variant
 52:11 GDIdentifierExpression Array -> Array
@@ -4694,7 +4694,7 @@ test_scripts/duck_typing_advanced.gd
 149:1 GDReturnExpression return result -> Variant
 149:8 GDIdentifierExpression result -> Variant
 152:0 Method _execute_action -> String|Variant|null
-152:21 Parameter action -> Callable|Dictionary[Variant, <Derivable>]|Object|String
+152:21 Parameter action -> Callable|Dictionary|Object|String
 154:4 GDDualOperatorExpression actionIsString -> bool
 154:4 GDIdentifierExpression action -> Variant
 154:14 GDIdentifierExpression String -> String
@@ -4725,7 +4725,7 @@ test_scripts/duck_typing_advanced.gd
 164:8 GDStringExpression "executed: " -> String
 164:23 GDIdentifierExpression cmd -> Variant
 167:0 Method _execute_dict_action -> String|Variant
-167:26 Parameter action_dict -> (+19 more)|Array|DiagnosticsTest_NamingRules.ValidEnum|Dictionary[String, Variant]|PackedStringArray|invalid_enum
+167:26 Parameter action_dict -> Array|Dictionary[String, Variant]|PackedStringArray
 168:4 GDCallExpression action_dict.has() -> bool
 168:4 GDMemberOperatorExpression action_dict.has -> Variant
 168:4 GDIdentifierExpression action_dict -> Variant
@@ -4737,7 +4737,7 @@ test_scripts/duck_typing_advanced.gd
 170:1 GDReturnExpression return "unknown_ac..." -> Variant
 170:8 GDStringExpression "unknown_ac..." -> String
 175:0 Method transform_data -> Dictionary|Variant
-175:20 Parameter data -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]
+175:20 Parameter data -> Array|Dictionary
 175:26 Parameter transformer -> Callable|Object
 180:4 GDDualOperatorExpression dataIsArray -> bool
 180:4 GDIdentifierExpression data -> Variant
@@ -4830,7 +4830,7 @@ test_scripts/duck_typing_advanced.gd
 213:1 GDReturnExpression return value -> Variant
 213:8 GDIdentifierExpression value -> Variant
 216:0 Method _step_validate -> Variant|null
-216:20 Parameter value -> Array[<Derivable>]|Dictionary|String|StringName|int
+216:20 Parameter value -> Array|Dictionary|String|StringName|int
 217:4 GDDualOperatorExpression valueEqualnull -> bool
 217:4 GDIdentifierExpression value -> Variant
 217:13 GDIdentifierExpression null -> null
@@ -4857,7 +4857,7 @@ test_scripts/duck_typing_advanced.gd
 223:1 GDReturnExpression return value -> Variant
 223:8 GDIdentifierExpression value -> Variant
 226:0 Method _step_transform -> Variant
-226:21 Parameter value -> Array[<Derivable>]|Observable|SignalCallbackChains.Observable|float|int
+226:21 Parameter value -> Array|Observable|SignalCallbackChains.Observable|float|int
 227:4 GDDualOperatorExpression valueIsint -> bool
 227:4 GDIdentifierExpression value -> Variant
 227:13 GDIdentifierExpression int -> int
@@ -5353,7 +5353,7 @@ test_scripts/dynamic_dispatch.gd
 169:11 GDIdentifierExpression key -> Variant
 169:16 GDIdentifierExpression value -> Variant
 172:0 Method _deserialize_value -> Array|Color|Dictionary|Variant|Vector2|Vector3|null
-172:24 Parameter data -> (+25 more)|Array[<Derivable>]|Dictionary[Variant, <Derivable>]|PackedStringArray|float|int
+172:24 Parameter data -> Array|Dictionary|PackedStringArray|String|bool|float|int
 173:4 GDDualOperatorExpression dataEqualnull -> bool
 173:4 GDIdentifierExpression data -> Variant
 173:12 GDIdentifierExpression null -> null
@@ -6521,7 +6521,7 @@ test_scripts/ecs_like_system.gd
 245:20 GDIdentifierExpression component_defs -> Variant
 247:0 Method create_from_archetype -> Entity|null
 247:27 Parameter archetype_name -> Variant
-247:43 Parameter overrides -> (+18 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|Dictionary|invalid_enum
+247:43 Parameter overrides -> Array|Dictionary
 247:55 GDDictionaryInitializerExpression {...} -> Dictionary
 248:4 GDSingleOperatorExpression Not2archetypes.has() -> bool
 248:8 GDCallExpression archetypes.has() -> bool
@@ -7695,7 +7695,7 @@ test_scripts/game_patterns.gd
 40:1 GDReturnExpression return result -> Variant
 40:8 GDIdentifierExpression result -> Array
 43:0 Method get_item_property -> Variant
-43:23 Parameter item -> Dictionary[Variant, <Derivable>]|Object
+43:23 Parameter item -> Dictionary|Object
 43:29 Parameter prop_name -> Variant
 43:40 Parameter default_val -> null
 43:54 GDIdentifierExpression null -> null
@@ -7719,7 +7719,7 @@ test_scripts/game_patterns.gd
 49:1 GDReturnExpression return default_val -> Variant
 49:8 GDIdentifierExpression default_val -> Variant
 52:0 Method set_item_property -> void
-52:23 Parameter item -> Dictionary[Variant, <Derivable>]|Object
+52:23 Parameter item -> Dictionary|Object
 52:29 Parameter prop_name -> Variant
 52:40 Parameter value -> Variant
 53:4 GDDualOperatorExpression itemIsDictionary -> bool
@@ -7824,7 +7824,7 @@ test_scripts/game_patterns.gd
 94:0 Variable dialog_history -> Array
 94:21 GDArrayInitializerExpression [...] -> Array
 97:0 Method load_dialog -> void
-97:17 Parameter dialog_data -> Dictionary[Variant, <Derivable>]|String
+97:17 Parameter dialog_data -> Dictionary|String
 99:4 GDDualOperatorExpression dialog_dataIsString -> bool
 99:4 GDIdentifierExpression dialog_data -> Variant
 99:19 GDIdentifierExpression String -> String
@@ -8448,7 +8448,7 @@ test_scripts/game_patterns.gd
 343:1 GDReturnExpression return result -> Variant
 343:8 GDIdentifierExpression result -> null
 346:0 Method _apply_effect_template -> Array
-346:28 Parameter template -> Dictionary[String, <Derivable>]|int
+346:28 Parameter template -> Dictionary[String, Variant]|int
 346:38 Parameter user -> Variant
 346:44 Parameter targets -> Array
 347:1 Variable results -> Array
@@ -8957,7 +8957,7 @@ test_scripts/game_patterns.gd
 527:1 GDReturnExpression return result -> Variant
 527:8 GDIdentifierExpression result -> Dictionary
 530:0 Method _serialize_value -> Array|Dictionary|Dictionary[String, String]|String|Variant
-530:22 Parameter value -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|Vector2|Vector3|bool|float|int
+530:22 Parameter value -> Array|Dictionary|String|Vector2|Vector3|bool|float|int
 531:4 GDDualOperatorExpression valueEqualnullOr2valueIsboolOr2valueIsintOr2valueIsfloatOr2valueIsString -> bool
 531:4 GDDualOperatorExpression valueEqualnullOr2valueIsboolOr2valueIsintOr2valueIsfloat -> bool
 531:4 GDDualOperatorExpression valueEqualnullOr2valueIsboolOr2valueIsint -> bool
@@ -9058,7 +9058,7 @@ test_scripts/game_patterns.gd
 555:1 GDReturnExpression return result -> Variant
 555:8 GDIdentifierExpression result -> Dictionary
 558:0 Method _deserialize_value -> Array|Dictionary|Variant|Vector2|Vector3
-558:24 Parameter value -> (+21 more)|Array[<Derivable>]|Dictionary[String, <Derivable>]|PackedStringArray
+558:24 Parameter value -> Array|Dictionary[String, Variant]|PackedStringArray
 559:4 GDDualOperatorExpression valueIsDictionary -> bool
 559:4 GDIdentifierExpression value -> Variant
 559:13 GDIdentifierExpression Dictionary -> Dictionary
@@ -10012,7 +10012,7 @@ test_scripts/local_variables.gd
 147:15 GDIdentifierExpression c -> int
 147:18 GDIdentifierExpression d -> int
 150:0 Method type_narrowing_local -> Array|Variant|int
-150:26 Parameter value -> (+19 more)|Array[<Derivable>]|DiagnosticsTest_NamingRules.ValidEnum|Dictionary[Variant, <Derivable>]|invalid_enum
+150:26 Parameter value -> Array|Dictionary
 152:1 Variable result -> Variant
 152:14 GDIdentifierExpression value -> Variant
 154:4 GDDualOperatorExpression resultIsDictionary -> bool
@@ -10295,7 +10295,7 @@ test_scripts/method_chains.gd
 102:8 GDMemberOperatorExpression Vector2.ZERO -> Vector2
 102:8 GDIdentifierExpression Vector2 -> Vector2
 105:0 Method mixed_chain -> String
-105:17 Parameter input -> Array[<Derivable>]|Dictionary[String, <Derivable>]|String
+105:17 Parameter input -> Array|Dictionary[String, Variant]|String
 107:4 GDDualOperatorExpression inputIsDictionary -> bool
 107:4 GDIdentifierExpression input -> Variant
 107:13 GDIdentifierExpression Dictionary -> Dictionary
@@ -11122,7 +11122,7 @@ test_scripts/polymorphic_interfaces.gd
 268:1 GDReturnExpression return value -> Variant
 268:8 GDIdentifierExpression value -> Variant
 271:0 Method _get_type_name -> String
-271:20 Parameter value -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|Vector2|Vector3|float|int
+271:20 Parameter value -> Array|Dictionary|String|Vector2|Vector3|float|int
 272:4 GDDualOperatorExpression valueIsint -> bool
 272:4 GDIdentifierExpression value -> Variant
 272:13 GDIdentifierExpression int -> int
@@ -15483,7 +15483,7 @@ test_scripts/todo_examples.gd
 test_scripts/type_guards.gd
 2:0 Class TypeGuards -> Variant
 8:0 Method process_value -> Array|Variant|float|int|null
-8:19 Parameter value -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|int
+8:19 Parameter value -> Array|Dictionary|String|int
 10:4 GDDualOperatorExpression valueEqualnull -> bool
 10:4 GDIdentifierExpression value -> Variant
 10:13 GDIdentifierExpression null -> null
@@ -15520,7 +15520,7 @@ test_scripts/type_guards.gd
 25:1 GDReturnExpression return value -> Variant
 25:8 GDIdentifierExpression value -> Variant
 28:0 Method nested_type_guards -> String
-28:24 Parameter data -> Dictionary[String, <Derivable>]
+28:24 Parameter data -> Dictionary[String, Variant]
 29:4 GDDualOperatorExpression dataEqualnull -> bool
 29:4 GDIdentifierExpression data -> Variant
 29:12 GDIdentifierExpression null -> null
@@ -15550,7 +15550,7 @@ test_scripts/type_guards.gd
 41:1 GDReturnExpression return "unknown" -> Variant
 41:8 GDStringExpression "unknown" -> String
 44:0 Method type_guard_with_and -> Variant|null
-44:25 Parameter value -> Array[<Derivable>]|Dictionary[String|int, <Derivable>]|String
+44:25 Parameter value -> Array|Dictionary[String|int, Variant]|String
 46:4 GDDualOperatorExpression valueIsArrayAnd2value.size()MoreThan0 -> bool
 46:4 GDDualOperatorExpression valueIsArray -> bool
 46:4 GDIdentifierExpression value -> Variant
@@ -15618,7 +15618,7 @@ test_scripts/type_guards.gd
 71:1 GDReturnExpression return null -> Variant
 71:8 GDIdentifierExpression null -> null
 74:0 Method early_return_guard -> Array|String
-74:24 Parameter data -> (+16 more)|AIController.AIState|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|SHOUTING_ENUM|invalid_enum
+74:24 Parameter data -> Variant
 76:4 GDDualOperatorExpression dataEqualnull -> bool
 76:4 GDIdentifierExpression data -> Variant
 76:12 GDIdentifierExpression null -> null
@@ -15729,7 +15729,7 @@ test_scripts/type_guards.gd
 129:3 GDReturnExpression return "other" -> Variant
 129:10 GDStringExpression "other" -> String
 132:0 Method custom_type_guard -> bool
-132:23 Parameter value -> Dictionary[String, <Derivable>]
+132:23 Parameter value -> Dictionary[String, Variant]
 134:1 GDReturnExpression return valueIsDictionaryAnd2value.has()And2value.get()Equal"player" -> Variant
 134:8 GDDualOperatorExpression valueIsDictionaryAnd2value.has()And2value.get()Equal"player" -> bool
 134:8 GDDualOperatorExpression valueIsDictionaryAnd2value.has() -> bool
@@ -15747,7 +15747,7 @@ test_scripts/type_guards.gd
 134:64 GDStringExpression "type" -> String
 134:75 GDStringExpression "player" -> String
 137:0 Method using_custom_guard -> String|Variant
-137:24 Parameter value -> Dictionary[String, <Derivable>]|Object
+137:24 Parameter value -> Dictionary[String, Variant]|Object
 138:4 GDCallExpression custom_type_guard() -> bool
 138:4 GDIdentifierExpression custom_type_guard -> Callable
 138:22 GDIdentifierExpression value -> Variant
@@ -15809,7 +15809,7 @@ test_scripts/type_guards.gd
 169:1 GDReturnExpression return "other" -> Variant
 169:8 GDStringExpression "other" -> String
 172:0 Method negated_guard -> Array|String
-172:19 Parameter value -> (+16 more)|AIController.AIState|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|SHOUTING_ENUM|invalid_enum
+172:19 Parameter value -> Variant
 174:4 GDSingleOperatorExpression Not2valueIsDictionary -> bool
 174:8 GDDualOperatorExpression valueIsDictionary -> bool
 174:8 GDIdentifierExpression value -> Variant
@@ -15821,7 +15821,7 @@ test_scripts/type_guards.gd
 179:8 GDMemberOperatorExpression value.keys -> Array
 179:8 GDIdentifierExpression value -> Variant
 182:0 Method guard_in_while -> Variant
-182:20 Parameter data -> Dictionary[String, <Derivable>]
+182:20 Parameter data -> Dictionary[String, Variant]
 184:1 Variable current -> Variant
 184:15 GDIdentifierExpression data -> Variant
 185:7 GDDualOperatorExpression currentIsDictionaryAnd2current.has() -> bool
@@ -15846,7 +15846,7 @@ test_scripts/type_guards.gd
 188:1 GDReturnExpression return current -> Variant
 188:8 GDIdentifierExpression current -> Variant
 191:0 Method multiple_guards_same_var -> String
-191:30 Parameter value -> Dictionary[String, <Derivable>]
+191:30 Parameter value -> Dictionary[String, Variant]
 193:1 Variable result -> String
 193:14 GDStringExpression "" -> String
 195:4 GDDualOperatorExpression valueIsDictionary -> bool
@@ -15885,7 +15885,7 @@ test_scripts/type_guards.gd
 204:1 GDReturnExpression return result -> Variant
 204:8 GDIdentifierExpression result -> String
 207:0 Method guard_with_method_call -> Variant|int
-207:28 Parameter value -> Array[<Derivable>]
+207:28 Parameter value -> Array
 209:4 GDDualOperatorExpression valueIsArrayAnd2value.front()Isint -> bool
 209:4 GDDualOperatorExpression valueIsArray -> bool
 209:4 GDIdentifierExpression value -> Variant
@@ -15964,7 +15964,7 @@ test_scripts/type_guards.gd
 246:3 GDReturnExpression return null -> Variant
 246:10 GDIdentifierExpression null -> null
 249:0 Method assert_type_guard -> Array
-249:23 Parameter value -> (+18 more)|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|Dictionary[Variant, <Derivable>]|invalid_enum
+249:23 Parameter value -> Dictionary
 251:1 GDCallExpression assert() -> void
 251:1 GDIdentifierExpression assert -> Callable() -> void
 251:8 GDDualOperatorExpression valueIsDictionary -> bool
@@ -15989,7 +15989,7 @@ test_scripts/type_guards.gd
 259:1 GDReturnExpression return result -> Variant
 259:8 GDIdentifierExpression result -> float
 262:0 Method guard_propagation -> Array|Variant
-262:23 Parameter outer -> (+18 more)|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|Dictionary[Variant, <Derivable>]|invalid_enum
+262:23 Parameter outer -> Dictionary
 264:4 GDDualOperatorExpression outerIsDictionary -> bool
 264:4 GDIdentifierExpression outer -> Variant
 264:13 GDIdentifierExpression Dictionary -> Dictionary
@@ -16662,7 +16662,7 @@ test_scripts/union_returns.gd
 70:1 GDReturnExpression return resource -> Variant
 70:8 GDIdentifierExpression resource -> Resource
 73:0 Method process_input -> Array|String|Variant|int|null
-73:19 Parameter input -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|float|int
+73:19 Parameter input -> Array|Dictionary|String|float|int
 75:4 GDDualOperatorExpression inputIsint -> bool
 75:4 GDIdentifierExpression input -> Variant
 75:13 GDIdentifierExpression int -> int
@@ -16809,7 +16809,7 @@ test_scripts/union_returns.gd
 136:8 GDIdentifierExpression result -> Variant
 139:0 Method exception_pattern -> Dictionary[String, String]|Variant|bool
 139:23 Parameter operation -> String
-139:42 Parameter data -> Dictionary[String, <Derivable>]|Object
+139:42 Parameter data -> Dictionary[String, Variant]|Object
 141:7 GDIdentifierExpression operation -> String
 142:2 GDStringExpression "read" -> String
 143:6 GDDualOperatorExpression dataIsDictionary -> bool
@@ -16965,7 +16965,7 @@ test_scripts/union_returns.gd
 199:29 GDStringExpression "error" -> String
 199:38 GDStringExpression "Operation ..." -> String
 202:0 Method validate_input -> Dictionary
-202:20 Parameter input -> Dictionary[String, <Derivable>]
+202:20 Parameter input -> Dictionary[String, Variant]
 204:1 Variable errors -> Array
 204:14 GDArrayInitializerExpression [...] -> Array
 206:4 GDDualOperatorExpression inputEqualnull -> bool
@@ -17189,7 +17189,7 @@ test_scripts/union_types_complex.gd
 53:1 GDReturnExpression return null -> Variant
 53:8 GDIdentifierExpression null -> null
 58:0 Method process_by_type -> Array|String|Variant|int|null
-58:21 Parameter value -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|float|int
+58:21 Parameter value -> Array|Dictionary|String|float|int
 60:4 GDDualOperatorExpression valueIsint -> bool
 60:4 GDIdentifierExpression value -> Variant
 60:13 GDIdentifierExpression int -> int
@@ -17357,7 +17357,7 @@ test_scripts/union_types_complex.gd
 144:1 GDReturnExpression return results -> Variant
 144:8 GDIdentifierExpression results -> Array
 147:0 Method _process_mixed_item -> Variant|int
-147:25 Parameter item -> Array[<Derivable>]|Dictionary[Variant, <Derivable>]|String|float|int
+147:25 Parameter item -> Array|Dictionary|String|float|int
 149:4 GDDualOperatorExpression itemIsint -> bool
 149:4 GDIdentifierExpression item -> Variant
 149:12 GDIdentifierExpression int -> int
@@ -17429,7 +17429,7 @@ test_scripts/union_types_complex.gd
 181:8 GDIdentifierExpression key -> Variant
 181:15 GDIdentifierExpression value -> Variant
 186:0 Method safe_get_nested -> Variant|null
-186:21 Parameter data -> Array[<Derivable>]|Dictionary[int, <Derivable>]
+186:21 Parameter data -> Array|Dictionary[int, Variant]
 186:27 Parameter path -> Array[int]
 188:1 Variable current -> Variant
 188:15 GDIdentifierExpression data -> Variant
@@ -17669,7 +17669,7 @@ test_scripts/union_types_complex.gd
 297:1 GDIdentifierExpression result_ready -> Signal
 297:19 GDIdentifierExpression result -> Variant
 300:0 Method _compute_result -> String|Variant|int
-300:21 Parameter params -> Array[<Derivable>]|String|int
+300:21 Parameter params -> Array|String|int
 302:4 GDDualOperatorExpression paramsIsString -> bool
 302:4 GDIdentifierExpression params -> Variant
 302:14 GDIdentifierExpression String -> String
@@ -17721,7 +17721,7 @@ test_scripts/union_types_complex.gd
 323:27 GDIdentifierExpression value -> Variant
 323:36 GDIdentifierExpression StringName -> StringName
 326:0 Method process_with_guards -> Variant|float|int
-326:25 Parameter value -> Array[<Derivable>]
+326:25 Parameter value -> Array
 328:4 GDCallExpression is_numeric() -> bool
 328:4 GDIdentifierExpression is_numeric -> Callable
 328:15 GDIdentifierExpression value -> Variant
@@ -17746,7 +17746,7 @@ test_scripts/union_types_complex.gd
 337:1 GDReturnExpression return 0 -> Variant
 337:8 GDNumberExpression 0 -> int
 340:0 Method validate_and_process -> Dictionary[String, String]
-340:26 Parameter data -> (+18 more)|Array|DiagnosticsTest_NamingRules.SuppressedEnumValues|DiagnosticsTest_NamingRules.ValidEnum|PackedStringArray|invalid_enum
+340:26 Parameter data -> Array|PackedStringArray
 342:4 GDDualOperatorExpression dataEqualnull -> bool
 342:4 GDIdentifierExpression data -> Variant
 342:12 GDIdentifierExpression null -> null

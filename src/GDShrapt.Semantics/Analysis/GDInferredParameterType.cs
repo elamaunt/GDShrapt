@@ -73,13 +73,6 @@ public class GDInferredParameterType
     public GDUnionNarrowingHint? NarrowingHint { get; internal set; }
 
     /// <summary>
-    /// Whether any part of the type can be inferred further.
-    /// </summary>
-    public bool HasDerivableParts => UnionMembers?.Any(m =>
-        m.KeyType?.IsDerivable == true ||
-        m.ValueType?.IsDerivable == true) ?? false;
-
-    /// <summary>
     /// Internal constructor for factory methods.
     /// </summary>
     protected GDInferredParameterType(
@@ -265,36 +258,6 @@ public class GDInferredParameterType
 
     #endregion
 
-    #region Derivable Navigation
-
-    /// <summary>
-    /// Gets all derivable slots with their source nodes for navigation.
-    /// </summary>
-    public IEnumerable<(string SlotDescription, GDNode? SourceNode, string? Reason)> GetDerivableSlots()
-    {
-        if (UnionMembers == null)
-            yield break;
-
-        foreach (var member in UnionMembers)
-        {
-            if (member.KeyType?.IsDerivable == true)
-            {
-                yield return (
-                    $"{member.BaseType} key type",
-                    member.KeyType.DerivableSourceNode,
-                    member.KeyType.DerivableReason);
-            }
-
-            if (member.ValueType?.IsDerivable == true)
-            {
-                yield return (
-                    $"{member.BaseType} value type",
-                    member.ValueType.DerivableSourceNode,
-                    member.ValueType.DerivableReason);
-            }
-        }
-    }
-
     /// <summary>
     /// Gets the source node for a specific union member.
     /// </summary>
@@ -305,8 +268,6 @@ public class GDInferredParameterType
 
         return UnionMembers[memberIndex].Source?.SourceNode;
     }
-
-    #endregion
 
     /// <summary>
     /// Converts to the general GDInferredType.

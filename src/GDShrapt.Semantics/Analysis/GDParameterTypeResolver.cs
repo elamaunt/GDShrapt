@@ -389,15 +389,7 @@ internal class GDParameterTypeResolver
         var sources = typeSpecific?.KeyTypeSources ?? new List<GDTypeInferenceSource>();
 
         if (keyTypes.Count == 0)
-        {
-            if (typeSpecific?.KeyIsDerivable == true)
-            {
-                return GDGenericTypeSlot.Derivable(
-                    typeSpecific.KeyDerivableNode,
-                    typeSpecific.KeyDerivableReason);
-            }
             return GDGenericTypeSlot.Variant();
-        }
 
         var typeStr = keyTypes.Count == 1
             ? keyTypes.First().DisplayName
@@ -406,9 +398,6 @@ internal class GDParameterTypeResolver
         return new GDGenericTypeSlot
         {
             TypeName = typeStr,
-            IsDerivable = typeSpecific?.KeyIsDerivable ?? false,
-            DerivableSourceNode = typeSpecific?.KeyDerivableNode,
-            DerivableReason = typeSpecific?.KeyDerivableReason,
             Sources = sources.ToList(),
             Confidence = GDTypeConfidence.Medium
         };
@@ -423,15 +412,7 @@ internal class GDParameterTypeResolver
         var sources = typeSpecific?.ElementTypeSources ?? new List<GDTypeInferenceSource>();
 
         if (elemTypes.Count == 0)
-        {
-            if (typeSpecific?.ValueIsDerivable == true)
-            {
-                return GDGenericTypeSlot.Derivable(
-                    typeSpecific.ValueDerivableNode,
-                    typeSpecific.ValueDerivableReason);
-            }
             return GDGenericTypeSlot.Variant();
-        }
 
         var typeStr = elemTypes.Count == 1
             ? elemTypes.First().DisplayName
@@ -440,9 +421,6 @@ internal class GDParameterTypeResolver
         return new GDGenericTypeSlot
         {
             TypeName = typeStr,
-            IsDerivable = typeSpecific?.ValueIsDerivable ?? false,
-            DerivableSourceNode = typeSpecific?.ValueDerivableNode,
-            DerivableReason = typeSpecific?.ValueDerivableReason,
             Sources = sources.ToList(),
             Confidence = GDTypeConfidence.Medium
         };
@@ -563,7 +541,8 @@ internal class GDParameterTypeResolver
         GDParameterConstraints constraints)
     {
         // Rule 0: Enum types -> always Low (synthetic static methods, not instance duck-typing)
-        if (typesProvider.IsEnumType(candidateType))
+        if (typesProvider.IsEnumType(candidateType) ||
+            _runtimeProvider.GetTypeInfo(candidateType)?.IsEnum == true)
             return GDTypeConfidence.Low;
 
         // Rule 2: Singleton & Internal -> always Low

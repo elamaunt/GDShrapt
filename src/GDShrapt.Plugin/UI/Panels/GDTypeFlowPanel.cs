@@ -69,7 +69,7 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     private static readonly Color TypeColor = new(0.4f, 0.76f, 0.65f);       // Cyan
     private static readonly Color ParamColor = new(0.85f, 0.85f, 0.75f);     // Light cream
     private static readonly Color SymbolColor = new(0.6f, 0.6f, 0.6f);       // Gray
-    private static readonly Color DerivableColor = new(1.0f, 0.85f, 0.3f);   // Yellow for derivable types
+
 
     /// <summary>
     /// Event fired when user clicks on a file location to navigate.
@@ -1022,16 +1022,12 @@ internal partial class GDTypeFlowPanel : AcceptDialog
     }
 
     /// <summary>
-    /// Formats a type for display, showing "Variant" as clickable "<Derivable>" in yellow with underline.
+    /// Formats a type for display.
     /// </summary>
     private string FormatTypeBBCode(string typeName, string context = null)
     {
-        if (typeName == "Variant" || string.IsNullOrEmpty(typeName))
-        {
-            // Show as clickable <Derivable> in yellow with underline
-            var urlTarget = context ?? "derivable";
-            return $"[url={urlTarget}][color=#{ColorToHex(DerivableColor)}][u]<Derivable>[/u][/color][/url]";
-        }
+        if (string.IsNullOrEmpty(typeName))
+            typeName = "Variant";
         return $"[color=#{ColorToHex(TypeColor)}]{typeName}[/color]";
     }
 
@@ -1150,8 +1146,8 @@ internal partial class GDTypeFlowPanel : AcceptDialog
         if (string.IsNullOrEmpty(targetName) || _currentScript == null)
             return;
 
-        // Handle click on <Derivable> type - trigger quick fix
-        if (targetName == "derivable" || targetName == "return")
+        // Handle click on return type - trigger quick fix
+        if (targetName == "return")
         {
             OnQuickFixPressed();
             return;

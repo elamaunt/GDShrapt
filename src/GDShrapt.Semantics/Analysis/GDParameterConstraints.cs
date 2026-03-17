@@ -120,28 +120,6 @@ public class GDParameterConstraints
             tc.KeyTypeSources.Add(source);
     }
 
-    /// <summary>
-    /// Marks a type's value slot as derivable (can be inferred further).
-    /// </summary>
-    public void MarkValueDerivable(GDSemanticType containerType, GDNode? sourceNode, string? reason = null)
-    {
-        var tc = GetOrCreateTypeConstraints(containerType);
-        tc.ValueIsDerivable = true;
-        tc.ValueDerivableNode = sourceNode;
-        tc.ValueDerivableReason = reason;
-    }
-
-    /// <summary>
-    /// Marks a type's key slot as derivable (can be inferred further).
-    /// </summary>
-    public void MarkKeyDerivable(GDSemanticType containerType, GDNode? sourceNode, string? reason = null)
-    {
-        var tc = GetOrCreateTypeConstraints(containerType);
-        tc.KeyIsDerivable = true;
-        tc.KeyDerivableNode = sourceNode;
-        tc.KeyDerivableReason = reason;
-    }
-
     #endregion
 
     #region Method Call Argument Types
@@ -313,36 +291,6 @@ internal class GDTypeSpecificConstraints
     public List<GDTypeInferenceSource> KeyTypeSources { get; } = new();
 
     /// <summary>
-    /// Whether the value type can be inferred further.
-    /// </summary>
-    public bool ValueIsDerivable { get; set; }
-
-    /// <summary>
-    /// Node to navigate to for deriving value type.
-    /// </summary>
-    public GDNode? ValueDerivableNode { get; set; }
-
-    /// <summary>
-    /// Reason why value type is derivable.
-    /// </summary>
-    public string? ValueDerivableReason { get; set; }
-
-    /// <summary>
-    /// Whether the key type can be inferred further.
-    /// </summary>
-    public bool KeyIsDerivable { get; set; }
-
-    /// <summary>
-    /// Node to navigate to for deriving key type.
-    /// </summary>
-    public GDNode? KeyDerivableNode { get; set; }
-
-    /// <summary>
-    /// Reason why key type is derivable.
-    /// </summary>
-    public string? KeyDerivableReason { get; set; }
-
-    /// <summary>
     /// Creates type-specific constraints.
     /// </summary>
     public GDTypeSpecificConstraints(GDSemanticType type)
@@ -356,7 +304,7 @@ internal class GDTypeSpecificConstraints
     public string GetElementTypeString()
     {
         if (ElementTypes.Count == 0)
-            return ValueIsDerivable ? "<Derivable>" : "Variant";
+            return "Variant";
 
         string typeStr;
         if (ElementTypes.Count == 1)
@@ -368,7 +316,7 @@ internal class GDTypeSpecificConstraints
             typeStr = string.Join(" | ", ElementTypes.Select(t => t.DisplayName).OrderBy(t => t));
         }
 
-        return ValueIsDerivable ? $"{typeStr}?" : typeStr;
+        return typeStr;
     }
 
     /// <summary>
@@ -377,7 +325,7 @@ internal class GDTypeSpecificConstraints
     public string GetKeyTypeString()
     {
         if (KeyTypes.Count == 0)
-            return KeyIsDerivable ? "<Derivable>" : "Variant";
+            return "Variant";
 
         string typeStr;
         if (KeyTypes.Count == 1)
@@ -389,7 +337,7 @@ internal class GDTypeSpecificConstraints
             typeStr = string.Join(" | ", KeyTypes.Select(t => t.DisplayName).OrderBy(t => t));
         }
 
-        return KeyIsDerivable ? $"{typeStr}?" : typeStr;
+        return typeStr;
     }
 
     /// <summary>
@@ -400,7 +348,7 @@ internal class GDTypeSpecificConstraints
         if (Type.IsArray)
         {
             var elem = GetElementTypeString();
-            if (elem != GDWellKnownTypes.Variant || ValueIsDerivable)
+            if (elem != GDWellKnownTypes.Variant)
                 return GDGenericTypeHelper.CreateArrayType(elem);
             return GDWellKnownTypes.Containers.Array;
         }
@@ -409,7 +357,7 @@ internal class GDTypeSpecificConstraints
         {
             var key = GetKeyTypeString();
             var val = GetElementTypeString();
-            if (key != GDWellKnownTypes.Variant || val != GDWellKnownTypes.Variant || KeyIsDerivable || ValueIsDerivable)
+            if (key != GDWellKnownTypes.Variant || val != GDWellKnownTypes.Variant)
                 return GDGenericTypeHelper.CreateDictionaryType(key, val);
             return GDWellKnownTypes.Containers.Dictionary;
         }

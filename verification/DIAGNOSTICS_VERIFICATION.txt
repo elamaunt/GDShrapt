@@ -1,16 +1,26 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-17 04:18:00
+Generated: 2026-03-17 18:36:20
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           899
+Total:           901
 Verified (OK):   897
-Unverified:      0
+Unverified:      2
 False Positives: 0
 Skipped:         2
 Orphaned Markers:0
+
+================================================================================
+UNVERIFIED DIAGNOSTICS
+================================================================================
+
+--- test_scripts/type_guards.gd (2 diagnostics) ---
+  249:23 [GD7020] All callers pass 'Dictionary' for parameter 'value'
+    Add: # 249:23-GD7020-OK
+  262:23 [GD7020] All callers pass 'Dictionary' for parameter 'outer'
+    Add: # 262:23-GD7020-OK
 
 ================================================================================
 SKIPPED (NEEDS ANALYSIS)
