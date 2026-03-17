@@ -557,4 +557,73 @@ func _ready():
         hover!.Content.Should().Contain("bridge", "should show bridge info");
         hover!.Content.Should().Contain("type_b.gd", "should include file path for TypeB");
     }
+
+    [TestMethod]
+    public void Hover_AfterNullCheck_ShowsNarrowedType()
+    {
+        SetupProject(
+            ("test.gd", @"extends Node
+
+const PATH = ""user://data.tres""
+
+static func restore() -> Inventory:
+    var inventory: Inventory = load(PATH) as Inventory
+    if inventory:
+        return inventory
+    return null
+"),
+            ("inventory.gd", @"class_name Inventory
+extends Resource
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        // Hover on "inventory" at line 8 "        return inventory"
+        var hover = _handler!.GetHover(filePath, 8, 16);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("Inventory");
+        // After null check, should NOT show "inferred: Inventory|null" or "narrowed to: Inventory|null"
+        hover!.Content.Should().NotContain("inferred: `Inventory|null`",
+            "after 'if inventory:', the inferred type should not show nullable Inventory");
+        hover!.Content.Should().NotContain("narrowed to: `Inventory|null`",
+            "after 'if inventory:', the narrowed type should not show nullable Inventory");
+    }
+
+    [TestMethod]
+    public void Hover_DeclaredDictionary_ShowsEnrichedType()
+    {
+        SetupProject(("test.gd", @"extends Node
+
+@export var _items: = {}
+
+func _init() -> void:
+    _items[""key""] = 0
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        // Hover on "_items" at line 3
+        var hover = _handler!.GetHover(filePath, 3, 18);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("Dictionary[");
+    }
+
+    [TestMethod]
+    public void Hover_EnumType_ShowsEnumNotClass()
+    {
+        SetupProject(("test.gd", @"extends Node
+
+enum ItemTypes { SWORD, SHIELD }
+
+signal item_changed(type: ItemTypes)
+"));
+
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        // Hover on "ItemTypes" in the signal parameter — line 5
+        var hover = _handler!.GetHover(filePath, 5, 30);
+
+        hover.Should().NotBeNull();
+        hover!.Content.Should().NotContain("class ItemTypes extends int",
+            "enum types should not show as 'class ... extends int'");
+    }
 }

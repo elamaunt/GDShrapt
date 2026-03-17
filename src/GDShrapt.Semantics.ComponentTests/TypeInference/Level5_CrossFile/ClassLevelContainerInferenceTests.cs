@@ -274,6 +274,148 @@ func access():
             "Indexer-based access should have Potential confidence");
     }
 
+    [TestMethod]
+    public void ClassLevelDictionary_GetExpressionType_ReturnsRefinedType()
+    {
+        // Arrange - class variable with empty dict initializer, populated in method
+        var code = @"
+class_name TestClass
+
+var scores = {}
+
+func add_score():
+    scores[""player1""] = 100
+    print(scores)
+";
+        var model = BuildSemanticModel(code);
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+
+        // Find 'scores' in print(scores)
+        var printCall = classDecl!.AllNodes
+            .OfType<GDCallExpression>()
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall);
+        var scoresRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(scoresRef);
+
+        // Act
+        var type = model.GetExpressionType(scoresRef);
+
+        // Assert - should be refined to Dictionary[String, int] via container profile fallback
+        Assert.IsNotNull(type, "Expression type should not be null");
+        Assert.IsTrue(type.Contains("Dictionary"), $"Type should contain Dictionary, got: {type}");
+    }
+
+    [TestMethod]
+    public void ClassLevelDictionary_RefinedByEnumKeyAndIntValue_InfersTypedDictionary()
+    {
+        // Arrange
+        var code = @"
+class_name TestClass
+
+enum ItemTypes { SWORD, SHIELD, POTION }
+
+var _items = {}
+
+func _init():
+    for item_name in ItemTypes:
+        _items[ItemTypes[item_name]] = 0
+";
+        var model = BuildSemanticModel(code);
+
+        // Act
+        var profile = model.GetClassContainerProfile("TestClass", "_items");
+
+        // Assert
+        Assert.IsNotNull(profile, "Class container profile should be collected for _items");
+        Assert.IsTrue(profile.IsDictionary, "Container should be detected as Dictionary");
+
+        var inferredType = profile.ComputeInferredType();
+        Assert.AreEqual("int", inferredType.EffectiveElementType.DisplayName,
+            "Value type should be int (from literal 0)");
+    }
+
+    [TestMethod]
+    public void ClassLevelDictionary_GetMethod_ReturnsConcreteValueType()
+    {
+        // Arrange - Dictionary.get() should return concrete value type from container profile
+        var code = @"
+class_name TestClass
+
+var _items = {}
+
+func _init():
+    _items[""key1""] = 42
+
+func test(key):
+    var value = _items.get(key, 0)
+    print(value)
+";
+        var model = BuildSemanticModel(code);
+        var reader = new GDScriptReader();
+        var classDecl = reader.ParseFileContent(code);
+
+        // Find 'value' in print(value)
+        var testMethod = classDecl!.AllNodes
+            .OfType<GDMethodDeclaration>()
+            .FirstOrDefault(m => m.Identifier?.Sequence == "test");
+        Assert.IsNotNull(testMethod);
+
+        var printCall = testMethod.AllNodes
+            .OfType<GDCallExpression>()
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall);
+
+        var valueRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(valueRef);
+
+        // Act
+        var type = model.GetExpressionType(valueRef);
+
+        // Assert - should be "int" from container profile, not "Variant"
+        Assert.AreEqual("int", type, "Dictionary.get() should return concrete value type from container profile");
+    }
+
+    [TestMethod]
+    public void ClassLevelDictionary_InventoryPattern_InfersTypedDictionary()
+    {
+        // Arrange - mimics inventory.gd pattern: @export var _items: = {} populated via enum loop
+        var code = @"
+class_name Inventory
+extends Resource
+
+enum ItemTypes { KEY, COIN, BOMB }
+
+@export var _items: = {}
+
+func _init() -> void:
+    for item_name in ItemTypes:
+        _items[ItemTypes[item_name]] = 0
+
+func get_item_count(item_type: int) -> int:
+    var old_amount: = _items.get(item_type, 0) as int
+    print(old_amount)
+    return _items.get(item_type, 0)
+";
+        var model = BuildSemanticModel(code);
+
+        // Verify container profile
+        var profile = model.GetClassContainerProfile("Inventory", "_items");
+        Assert.IsNotNull(profile, "Class container profile should be collected for _items");
+        Assert.IsTrue(profile.IsDictionary, "Container should be detected as Dictionary");
+
+        var inferredType = profile.ComputeInferredType();
+        Assert.AreEqual("int", inferredType.EffectiveElementType.DisplayName,
+            "Value type should be int (from literal 0)");
+
+        // Verify GetInferredContainerType fallback works
+        var containerType = model.GetInferredContainerType("_items");
+        Assert.IsNotNull(containerType, "GetInferredContainerType should find class-level profile for _items");
+        Assert.AreEqual("int", containerType.EffectiveElementType.DisplayName,
+            "Inferred container type should have int value type");
+    }
+
     #endregion
 
     #region Edge Cases

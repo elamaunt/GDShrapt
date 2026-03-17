@@ -49,12 +49,20 @@ internal class GDClassContainerUsageCollector : GDVisitor
         {
             if (member is GDVariableDeclaration varDecl)
             {
-                // Only track untyped variables (no type annotation)
-                if (varDecl.Type != null)
-                    continue;
-
                 var varName = varDecl.Identifier?.Sequence;
                 if (string.IsNullOrEmpty(varName))
+                    continue;
+
+                // Check for bare container type annotations (Dictionary, Array without generic params)
+                var typeAnnotation = varDecl.Type?.ToString();
+                if (typeAnnotation == "Dictionary" || typeAnnotation == "Array")
+                {
+                    names.Add(varName);
+                    continue;
+                }
+
+                // Only track untyped variables (no type annotation)
+                if (varDecl.Type != null)
                     continue;
 
                 // Check if initializer is Array or Dictionary by AST type

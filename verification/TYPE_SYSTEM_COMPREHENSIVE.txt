@@ -9996,7 +9996,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+    inferred:     (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -10073,7 +10073,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+    inferred:     (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -10369,7 +10369,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+    inferred:     (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -22002,10 +22002,11 @@ test_scripts/scene_nodes.gd
 --- 36:1 Variable player_node ---
   Type Info:
     declared:     (none)
-    inferred:     CharacterBody2D
-    effective:    CharacterBody2D
-    confidence:   High
+    inferred:     CharacterBody2D|null
+    effective:    CharacterBody2D|null
+    confidence:   Medium
     nullable:     no
+    union:        CharacterBody2D|null
 
 --- 41:1 Variable optional ---
   Type Info:
@@ -22427,10 +22428,11 @@ test_scripts/scene_nodes.gd
 --- 165:1 Variable copy ---
   Type Info:
     declared:     (none)
-    inferred:     Node2D
-    effective:    Node2D
-    confidence:   High
+    inferred:     Node2D|null
+    effective:    Node2D|null
+    confidence:   Medium
     nullable:     no
+    union:        Node2D|null
 
 --- 169:0 Method get_node_configuration_warnings ---
   Type Info:
@@ -22584,8 +22586,8 @@ test_scripts/scene_nodes.gd
 
   Flow Narrowing:
     _ready():
-      37:4 player_node -> CharacterBody2D (base: CharacterBody2D)
-      38:15 player_node -> CharacterBody2D (base: CharacterBody2D)
+      37:4 player_node -> CharacterBody2D|null (base: CharacterBody2D|null)
+      38:15 player_node -> CharacterBody2D|null (base: CharacterBody2D|null)
       42:4 optional -> Node (base: Node)
       47:4 sprite_node -> Sprite2D (base: Node)
       48:2 sprite_node -> Sprite2D (base: Node)
@@ -22636,9 +22638,9 @@ test_scripts/scene_nodes.gd
       129:8 instance -> Node (base: Node)
     instantiate_typed():
       134:16 scene -> PackedScene (base: PackedScene)
-      135:4 instance -> CharacterBody2D (base: CharacterBody2D)
-      136:12 instance -> CharacterBody2D (base: CharacterBody2D)
-      137:9 instance -> CharacterBody2D (base: CharacterBody2D)
+      135:4 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
+      136:12 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
+      137:9 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
     queue_free_child():
       143:30 child_name -> String (base: String)
       144:4 child -> Node (base: Node)
@@ -22651,7 +22653,7 @@ test_scripts/scene_nodes.gd
     find_owner():
       160:8 scene_owner -> Node (base: Node)
     duplicate_node():
-      166:8 copy -> Node2D (base: Node2D)
+      166:8 copy -> Node2D|null (base: Node2D|null)
     get_node_configuration_warnings():
       174:2 warnings -> PackedStringArray (base: PackedStringArray)
       177:2 warnings -> PackedStringArray (base: PackedStringArray)
@@ -22800,10 +22802,11 @@ test_scripts/scene_references.gd
 --- 48:1 Variable enemy ---
   Type Info:
     declared:     (none)
-    inferred:     Node2D
-    effective:    Node2D
-    confidence:   High
+    inferred:     Node2D|null
+    effective:    Node2D|null
+    confidence:   Medium
     nullable:     no
+    union:        Node2D|null
 
 --- 54:0 Method get_enemies ---
   Type Info:
@@ -22924,10 +22927,10 @@ test_scripts/scene_references.gd
       42:33 new_health -> int (base: int)
     spawn_enemy():
       48:14 enemy_scene -> PackedScene (base: PackedScene)
-      49:1 enemy -> Node2D (base: Node2D)
+      49:1 enemy -> Node2D|null (base: Node2D|null)
       49:18 spawn_pos -> Vector2 (base: Vector2)
-      50:27 enemy -> Node2D (base: Node2D)
-      51:8 enemy -> Node2D (base: Node2D)
+      50:27 enemy -> Node2D|null (base: Node2D|null)
+      51:8 enemy -> Node2D|null (base: Node2D|null)
     get_enemies():
       57:5 child -> Node2D (base: Node)
       58:3 enemies -> Array[Node2D] (base: Array[Node2D])
@@ -29153,7 +29156,7 @@ test_scripts/type_guards.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+8 more)|String|StringName|Vector2i|float|int
+    inferred:     (+8 more)|String|StringName|float|int
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -30116,18 +30119,20 @@ test_scripts/type_inference.gd
 --- 80:1 Variable sprite ---
   Type Info:
     declared:     (none)
-    inferred:     Sprite2D
-    effective:    Sprite2D
-    confidence:   High
+    inferred:     Sprite2D|null
+    effective:    Sprite2D|null
+    confidence:   Medium
     nullable:     no
+    union:        Sprite2D|null
 
 --- 81:1 Variable label ---
   Type Info:
     declared:     (none)
-    inferred:     Label
-    effective:    Label
-    confidence:   High
+    inferred:     Label|null
+    effective:    Label|null
+    confidence:   Medium
     nullable:     no
+    union:        Label|null
 
 --- 90:0 Method test_conditional_inference ---
   Type Info:
@@ -30636,10 +30641,10 @@ test_scripts/type_inference.gd
       75:14 front -> int (base: int)
       75:21 popped -> int (base: int)
     get_node_types():
-      84:4 sprite -> Sprite2D (base: Sprite2D)
-      85:2 sprite -> Sprite2D (base: Sprite2D)
-      86:4 label -> Label (base: Label)
-      87:2 label -> Label (base: Label)
+      84:4 sprite -> Sprite2D|null (base: Sprite2D|null)
+      85:2 sprite -> Sprite2D|null (base: Sprite2D|null)
+      86:4 label -> Label|null (base: Label|null)
+      87:2 label -> Label|null (base: Label|null)
     test_conditional_inference():
       92:25 value -> float (base: float)
       95:23 number -> int (base: int)

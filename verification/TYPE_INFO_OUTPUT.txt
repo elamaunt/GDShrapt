@@ -15922,10 +15922,11 @@ test_scripts/scene_nodes.gd
 
   36:1 Variable player_node
     declared: (none)
-    inferred: CharacterBody2D
-    effective: CharacterBody2D
-    confidence: High
+    inferred: CharacterBody2D|null
+    effective: CharacterBody2D|null
+    confidence: Medium
     nullable: no
+    union: CharacterBody2D|null
 
   41:1 Variable optional
     declared: (none)
@@ -16237,10 +16238,11 @@ test_scripts/scene_nodes.gd
 
   165:1 Variable copy
     declared: (none)
-    inferred: Node2D
-    effective: Node2D
-    confidence: High
+    inferred: Node2D|null
+    effective: Node2D|null
+    confidence: Medium
     nullable: no
+    union: Node2D|null
 
   169:0 Method get_node_configuration_warnings
     declared: (none)
@@ -16456,10 +16458,11 @@ test_scripts/scene_references.gd
 
   48:1 Variable enemy
     declared: (none)
-    inferred: Node2D
-    effective: Node2D
-    confidence: High
+    inferred: Node2D|null
+    effective: Node2D|null
+    confidence: Medium
     nullable: no
+    union: Node2D|null
 
   54:0 Method get_enemies
     declared: (none)
@@ -21786,17 +21789,19 @@ test_scripts/type_inference.gd
 
   80:1 Variable sprite
     declared: (none)
-    inferred: Sprite2D
-    effective: Sprite2D
-    confidence: High
+    inferred: Sprite2D|null
+    effective: Sprite2D|null
+    confidence: Medium
     nullable: no
+    union: Sprite2D|null
 
   81:1 Variable label
     declared: (none)
-    inferred: Label
-    effective: Label
-    confidence: High
+    inferred: Label|null
+    effective: Label|null
+    confidence: Medium
     nullable: no
+    union: Label|null
 
   90:0 Method test_conditional_inference
     declared: (none)

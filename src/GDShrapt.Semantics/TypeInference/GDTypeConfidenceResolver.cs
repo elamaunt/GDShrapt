@@ -222,7 +222,9 @@ internal class GDTypeConfidenceResolver
             var collectionType = _semanticModel.GetExpressionType(forStmt.Collection);
             if (!string.IsNullOrEmpty(collectionType))
             {
-                var elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
+                var elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType,
+                    t => _semanticModel?.FindSymbol(t)?.Kind == GDSymbolKind.Enum
+                         || _runtimeProvider?.GetTypeInfo(t)?.IsEnum == true);
                 if (!string.IsNullOrEmpty(elementType) && elementType != GDWellKnownTypes.Variant)
                     return GDInferredType.FromType(elementType, GDTypeConfidence.High, "inferred from collection type");
             }

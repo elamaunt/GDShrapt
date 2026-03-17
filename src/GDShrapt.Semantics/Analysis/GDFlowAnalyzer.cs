@@ -1015,7 +1015,8 @@ internal class GDFlowAnalyzer : GDVisitor
             else
             {
                 var collectionType = _typeProvider?.InferType(forStmt.Collection)?.DisplayName;
-                elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType);
+                elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType,
+                    t => _typeProvider?.LookupSymbol(t)?.Kind == GDSymbolKind.Enum);
             }
 
             context.IteratorName = iteratorName;
@@ -1217,7 +1218,8 @@ internal class GDFlowAnalyzer : GDVisitor
 
         if (pattern is GDArrayInitializerExpression arrayExpr)
         {
-            var elementType = GDLoopFlowHelper.InferIteratorElementType(subjectType);
+            var elementType = GDLoopFlowHelper.InferIteratorElementType(subjectType,
+                t => _typeProvider?.LookupSymbol(t)?.Kind == GDSymbolKind.Enum);
             foreach (var element in arrayExpr.Values ?? Enumerable.Empty<GDExpression>())
             {
                 DeclareBindingsFromPattern(element, state, elementType, guardVar, guardType);

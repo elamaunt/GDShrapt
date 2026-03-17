@@ -1120,7 +1120,7 @@ test_scripts/dynamic_dispatch.gd
     union: yes
 
   63:29 Parameter target in copy_properties
-    inferred-type: (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+    inferred-type: (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1148,7 +1148,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   76:22 Parameter obj in apply_properties
-    inferred-type: (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+    inferred-type: (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1213,7 +1213,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   165:27 Parameter obj in deserialize_to_object
-    inferred-type: (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+    inferred-type: (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3607,7 +3607,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   61:24 Parameter value in type_guard_with_or
-    inferred-type: (+8 more)|String|StringName|Vector2i|float|int
+    inferred-type: (+8 more)|String|StringName|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes

@@ -106,6 +106,13 @@ public class GDInlayHintHandler : IGDInlayHintHandler
                         if (typeInfo.IsContainer)
                         {
                             var containerType = semanticModel.TypeSystem.GetContainerElementType(variable.Name);
+                            if (containerType == null || !containerType.HasElementTypes)
+                            {
+                                var className = semanticModel.ScriptFile?.TypeName;
+                                if (!string.IsNullOrEmpty(className))
+                                    containerType = semanticModel.TypeSystem.GetClassContainerElementType(className, variable.Name);
+                            }
+
                             if (containerType != null && containerType.HasElementTypes)
                             {
                                 typeName = containerType.ToString();

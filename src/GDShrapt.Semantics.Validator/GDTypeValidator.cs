@@ -848,6 +848,13 @@ namespace GDShrapt.Semantics.Validator
             if (left == null || right == null || op == null)
                 return;
 
+            // Handle 'as' separately: right side is a type name, not a typed expression
+            if (op == GDDualOperatorType.As)
+            {
+                ValidateAsCast(expr, left, right);
+                return;
+            }
+
             var leftType = InferSimpleType(left);
             var rightType = InferSimpleType(right);
 
@@ -1354,6 +1361,53 @@ namespace GDShrapt.Semantics.Validator
                             expr);
                     }
                     break;
+            }
+        }
+
+        private void ValidateAsCast(GDDualOperatorExpression expr, GDExpression left, GDExpression right)
+        {
+            var leftType = InferSimpleType(left);
+            if (string.IsNullOrEmpty(leftType))
+                return;
+
+            var leftSemantic = GDSemanticType.FromRuntimeTypeName(leftType);
+            if (leftSemantic.IsVariant)
+                return;
+
+            var targetTypeName = right is GDIdentifierExpression id
+                ? id.Identifier?.Sequence
+                : right?.ToString();
+            if (string.IsNullOrEmpty(targetTypeName))
+                return;
+
+            var targetSemantic = GDSemanticType.FromRuntimeTypeName(targetTypeName);
+            // Value type conversions always succeed in GDScript (returns default, not null)
+            if (targetSemantic.IsValueType)
+                return;
+
+            // Value type → ref type: impossible
+            if (leftSemantic.IsValueType)
+            {
+                ReportWarning(
+                    GDDiagnosticCode.ImpossibleCast,
+                    $"Cast '{leftType} as {targetTypeName}' will always fail: value type cannot be cast to reference type",
+                    expr);
+                return;
+            }
+
+            // Check inheritance relationship
+            var provider = _semanticModel?.RuntimeProvider;
+            if (provider != null)
+            {
+                bool leftIsTarget = provider.IsAssignableTo(leftType, targetTypeName);
+                bool targetIsLeft = provider.IsAssignableTo(targetTypeName, leftType);
+                if (!leftIsTarget && !targetIsLeft)
+                {
+                    ReportWarning(
+                        GDDiagnosticCode.ImpossibleCast,
+                        $"Cast '{leftType} as {targetTypeName}' will always fail: types share no inheritance relationship",
+                        expr);
+                }
             }
         }
 

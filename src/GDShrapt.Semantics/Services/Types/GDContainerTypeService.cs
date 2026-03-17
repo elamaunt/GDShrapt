@@ -46,8 +46,20 @@ internal class GDContainerTypeService
         if (_containerTypeCache.TryGetValue(variableName, out var cached))
             return cached;
 
-        // Compute from profile
+        // Compute from local profile first, then class-level profile
         var profile = GetContainerProfile(variableName);
+        if (profile == null)
+        {
+            foreach (var kv in _classContainerProfiles)
+            {
+                if (kv.Key == variableName || kv.Key.EndsWith("." + variableName))
+                {
+                    profile = kv.Value;
+                    break;
+                }
+            }
+        }
+
         if (profile == null)
             return null;
 

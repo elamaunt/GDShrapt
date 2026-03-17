@@ -1036,6 +1036,246 @@ func test(value):
 
     #endregion
 
+    #region Enum For-Loop Tests
+
+    [TestMethod]
+    public void FlowType_ForLoop_OverEnum_IteratorIsString()
+    {
+        // Arrange
+        var code = @"
+extends Node
+
+enum ItemTypes { SWORD, SHIELD, POTION }
+
+func test():
+    for item_name in ItemTypes:
+        print(item_name)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        // Find the 'item_name' in print(item_name)
+        var callExpr = FindFirstCallExpression(method);
+        Assert.IsNotNull(callExpr);
+        var itemNameRef = callExpr.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(itemNameRef);
+
+        // Act
+        var type = model.GetExpressionType(itemNameRef);
+
+        // Assert
+        Assert.AreEqual("String", type, "Iterating over enum should yield String keys");
+    }
+
+    #endregion
+
+    #region As Operator Nullable Semantics Tests
+
+    [TestMethod]
+    public void FlowType_AsOperator_ReferenceType_ReturnsNullableType()
+    {
+        // Arrange - "as Node2D" should be nullable because reference types return null on failure
+        var code = @"
+extends Node
+
+func test():
+    var node: Node = Node.new()
+    var obj = node as Node2D
+    print(obj)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        // Find 'obj' in print(obj)
+        var printCall = FindAllCallExpressions(method)
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall, "Should find print() call");
+        var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(objRef);
+
+        // Act
+        var type = model.GetExpressionType(objRef);
+
+        // Assert - reference type should be nullable
+        Assert.IsNotNull(type);
+        Assert.IsTrue(type.Contains("null"), $"'as Node2D' should be nullable, got: {type}");
+        Assert.IsTrue(type.Contains("Node2D"), $"Type should contain Node2D, got: {type}");
+    }
+
+    [TestMethod]
+    public void FlowType_AsOperator_ValueType_ReturnsNonNullableType()
+    {
+        // Arrange - "as int" should NOT be nullable because value types return 0 on failure
+        var code = @"
+extends Node
+
+func test():
+    var x = some_value as int
+    print(x)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        // Find 'x' in print(x)
+        var callExpr = FindFirstCallExpression(method);
+        Assert.IsNotNull(callExpr);
+        var xRef = callExpr.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(xRef);
+
+        // Act
+        var type = model.GetExpressionType(xRef);
+
+        // Assert - value type should NOT be nullable
+        Assert.AreEqual("int", type, "'as int' should be non-nullable (returns 0 on failure)");
+    }
+
+    [TestMethod]
+    public void FlowType_AsOperator_StringType_ReturnsNonNullableType()
+    {
+        // Arrange - "as String" should NOT be nullable (returns "" on failure)
+        var code = @"
+extends Node
+
+func test():
+    var s = some_value as String
+    print(s)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        var callExpr = FindFirstCallExpression(method);
+        Assert.IsNotNull(callExpr);
+        var sRef = callExpr.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(sRef);
+
+        // Act
+        var type = model.GetExpressionType(sRef);
+
+        // Assert
+        Assert.AreEqual("String", type, "'as String' should be non-nullable (returns empty string on failure)");
+    }
+
+    [TestMethod]
+    public void FlowType_AsOperator_SubtypeLeft_ReturnsNonNullableType()
+    {
+        // Node2D as Node → guaranteed success (Node2D IS-A Node) → T
+        var code = @"
+extends Node
+
+func test():
+    var node: Node2D = Node2D.new()
+    var obj = node as Node
+    print(obj)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        var printCall = FindAllCallExpressions(method)
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall, "Should find print() call");
+        var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(objRef);
+
+        var type = model.GetExpressionType(objRef);
+
+        Assert.AreEqual("Node", type, "'Node2D as Node' should be non-nullable (upcast always succeeds)");
+    }
+
+    [TestMethod]
+    public void FlowType_AsOperator_SupertypeLeft_ReturnsNullableType()
+    {
+        // Node as Node2D → downcast, may fail → T|null
+        var code = @"
+extends Node
+
+func test():
+    var node: Node = Node.new()
+    var obj = node as Node2D
+    print(obj)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        var printCall = FindAllCallExpressions(method)
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall, "Should find print() call");
+        var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(objRef);
+
+        var type = model.GetExpressionType(objRef);
+
+        Assert.IsNotNull(type);
+        Assert.IsTrue(type.Contains("Node2D") && type.Contains("null"),
+            $"'Node as Node2D' should be nullable (downcast), got: {type}");
+    }
+
+    [TestMethod]
+    public void FlowType_AsOperator_UnrelatedTypes_ReturnsNull()
+    {
+        // Resource as Node → impossible cast → null
+        var code = @"
+extends Node
+
+func test():
+    var res: Resource = Resource.new()
+    var obj = res as Node
+    print(obj)
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        var printCall = FindAllCallExpressions(method)
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall, "Should find print() call");
+        var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(objRef);
+
+        var type = model.GetExpressionType(objRef);
+
+        Assert.AreEqual("null", type, "'Resource as Node' should be 'null' (impossible cast)");
+    }
+
+    [TestMethod]
+    public void FlowType_AsOperator_VariantLeft_ReturnsNullableType()
+    {
+        // Variant (untyped) as Node → T|null (unknown left)
+        var code = @"
+extends Node
+
+func test():
+    var v = get_something()
+    var obj = v as Node
+    print(obj)
+
+func get_something():
+    pass
+";
+        var (classDecl, model) = AnalyzeCode(code);
+        var method = FindMethod(classDecl, "test");
+        Assert.IsNotNull(method);
+
+        var printCall = FindAllCallExpressions(method)
+            .FirstOrDefault(c => c.CallerExpression is GDIdentifierExpression id && id.Identifier?.Sequence == "print");
+        Assert.IsNotNull(printCall, "Should find print() call");
+        var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
+        Assert.IsNotNull(objRef);
+
+        var type = model.GetExpressionType(objRef);
+
+        Assert.IsNotNull(type);
+        Assert.IsTrue(type.Contains("Node") && type.Contains("null"),
+            $"'Variant as Node' should be nullable, got: {type}");
+    }
+
+    #endregion
+
     #region Fixed-Point Loop Analysis Tests
 
     [TestMethod]

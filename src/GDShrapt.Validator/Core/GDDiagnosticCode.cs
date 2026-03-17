@@ -5,7 +5,7 @@ namespace GDShrapt.Reader
     /// Codes are grouped by category:
     /// - GD1xxx: Syntax errors
     /// - GD2xxx: Scope errors
-    /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018, annotation analysis GD3022-3025)
+    /// - GD3xxx: Type errors (including indexers GD3013-3015, generics GD3016-3018, annotation analysis GD3022-3025, impossible cast GD3026)
     /// - GD4xxx: Call errors (including signal types GD4009-4010, scene nodes GD4011-4013)
     /// - GD5xxx: Control flow errors
     /// - GD6xxx: Indentation errors
@@ -216,6 +216,12 @@ namespace GDShrapt.Reader
         /// For example: var scores: Array could be Array[int] based on append() calls.
         /// </summary>
         ContainerMissingSpecialization = 3025,
+
+        /// <summary>
+        /// Cast via 'as' operator will always fail because the types are incompatible.
+        /// For example: var r: Resource; r as Node — Resource and Node share no inheritance.
+        /// </summary>
+        ImpossibleCast = 3026,
 
         // Call errors (4xxx)
         /// <summary>

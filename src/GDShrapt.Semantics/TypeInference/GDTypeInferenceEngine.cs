@@ -547,6 +547,14 @@ namespace GDShrapt.Semantics
                     return callableType;
             }
 
+            // 'as' operator → use string-based inference (union types can't be represented as GDTypeNode)
+            if (expression is GDDualOperatorExpression dualOp && dualOp.Operator?.OperatorType == GDDualOperatorType.As)
+            {
+                var asResult = InferDualOperatorType(dualOp);
+                if (!string.IsNullOrEmpty(asResult))
+                    return GDSemanticType.FromRuntimeTypeName(asResult);
+            }
+
             var typeNode = InferTypeNode(expression);
             return GDSemanticType.FromTypeNode(typeNode);
         }
@@ -1246,6 +1254,22 @@ namespace GDShrapt.Semantics
                             var dictValueType = InferDictionaryGetType(callExpr, memberExpr.CallerExpression);
                             if (!string.IsNullOrEmpty(dictValueType))
                                 return dictValueType;
+
+                            // Fallback: use container usage profile for value type
+                            if (_containerTypeProvider != null)
+                            {
+                                var varName = GetRootVariableName(memberExpr.CallerExpression);
+                                if (!string.IsNullOrEmpty(varName))
+                                {
+                                    var inferredType = _containerTypeProvider(varName);
+                                    if (inferredType != null && inferredType.HasElementTypes)
+                                    {
+                                        var effectiveType = inferredType.EffectiveElementType;
+                                        if (!effectiveType.IsVariant)
+                                            return effectiveType.DisplayName;
+                                    }
+                                }
+                            }
                         }
 
                         // Special handling for Object.get("property") - infer property type
@@ -2203,6 +2227,59 @@ namespace GDShrapt.Semantics
             return null;
         }
 
+        private string InferAsOperatorResultType(string leftType, string targetTypeName)
+        {
+            if (string.IsNullOrEmpty(leftType) || leftType == GDWellKnownTypes.Variant)
+                return targetTypeName + "|null";
+
+            var leftSemType = GDSemanticType.FromRuntimeTypeName(leftType);
+
+            if (leftSemType is GDUnionSemanticType union)
+                return InferAsOperatorForUnionLeft(union, targetTypeName);
+
+            if (leftSemType.IsNull)
+                return "null";
+
+            // Value type left → ref type target: impossible cast
+            if (leftSemType.IsValueType)
+                return "null";
+
+            // Left IS-A target (Node2D as Node) → guaranteed success → T
+            if (_runtimeProvider.IsAssignableTo(leftType, targetTypeName))
+                return targetTypeName;
+
+            // Target IS-A left (Node as Node2D) → downcast → T|null
+            if (_runtimeProvider.IsAssignableTo(targetTypeName, leftType))
+                return targetTypeName + "|null";
+
+            // No inheritance relationship → impossible → null
+            return "null";
+        }
+
+        private string InferAsOperatorForUnionLeft(GDUnionSemanticType union, string targetTypeName)
+        {
+            bool canBeTarget = false;
+            bool alwaysTarget = true;
+
+            foreach (var memberType in union.Types)
+            {
+                if (memberType.IsNull) { alwaysTarget = false; continue; }
+                if (memberType.IsVariant) return targetTypeName + "|null";
+
+                var memberName = memberType.DisplayName;
+                if (_runtimeProvider.IsAssignableTo(memberName, targetTypeName))
+                    canBeTarget = true;
+                else if (_runtimeProvider.IsAssignableTo(targetTypeName, memberName))
+                { canBeTarget = true; alwaysTarget = false; }
+                else
+                    alwaysTarget = false;
+            }
+
+            if (!canBeTarget) return "null";
+            if (alwaysTarget) return targetTypeName;
+            return targetTypeName + "|null";
+        }
+
         private string InferDualOperatorType(GDDualOperatorExpression dualOp)
         {
             var opType = dualOp.Operator?.OperatorType;
@@ -2213,7 +2290,15 @@ namespace GDShrapt.Semantics
             if (opType == GDDualOperatorType.As)
             {
                 var typeName = GetTypeNameFromExpression(dualOp.RightExpression);
-                return typeName ?? GDWellKnownTypes.Variant;
+                if (string.IsNullOrEmpty(typeName))
+                    return GDWellKnownTypes.Variant;
+
+                var targetSemType = GDSemanticType.FromRuntimeTypeName(typeName);
+                if (targetSemType.IsValueType)
+                    return typeName;
+
+                var asLeftType = InferTypeNode(dualOp.LeftExpression)?.BuildName();
+                return InferAsOperatorResultType(asLeftType, typeName);
             }
 
             var leftType = InferTypeNode(dualOp.LeftExpression)?.BuildName();
@@ -2236,9 +2321,20 @@ namespace GDShrapt.Semantics
             // Special handling for 'as' operator - right side IS the type name
             if (opType == GDDualOperatorType.As)
             {
-                // Try to extract type node from expression
                 var typeNode = GetTypeNodeFromExpression(dualOp.RightExpression);
-                return typeNode ?? CreateSimpleType(GDWellKnownTypes.Variant);
+                if (typeNode == null)
+                    return CreateSimpleType(GDWellKnownTypes.Variant);
+
+                var typeName = typeNode.BuildName();
+                var targetSemType = GDSemanticType.FromRuntimeTypeName(typeName);
+                if (targetSemType.IsValueType)
+                    return typeNode;
+
+                var leftType = InferTypeNode(dualOp.LeftExpression)?.BuildName();
+                var resultTypeName = InferAsOperatorResultType(leftType, typeName);
+                if (resultTypeName == typeName)
+                    return typeNode;
+                return CreateSimpleType(resultTypeName);
             }
 
             // Infer operand types as GDTypeNode directly

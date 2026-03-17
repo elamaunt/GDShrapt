@@ -1,23 +1,23 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-17 18:33:54
+Generated: 2026-03-18 02:29:57
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 736
+Total diagnostics: 745
 Scripts analyzed:  61
 
 By Severity:
   Error     :    30
   Hint      :    98
   Info      :    36
-  Warning   :   572
+  Warning   :   581
 
 By Source:
   Linter              :   304
-  SemanticValidator   :   398
+  SemanticValidator   :   407
   Validator           :    34
 
 By Code (Top 30):
@@ -34,23 +34,23 @@ By Code (Top 30):
   GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
   GDL222    :   11  ('CyclicInference' has 22 public methods (max 20))
   GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
+  GD3009    :    8  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GDL101    :    8  (Line 212 exceeds 120 characters (length: 146))
   GDL202    :    8  (Parameter 'delta' is declared but never used)
   GDL211    :    7  (Local variable 'class_level_var' shadows a class-level va...)
   GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
-  GD3009    :    5  (Property 'nonexistent_property_xyz' not found on type 'Node')
+  GD3010    :    5  (Argument type mismatch for 'x' in call to '_take_int': ex...)
   GD3013    :    5  (Type 'Array' expects integer index, got 'String')
   GD3024    :    5  (Not all code paths return a value in 'test_gdl228_valid' ...)
+  GD4002    :    5  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD5004    :    5  (Unreachable code detected after return/break/continue sta...)
   GDL002    :    5  (Function name 'InvalidFunctionName' should use snake_case)
   GDL210    :    5  (Unreachable code detected)
   GDL226    :    5  ('test_gdl226_invalid' has 16 local variables (max 15))
   GD3014    :    4  (Type 'int' does not support indexing)
   GD3018    :    4  (Type 'Array' is not hashable and cannot be used as Dictio...)
-  GD4002    :    4  (Method 'process_by_type' not found on type 'DuckTypingAdv...)
   GD4009    :    4  (Signal 'typed_signal' parameter 1 expects 'int', got 'Str...)
   GD7013    :    4  (Redundant null check: 'right' is already known to be non-...)
-  GD3006    :    3  (Unknown type: 'CompletelyUnknownType')
 
 ================================================================================
 DIAGNOSTICS BY FILE
@@ -471,9 +471,11 @@ DIAGNOSTICS BY FILE
    376:14  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
    377:31  [GD7007] Warning - Variable 'edata' may be null when accessing 'get'
 
---- test_scripts/enemy_entity.gd (1 diagnostics) ---
+--- test_scripts/enemy_entity.gd (3 diagnostics) ---
 
+    94:2   [GD4002] Warning - Method 'gain_experience' not found on type 'PlayerEntity|null'
     94:2   [GD7007] Warning - Variable 'player' may be null when accessing 'gain_experience'
+   104:13  [GD3010] Warning - Argument type mismatch for 'new_target' in call to 'set_target': expected 'BaseEntity', got 'BaseEntity|null'
 
 --- test_scripts/extended_class.gd (1 diagnostics) ---
 
@@ -656,18 +658,23 @@ DIAGNOSTICS BY FILE
     31:5   [GDL201] Warning - Local variable 'cb' is declared but never used
     32:5   [GDL201] Warning - Local variable 'cb2' is declared but never used
 
---- test_scripts/scene_nodes.gd (5 diagnostics) ---
+--- test_scripts/scene_nodes.gd (8 diagnostics) ---
 
      2:11  [GDL222] Warning - 'SceneNodes' has 22 public methods (max 20)
+    38:15  [GD3010] Warning - Argument type mismatch for 'p' in call to 'setup_player': expected 'CharacterBody2D', got 'CharacterBody2D|null'
     57:8   [GD7005] Hint - Variable 'player' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'global_position'. Accessed in scene_nodes.gd:55:0 get_player_position (no in-file callers)
     62:1   [GD7005] Hint - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'max_value'. Accessed in scene_nodes.gd:60:0 update_health_bar (no in-file callers)
     63:1   [GD7005] Hint - Variable 'health_bar' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'value'. Accessed in scene_nodes.gd:60:0 update_health_bar (no in-file callers)
+   137:2   [GD3007] Warning - Cannot return 'CharacterBody2D|null' from function with return type 'CharacterBody2D'
+   166:1   [GD3007] Warning - Cannot return 'Node2D|null' from function with return type 'Node2D'
    203:5   [GDL201] Warning - Local variable 'node_path' is declared but never used
 
---- test_scripts/scene_references.gd (5 diagnostics) ---
+--- test_scripts/scene_references.gd (7 diagnostics) ---
 
     34:2   [GD4006] Warning - Signal 'health_changed' not found on type 'CharacterBody2D'
+    49:1   [GD3009] Warning - Property 'position' not found on type 'Node2D|null'
     50:1   [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'add_child'. Accessed in scene_references.gd:45:0 spawn_enemy (no in-file callers)
+    51:1   [GD3007] Warning - Cannot return 'Node2D|null' from function with return type 'Node2D'
     56:14  [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'. Accessed in scene_references.gd:54:0 get_enemies (no in-file callers)
     63:14  [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'. Accessed in scene_references.gd:62:0 clear_enemies (no in-file callers)
     71:0   [GD3023] Warning - Function 'find_child_of_type' returns inconsistent types: Array[Node], Node, null
@@ -885,8 +892,10 @@ DIAGNOSTICS BY FILE
    253:8   [GD7007] Warning - Variable 'value' may be null when accessing 'keys'
    268:6   [GD7011] Hint - Redundant type check: 'outer' is already narrowed to 'Dictionary'
 
---- test_scripts/type_inference.gd (1 diagnostics) ---
+--- test_scripts/type_inference.gd (3 diagnostics) ---
 
+    85:2   [GD3009] Warning - Property 'texture' not found on type 'Sprite2D|null'
+    87:2   [GD3009] Warning - Property 'text' not found on type 'Label|null'
    100:0   [GD3024] Warning - Not all code paths return a value in 'test_match_inference' (declared -> String)
 
 --- test_scripts/union_returns.gd (13 diagnostics) ---

@@ -5063,7 +5063,7 @@ test_scripts/dynamic_dispatch.gd
 60:8 GDBoolExpression false -> bool
 63:0 Method copy_properties -> void
 63:21 Parameter source -> Dictionary|Object
-63:29 Parameter target -> (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+63:29 Parameter target -> (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
 63:37 Parameter prop_names -> Array
 64:1 Iterator prop -> Variant
 64:13 GDIdentifierExpression prop_names -> Variant
@@ -5094,7 +5094,7 @@ test_scripts/dynamic_dispatch.gd
 73:30 GDIdentifierExpression obj -> Variant
 73:38 GDIdentifierExpression prop -> Variant
 76:0 Method apply_properties -> void
-76:22 Parameter obj -> (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+76:22 Parameter obj -> (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
 78:1 Iterator prop -> Variant
 78:13 GDIdentifierExpression dynamic_properties -> Dictionary
 79:5 GDDualOperatorExpression propInobj -> bool
@@ -5334,7 +5334,7 @@ test_scripts/dynamic_dispatch.gd
 162:8 GDIdentifierExpression str -> Callable(Array...) -> String
 162:12 GDIdentifierExpression value -> Variant
 165:0 Method deserialize_to_object -> void
-165:27 Parameter obj -> (+6 more)|Object|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
+165:27 Parameter obj -> (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
 165:32 Parameter data -> Array
 166:1 Iterator key -> Variant
 166:12 GDIdentifierExpression data -> Variant
@@ -6086,7 +6086,7 @@ test_scripts/ecs_like_system.gd
 47:16 GDIdentifierExpression entity_id -> Variant
 48:1 GDReturnExpression return true -> Variant
 48:8 GDBoolExpression true -> bool
-51:0 Method get_entity -> Variant
+51:0 Method get_entity -> Entity
 51:16 Parameter entity_id -> Variant
 52:1 GDReturnExpression return entities.get() -> Variant
 52:8 GDCallExpression entities.get() -> Variant
@@ -7184,13 +7184,13 @@ test_scripts/enemy_entity.gd
 92:4 GDDualOperatorExpression last_damage_sourceIsPlayerEntity -> bool
 92:4 GDIdentifierExpression last_damage_source -> Node
 92:26 GDIdentifierExpression PlayerEntity -> PlayerEntity
-93:2 Variable player -> PlayerEntity
-93:15 GDDualOperatorExpression last_damage_sourceAsPlayerEntity -> PlayerEntity
+93:2 Variable player -> PlayerEntity|null
+93:15 GDDualOperatorExpression last_damage_sourceAsPlayerEntity -> PlayerEntity|null
 93:15 GDIdentifierExpression last_damage_source -> Node
 93:37 GDIdentifierExpression PlayerEntity -> PlayerEntity
 94:2 GDCallExpression player.gain_experience() -> void
-94:2 GDMemberOperatorExpression player.gain_experience -> void
-94:2 GDIdentifierExpression player -> PlayerEntity
+94:2 GDMemberOperatorExpression player.gain_experience -> Variant
+94:2 GDIdentifierExpression player -> BaseEntity
 94:25 GDIdentifierExpression experience_reward -> int
 96:1 GDCallExpression super.die() -> void
 96:1 GDMemberOperatorExpression super.die -> void
@@ -7211,7 +7211,7 @@ test_scripts/enemy_entity.gd
 103:27 GDIdentifierExpression BaseEntity -> BaseEntity
 104:2 GDCallExpression set_target() -> void
 104:2 GDIdentifierExpression set_target -> Callable
-104:13 GDDualOperatorExpression sourceAsBaseEntity -> BaseEntity
+104:13 GDDualOperatorExpression sourceAsBaseEntity -> BaseEntity|null
 104:13 GDIdentifierExpression source -> Node
 104:23 GDIdentifierExpression BaseEntity -> BaseEntity
 107:0 Method patrol_to -> void
@@ -12065,16 +12065,16 @@ test_scripts/scene_nodes.gd
 30:8 Variable external_target -> Node2D
 31:8 Variable spawn_point -> Marker2D
 34:0 Method _ready -> void
-36:1 Variable player_node -> CharacterBody2D
-36:19 GDDualOperatorExpression get_node()AsCharacterBody2D -> CharacterBody2D
+36:1 Variable player_node -> CharacterBody2D|null
+36:19 GDDualOperatorExpression get_node()AsCharacterBody2D -> CharacterBody2D|null
 36:19 GDCallExpression get_node() -> Node
 36:19 GDIdentifierExpression get_node -> Node
 36:28 GDStringExpression "Player" -> String
 36:41 GDIdentifierExpression CharacterBody2D -> CharacterBody2D
-37:4 GDIdentifierExpression player_node -> CharacterBody2D
+37:4 GDIdentifierExpression player_node -> CharacterBody2D|null
 38:2 GDCallExpression setup_player() -> Variant
 38:2 GDIdentifierExpression setup_player -> Callable
-38:15 GDIdentifierExpression player_node -> CharacterBody2D
+38:15 GDIdentifierExpression player_node -> CharacterBody2D|null
 41:1 Variable optional -> Node
 41:16 GDCallExpression get_node_or_null() -> Node
 41:16 GDIdentifierExpression get_node_or_null -> Node
@@ -12242,18 +12242,18 @@ test_scripts/scene_nodes.gd
 129:8 GDIdentifierExpression instance -> Node
 132:0 Method instantiate_typed -> CharacterBody2D
 132:23 Parameter scene -> PackedScene
-134:1 Variable instance -> CharacterBody2D
-134:16 GDDualOperatorExpression scene.instantiate()AsCharacterBody2D -> CharacterBody2D
+134:1 Variable instance -> CharacterBody2D|null
+134:16 GDDualOperatorExpression scene.instantiate()AsCharacterBody2D -> CharacterBody2D|null
 134:16 GDCallExpression scene.instantiate() -> Node
 134:16 GDMemberOperatorExpression scene.instantiate -> Node
 134:16 GDIdentifierExpression scene -> PackedScene
 134:39 GDIdentifierExpression CharacterBody2D -> CharacterBody2D
-135:4 GDIdentifierExpression instance -> CharacterBody2D
+135:4 GDIdentifierExpression instance -> CharacterBody2D|null
 136:2 GDCallExpression add_child() -> void
 136:2 GDIdentifierExpression add_child -> void
-136:12 GDIdentifierExpression instance -> CharacterBody2D
+136:12 GDIdentifierExpression instance -> CharacterBody2D|null
 137:2 GDReturnExpression return instance -> Variant
-137:9 GDIdentifierExpression instance -> CharacterBody2D
+137:9 GDIdentifierExpression instance -> CharacterBody2D|null
 138:1 GDReturnExpression return null -> Variant
 138:8 GDIdentifierExpression null -> null
 141:0 Method queue_free_child -> void
@@ -12293,13 +12293,13 @@ test_scripts/scene_nodes.gd
 160:1 GDReturnExpression return scene_owner -> Variant
 160:8 GDIdentifierExpression scene_owner -> Node
 163:0 Method duplicate_node -> Node2D
-165:1 Variable copy -> Node2D
-165:12 GDDualOperatorExpression duplicate()AsNode2D -> Node2D
+165:1 Variable copy -> Node2D|null
+165:12 GDDualOperatorExpression duplicate()AsNode2D -> Node2D|null
 165:12 GDCallExpression duplicate() -> Node
 165:12 GDIdentifierExpression duplicate -> Node
 165:27 GDIdentifierExpression Node2D -> Node2D
 166:1 GDReturnExpression return copy -> Variant
-166:8 GDIdentifierExpression copy -> Node2D
+166:8 GDIdentifierExpression copy -> Node2D|null
 169:0 Method get_node_configuration_warnings -> PackedStringArray
 171:1 Variable warnings -> PackedStringArray
 171:16 GDCallExpression PackedStringArray() -> PackedStringArray
@@ -12457,22 +12457,22 @@ test_scripts/scene_references.gd
 45:0 Method spawn_enemy -> Node2D
 45:17 Parameter enemy_scene -> PackedScene
 45:43 Parameter spawn_pos -> Vector2
-48:1 Variable enemy -> Node2D
-48:14 GDDualOperatorExpression enemy_scene.instantiate()AsNode2D -> Node2D
+48:1 Variable enemy -> Node2D|null
+48:14 GDDualOperatorExpression enemy_scene.instantiate()AsNode2D -> Node2D|null
 48:14 GDCallExpression enemy_scene.instantiate() -> Node
 48:14 GDMemberOperatorExpression enemy_scene.instantiate -> Node
 48:14 GDIdentifierExpression enemy_scene -> PackedScene
 48:43 GDIdentifierExpression Node2D -> Node2D
-49:1 GDDualOperatorExpression enemy.positionAssignmentspawn_pos -> Vector2
-49:1 GDMemberOperatorExpression enemy.position -> Vector2
-49:1 GDIdentifierExpression enemy -> Node2D
+49:1 GDDualOperatorExpression enemy.positionAssignmentspawn_pos -> Variant
+49:1 GDMemberOperatorExpression enemy.position -> Variant
+49:1 GDIdentifierExpression enemy -> Node2D|null
 49:18 GDIdentifierExpression spawn_pos -> Vector2
 50:1 GDCallExpression enemy_container.add_child() -> void
 50:1 GDMemberOperatorExpression enemy_container.add_child -> void
 50:1 GDIdentifierExpression enemy_container -> Node2D
-50:27 GDIdentifierExpression enemy -> Node2D
+50:27 GDIdentifierExpression enemy -> Node2D|null
 51:1 GDReturnExpression return enemy -> Variant
-51:8 GDIdentifierExpression enemy -> Node2D
+51:8 GDIdentifierExpression enemy -> Node2D|null
 54:0 Method get_enemies -> Array[Node2D]
 55:1 Variable enemies -> Array[Node2D]
 55:30 GDArrayInitializerExpression [...] -> Array
@@ -15592,7 +15592,7 @@ test_scripts/type_guards.gd
 58:1 GDReturnExpression return null -> Variant
 58:8 GDIdentifierExpression null -> null
 61:0 Method type_guard_with_or -> Variant|float|null
-61:24 Parameter value -> (+8 more)|String|StringName|Vector2i|float|int
+61:24 Parameter value -> (+8 more)|String|StringName|float|int
 63:4 GDDualOperatorExpression valueIsintOr2valueIsfloat -> bool
 63:4 GDDualOperatorExpression valueIsint -> bool
 63:4 GDIdentifierExpression value -> Variant
@@ -16194,25 +16194,25 @@ test_scripts/type_inference.gd
 75:14 GDIdentifierExpression front -> int
 75:21 GDIdentifierExpression popped -> int
 78:0 Method get_node_types -> void
-80:1 Variable sprite -> Sprite2D
-80:15 GDDualOperatorExpression $Sprite2D AsSprite2D -> Sprite2D
+80:1 Variable sprite -> Sprite2D|null
+80:15 GDDualOperatorExpression $Sprite2D AsSprite2D -> Sprite2D|null
 80:15 GDGetNodeExpression $Sprite2D  -> Node
 80:28 GDIdentifierExpression Sprite2D -> Sprite2D
-81:1 Variable label -> Label
-81:14 GDDualOperatorExpression get_node()AsLabel -> Label
+81:1 Variable label -> Label|null
+81:14 GDDualOperatorExpression get_node()AsLabel -> Label|null
 81:14 GDCallExpression get_node() -> Node
 81:14 GDIdentifierExpression get_node -> Node
 81:23 GDStringExpression "UI/Label" -> String
 81:38 GDIdentifierExpression Label -> Label
-84:4 GDIdentifierExpression sprite -> Sprite2D
-85:2 GDDualOperatorExpression sprite.textureAssignmentnull -> Texture2D
-85:2 GDMemberOperatorExpression sprite.texture -> Texture2D
-85:2 GDIdentifierExpression sprite -> Sprite2D
+84:4 GDIdentifierExpression sprite -> Sprite2D|null
+85:2 GDDualOperatorExpression sprite.textureAssignmentnull -> Variant
+85:2 GDMemberOperatorExpression sprite.texture -> Variant
+85:2 GDIdentifierExpression sprite -> Sprite2D|null
 85:19 GDIdentifierExpression null -> null
-86:4 GDIdentifierExpression label -> Label
-87:2 GDDualOperatorExpression label.textAssignment"Test" -> String
-87:2 GDMemberOperatorExpression label.text -> String
-87:2 GDIdentifierExpression label -> Label
+86:4 GDIdentifierExpression label -> Label|null
+87:2 GDDualOperatorExpression label.textAssignment"Test" -> Variant
+87:2 GDMemberOperatorExpression label.text -> Variant
+87:2 GDIdentifierExpression label -> Label|null
 87:15 GDStringExpression "Test" -> String
 90:0 Method test_conditional_inference -> void
 91:1 Variable value -> float
@@ -17693,7 +17693,7 @@ test_scripts/union_types_complex.gd
 307:9 GDIdentifierExpression params -> Variant
 308:1 GDReturnExpression return params -> Variant
 308:8 GDIdentifierExpression params -> Variant
-311:0 Method get_result -> Variant
+311:0 Method get_result -> null
 311:16 Parameter request_id -> Variant
 313:1 GDReturnExpression return pending_results.get() -> Variant
 313:8 GDCallExpression pending_results.get() -> Variant

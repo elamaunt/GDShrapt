@@ -1,3 +1,4 @@
+using System;
 using GDShrapt.Abstractions;
 
 namespace GDShrapt.Semantics;
@@ -71,7 +72,7 @@ internal static class GDLoopFlowHelper
     /// <summary>
     /// Infers the element type from a collection type for for-loop iteration.
     /// </summary>
-    public static string? InferIteratorElementType(string? collectionType)
+    public static string? InferIteratorElementType(string? collectionType, Func<string, bool>? isEnumType = null)
     {
         if (string.IsNullOrEmpty(collectionType))
             return "Variant";
@@ -100,6 +101,10 @@ internal static class GDLoopFlowHelper
         var packedElement = GDPackedArrayTypes.GetElementType(collectionType);
         if (packedElement != null)
             return packedElement;
+
+        // Handle enum types: for x in EnumType -> String (iterates key names)
+        if (isEnumType != null && isEnumType(collectionType))
+            return GDWellKnownTypes.Strings.String;
 
         return GDWellKnownTypes.Variant;
     }

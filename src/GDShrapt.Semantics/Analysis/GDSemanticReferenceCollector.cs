@@ -1604,6 +1604,16 @@ internal class GDSemanticReferenceCollector : GDVisitor
 
                 _model!.SetNodeType(expression, typeName, typeNode);
             }
+            else
+            {
+                // Fallback: union types (e.g., "Node2D|null" from 'as' operator) can't be
+                // represented as GDTypeNode. Use InferSemanticType for the string representation.
+                var semType = _typeEngine.InferSemanticType(expression);
+                if (semType != null && !semType.IsVariant)
+                {
+                    _model!.SetNodeType(expression, semType.DisplayName);
+                }
+            }
         }
         finally
         {

@@ -474,8 +474,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         var typeInfo = _runtimeProvider.GetTypeInfo(name);
         if (typeInfo != null)
         {
-            var baseType = _runtimeProvider.GetBaseType(name);
-            var symbolInfo = new GDSymbolInfo(name, GDSymbolKind.Class, baseType, name);
+            var kind = typeInfo.IsEnum ? GDSymbolKind.Enum : GDSymbolKind.Class;
+            var baseType = typeInfo.IsEnum ? null : _runtimeProvider.GetBaseType(name);
+            var symbolInfo = new GDSymbolInfo(name, kind, baseType, name);
             symbolInfo.Documentation = typeInfo.BriefDescription ?? typeInfo.Description;
             return symbolInfo;
         }

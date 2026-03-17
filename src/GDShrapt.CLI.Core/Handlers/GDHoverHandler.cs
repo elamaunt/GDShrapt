@@ -316,7 +316,39 @@ public class GDHoverHandler : IGDHoverHandler
 
                 if (inferredType == "Variant" || inferredType == declaredType)
                     inferredType = null;
+
+                // After null check (if x:), suppress nullable inferred type
+                if (narrowedType == null && flowVarType.IsGuaranteedNonNull && inferredType != null)
+                {
+                    var effectiveType = flowVarType.CurrentType.IsSingleType
+                        ? flowVarType.CurrentType.Types.First()
+                        : flowVarType.CurrentType.ToSemanticType();
+
+                    if (effectiveType is GDUnionSemanticType union && union.IsNullable)
+                    {
+                        var nonNullType = union.WithoutNull();
+                        var nonNullDisplay = nonNullType.DisplayName;
+                        if (nonNullDisplay == declaredType)
+                            inferredType = null;
+                        else
+                            narrowedType = nonNullDisplay;
+                    }
+                }
             }
+        }
+
+        // Enrich bare container types (Dictionary, Array) with usage-based profiles
+        if (inferredType == null && (declaredType == "Dictionary" || declaredType == "Array"))
+        {
+            var containerType = semanticModel.TypeSystem.GetContainerElementType(symbol.Name);
+            if (containerType == null || !containerType.HasElementTypes)
+            {
+                var className = semanticModel.ScriptFile?.TypeName;
+                if (!string.IsNullOrEmpty(className))
+                    containerType = semanticModel.TypeSystem.GetClassContainerElementType(className, symbol.Name);
+            }
+            if (containerType != null && containerType.HasElementTypes)
+                inferredType = containerType.ToString();
         }
 
         // Fallback: infer type from initializer when declared type is null and flow analysis didn't help
@@ -332,6 +364,12 @@ public class GDHoverHandler : IGDHoverHandler
                 if (inferredType == "Dictionary" || inferredType == "Array")
                 {
                     var containerType = semanticModel.TypeSystem.GetContainerElementType(symbol.Name);
+                    if (containerType == null || !containerType.HasElementTypes)
+                    {
+                        var className = semanticModel.ScriptFile?.TypeName;
+                        if (!string.IsNullOrEmpty(className))
+                            containerType = semanticModel.TypeSystem.GetClassContainerElementType(className, symbol.Name);
+                    }
                     if (containerType != null && containerType.HasElementTypes)
                         inferredType = containerType.ToString();
                 }
