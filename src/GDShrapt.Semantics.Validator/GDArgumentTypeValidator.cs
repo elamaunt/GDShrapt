@@ -146,7 +146,17 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private string InferArgumentType(GDExpression arg)
         {
-            // Use semantic model for type inference
+            if (arg is GDIdentifierExpression identExpr && _semanticModel != null)
+            {
+                var varName = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(varName))
+                {
+                    var narrowedType = _semanticModel.TypeSystem.GetNarrowedType(varName, arg);
+                    if (!string.IsNullOrEmpty(narrowedType))
+                        return narrowedType;
+                }
+            }
+
             var typeInfo = _semanticModel?.TypeSystem.GetType(arg);
             if (typeInfo == null || typeInfo.IsVariant)
                 return "Unknown";

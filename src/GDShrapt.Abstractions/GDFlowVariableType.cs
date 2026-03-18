@@ -117,6 +117,9 @@ public class GDFlowVariableType
             {
                 var currentEffective = CurrentType.EffectiveType;
 
+                if (IsGuaranteedNonNull && currentEffective is GDUnionSemanticType union && union.IsNullable)
+                    currentEffective = union.WithoutNull();
+
                 if (DeclaredType != null && currentEffective is GDNullSemanticType)
                     return DeclaredType;
 
@@ -168,7 +171,17 @@ public class GDFlowVariableType
                     return singleType.DisplayName;
                 }
                 if (CurrentType.IsUnion)
+                {
+                    if (IsGuaranteedNonNull)
+                    {
+                        var nonNullTypes = CurrentType.Types.Where(t => t is not GDNullSemanticType).ToList();
+                        if (nonNullTypes.Count == 1)
+                            return nonNullTypes[0].DisplayName;
+                        if (nonNullTypes.Count > 1)
+                            return string.Join("|", nonNullTypes.Select(t => t.DisplayName).OrderBy(t => t));
+                    }
                     return string.Join("|", CurrentType.Types.Select(t => t.DisplayName).OrderBy(t => t));
+                }
             }
 
             return DeclaredType?.DisplayName ?? "Variant";

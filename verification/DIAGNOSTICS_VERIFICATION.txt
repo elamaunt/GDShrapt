@@ -1,13 +1,13 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-18 02:32:36
+Generated: 2026-03-18 05:14:46
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           910
+Total:           907
 Verified (OK):   897
-Unverified:      11
+Unverified:      8
 False Positives: 0
 Skipped:         2
 Orphaned Markers:0
@@ -22,9 +22,7 @@ UNVERIFIED DIAGNOSTICS
   104:13 [GD3010] Argument type mismatch for 'new_target' in call to 'set_target': expected 'BaseEntity', got 'BaseEntity|null'
     Add: # 104:13-GD3010-OK
 
---- test_scripts/scene_nodes.gd (3 diagnostics) ---
-  38:15 [GD3010] Argument type mismatch for 'p' in call to 'setup_player': expected 'CharacterBody2D', got 'CharacterBody2D|null'
-    Add: # 38:15-GD3010-OK
+--- test_scripts/scene_nodes.gd (2 diagnostics) ---
   137:2 [GD3007] Cannot return 'CharacterBody2D|null' from function with return type 'CharacterBody2D'
     Add: # 137:2-GD3007-OK
   166:1 [GD3007] Cannot return 'Node2D|null' from function with return type 'Node2D'
@@ -41,12 +39,6 @@ UNVERIFIED DIAGNOSTICS
     Add: # 249:23-GD7020-OK
   262:23 [GD7020] All callers pass 'Dictionary' for parameter 'outer'
     Add: # 262:23-GD7020-OK
-
---- test_scripts/type_inference.gd (2 diagnostics) ---
-  85:2 [GD3009] Property 'texture' not found on type 'Sprite2D|null'
-    Add: # 85:2-GD3009-OK
-  87:2 [GD3009] Property 'text' not found on type 'Label|null'
-    Add: # 87:2-GD3009-OK
 
 ================================================================================
 SKIPPED (NEEDS ANALYSIS)

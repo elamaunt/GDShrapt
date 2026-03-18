@@ -492,4 +492,85 @@ func test():
     }
 
     #endregion
+
+    #region Null Check Narrowing
+
+    [TestMethod]
+    public void NullCheck_PropertyAccess_NoGD3009()
+    {
+        var code = @"
+extends Node2D
+
+var _sprite: Sprite2D
+
+func test():
+    _sprite = get_node(""Sprite"") as Sprite2D
+    if _sprite:
+        _sprite.texture = null
+        _sprite.flip_h = true
+";
+        var diagnostics = ValidateCode(code);
+        var gd3009 = diagnostics.Where(d => d.Code == GDDiagnosticCode.PropertyNotFound).ToList();
+        Assert.AreEqual(0, gd3009.Count,
+            $"After null check, Sprite2D properties should be found. Got: {FormatDiagnostics(gd3009)}");
+    }
+
+    [TestMethod]
+    public void NullCheck_ArgumentType_NoGD3010()
+    {
+        var code = @"
+extends Node2D
+
+func set_target(target: Node2D) -> void:
+    pass
+
+func test():
+    var node = get_node(""target"") as Node2D
+    if node:
+        set_target(node)
+";
+        var diagnostics = ValidateCode(code);
+        var gd3010 = diagnostics.Where(d => d.Code == GDDiagnosticCode.ArgumentTypeMismatch).ToList();
+        Assert.AreEqual(0, gd3010.Count,
+            $"After null check, Node2D should match Node2D parameter. Got: {FormatDiagnostics(gd3010)}");
+    }
+
+    [TestMethod]
+    public void NullCheck_EffectiveType_StripsNull()
+    {
+        var code = @"
+extends Node
+
+func test():
+    var x = get_node(""child"") as Sprite2D
+    if x:
+        print(x)
+";
+        var reference = new GDScriptReference("test://virtual/test_script.gd");
+        var scriptFile = new GDScriptFile(reference);
+        scriptFile.Reload(code);
+
+        var runtimeProvider = new GDCompositeRuntimeProvider(
+            new GDGodotTypesProvider(),
+            null, null, null);
+        scriptFile.Analyze(runtimeProvider);
+        var model = scriptFile.SemanticModel!;
+
+        // Find 'x' inside the if-block via symbols
+        var xSymbol = model.Symbols.FirstOrDefault(s => s.Name == "x");
+        Assert.IsNotNull(xSymbol, "Symbol 'x' should exist");
+
+        var typeInfo = model.TypeSystem.GetTypeInfo("x");
+        Assert.IsNotNull(typeInfo, "TypeInfo for 'x' should exist");
+
+        // The effective type should not contain null when IsGuaranteedNonNull
+        var effectiveDisplay = typeInfo.EffectiveType?.DisplayName;
+        if (typeInfo.IsGuaranteedNonNull)
+        {
+            Assert.IsFalse(effectiveDisplay?.Contains("null") == true,
+                $"When IsGuaranteedNonNull, effective type should not contain null. Got: '{effectiveDisplay}'");
+        }
+    }
+
+    #endregion
 }
