@@ -45,7 +45,13 @@ public class GDAddTypeAnnotationsService
         public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferVariableType(_varDecl);
         public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.ClassVariable;
         public string GetFallbackName() => "variable";
-        public string? GetExistingTypeName() => _varDecl.Type?.BuildName();
+        public string? GetExistingTypeName()
+        {
+            var typeNode = GetTypeNode();
+            if (typeNode == null) return null;
+            var semType = GDSemanticType.FromTypeNode(typeNode);
+            return semType.IsVariant ? null : semType.DisplayName;
+        }
         public GDTypeNode? GetTypeNode() => _varDecl.Type;
     }
 
@@ -63,7 +69,13 @@ public class GDAddTypeAnnotationsService
         public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferVariableType(_varStmt);
         public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.LocalVariable;
         public string GetFallbackName() => "variable";
-        public string? GetExistingTypeName() => _varStmt.Type?.BuildName();
+        public string? GetExistingTypeName()
+        {
+            var typeNode = GetTypeNode();
+            if (typeNode == null) return null;
+            var semType = GDSemanticType.FromTypeNode(typeNode);
+            return semType.IsVariant ? null : semType.DisplayName;
+        }
         public GDTypeNode? GetTypeNode() => _varStmt.Type;
     }
 
@@ -81,7 +93,13 @@ public class GDAddTypeAnnotationsService
         public GDInferredType InferType(GDTypeConfidenceResolver helper) => helper.InferForLoopVariableType(_forStmt);
         public TypeAnnotationTarget GetTarget() => TypeAnnotationTarget.ForLoopVariable;
         public string GetFallbackName() => "iterator";
-        public string? GetExistingTypeName() => _forStmt.VariableType?.BuildName();
+        public string? GetExistingTypeName()
+        {
+            var typeNode = GetTypeNode();
+            if (typeNode == null) return null;
+            var semType = GDSemanticType.FromTypeNode(typeNode);
+            return semType.IsVariant ? null : semType.DisplayName;
+        }
         public GDTypeNode? GetTypeNode() => _forStmt.VariableType;
     }
 
@@ -101,7 +119,13 @@ public class GDAddTypeAnnotationsService
         public string GetFallbackName() => "parameter";
         public GDInferredParameterType? GetRichParameterType(GDTypeConfidenceResolver helper)
             => helper.InferParameterTypeRich(_param);
-        public string? GetExistingTypeName() => _param.Type?.BuildName();
+        public string? GetExistingTypeName()
+        {
+            var typeNode = GetTypeNode();
+            if (typeNode == null) return null;
+            var semType = GDSemanticType.FromTypeNode(typeNode);
+            return semType.IsVariant ? null : semType.DisplayName;
+        }
         public GDTypeNode? GetTypeNode() => _param.Type;
         public string? GetMethodName() => _param.GetContainingMethod()?.Identifier?.Sequence;
     }

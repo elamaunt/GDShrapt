@@ -1,8 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using GDShrapt.Abstractions;
-using GDShrapt.Reader;
-
 namespace GDShrapt.Semantics;
 
 /// <summary>

@@ -11,7 +11,7 @@ Detailed documentation is in folder-level CLAUDE.md files:
 | `Analysis/` | [Analysis/CLAUDE.md](Analysis/CLAUDE.md) | SemanticModel, FlowAnalyzer, duck-typing algorithm |
 | `Analysis/CrossMethod/` | [Analysis/CrossMethod/CLAUDE.md](Analysis/CrossMethod/CLAUDE.md) | Cross-method flow analysis, @onready safety |
 | `TypeInference/` | [TypeInference/CLAUDE.md](TypeInference/CLAUDE.md) | Type inference engine, providers, caching |
-| `Services/Types/` | [Services/Types/CLAUDE.md](Services/Types/CLAUDE.md) | Type services (Container, Union, Duck, Confidence) |
+| `TypeInference/Services/` | [TypeInference/Services/CLAUDE.md](TypeInference/Services/CLAUDE.md) | Type services (Container, Union, Duck, Confidence) |
 | `Refactoring/` | [Refactoring/CLAUDE.md](Refactoring/CLAUDE.md) | 17 refactoring services, Plan vs Execute |
 | `SceneFlow/` | — | Scene hierarchy prediction, `GDSceneFlowService`, `CheckNodePath()` |
 | `ResourceFlow/` | — | Resource dependency graph, `GDResourceFlowService` |

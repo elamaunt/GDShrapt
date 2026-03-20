@@ -142,29 +142,6 @@ public class GDNamingUtilitiesTests
 
     #endregion
 
-    #region IsBuiltInType Tests
-
-    [TestMethod]
-    [DataRow("String", true)]
-    [DataRow("int", true)]
-    [DataRow("float", true)]
-    [DataRow("bool", true)]
-    [DataRow("Array", true)]
-    [DataRow("Dictionary", true)]
-    [DataRow("Vector2", true)]
-    [DataRow("Vector3", true)]
-    [DataRow("Node", true)]
-    [DataRow("Node2D", true)]
-    [DataRow("Variant", true)]
-    [DataRow("Player", false)]
-    [DataRow("MyClass", false)]
-    public void IsBuiltInType_ChecksCorrectly(string name, bool expected)
-    {
-        GDNamingUtilities.IsBuiltInType(name).Should().Be(expected);
-    }
-
-    #endregion
-
     #region NormalizeVariableName Tests
 
     [TestMethod]

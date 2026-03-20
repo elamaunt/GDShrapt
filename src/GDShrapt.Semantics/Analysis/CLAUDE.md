@@ -40,6 +40,19 @@ Flow analysis is the **single source of truth** for variable types within method
 3. **Call-site parameter injection** — for untyped parameters, union of types passed by callers
 4. **Declared type / union type** — additional fallbacks
 
+## Subfolders
+
+| Folder | Contents |
+|--------|----------|
+| `FlowServices/` | Flow helpers + flow query/nullability/cross-method services |
+| `CrossMethod/` | Cross-method flow analysis, @onready safety |
+| `DataFlow/` | SSA-style flow analyzer, variable types |
+| `Rules/` | Analysis rules |
+| `DeadCode/` | Dead code detection (`GDDeadCodeService`) |
+| `Dependencies/` | Dependency graph (`GDDependencyService`) |
+| `Metrics/` | Code metrics (`GDMetricsService`) |
+| `TypeCoverage/` | Type annotation coverage (`GDTypeCoverageService`) |
+
 ## Key Classes
 
 ### GDSemanticModel

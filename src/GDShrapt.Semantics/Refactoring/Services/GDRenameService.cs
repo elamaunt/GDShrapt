@@ -424,6 +424,64 @@ public class GDRenameService
     }
 
     /// <summary>
+    /// Plans a rename operation for node paths across GDScript and scene files.
+    /// </summary>
+    /// <param name="oldNodeName">The current node name.</param>
+    /// <param name="newNodeName">The new node name.</param>
+    /// <returns>The rename result with all required edits.</returns>
+    public GDRenameResult PlanNodePathRename(string oldNodeName, string newNodeName)
+    {
+        if (string.IsNullOrEmpty(oldNodeName) || string.IsNullOrEmpty(newNodeName))
+            return GDRenameResult.Failed("Node name cannot be empty");
+
+        if (oldNodeName == newNodeName)
+            return GDRenameResult.NoOccurrences(oldNodeName);
+
+        var finder = new GDNodePathReferenceFinder(_project);
+        var allRefs = finder.FindAllReferences(oldNodeName).ToList();
+
+        var strictEdits = new List<GDTextEdit>();
+        var filesModified = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var r in allRefs)
+        {
+            if (r.Type == GDNodePathReference.RefType.GDScript && r.PathSpecifier != null)
+            {
+                strictEdits.Add(new GDTextEdit(
+                    r.FilePath,
+                    r.PathSpecifier.StartLine + 1,
+                    r.PathSpecifier.StartColumn + 1,
+                    oldNodeName,
+                    newNodeName,
+                    GDReferenceConfidence.Strict,
+                    "Node path reference"));
+            }
+            else if (r.Type == GDNodePathReference.RefType.SceneNodeName ||
+                     r.Type == GDNodePathReference.RefType.SceneParentPath)
+            {
+                strictEdits.Add(new GDTextEdit(
+                    r.FilePath,
+                    r.LineNumber,
+                    r.Column,
+                    oldNodeName,
+                    newNodeName,
+                    GDReferenceConfidence.Strict,
+                    r.Type == GDNodePathReference.RefType.SceneNodeName
+                        ? "Scene node name" : "Scene parent path"));
+            }
+            filesModified.Add(r.FilePath);
+        }
+
+        if (strictEdits.Count == 0)
+            return GDRenameResult.NoOccurrences(oldNodeName);
+
+        return GDRenameResult.SuccessfulWithConfidence(
+            SortEditsReverse(strictEdits),
+            Array.Empty<GDTextEdit>(),
+            filesModified.Count);
+    }
+
+    /// <summary>
     /// Checks for naming conflicts before rename.
     /// </summary>
     /// <param name="symbol">The symbol being renamed.</param>
@@ -443,7 +501,7 @@ public class GDRenameService
         }
 
         // Check built-in types
-        if (GDNamingUtilities.IsBuiltInType(newName))
+        if (_runtimeProvider?.IsKnownType(newName) == true)
         {
             conflicts.Add(new GDRenameConflict(
                 newName,

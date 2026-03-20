@@ -1501,30 +1501,26 @@ public partial class GDShraptPlugin : EditorPlugin
             return;
         }
 
-        // Apply changes to GDScript files only (scene is already updated)
-        // Use Semantics GDNodePathRenamer
-        var renamer = new GDNodePathRenamer(_scriptProject);
+        // Plan and apply rename using GDRenameService
+        var renameService = new GDRenameService(_scriptProject);
+        var renamePlan = renameService.PlanNodePathRename(rename.OldName, rename.NewName);
 
-        // Apply rename with the NEW name from the scene
-        var renameResult = renamer.ApplyRename(result.SelectedReferences, rename.OldName, rename.NewName);
-
-        if (!renameResult.Success)
+        if (!renamePlan.Success)
         {
-            Logger.Error($"Node rename failed: {renameResult.ErrorMessage}");
+            Logger.Error($"Node rename failed: {renamePlan.ErrorMessage}");
             return;
         }
 
         // Mark our own write to avoid triggering another rename detection
         _scriptProject.SceneTypesProvider?.MarkOwnWrite();
 
-        // Save modified scripts
-        var modifiedScripts = renamer.GetModifiedScripts(result.SelectedReferences);
-        foreach (var script in modifiedScripts)
+        // Apply edits to files
+        foreach (var editGroup in renamePlan.GetStrictEditsByFile())
         {
-            SaveModifiedScript(script);
+            renameService.ApplyEditsToFile(editGroup.Key, editGroup.Value);
         }
 
-        Logger.Debug($"Applied rename: '{rename.OldName}' -> '{rename.NewName}' to {modifiedScripts.Count} scripts");
+        Logger.Debug($"Applied rename: '{rename.OldName}' -> '{rename.NewName}' to {renamePlan.FileCount} files");
     }
 
     private void SaveModifiedScript(GDScriptFile ScriptFile)

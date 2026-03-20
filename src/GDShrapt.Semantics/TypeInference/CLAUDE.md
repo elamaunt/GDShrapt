@@ -15,7 +15,18 @@ GDTypeInferenceEngine (core)
 │   └── GD*Report classes        - Inference debugging
 ├── Services/
 │   ├── GDInferenceDependencyTracker
-│   └── GDInferenceVisualizationService
+│   ├── GDInferenceVisualizationService
+│   ├── GDArgumentTypeService      - Argument type inference
+│   ├── GDConfidenceService        - Member access confidence
+│   ├── GDContainerTypeService     - Container profiling
+│   ├── GDDuckTypeService          - Duck types, narrowing
+│   ├── GDExpressionTypeService    - Expression type resolution
+│   ├── GDLambdaTypeService        - Lambda type inference
+│   ├── GDLocalTypeService         - Local variable types
+│   ├── GDMemberResolver           - Member resolution
+│   ├── GDOnreadyService           - @onready detection
+│   ├── GDScopeService             - Scope management
+│   └── GDUnionTypeService         - Union types, call sites
 └── Providers/
     ├── GDGodotTypesProvider     - TypesMap access
     ├── GDProjectTypesProvider   - Project script types

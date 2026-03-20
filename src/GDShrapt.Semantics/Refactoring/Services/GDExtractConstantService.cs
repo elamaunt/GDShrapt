@@ -42,7 +42,8 @@ public class GDExtractConstantService : GDRefactoringServiceBase
             ? SuggestConstantName(literal)
             : ValidateConstantName(suggestedName);
 
-        constantName = GDNamingUtilities.GenerateUniqueName(constantName, existingNames);
+        var runtimeProvider = context.GetSemanticModel()?.RuntimeProvider;
+        constantName = GDNamingUtilities.GenerateUniqueName(constantName, existingNames, runtimeProvider);
 
         // Find insertion point
         var insertionLine = GDIndentationUtilities.FindConstantInsertionLine(classDecl);

@@ -139,6 +139,7 @@ public class GDNodePathReferenceFinder
                 FilePath = sceneInfo.FullPath,
                 ResourcePath = scenePath,
                 LineNumber = node.LineNumber,
+                Column = FindColumnInLine(node.OriginalLine, $"name=\"{nodeName}\"", "name=\"".Length, nodeName),
                 NodePath = nodeName,
                 SegmentIndex = 0,
                 DisplayContext = node.OriginalLine ?? $"[node name=\"{nodeName}\" ...]"
@@ -154,6 +155,7 @@ public class GDNodePathReferenceFinder
                 FilePath = sceneInfo.FullPath,
                 ResourcePath = scenePath,
                 LineNumber = childNode.LineNumber,
+                Column = FindNodeNameColumnInParentPath(childNode.OriginalLine, nodeName),
                 NodePath = childNode.ParentPath ?? "",
                 SegmentIndex = GetSegmentIndex(childNode.ParentPath, nodeName),
                 DisplayContext = childNode.OriginalLine ?? $"[node ... parent=\"{childNode.ParentPath}\"]"
@@ -278,5 +280,47 @@ public class GDNodePathReferenceFinder
         }
 
         return "";
+    }
+
+    /// <summary>
+    /// Finds the 1-based column of a node name within a scene line.
+    /// Searches for a pattern like name="NodeName" and returns column of NodeName.
+    /// </summary>
+    private static int FindColumnInLine(string? line, string searchPattern, int offsetInPattern, string nodeName)
+    {
+        if (string.IsNullOrEmpty(line))
+            return 1;
+
+        var idx = line.IndexOf(searchPattern, System.StringComparison.Ordinal);
+        if (idx >= 0)
+            return idx + offsetInPattern + 1;
+
+        // Fallback: find the node name directly
+        idx = line.IndexOf(nodeName, System.StringComparison.Ordinal);
+        return idx >= 0 ? idx + 1 : 1;
+    }
+
+    /// <summary>
+    /// Finds the 1-based column of a node name within a parent path declaration.
+    /// Handles parent="NodeName", parent="NodeName/...", parent=".../NodeName/...", parent=".../NodeName".
+    /// </summary>
+    private static int FindNodeNameColumnInParentPath(string? line, string nodeName)
+    {
+        if (string.IsNullOrEmpty(line))
+            return 1;
+
+        // Look for the node name in parent="..." context
+        var parentIdx = line.IndexOf("parent=\"", System.StringComparison.Ordinal);
+        if (parentIdx >= 0)
+        {
+            var searchStart = parentIdx + "parent=\"".Length;
+            var idx = line.IndexOf(nodeName, searchStart, System.StringComparison.Ordinal);
+            if (idx >= 0)
+                return idx + 1;
+        }
+
+        // Fallback
+        var fallback = line.IndexOf(nodeName, System.StringComparison.Ordinal);
+        return fallback >= 0 ? fallback + 1 : 1;
     }
 }

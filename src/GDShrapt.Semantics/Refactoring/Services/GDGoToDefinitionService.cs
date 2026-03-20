@@ -1,7 +1,3 @@
-using System.Linq;
-using GDShrapt.Abstractions;
-using GDShrapt.Reader;
-
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -285,7 +281,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             GDMemberOperatorExpression memberExpr when token is GDIdentifier id => ResolveMember(context, id, memberExpr),
             GDMethodExpression lambdaExpr when token is GDIdentifier id => ResolveLambdaDeclaration(context, id, lambdaExpr),
             GDStringTypeNode stringTypeNode => ResolveStringTypePath(stringTypeNode),
-            GDTypeNode typeNode => ResolveType(context, typeNode.BuildName()),
+            GDTypeNode typeNode => ResolveType(context, GDSemanticType.FromTypeNode(typeNode).DisplayName),
             GDStringExpression strExpr => ResolveStringInContext(context, token, strExpr),
             GDStringNode strNode => ResolveStringInContext(context, token, strNode),
             _ => TryResolveStringParent(context, token, parent)
@@ -306,7 +302,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
 
         if (symbolName == "super")
         {
-            var parentType = context.Script?.Class?.Extends?.Type?.BuildName();
+            var parentType = context.GetSemanticModel()?.BaseTypeName;
             if (!string.IsNullOrEmpty(parentType))
                 return ResolveType(context, parentType);
             return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalType, "super");
@@ -374,7 +370,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         // 4. Try to resolve as a built-in member of self type (inherited properties like texture, position)
         if (semanticModel != null)
         {
-            var selfType = context.Script?.Class?.Extends?.Type?.BuildName();
+            var selfType = context.GetSemanticModel()?.BaseTypeName;
             if (!string.IsNullOrEmpty(selfType))
             {
                 var memberSymbol = semanticModel.ResolveMember(selfType, symbolName);
@@ -613,15 +609,14 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (string.IsNullOrEmpty(typeName))
             return GDGoToDefinitionResult.Failed("Type name is empty");
 
-        // Extract base type for generics: Array[Battler] -> Array
-        var baseTypeName = GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType ct ? (ct.IsDictionary ? "Dictionary" : "Array") : typeName;
+        var baseTypeName = GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType ct
+            ? (ct.IsDictionary ? "Dictionary" : "Array")
+            : typeName;
 
-        // Check if it's a built-in Godot type
-        if (IsBuiltInType(baseTypeName))
-            return GDGoToDefinitionResult.BuiltIn(baseTypeName);
+        var typeInfo = context.GetSemanticModel()?.RuntimeProvider?.GetTypeInfo(baseTypeName);
+        if (typeInfo != null)
+            return GDGoToDefinitionResult.BuiltIn(typeInfo.Name);
 
-        // External type resolution requires project context
-        // Return a result indicating the Plugin should search project files
         return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalType, typeName);
     }
 
@@ -635,7 +630,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
     {
         if (token is GDTypeNode typeNode)
         {
-            return ResolveType(context, typeNode.BuildName());
+            return ResolveType(context, GDSemanticType.FromTypeNode(typeNode).DisplayName);
         }
 
         if (token is GDStringNode stringNode)
@@ -754,97 +749,43 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (expr.CallerExpression == null)
             return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
 
-        var isSuperCall = expr.CallerExpression is GDIdentifierExpression superExpr
-            && superExpr.Identifier?.Sequence == "super";
-
-        if (isSuperCall)
+        if (expr.CallerExpression is GDIdentifierExpression superExpr
+            && superExpr.Identifier?.Sequence == "super")
             return ResolveSuperMember(context, memberName);
 
         var semanticModel = context.GetSemanticModel();
-        if (semanticModel != null)
+        if (semanticModel == null)
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+
+        var callerType = semanticModel.GetExpressionType(expr.CallerExpression);
+        if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+
+        var symbolInfo = semanticModel.ResolveMember(callerType, memberName);
+        if (symbolInfo != null
+            && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
+            && symbolInfo.DeclaringTypeName != "Unknown")
         {
-            var callerType = semanticModel.GetExpressionType(expr.CallerExpression);
+            if (IsProjectType(context, symbolInfo.DeclaringTypeName))
+                return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
 
-            if (!string.IsNullOrEmpty(callerType) && callerType != "Variant")
-            {
-                var symbolInfo = semanticModel.ResolveMember(callerType, memberName);
-                if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
-                    && symbolInfo.DeclaringTypeName != "Unknown")
-                {
-                    // Check if the declaring type is a project type (user-defined)
-                    if (context.Project?.GetScriptByTypeName(symbolInfo.DeclaringTypeName) != null)
-                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
-
-                    // Also check project enum types (not class_name, but still project-defined)
-                    if (semanticModel.RuntimeProvider is GDCompositeRuntimeProvider composite
-                        && composite.ProjectTypesProvider?.IsKnownType(symbolInfo.DeclaringTypeName) == true)
-                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
-
-                    return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
-                }
-
-                // Member not found on callerType — if it's a project type,
-                // walk the extends chain to find the member on a built-in base type
-                var baseType = ResolveBaseTypeForProjectType(context, callerType);
-                if (!string.IsNullOrEmpty(baseType))
-                {
-                    symbolInfo = semanticModel.ResolveMember(baseType, memberName);
-                    if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
-                        && symbolInfo.DeclaringTypeName != "Unknown")
-                    {
-                        return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
-                    }
-                }
-
-                // callerType may be an autoload name — resolve via autoload script
-                if (context.Project != null)
-                {
-                    var autoload = context.Project.AutoloadEntries
-                        .FirstOrDefault(a => a.Name == callerType);
-
-                    if (autoload != null)
-                    {
-                        var autoloadScript = context.Project.GetScriptByResourcePath(autoload.Path);
-                        if (autoloadScript?.Class != null)
-                        {
-                            // Try class_name first (for project-defined members)
-                            var className = autoloadScript.Class.ClassName?.Identifier?.Sequence;
-                            if (!string.IsNullOrEmpty(className))
-                            {
-                                symbolInfo = semanticModel.ResolveMember(className, memberName);
-                                if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
-                                    && symbolInfo.DeclaringTypeName != "Unknown")
-                                {
-                                    if (context.Project.GetScriptByTypeName(symbolInfo.DeclaringTypeName) != null)
-                                        return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
-
-                                    return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
-                                }
-                            }
-
-                            // Try extends type (for inherited built-in members)
-                            var extendsType = autoloadScript.Class.Extends?.Type?.BuildName();
-                            if (!string.IsNullOrEmpty(extendsType))
-                            {
-                                symbolInfo = semanticModel.ResolveMember(extendsType, memberName);
-                                if (symbolInfo != null && !string.IsNullOrEmpty(symbolInfo.DeclaringTypeName)
-                                    && symbolInfo.DeclaringTypeName != "Unknown")
-                                {
-                                    return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
-                                }
-                            }
-                        }
-
-                        // Autoload found but member not resolved — use BuiltInMember to avoid expensive project-wide scan
-                        var autoloadTypeInfo = semanticModel.RuntimeProvider?.GetTypeInfo(autoload.Name);
-                        var autoloadBaseType = autoloadTypeInfo?.BaseType ?? "Node";
-                        return GDGoToDefinitionResult.BuiltInMember(autoloadBaseType, memberName);
-                    }
-                }
-            }
+            return GDGoToDefinitionResult.BuiltInMember(symbolInfo.DeclaringTypeName, memberName);
         }
 
         return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
+    }
+
+    private static bool IsProjectType(GDRefactoringContext context, string typeName)
+    {
+        if (context.Project?.GetScriptByTypeName(typeName) != null)
+            return true;
+
+        var semanticModel = context.GetSemanticModel();
+        if (semanticModel?.RuntimeProvider is GDCompositeRuntimeProvider composite
+            && composite.ProjectTypesProvider?.IsKnownType(typeName) == true)
+            return true;
+
+        return false;
     }
 
     /// <summary>
@@ -853,7 +794,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
     /// </summary>
     private GDGoToDefinitionResult ResolveSuperMember(GDRefactoringContext context, string memberName)
     {
-        var parentType = context.Script?.Class?.Extends?.Type?.BuildName();
+        var parentType = context.GetSemanticModel()?.BaseTypeName;
         if (!string.IsNullOrEmpty(parentType))
         {
             var parentScript = context.Project?.GetScriptByTypeName(parentType);
@@ -887,33 +828,6 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
     }
 
     /// <summary>
-    /// Walks the extends chain for a project type to find the first built-in base type.
-    /// E.g., FieldCamera → Camera2D (built-in).
-    /// </summary>
-    private static string? ResolveBaseTypeForProjectType(GDRefactoringContext context, string typeName)
-    {
-        var currentType = typeName;
-        for (int i = 0; i < 20; i++) // depth limit
-        {
-            var script = context.Project?.GetScriptByTypeName(currentType);
-            if (script?.Class == null)
-                break;
-
-            var extendsType = script.Class.Extends?.Type?.BuildName();
-            if (string.IsNullOrEmpty(extendsType))
-                break;
-
-            // If extends type is NOT a project type, it's a built-in
-            if (context.Project?.GetScriptByTypeName(extendsType) == null)
-                return extendsType;
-
-            currentType = extendsType;
-        }
-
-        return null;
-    }
-
-    /// <summary>
     /// Resolves a lambda expression declaration — the identifier IS the declaration itself.
     /// </summary>
     private GDGoToDefinitionResult ResolveLambdaDeclaration(
@@ -931,51 +845,5 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
             identifier.Sequence,
             lambdaExpr,
             identifier);
-    }
-
-    /// <summary>
-    /// Checks if a type name is a built-in Godot type.
-    /// </summary>
-    private bool IsBuiltInType(string typeName)
-    {
-        // Common built-in types
-        return typeName switch
-        {
-            // Primitive types
-            "bool" or "int" or "float" or "String" or "void" => true,
-
-            // Core types
-            "Vector2" or "Vector2i" or "Vector3" or "Vector3i" or "Vector4" or "Vector4i" => true,
-            "Rect2" or "Rect2i" or "Transform2D" or "Transform3D" => true,
-            "Plane" or "Quaternion" or "AABB" or "Basis" or "Projection" => true,
-            "Color" or "NodePath" or "RID" or "Callable" or "Signal" => true,
-            "Dictionary" or "Array" or "PackedByteArray" or "PackedInt32Array" => true,
-            "PackedInt64Array" or "PackedFloat32Array" or "PackedFloat64Array" => true,
-            "PackedStringArray" or "PackedVector2Array" or "PackedVector3Array" => true,
-            "PackedColorArray" or "PackedVector4Array" => true,
-            "StringName" or "Variant" or "Object" => true,
-
-            // Common node types (just a sample - full check requires TypesMap)
-            "Node" or "Node2D" or "Node3D" or "Control" or "CanvasItem" => true,
-            "Sprite2D" or "Sprite3D" or "AnimatedSprite2D" or "AnimatedSprite3D" => true,
-            "Camera2D" or "Camera3D" => true,
-            "CharacterBody2D" or "CharacterBody3D" => true,
-            "RigidBody2D" or "RigidBody3D" or "StaticBody2D" or "StaticBody3D" => true,
-            "Area2D" or "Area3D" or "CollisionShape2D" or "CollisionShape3D" => true,
-            "Label" or "Button" or "TextEdit" or "LineEdit" => true,
-            "Panel" or "Container" or "HBoxContainer" or "VBoxContainer" or "GridContainer" => true,
-            "Timer" or "AnimationPlayer" or "AudioStreamPlayer" => true,
-            "Resource" or "Texture" or "Texture2D" or "Image" or "Mesh" or "Material" => true,
-
-            _ => false
-        };
-    }
-
-    /// <summary>
-    /// Finds a parent node of the specified type.
-    /// </summary>
-    private static T? FindParentOfType<T>(GDSyntaxToken token) where T : GDNode
-    {
-        return GDPositionFinder.FindParent<T>(token);
     }
 }

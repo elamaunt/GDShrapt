@@ -81,17 +81,16 @@ public static class GDMemberCollector
 
     /// <summary>
     /// Collects all names that should not be used for new identifiers.
-    /// Includes member names, reserved keywords, and built-in types.
+    /// Includes member names and reserved keywords.
+    /// Built-in type checking is done via IGDRuntimeProvider.IsKnownType() at the call site.
     /// </summary>
     /// <param name="classDecl">The class declaration to scan.</param>
     /// <param name="includeKeywords">Include GDScript reserved keywords.</param>
-    /// <param name="includeBuiltInTypes">Include built-in type names.</param>
-    /// <param name="includeUppercaseVariants">Include UPPERCASE variants of keywords/types.</param>
+    /// <param name="includeUppercaseVariants">Include UPPERCASE variants of keywords.</param>
     /// <returns>Set of reserved names.</returns>
     public static HashSet<string> CollectAllReservedNames(
         GDClassDeclaration? classDecl,
         bool includeKeywords = true,
-        bool includeBuiltInTypes = true,
         bool includeUppercaseVariants = true)
     {
         var names = CollectMemberNames(classDecl);
@@ -103,16 +102,6 @@ public static class GDMemberCollector
                 names.Add(kw);
                 if (includeUppercaseVariants)
                     names.Add(kw.ToUpperInvariant());
-            }
-        }
-
-        if (includeBuiltInTypes)
-        {
-            foreach (var type in GDNamingUtilities.BuiltInTypes)
-            {
-                names.Add(type);
-                if (includeUppercaseVariants)
-                    names.Add(type.ToUpperInvariant());
             }
         }
 

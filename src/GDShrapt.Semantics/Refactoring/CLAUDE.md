@@ -9,7 +9,8 @@ Refactoring/
 ├── Services/           - 17 refactoring services
 ├── Context/            - Refactoring context (selection, cursor)
 ├── Results/            - Result types (single-file only in Base)
-└── GDCrossFileReferenceFinder.cs - Cross-file reference search
+├── GDCrossFileReferenceFinder.cs  - Cross-file reference search
+└── GDNodePathReferenceFinder.cs   - Scene node path reference search
 ```
 
 ## Plan vs Execute Model

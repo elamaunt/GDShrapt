@@ -665,30 +665,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (string.IsNullOrEmpty(typeName) || string.IsNullOrEmpty(memberName))
             return null;
 
-        if (_runtimeProvider == null)
-            return null;
-
-        var memberInfo = _runtimeProvider.GetMember(typeName, memberName);
+        var memberInfo = _memberResolver.FindMember(typeName, memberName);
         if (memberInfo == null)
             return null;
 
-        var declaringType = FindDeclaringType(typeName, memberName) ?? typeName;
-
+        var declaringType = _memberResolver.FindDeclaringType(typeName, memberName);
         return GDSymbolInfo.BuiltIn(memberInfo, declaringType);
-    }
-
-    /// <summary>
-    /// Finds the type that actually declares a member (for inherited members).
-    /// </summary>
-    private string? FindDeclaringType(string typeName, string memberName)
-    {
-        return TraverseInheritanceChain(typeName, current =>
-        {
-            var typeInfo = _runtimeProvider!.GetTypeInfo(current);
-            if (typeInfo?.Members?.Any(m => m.Name == memberName) == true)
-                return current;
-            return null;
-        }) ?? typeName;
     }
 
     #endregion

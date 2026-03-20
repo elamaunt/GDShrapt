@@ -45,6 +45,11 @@ public class GDNodePathReference
     public int LineNumber { get; set; }
 
     /// <summary>
+    /// Column number (1-based) where the node name starts in the line.
+    /// </summary>
+    public int Column { get; set; }
+
+    /// <summary>
     /// The node path being referenced (e.g., "Player" or "Enemy/Spawner").
     /// </summary>
     public string NodePath { get; set; } = string.Empty;

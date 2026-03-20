@@ -28,26 +28,6 @@ public static class GDNamingUtilities
     };
 
     /// <summary>
-    /// Built-in type names that should not be used as variable identifiers.
-    /// </summary>
-    public static IReadOnlySet<string> BuiltInTypes { get; } = new HashSet<string>(StringComparer.Ordinal)
-    {
-        "Array", "Dictionary", "String", "Vector2", "Vector3", "Vector4",
-        "Color", "Rect2", "Transform2D", "Transform3D", "Basis", "Quaternion",
-        "AABB", "Plane", "NodePath", "RID", "Object", "Callable", "Signal",
-        "StringName", "PackedByteArray", "PackedInt32Array", "PackedInt64Array",
-        "PackedFloat32Array", "PackedFloat64Array", "PackedStringArray",
-        "PackedVector2Array", "PackedVector3Array", "PackedColorArray",
-        "int", "float", "bool", "Variant", "void",
-        // Node types
-        "Node", "Node2D", "Node3D", "Control", "Sprite2D", "Sprite3D",
-        "Camera2D", "Camera3D", "AudioStreamPlayer", "Area2D", "Area3D",
-        "CharacterBody2D", "CharacterBody3D", "RigidBody2D", "RigidBody3D",
-        "StaticBody2D", "StaticBody3D", "CollisionShape2D", "CollisionShape3D",
-        "AnimationPlayer", "Timer", "Label", "Button", "TextureRect"
-    };
-
-    /// <summary>
     /// Validates that a name is a valid GDScript identifier.
     /// </summary>
     /// <param name="name">The name to validate.</param>
@@ -88,14 +68,6 @@ public static class GDNamingUtilities
     public static bool IsReservedKeyword(string name)
     {
         return ReservedKeywords.Contains(name);
-    }
-
-    /// <summary>
-    /// Checks if a name is a built-in type name.
-    /// </summary>
-    public static bool IsBuiltInType(string name)
-    {
-        return BuiltInTypes.Contains(name);
     }
 
     /// <summary>
@@ -351,7 +323,16 @@ public static class GDNamingUtilities
     /// <returns>A unique name.</returns>
     public static string GenerateUniqueName(string baseName, ISet<string> existingNames)
     {
-        if (!existingNames.Contains(baseName))
+        return GenerateUniqueName(baseName, existingNames, null);
+    }
+
+    /// <summary>
+    /// Generates a unique name by appending a number suffix.
+    /// Also checks against runtime provider known types.
+    /// </summary>
+    public static string GenerateUniqueName(string baseName, ISet<string> existingNames, IGDRuntimeProvider? runtimeProvider)
+    {
+        if (!existingNames.Contains(baseName) && runtimeProvider?.IsKnownType(baseName) != true)
             return baseName;
 
         int suffix = 1;
@@ -361,7 +342,7 @@ public static class GDNamingUtilities
             candidate = $"{baseName}_{suffix}";
             suffix++;
         }
-        while (existingNames.Contains(candidate));
+        while (existingNames.Contains(candidate) || runtimeProvider?.IsKnownType(candidate) == true);
 
         return candidate;
     }

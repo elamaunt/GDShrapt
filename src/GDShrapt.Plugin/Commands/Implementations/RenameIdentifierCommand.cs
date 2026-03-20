@@ -14,7 +14,6 @@ internal class RenameIdentifierCommand : Command
     Action<string, int, int, int> _renamingDialogNavigateHandler;
     NodeRenamingDialog _nodeRenamingDialog;
     GDNodePathReferenceFinder _referenceFinder;
-    GDNodePathRenamer _renamer;
     readonly IGDSymbolsHandler _symbolsHandler;
 
     public RenameIdentifierCommand(GDShraptPlugin plugin)
@@ -271,19 +270,20 @@ internal class RenameIdentifierCommand : Command
 
         var newName = InternalMethods.PrepareIdentifier(parameters.NewName, "");
 
-        // Initialize renamer if needed
-        if (_renamer == null)
+        // Plan rename using GDRenameService
+        var renameService = new GDRenameService(Map);
+        var renamePlan = renameService.PlanNodePathRename(nodeName, newName);
+
+        if (!renamePlan.Success)
         {
-            _renamer = new GDNodePathRenamer(Map);
+            Logger.Error($"Node rename failed: {renamePlan.ErrorMessage}");
+            return false;
         }
 
-        // Apply changes using Semantics service
-        var renameResult = _renamer.ApplyRename(parameters.SelectedReferences, nodeName, newName);
-
-        if (!renameResult.Success)
+        // Apply edits
+        foreach (var edit in renamePlan.StrictEdits)
         {
-            Logger.Error($"Node rename failed: {renameResult.ErrorMessage}");
-            return false;
+            renameService.ApplyEditsToFile(edit.FilePath, new[] { edit });
         }
 
         // Clear scene cache to reload updated scenes
@@ -378,19 +378,20 @@ internal class RenameIdentifierCommand : Command
 
         var newName = InternalMethods.PrepareIdentifier(dialogParams.NewName, "");
 
-        // Initialize renamer if needed
-        if (_renamer == null)
+        // Plan rename using GDRenameService
+        var renameService = new GDRenameService(Map);
+        var renamePlan = renameService.PlanNodePathRename(nodeName, newName);
+
+        if (!renamePlan.Success)
         {
-            _renamer = new GDNodePathRenamer(Map);
+            Logger.Error($"Node rename failed: {renamePlan.ErrorMessage}");
+            return false;
         }
 
-        // Apply changes using Semantics service
-        var renameResult = _renamer.ApplyRename(dialogParams.SelectedReferences, nodeName, newName);
-
-        if (!renameResult.Success)
+        // Apply edits
+        foreach (var edit in renamePlan.StrictEdits)
         {
-            Logger.Error($"Node rename failed: {renameResult.ErrorMessage}");
-            return false;
+            renameService.ApplyEditsToFile(edit.FilePath, new[] { edit });
         }
 
         // Clear scene cache to reload updated scenes
