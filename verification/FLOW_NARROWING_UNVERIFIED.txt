@@ -2,15 +2,6 @@
 # Copy entries to FLOW_NARROWING_VERIFIED.txt and add # OK
 
 test_scripts/scene_nodes.gd
-  _ready()
-    37:4 player_node -> CharacterBody2D|null (base: CharacterBody2D|null)
-    38:15 player_node -> CharacterBody2D|null (base: CharacterBody2D|null)
-
-  instantiate_typed()
-    135:4 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
-    136:12 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
-    137:9 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
-
   duplicate_node()
     166:8 copy -> Node2D|null (base: Node2D|null)
 
@@ -19,11 +10,4 @@ test_scripts/scene_references.gd
     49:1 enemy -> Node2D|null (base: Node2D|null)
     50:27 enemy -> Node2D|null (base: Node2D|null)
     51:8 enemy -> Node2D|null (base: Node2D|null)
-
-test_scripts/type_inference.gd
-  get_node_types()
-    84:4 sprite -> Sprite2D|null (base: Sprite2D|null)
-    85:2 sprite -> Sprite2D|null (base: Sprite2D|null)
-    86:4 label -> Label|null (base: Label|null)
-    87:2 label -> Label|null (base: Label|null)
 

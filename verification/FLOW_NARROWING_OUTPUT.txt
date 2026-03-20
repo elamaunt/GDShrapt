@@ -1933,8 +1933,8 @@ test_scripts/rename_test.gd
 
 test_scripts/scene_nodes.gd
   _ready()
-    37:4 player_node -> CharacterBody2D|null (base: CharacterBody2D|null)
-    38:15 player_node -> CharacterBody2D|null (base: CharacterBody2D|null)
+    37:4 player_node -> CharacterBody2D (base: CharacterBody2D)
+    38:15 player_node -> CharacterBody2D (base: CharacterBody2D)
     42:4 optional -> Node (base: Node)
     47:4 sprite_node -> Sprite2D (base: Node)
     48:2 sprite_node -> Sprite2D (base: Node)
@@ -1996,9 +1996,9 @@ test_scripts/scene_nodes.gd
 
   instantiate_typed()
     134:16 scene -> PackedScene (base: PackedScene)
-    135:4 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
-    136:12 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
-    137:9 instance -> CharacterBody2D|null (base: CharacterBody2D|null)
+    135:4 instance -> CharacterBody2D (base: CharacterBody2D)
+    136:12 instance -> CharacterBody2D (base: CharacterBody2D)
+    137:9 instance -> CharacterBody2D (base: CharacterBody2D)
 
   queue_free_child()
     143:30 child_name -> String (base: String)
@@ -2770,10 +2770,10 @@ test_scripts/type_inference.gd
     75:21 popped -> int (base: int)
 
   get_node_types()
-    84:4 sprite -> Sprite2D|null (base: Sprite2D|null)
-    85:2 sprite -> Sprite2D|null (base: Sprite2D|null)
-    86:4 label -> Label|null (base: Label|null)
-    87:2 label -> Label|null (base: Label|null)
+    84:4 sprite -> Sprite2D (base: Sprite2D)
+    85:2 sprite -> Sprite2D (base: Sprite2D)
+    86:4 label -> Label (base: Label)
+    87:2 label -> Label (base: Label)
 
   test_conditional_inference()
     92:25 value -> float (base: float)

@@ -115,7 +115,7 @@ func test(node):
         Assert.IsNotNull(asExpr, "Should find 'as' expression");
 
         var typeInfo = model.TypeSystem.GetType(asExpr);
-        Assert.AreEqual("Sprite2D", typeInfo.DisplayName, "'node as Sprite2D' should infer as Sprite2D");
+        Assert.AreEqual("Sprite2D|null", typeInfo.DisplayName, "'node as Sprite2D' should infer as Sprite2D|null (cast can fail)");
     }
 
     [TestMethod]
@@ -180,7 +180,7 @@ func test(obj):
         Assert.IsNotNull(asExpr, "Should find 'as' expression");
 
         var typeInfo = model.TypeSystem.GetType(asExpr);
-        Assert.AreEqual("MyInner", typeInfo.DisplayName, "'obj as MyInner' should infer as MyInner");
+        Assert.AreEqual("MyInner|null", typeInfo.DisplayName, "'obj as MyInner' should infer as MyInner|null (cast can fail)");
     }
 
     [TestMethod]

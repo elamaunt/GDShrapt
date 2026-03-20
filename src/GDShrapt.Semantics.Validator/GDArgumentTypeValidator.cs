@@ -1,6 +1,7 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using GDShrapt.Semantics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -151,9 +152,16 @@ namespace GDShrapt.Semantics.Validator
                 var varName = identExpr.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(varName))
                 {
-                    var narrowedType = _semanticModel.TypeSystem.GetNarrowedType(varName, arg);
-                    if (!string.IsNullOrEmpty(narrowedType))
-                        return narrowedType;
+                    try
+                    {
+                        var narrowedType = _semanticModel.TypeSystem.GetNarrowedType(varName, arg);
+                        if (!string.IsNullOrEmpty(narrowedType))
+                            return narrowedType;
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"[GD3010] GetNarrowedType failed for '{varName}': {ex}");
+                    }
                 }
             }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Reader;
@@ -37,33 +38,40 @@ public class GDDiagnosticsHandler : IGDDiagnosticsHandler
 
         if (script.SemanticModel != null && script.Class != null)
         {
-            var options = semanticOptions ?? GDSemanticValidatorOptions.Default;
-            var validator = new GDSemanticValidator(script.SemanticModel, options);
-            var semanticResult = validator.Validate(script.Class);
-
-            foreach (var diag in semanticResult.Diagnostics)
+            try
             {
-                var ruleId = diag.CodeString;
+                var options = semanticOptions ?? GDSemanticValidatorOptions.Default;
+                var validator = new GDSemanticValidator(script.SemanticModel, options);
+                var semanticResult = validator.Validate(script.Class);
 
-                if (config?.Linting.Rules.TryGetValue(ruleId, out var rc) == true && !rc.Enabled)
-                    continue;
-
-                var severity = GDSeverityMapper.FromValidator(diag.Severity);
-
-                if (config?.Linting.Rules.TryGetValue(ruleId, out var rc2) == true && rc2.Severity.HasValue)
-                    severity = GDSeverityMapper.FromValidator(rc2.Severity.Value);
-
-                result.Add(new GDUnifiedDiagnostic
+                foreach (var diag in semanticResult.Diagnostics)
                 {
-                    Code = ruleId,
-                    Message = diag.Message,
-                    Severity = severity,
-                    Source = GDDiagnosticSource.SemanticValidator,
-                    StartLine = diag.StartLine,
-                    StartColumn = diag.StartColumn,
-                    EndLine = diag.EndLine,
-                    EndColumn = diag.EndColumn
-                });
+                    var ruleId = diag.CodeString;
+
+                    if (config?.Linting.Rules.TryGetValue(ruleId, out var rc) == true && !rc.Enabled)
+                        continue;
+
+                    var severity = GDSeverityMapper.FromValidator(diag.Severity);
+
+                    if (config?.Linting.Rules.TryGetValue(ruleId, out var rc2) == true && rc2.Severity.HasValue)
+                        severity = GDSeverityMapper.FromValidator(rc2.Severity.Value);
+
+                    result.Add(new GDUnifiedDiagnostic
+                    {
+                        Code = ruleId,
+                        Message = diag.Message,
+                        Severity = severity,
+                        Source = GDDiagnosticSource.SemanticValidator,
+                        StartLine = diag.StartLine,
+                        StartColumn = diag.StartColumn,
+                        EndLine = diag.EndLine,
+                        EndColumn = diag.EndColumn
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[DIAG] Semantic validation failed for {script.Reference?.FullPath}: {ex}");
             }
         }
 

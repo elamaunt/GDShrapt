@@ -833,6 +833,11 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
                                 }
                             }
                         }
+
+                        // Autoload found but member not resolved — use BuiltInMember to avoid expensive project-wide scan
+                        var autoloadTypeInfo = semanticModel.RuntimeProvider?.GetTypeInfo(autoload.Name);
+                        var autoloadBaseType = autoloadTypeInfo?.BaseType ?? "Node";
+                        return GDGoToDefinitionResult.BuiltInMember(autoloadBaseType, memberName);
                     }
                 }
             }

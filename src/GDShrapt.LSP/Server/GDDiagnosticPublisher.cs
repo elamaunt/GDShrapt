@@ -103,6 +103,10 @@ public class GDDiagnosticPublisher : IAsyncDisposable
             {
                 // Expected when update is cancelled
             }
+            catch (Exception ex)
+            {
+                GDLspPerformanceTrace.Log("diagnostics", $"ERROR {uri}: {ex}");
+            }
             finally
             {
                 _pendingUpdates.TryRemove(uri, out _);
