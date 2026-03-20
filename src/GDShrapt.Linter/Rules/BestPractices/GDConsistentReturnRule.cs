@@ -38,7 +38,7 @@ namespace GDShrapt.Linter
                 return;
             }
 
-            var returns = method.AllNodes.OfType<GDReturnExpression>().ToList();
+            var returns = GDAstNodeIndex.Build(method).GetNodes<GDReturnExpression>();
 
             if (returns.Count == 0)
             {

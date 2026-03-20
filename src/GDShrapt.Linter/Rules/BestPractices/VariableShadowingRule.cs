@@ -48,8 +48,10 @@ namespace GDShrapt.Linter
             if (classVarNames.Count == 0)
                 return;
 
+            var methodIndex = GDAstNodeIndex.Build(method);
+
             // Check local variable declarations
-            foreach (var localVar in method.AllNodes.OfType<GDVariableDeclarationStatement>())
+            foreach (var localVar in methodIndex.GetNodes<GDVariableDeclarationStatement>())
             {
                 var name = localVar.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(name) && classVarNames.Contains(name))
@@ -62,7 +64,7 @@ namespace GDShrapt.Linter
             }
 
             // Check for-loop iterators
-            foreach (var forStmt in method.AllNodes.OfType<GDForStatement>())
+            foreach (var forStmt in methodIndex.GetNodes<GDForStatement>())
             {
                 var name = forStmt.Variable?.Sequence;
                 if (!string.IsNullOrEmpty(name) && classVarNames.Contains(name))

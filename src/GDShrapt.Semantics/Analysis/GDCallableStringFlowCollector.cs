@@ -25,8 +25,8 @@ internal class GDCallableStringFlowCollector
             if (scriptFile.Class == null)
                 continue;
 
-            var callableConstructions = scriptFile.Class.AllNodes
-                .OfType<GDCallExpression>()
+            var classIndex = scriptFile.ClassIndex!;
+            var callableConstructions = classIndex.GetNodes<GDCallExpression>()
                 .Where(c => GDStringValueResolver.GetCalleeMethodName(c) == "Callable");
 
             foreach (var callableCall in callableConstructions)
@@ -35,7 +35,7 @@ internal class GDCallableStringFlowCollector
                 if (args == null || args.Count < 2)
                     continue;
 
-                var resolvedNames = _stringResolver.ResolveStringValues(args[1], scriptFile.Class);
+                var resolvedNames = _stringResolver.ResolveStringValues(args[1], scriptFile);
                 if (resolvedNames.Count == 0)
                     continue;
 

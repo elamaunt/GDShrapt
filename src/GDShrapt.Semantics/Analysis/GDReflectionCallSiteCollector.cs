@@ -39,11 +39,11 @@ internal class GDReflectionCallSiteCollector
     {
         if (classDecl == null) return;
 
-        var allNodes = classDecl.AllNodes.ToList();
+        var classIndex = _model.ScriptFile.ClassIndex!;
 
         // Phase 1: Find all for-loops with get_method_list()/get_property_list()/get_signal_list()
         var contexts = new List<ForLoopContext>();
-        foreach (var forStmt in allNodes.OfType<GDForStatement>())
+        foreach (var forStmt in classIndex.GetNodes<GDForStatement>())
         {
             var iteratorName = forStmt.Variable?.Sequence;
             if (string.IsNullOrEmpty(iteratorName))
@@ -71,7 +71,7 @@ internal class GDReflectionCallSiteCollector
             return;
 
         // Phase 2: Find matching invocations that reference an iterator variable
-        foreach (var callExpr in allNodes.OfType<GDCallExpression>())
+        foreach (var callExpr in classIndex.GetNodes<GDCallExpression>())
         {
             TryMatchReflectionCall(callExpr, contexts);
         }

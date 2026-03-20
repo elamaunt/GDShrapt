@@ -536,7 +536,8 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         if (script?.Class == null || string.IsNullOrEmpty(symbolName))
             yield break;
 
-        foreach (var node in script.Class.AllNodes.OfType<GDDualOperatorExpression>())
+        var classIndex = script.ClassIndex;
+        foreach (var node in classIndex.GetNodes<GDDualOperatorExpression>())
         {
             if (node.Operator?.OperatorType != GDDualOperatorType.Assignment)
                 continue;
@@ -981,7 +982,7 @@ public class GDTypeFlowHandler : IGDTypeFlowHandler
         // Find return statements inside the method
         if (method.Statements != null)
         {
-            var returnStatements = method.AllNodes.OfType<GDReturnExpression>().Take(10);
+            var returnStatements = GDAstNodeIndex.Build(method).GetNodes<GDReturnExpression>().Take(10);
             foreach (var ret in returnStatements)
             {
                 string returnedType;

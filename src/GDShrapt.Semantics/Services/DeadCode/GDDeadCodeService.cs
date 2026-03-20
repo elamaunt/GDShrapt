@@ -1308,9 +1308,13 @@ public class GDDeadCodeService
         if (scope == null || string.IsNullOrEmpty(varName))
             return true;
 
-        foreach (var node in scope.AllNodes)
+        var scopeIndex = GDAstNodeIndex.Build(scope,
+            typeof(GDCallExpression), typeof(GDReturnExpression),
+            typeof(GDDualOperatorExpression), typeof(GDArrayInitializerExpression));
+
+        foreach (var call in scopeIndex.GetNodes<GDCallExpression>())
         {
-            if (node is GDCallExpression call && call.Parameters != null)
+            if (call.Parameters != null)
             {
                 foreach (var param in call.Parameters)
                 {
@@ -1318,28 +1322,34 @@ public class GDDeadCodeService
                         return true;
                 }
             }
+        }
 
-            if (node is GDReturnExpression ret && ContainsIdentifier(ret.Expression, varName))
+        foreach (var ret in scopeIndex.GetNodes<GDReturnExpression>())
+        {
+            if (ContainsIdentifier(ret.Expression, varName))
                 return true;
+        }
 
-            if (node is GDDualOperatorExpression dualOp)
+        foreach (var dualOp in scopeIndex.GetNodes<GDDualOperatorExpression>())
+        {
+            var opType = dualOp.Operator?.OperatorType;
+            if (opType == GDDualOperatorType.Assignment
+                || opType == GDDualOperatorType.AddAndAssign
+                || opType == GDDualOperatorType.SubtractAndAssign)
             {
-                var opType = dualOp.Operator?.OperatorType;
-                if (opType == GDDualOperatorType.Assignment
-                    || opType == GDDualOperatorType.AddAndAssign
-                    || opType == GDDualOperatorType.SubtractAndAssign)
+                if (dualOp.RightExpression != null
+                    && ContainsIdentifier(dualOp.RightExpression, varName))
                 {
-                    if (dualOp.RightExpression != null
-                        && ContainsIdentifier(dualOp.RightExpression, varName))
-                    {
-                        var lhsName = GetRootIdentifierName(dualOp.LeftExpression);
-                        if (lhsName != varName)
-                            return true;
-                    }
+                    var lhsName = GetRootIdentifierName(dualOp.LeftExpression);
+                    if (lhsName != varName)
+                        return true;
                 }
             }
+        }
 
-            if (node is GDArrayInitializerExpression arr && arr.Values != null)
+        foreach (var arr in scopeIndex.GetNodes<GDArrayInitializerExpression>())
+        {
+            if (arr.Values != null)
             {
                 foreach (var val in arr.Values)
                 {

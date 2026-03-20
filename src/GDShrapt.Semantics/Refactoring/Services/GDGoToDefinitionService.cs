@@ -426,7 +426,8 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         }
 
         // Check local variable declarations
-        foreach (var varDecl in scope.AllNodes.OfType<GDVariableDeclarationStatement>())
+        var scopeIndex = GDAstNodeIndex.Build(scope, typeof(GDVariableDeclarationStatement), typeof(GDForStatement));
+        foreach (var varDecl in scopeIndex.GetNodes<GDVariableDeclarationStatement>())
         {
             if (varDecl.Identifier?.Sequence == symbolName &&
                 varDecl.StartLine < identifier.StartLine)
@@ -444,7 +445,7 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         }
 
         // Check for loop variables
-        foreach (var forStmt in scope.AllNodes.OfType<GDForStatement>())
+        foreach (var forStmt in scopeIndex.GetNodes<GDForStatement>())
         {
             if (forStmt.Variable?.Sequence == symbolName &&
                 forStmt.StartLine <= identifier.StartLine)

@@ -399,21 +399,19 @@ public class GDIncrementalAnalyzer : IGDIncrementalAnalyzer
         }
 
         // 2. Extract preload/load call dependencies
-        foreach (var node in script.Class.AllNodes)
+        var classIndex = script.ClassIndex!;
+        foreach (var call in classIndex.GetNodes<GDCallExpression>())
         {
-            if (node is GDCallExpression call)
+            var callerName = GetCallerName(call);
+            if (GDWellKnownFunctions.IsResourceLoader(callerName))
             {
-                var callerName = GetCallerName(call);
-                if (GDWellKnownFunctions.IsResourceLoader(callerName))
+                var firstParam = call.Parameters?.FirstOrDefault();
+                if (firstParam is GDStringExpression strExpr && strExpr.String != null)
                 {
-                    var firstParam = call.Parameters?.FirstOrDefault();
-                    if (firstParam is GDStringExpression strExpr && strExpr.String != null)
-                    {
-                        var resourcePath = strExpr.String.Sequence;
-                        var resolved = ResolveResourcePath(resourcePath, project);
-                        if (resolved != null)
-                            deps.Add(resolved);
-                    }
+                    var resourcePath = strExpr.String.Sequence;
+                    var resolved = ResolveResourcePath(resourcePath, project);
+                    if (resolved != null)
+                        deps.Add(resolved);
                 }
             }
         }

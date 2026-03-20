@@ -16,7 +16,8 @@ public static class GDRefactoringExtensions
     public static IEnumerable<T> FindNodes<T>(this GDNode root, Func<T, bool>? predicate = null) where T : GDNode
     {
         if (root == null) return Enumerable.Empty<T>();
-        var nodes = root.AllNodes.OfType<T>();
+        var index = GDAstNodeIndex.Build(root, typeof(T));
+        var nodes = index.GetNodes<T>();
         return predicate != null ? nodes.Where(predicate) : nodes;
     }
 

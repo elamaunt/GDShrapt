@@ -70,9 +70,12 @@ internal sealed class GDParameterTypeAnalyzer
         {
             var context = new ConditionAnalysisContext(paramName, new HashSet<string>());
 
-            AnalyzeIfStatements(method, context);
-            AnalyzeMatchStatements(method, paramName, context.TypeGuardTypes);
-            AnalyzeAssertStatements(method, paramName, context.TypeGuardTypes);
+            var methodIndex = GDAstNodeIndex.Build(method,
+                typeof(GDIfStatement), typeof(GDMatchStatement), typeof(GDCallExpression));
+
+            AnalyzeIfStatements(methodIndex, context);
+            AnalyzeMatchStatements(methodIndex, paramName, context.TypeGuardTypes);
+            AnalyzeAssertStatements(methodIndex, paramName, context.TypeGuardTypes);
 
             foreach (var guardType in context.TypeGuardTypes)
             {
@@ -141,9 +144,9 @@ internal sealed class GDParameterTypeAnalyzer
         }
     }
 
-    private void AnalyzeIfStatements(GDMethodDeclaration method, ConditionAnalysisContext context)
+    private void AnalyzeIfStatements(GDAstNodeIndex methodIndex, ConditionAnalysisContext context)
     {
-        foreach (var ifStmt in method.AllNodes.OfType<GDIfStatement>())
+        foreach (var ifStmt in methodIndex.GetNodes<GDIfStatement>())
         {
             AnalyzeCondition(ifStmt.IfBranch?.Condition, context);
 
@@ -240,11 +243,11 @@ internal sealed class GDParameterTypeAnalyzer
     /// Analyzes match statements for pattern-based type inference.
     /// </summary>
     private void AnalyzeMatchStatements(
-        GDMethodDeclaration method,
+        GDAstNodeIndex methodIndex,
         string paramName,
         HashSet<string> inferredTypes)
     {
-        foreach (var matchStmt in method.AllNodes.OfType<GDMatchStatement>())
+        foreach (var matchStmt in methodIndex.GetNodes<GDMatchStatement>())
         {
             if (!IsParameterExpression(matchStmt.Value, paramName))
                 continue;
@@ -275,11 +278,11 @@ internal sealed class GDParameterTypeAnalyzer
     /// Analyzes assert statements for type inference.
     /// </summary>
     private void AnalyzeAssertStatements(
-        GDMethodDeclaration method,
+        GDAstNodeIndex methodIndex,
         string paramName,
         HashSet<string> typeGuardTypes)
     {
-        foreach (var call in method.AllNodes.OfType<GDCallExpression>())
+        foreach (var call in methodIndex.GetNodes<GDCallExpression>())
         {
             if (!call.IsAssert())
                 continue;

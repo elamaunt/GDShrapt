@@ -1149,18 +1149,16 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (classDecl == null)
             return false;
 
-        foreach (var node in classDecl.AllNodes)
+        var classIndex = _scriptFile.ClassIndex!;
+        foreach (var call in classIndex.GetNodes<GDCallExpression>())
         {
-            if (node is GDCallExpression call && call.Parameters != null)
-            {
-                if (ContainsSelfIdentifier(call.Parameters))
-                    return true;
-            }
-            else if (node is GDArrayInitializerExpression array && array.Values != null)
-            {
-                if (ContainsSelfIdentifier(array.Values))
-                    return true;
-            }
+            if (call.Parameters != null && ContainsSelfIdentifier(call.Parameters))
+                return true;
+        }
+        foreach (var array in classIndex.GetNodes<GDArrayInitializerExpression>())
+        {
+            if (array.Values != null && ContainsSelfIdentifier(array.Values))
+                return true;
         }
 
         return false;

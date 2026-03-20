@@ -14,7 +14,7 @@ internal class GDStringValueResolver
         _project = project ?? throw new ArgumentNullException(nameof(project));
     }
 
-    public HashSet<string> ResolveStringValues(GDExpression expr, GDClassDeclaration classDecl)
+    public HashSet<string> ResolveStringValues(GDExpression expr, GDScriptFile scriptFile)
     {
         var result = new HashSet<string>(StringComparer.Ordinal);
 
@@ -36,7 +36,7 @@ internal class GDStringValueResolver
                 var dictVarName = dictId.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(dictVarName))
                 {
-                    CollectDictionaryValuesForKey(classDecl, dictVarName, keyLiteral, result);
+                    CollectDictionaryValuesForKey(scriptFile, dictVarName, keyLiteral, result);
                 }
             }
         }
@@ -50,7 +50,7 @@ internal class GDStringValueResolver
                 var dictVarName = dictId.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(dictVarName))
                 {
-                    CollectDictionaryValuesForKey(classDecl, dictVarName, memberName, result);
+                    CollectDictionaryValuesForKey(scriptFile, dictVarName, memberName, result);
                 }
             }
         }
@@ -68,13 +68,15 @@ internal class GDStringValueResolver
     }
 
     private void CollectDictionaryValuesForKey(
-        GDClassDeclaration classDecl,
+        GDScriptFile scriptFile,
         string varName,
         string key,
         HashSet<string> result)
     {
-        var forLoops = classDecl.AllNodes
-            .OfType<GDForStatement>()
+        var classDecl = scriptFile.Class!;
+        var classIndex = scriptFile.ClassIndex!;
+
+        var forLoops = classIndex.GetNodes<GDForStatement>()
             .Where(f => f.Variable?.Sequence == varName);
 
         foreach (var forLoop in forLoops)
@@ -83,11 +85,10 @@ internal class GDStringValueResolver
             if (iterable == null)
                 continue;
 
-            CollectDictionaryValuesFromIterable(classDecl, iterable, key, result);
+            CollectDictionaryValuesFromIterable(classDecl, classIndex, iterable, key, result);
         }
 
-        var varDecls = classDecl.AllNodes
-            .OfType<GDVariableDeclaration>()
+        var varDecls = classIndex.GetNodes<GDVariableDeclaration>()
             .Where(v => v.Identifier?.Sequence == varName);
 
         foreach (var varDecl in varDecls)
@@ -101,6 +102,7 @@ internal class GDStringValueResolver
 
     private void CollectDictionaryValuesFromIterable(
         GDClassDeclaration classDecl,
+        GDAstNodeIndex classIndex,
         GDExpression iterable,
         string key,
         HashSet<string> result)
@@ -116,8 +118,7 @@ internal class GDStringValueResolver
             var iterVarName = idExpr.Identifier?.Sequence;
             if (!string.IsNullOrEmpty(iterVarName))
             {
-                var decls = classDecl.AllNodes
-                    .OfType<GDVariableDeclaration>()
+                var decls = classIndex.GetNodes<GDVariableDeclaration>()
                     .Where(v => v.Identifier?.Sequence == iterVarName);
 
                 foreach (var decl in decls)
@@ -128,8 +129,7 @@ internal class GDStringValueResolver
                     }
                 }
 
-                var localDecls = classDecl.AllNodes
-                    .OfType<GDVariableDeclarationStatement>()
+                var localDecls = classIndex.GetNodes<GDVariableDeclarationStatement>()
                     .Where(v => v.Identifier?.Sequence == iterVarName);
 
                 foreach (var decl in localDecls)
@@ -182,8 +182,8 @@ internal class GDStringValueResolver
 
         foreach (var method in methods)
         {
-            var returns = method.AllNodes
-                .OfType<GDReturnExpression>();
+            var methodIndex = GDAstNodeIndex.Build(method, typeof(GDReturnExpression));
+            var returns = methodIndex.GetNodes<GDReturnExpression>();
 
             foreach (var ret in returns)
             {

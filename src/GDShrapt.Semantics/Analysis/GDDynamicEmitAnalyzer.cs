@@ -22,8 +22,9 @@ internal class GDDynamicEmitAnalyzer
         string signalName,
         IReadOnlyList<string> effectiveNames)
     {
-        var emitSignalCalls = classDecl.AllNodes
-            .OfType<GDCallExpression>()
+        var classIndex = file.ClassIndex!;
+
+        var emitSignalCalls = classIndex.GetNodes<GDCallExpression>()
             .Where(c => GetCalleeMethodName(c) == "emit_signal")
             .ToList();
 
@@ -56,7 +57,7 @@ internal class GDDynamicEmitAnalyzer
                 if (paramIndex < 0)
                     continue;
 
-                if (TraceStringArgumentToCallers(file, classDecl, methodName, paramIndex, signalName, effectiveNames))
+                if (TraceStringArgumentToCallers(file, classIndex, methodName, paramIndex, signalName, effectiveNames))
                     return true;
             }
         }
@@ -66,15 +67,15 @@ internal class GDDynamicEmitAnalyzer
 
     private bool TraceStringArgumentToCallers(
         GDScriptFile file,
-        GDClassDeclaration classDecl,
+        GDAstNodeIndex classIndex,
         string methodName,
         int paramIndex,
         string signalName,
         IReadOnlyList<string> effectiveNames)
     {
+        var classDecl = file.Class!;
         // Check local direct calls
-        var localCalls = classDecl.AllNodes
-            .OfType<GDCallExpression>()
+        var localCalls = classIndex.GetNodes<GDCallExpression>()
             .Where(c => GetCalleeMethodName(c) == methodName);
 
         foreach (var call in localCalls)
@@ -90,8 +91,7 @@ internal class GDDynamicEmitAnalyzer
         }
 
         // Check .bind() patterns
-        var bindCalls = classDecl.AllNodes
-            .OfType<GDCallExpression>()
+        var bindCalls = classIndex.GetNodes<GDCallExpression>()
             .Where(c =>
             {
                 if (c.CallerExpression is GDMemberOperatorExpression mem &&
@@ -143,8 +143,8 @@ internal class GDDynamicEmitAnalyzer
                     if (callerFile?.Class == null)
                         continue;
 
-                    var callerCalls = callerFile.Class.AllNodes
-                        .OfType<GDCallExpression>()
+                    var callerIndex = callerFile.ClassIndex!;
+                    var callerCalls = callerIndex.GetNodes<GDCallExpression>()
                         .Where(c =>
                         {
                             var callee = GetCalleeMethodName(c);

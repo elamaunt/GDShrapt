@@ -471,7 +471,8 @@ public class GDProjectSemanticModel : IDisposable
             }
         }
 
-        foreach (var preload in scriptFile.Class.AllNodes.OfType<GDCallExpression>())
+        var classIndex = scriptFile.ClassIndex!;
+        foreach (var preload in classIndex.GetNodes<GDCallExpression>())
         {
             if (preload.CallerExpression is GDIdentifierExpression idExpr &&
                 idExpr.Identifier?.Sequence == GDWellKnownFunctions.Preload &&

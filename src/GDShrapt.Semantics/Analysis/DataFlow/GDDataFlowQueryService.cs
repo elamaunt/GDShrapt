@@ -300,7 +300,8 @@ internal sealed class GDDataFlowQueryService : IGDDataFlowQuery
         GDNode? best = null;
         int bestDistance = int.MaxValue;
 
-        foreach (var node in scope.AllNodes)
+        var scopeIndex = GDAstNodeIndex.Build(scope);
+        foreach (var node in scopeIndex.AllNodes)
         {
             var firstToken = node.FirstLeafToken;
             if (firstToken == null)

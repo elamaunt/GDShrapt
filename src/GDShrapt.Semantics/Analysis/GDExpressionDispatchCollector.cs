@@ -36,9 +36,9 @@ internal class GDExpressionDispatchCollector
     private void CollectFromExpressionExecute(GDScriptFile scriptFile, List<GDExpressionDispatchEntry> entries)
     {
         var classDecl = scriptFile.Class!;
+        var classIndex = scriptFile.ClassIndex!;
 
-        var parseCalls = classDecl.AllNodes
-            .OfType<GDCallExpression>()
+        var parseCalls = classIndex.GetNodes<GDCallExpression>()
             .Where(c =>
             {
                 if (c.CallerExpression is GDMemberOperatorExpression mem)
@@ -53,7 +53,7 @@ internal class GDExpressionDispatchCollector
                 continue;
 
             var stringArg = args[0];
-            var resolvedStrings = _stringResolver.ResolveStringValues(stringArg, classDecl);
+            var resolvedStrings = _stringResolver.ResolveStringValues(stringArg, scriptFile);
 
             foreach (var str in resolvedStrings)
             {
@@ -78,9 +78,9 @@ internal class GDExpressionDispatchCollector
     private void CollectFromStringReplaceChains(GDScriptFile scriptFile, List<GDExpressionDispatchEntry> entries)
     {
         var classDecl = scriptFile.Class!;
+        var classIndex = scriptFile.ClassIndex!;
 
-        var replaceCalls = classDecl.AllNodes
-            .OfType<GDCallExpression>()
+        var replaceCalls = classIndex.GetNodes<GDCallExpression>()
             .Where(c =>
             {
                 if (c.CallerExpression is GDMemberOperatorExpression mem)
@@ -119,8 +119,9 @@ internal class GDExpressionDispatchCollector
     private void CollectFromStringLiterals(GDScriptFile scriptFile, List<GDExpressionDispatchEntry> entries)
     {
         var classDecl = scriptFile.Class!;
+        var classIndex = scriptFile.ClassIndex!;
 
-        foreach (var strExpr in classDecl.AllNodes.OfType<GDStringExpression>())
+        foreach (var strExpr in classIndex.GetNodes<GDStringExpression>())
         {
             var code = strExpr.String?.Sequence;
             if (string.IsNullOrEmpty(code))
@@ -194,8 +195,8 @@ internal class GDExpressionDispatchCollector
         if (method == null)
             return null;
 
-        var executeCalls = method.AllNodes
-            .OfType<GDCallExpression>()
+        var methodIndex = GDAstNodeIndex.Build(method, typeof(GDCallExpression));
+        var executeCalls = methodIndex.GetNodes<GDCallExpression>()
             .Where(c =>
             {
                 if (c.CallerExpression is GDMemberOperatorExpression mem)

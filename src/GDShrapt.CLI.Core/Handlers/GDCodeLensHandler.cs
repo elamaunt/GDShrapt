@@ -596,7 +596,8 @@ public class GDCodeLensHandler : IGDCodeLensHandler
 
             scriptToNodePath.TryGetValue(scriptResPath, out var scriptNodePath);
 
-            foreach (var astNode in script.Class.AllNodes)
+            var classIndex = script.ClassIndex;
+            foreach (var astNode in classIndex.AllNodes)
             {
                 if (astNode is GDGetNodeExpression pathExpr)
                 {

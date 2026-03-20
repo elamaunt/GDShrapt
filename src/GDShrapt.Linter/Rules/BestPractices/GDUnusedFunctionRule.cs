@@ -119,32 +119,25 @@ namespace GDShrapt.Linter
 
         private void CollectCalls(GDClassDeclaration classDecl, HashSet<string> calledFuncs, HashSet<string> connectedFuncs)
         {
-            foreach (var node in classDecl.AllNodes)
+            var classIndex = GDAstNodeIndex.Build(classDecl, typeof(GDCallExpression));
+            foreach (var call in classIndex.GetNodes<GDCallExpression>())
             {
-                // Direct function calls
-                if (node is GDCallExpression call)
+                var name = GetCallMethodName(call);
+                if (!string.IsNullOrEmpty(name))
                 {
-                    var name = GetCallMethodName(call);
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        calledFuncs.Add(name);
+                    calledFuncs.Add(name);
 
-                        // Check for signal.connect(callable) pattern
-                        if (name == "connect" || name == "call_deferred" || name == "call")
-                        {
-                            CollectCallableArguments(call, connectedFuncs);
-                        }
+                    // Check for signal.connect(callable) pattern
+                    if (name == "connect" || name == "call_deferred" || name == "call")
+                    {
+                        CollectCallableArguments(call, connectedFuncs);
                     }
                 }
 
                 // Callable references: Callable(self, "_method_name")
-                if (node is GDCallExpression callableExpr)
+                if (name == "Callable")
                 {
-                    var callableName = GetCallMethodName(callableExpr);
-                    if (callableName == "Callable")
-                    {
-                        CollectCallableArguments(callableExpr, connectedFuncs);
-                    }
+                    CollectCallableArguments(call, connectedFuncs);
                 }
             }
         }

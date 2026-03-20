@@ -15,6 +15,7 @@ internal class GDUnionTypeService
     private readonly Dictionary<string, List<GDCallSiteArgumentReport>> _callSiteArgumentReports = new();
     private readonly Dictionary<string, GDVariableUsageProfile> _variableProfiles = new();
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly GDUnionTypeResolver? _resolver;
     private GDTypeInferenceEngine? _typeEngine;
 
     /// <summary>
@@ -23,6 +24,7 @@ internal class GDUnionTypeService
     public GDUnionTypeService(IGDRuntimeProvider? runtimeProvider = null)
     {
         _runtimeProvider = runtimeProvider;
+        _resolver = runtimeProvider != null ? new GDUnionTypeResolver(runtimeProvider) : null;
     }
 
     /// <summary>
@@ -93,11 +95,10 @@ internal class GDUnionTypeService
     /// </summary>
     public GDReferenceConfidence GetUnionMemberConfidence(GDUnionType unionType, string memberName)
     {
-        if (unionType == null || string.IsNullOrEmpty(memberName) || _runtimeProvider == null)
+        if (unionType == null || string.IsNullOrEmpty(memberName) || _resolver == null)
             return GDReferenceConfidence.NameMatch;
 
-        var resolver = new GDUnionTypeResolver(_runtimeProvider);
-        return resolver.GetMemberConfidence(unionType, memberName);
+        return _resolver.GetMemberConfidence(unionType, memberName);
     }
 
     /// <summary>
@@ -241,11 +242,10 @@ internal class GDUnionTypeService
     /// </summary>
     private void EnrichUnionTypeIfNeeded(GDUnionType? union)
     {
-        if (union == null || _runtimeProvider == null)
+        if (union == null || _resolver == null)
             return;
 
-        var resolver = new GDUnionTypeResolver(_runtimeProvider);
-        resolver.EnrichUnionType(union);
+        _resolver.EnrichUnionType(union);
     }
 
     /// <summary>

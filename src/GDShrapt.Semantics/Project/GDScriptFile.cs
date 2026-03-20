@@ -35,6 +35,12 @@ public class GDScriptFile : IGDScriptInfo
     public GDClassDeclaration? Class { get; private set; }
 
     /// <summary>
+    /// Pre-built AST node index for the class declaration.
+    /// Built once after Freeze() in Reload(), shared by all consumers.
+    /// </summary>
+    public GDAstNodeIndex? ClassIndex { get; private set; }
+
+    /// <summary>
     /// The semantic model for this script.
     /// Provides unified access to symbols, references, type inference, and semantic analysis.
     /// </summary>
@@ -123,6 +129,7 @@ public class GDScriptFile : IGDScriptInfo
 
                 Class = Reader.ParseFileContent(content);
                 Class?.Freeze(); // Freeze for thread-safe parallel analysis
+                ClassIndex = Class != null ? GDAstNodeIndex.Build(Class) : null;
                 _lastContent = content;
 
                 TypeName = Class?.ClassName?.Identifier?.Sequence ?? Path.GetFileNameWithoutExtension(_reference.FullPath);
@@ -164,6 +171,7 @@ public class GDScriptFile : IGDScriptInfo
                     var result = _incrementalReader.ParseIncremental(oldTree, newContent, changes);
                     Class = result.Tree;
                     Class?.Freeze(); // Freeze for thread-safe parallel analysis
+                    ClassIndex = Class != null ? GDAstNodeIndex.Build(Class) : null;
                     wasIncremental = !result.IsFullReparse;
                 }
                 else
@@ -172,6 +180,7 @@ public class GDScriptFile : IGDScriptInfo
                     _logger.Debug($"Full reload: {Path.GetFileName(_reference.FullPath)}");
                     Class = Reader.ParseFileContent(newContent);
                     Class?.Freeze(); // Freeze for thread-safe parallel analysis
+                    ClassIndex = Class != null ? GDAstNodeIndex.Build(Class) : null;
                 }
 
                 _lastContent = newContent;

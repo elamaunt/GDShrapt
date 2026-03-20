@@ -14,6 +14,7 @@ internal class GDContainerTypeService
     private readonly Dictionary<string, GDContainerUsageProfile> _classContainerProfiles = new();
     private readonly Dictionary<string, GDContainerElementType> _containerTypeCache = new();
     private readonly IGDRuntimeProvider? _runtimeProvider;
+    private readonly GDUnionTypeResolver? _resolver;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GDContainerTypeService"/> class.
@@ -21,6 +22,7 @@ internal class GDContainerTypeService
     public GDContainerTypeService(IGDRuntimeProvider? runtimeProvider = null)
     {
         _runtimeProvider = runtimeProvider;
+        _resolver = runtimeProvider != null ? new GDUnionTypeResolver(runtimeProvider) : null;
     }
 
     /// <summary>
@@ -154,15 +156,13 @@ internal class GDContainerTypeService
     /// </summary>
     private void EnrichUnionTypes(GDContainerElementType? containerType)
     {
-        if (containerType == null || _runtimeProvider == null)
+        if (containerType == null || _resolver == null)
             return;
 
-        var resolver = new GDUnionTypeResolver(_runtimeProvider);
-
         if (containerType.ElementUnionType != null)
-            resolver.EnrichUnionType(containerType.ElementUnionType);
+            _resolver.EnrichUnionType(containerType.ElementUnionType);
 
         if (containerType.KeyUnionType != null)
-            resolver.EnrichUnionType(containerType.KeyUnionType);
+            _resolver.EnrichUnionType(containerType.KeyUnionType);
     }
 }

@@ -35,8 +35,10 @@ public class GDNodePathReferenceFinder
             if (script.Class == null)
                 continue;
 
+            var classIndex = script.ClassIndex!;
+
             // Find all path expressions in the script ($Node)
-            foreach (var pathExpr in script.Class.AllNodes.OfType<GDGetNodeExpression>())
+            foreach (var pathExpr in classIndex.GetNodes<GDGetNodeExpression>())
             {
                 var pathList = pathExpr.Path;
                 if (pathList == null)
@@ -70,7 +72,7 @@ public class GDNodePathReferenceFinder
             }
 
             // Also check get_node() calls with string arguments
-            foreach (var call in script.Class.AllNodes.OfType<GDCallExpression>())
+            foreach (var call in classIndex.GetNodes<GDCallExpression>())
             {
                 if (!IsGetNodeCall(call))
                     continue;

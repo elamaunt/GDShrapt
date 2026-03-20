@@ -415,7 +415,8 @@ public static class GDProvenanceTracer
     {
         var method = FindMethodAtLine(file, line1Based);
         if (method?.Statements == null) return null;
-        return method.AllNodes.OfType<GDForStatement>()
+        var methodIndex = GDAstNodeIndex.Build(method, typeof(GDForStatement));
+        return methodIndex.GetNodes<GDForStatement>()
             .FirstOrDefault(f => f.Variable?.Sequence == varName
                 && f.StartLine <= line1Based - 1 && line1Based - 1 <= f.EndLine);
     }

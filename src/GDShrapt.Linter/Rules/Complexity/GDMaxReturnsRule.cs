@@ -27,7 +27,7 @@ namespace GDShrapt.Linter
             if (method == null)
                 return;
 
-            var returnCount = method.AllNodes.OfType<GDReturnExpression>().Count();
+            var returnCount = GDAstNodeIndex.Build(method).Count<GDReturnExpression>();
 
             if (returnCount > maxReturns)
             {

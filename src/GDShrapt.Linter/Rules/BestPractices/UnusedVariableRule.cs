@@ -57,48 +57,42 @@ namespace GDShrapt.Linter
 
         private void CollectLocalVariables(GDNode node, List<GDVariableDeclarationStatement> result)
         {
-            foreach (var childNode in node.AllNodes)
+            var nodeIndex = GDAstNodeIndex.Build(node);
+            foreach (var varDecl in nodeIndex.GetNodes<GDVariableDeclarationStatement>())
             {
-                if (childNode is GDVariableDeclarationStatement varDecl)
-                {
-                    result.Add(varDecl);
-                }
+                result.Add(varDecl);
             }
         }
 
         private void CollectUsedIdentifiers(GDMethodDeclaration method, HashSet<string> result)
         {
             // Get declared variable names to exclude them from usage detection
+            var methodIndex = GDAstNodeIndex.Build(method);
+
             var declaredNames = new HashSet<string>();
-            foreach (var node in method.AllNodes)
+            foreach (var varDecl in methodIndex.GetNodes<GDVariableDeclarationStatement>())
             {
-                if (node is GDVariableDeclarationStatement varDecl)
-                {
-                    var name = varDecl.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name))
-                        declaredNames.Add(name);
-                }
+                var name = varDecl.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(name))
+                    declaredNames.Add(name);
             }
 
             // Find all identifier expressions that are not the declaration itself
-            foreach (var node in method.AllNodes)
+            foreach (var identExpr in methodIndex.GetNodes<GDIdentifierExpression>())
             {
-                if (node is GDIdentifierExpression identExpr)
+                var name = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(name) && declaredNames.Contains(name))
                 {
-                    var name = identExpr.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name) && declaredNames.Contains(name))
+                    // Check if this identifier is part of a variable declaration
+                    // If the parent is a variable declaration and this is its identifier, skip it
+                    var parent = identExpr.Parent;
+                    if (parent is GDVariableDeclarationStatement varDecl &&
+                        varDecl.Identifier?.Sequence == name)
                     {
-                        // Check if this identifier is part of a variable declaration
-                        // If the parent is a variable declaration and this is its identifier, skip it
-                        var parent = identExpr.Parent;
-                        if (parent is GDVariableDeclarationStatement varDecl &&
-                            varDecl.Identifier?.Sequence == name)
-                        {
-                            continue; // This is the declaration, not a usage
-                        }
-
-                        result.Add(name);
+                        continue; // This is the declaration, not a usage
                     }
+
+                    result.Add(name);
                 }
             }
         }

@@ -64,16 +64,14 @@ public class GDSignatureHelpHandler : IGDSignatureHelpHandler
     {
         GDCallExpression? result = null;
 
-        foreach (var node in root.AllNodes)
+        var rootIndex = GDAstNodeIndex.Build(root);
+        foreach (var call in rootIndex.GetNodes<GDCallExpression>())
         {
-            if (node is GDCallExpression call)
+            if (IsPositionInCallArguments(call, line, column))
             {
-                if (IsPositionInCallArguments(call, line, column))
+                if (result == null || IsMoreSpecific(call, result))
                 {
-                    if (result == null || IsMoreSpecific(call, result))
-                    {
-                        result = call;
-                    }
+                    result = call;
                 }
             }
         }

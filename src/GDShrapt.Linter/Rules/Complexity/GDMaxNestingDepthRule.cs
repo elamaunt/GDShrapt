@@ -30,7 +30,8 @@ namespace GDShrapt.Linter
             GDSyntaxToken deepestToken = null;
 
             // Track parents to calculate depth
-            foreach (var node in method.AllNodes)
+            var methodIndex = GDAstNodeIndex.Build(method);
+            foreach (var node in methodIndex.AllNodes)
             {
                 if (IsNestingNode(node))
                 {

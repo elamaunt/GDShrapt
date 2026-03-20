@@ -30,7 +30,8 @@ namespace GDShrapt.Linter
             int complexity = 1;
 
             // Count decision points
-            foreach (var node in method.AllNodes)
+            var methodIndex = GDAstNodeIndex.Build(method);
+            foreach (var node in methodIndex.AllNodes)
             {
                 // Control flow statements
                 if (node is GDIfStatement)

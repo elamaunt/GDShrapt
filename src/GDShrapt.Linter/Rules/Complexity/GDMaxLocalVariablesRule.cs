@@ -27,7 +27,7 @@ namespace GDShrapt.Linter
             if (method == null)
                 return;
 
-            var localVarCount = method.AllNodes.OfType<GDVariableDeclarationStatement>().Count();
+            var localVarCount = GDAstNodeIndex.Build(method).Count<GDVariableDeclarationStatement>();
 
             if (localVarCount > maxVars)
             {

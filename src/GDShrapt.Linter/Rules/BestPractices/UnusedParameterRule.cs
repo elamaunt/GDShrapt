@@ -58,15 +58,13 @@ namespace GDShrapt.Linter
         private void CollectUsedIdentifiers(GDMethodDeclaration method, HashSet<string> result)
         {
             // Collect all identifier usages in the method body
-            foreach (var node in method.AllNodes)
+            var methodIndex = GDAstNodeIndex.Build(method);
+            foreach (var identExpr in methodIndex.GetNodes<GDIdentifierExpression>())
             {
-                if (node is GDIdentifierExpression identExpr)
+                var name = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(name))
                 {
-                    var name = identExpr.Identifier?.Sequence;
-                    if (!string.IsNullOrEmpty(name))
-                    {
-                        result.Add(name);
-                    }
+                    result.Add(name);
                 }
             }
         }

@@ -220,7 +220,8 @@ namespace GDShrapt.Semantics
             var sourceMethodName = method.Identifier?.ToString();
 
             // Find all call expressions in the method body
-            var callExpressions = method.AllNodes.OfType<GDCallExpression>().ToList();
+            var methodIndex = GDAstNodeIndex.Build(method, typeof(GDCallExpression), typeof(GDVariableDeclarationStatement));
+            var callExpressions = methodIndex.GetNodes<GDCallExpression>();
 
             foreach (var call in callExpressions)
             {
@@ -356,7 +357,8 @@ namespace GDShrapt.Semantics
             }
 
             // Check local variable declarations (var x: Type) in the method body
-            foreach (var varDecl in method.AllNodes.OfType<GDVariableDeclarationStatement>())
+            var resolveIndex = GDAstNodeIndex.Build(method, typeof(GDVariableDeclarationStatement));
+            foreach (var varDecl in resolveIndex.GetNodes<GDVariableDeclarationStatement>())
             {
                 if (varDecl.Identifier?.Sequence == identifierName && varDecl.Type != null)
                 {
@@ -438,7 +440,8 @@ namespace GDShrapt.Semantics
                 return true;
 
             // Check for identifier usage in the tree
-            foreach (var identifier in file.Class.AllNodes.OfType<GDIdentifierExpression>())
+            var fileClassIndex = file.ClassIndex!;
+            foreach (var identifier in fileClassIndex.GetNodes<GDIdentifierExpression>())
             {
                 if (className.Equals(identifier.Identifier?.ToString(), StringComparison.OrdinalIgnoreCase))
                     return true;

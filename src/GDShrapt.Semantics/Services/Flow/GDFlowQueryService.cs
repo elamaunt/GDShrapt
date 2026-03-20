@@ -98,7 +98,8 @@ internal class GDFlowQueryService
         if (scope == null) return null;
 
         var beforeLine = expr.StartLine;
-        return scope.AllNodes.OfType<GDVariableDeclarationStatement>()
+        var scopeIndex = GDAstNodeIndex.Build(scope, typeof(GDVariableDeclarationStatement));
+        return scopeIndex.GetNodes<GDVariableDeclarationStatement>()
             .FirstOrDefault(v => v.Identifier?.Sequence == varName && v.StartLine < beforeLine);
     }
 
@@ -109,7 +110,8 @@ internal class GDFlowQueryService
     {
         if (method?.Statements == null) return null;
 
-        return method.AllNodes.OfType<GDVariableDeclarationStatement>()
+        var methodIndex = GDAstNodeIndex.Build(method, typeof(GDVariableDeclarationStatement));
+        return methodIndex.GetNodes<GDVariableDeclarationStatement>()
             .FirstOrDefault(v => v.Identifier?.Sequence == varName && v.StartLine < beforeLine);
     }
 }

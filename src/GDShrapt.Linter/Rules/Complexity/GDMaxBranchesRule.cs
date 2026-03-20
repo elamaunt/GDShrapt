@@ -27,23 +27,11 @@ namespace GDShrapt.Linter
             if (method == null)
                 return;
 
-            int branchCount = 0;
-
-            foreach (var node in method.AllNodes)
-            {
-                // Count if statements
-                if (node is GDIfStatement)
-                    branchCount++;
-                // Count elif branches
-                else if (node is GDElifBranch)
-                    branchCount++;
-                // Count else branches
-                else if (node is GDElseBranch)
-                    branchCount++;
-                // Count match cases
-                else if (node is GDMatchCaseDeclaration)
-                    branchCount++;
-            }
+            var methodIndex = GDAstNodeIndex.Build(method);
+            int branchCount = methodIndex.Count<GDIfStatement>()
+                            + methodIndex.Count<GDElifBranch>()
+                            + methodIndex.Count<GDElseBranch>()
+                            + methodIndex.Count<GDMatchCaseDeclaration>();
 
             if (branchCount > maxBranches)
             {

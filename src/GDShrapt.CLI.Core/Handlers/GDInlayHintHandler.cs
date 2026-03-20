@@ -35,17 +35,19 @@ public class GDInlayHintHandler : IGDInlayHintHandler
 
         var hints = new List<GDInlayHint>();
 
+        var classIndex = script.ClassIndex;
+
         // Collect hints for class-level variables and properties
         CollectVariableHints(script, semanticModel, startLine, endLine, hints);
 
         // Collect hints for local variables in methods
-        CollectLocalVariableHints(script, semanticModel, startLine, endLine, hints);
+        CollectLocalVariableHints(script, semanticModel, startLine, endLine, hints, classIndex);
 
         // Collect hints for method parameters without type annotations
-        CollectParameterTypeHints(script, semanticModel, startLine, endLine, hints);
+        CollectParameterTypeHints(script, semanticModel, startLine, endLine, hints, classIndex);
 
         // Collect hints for signal parameters without type annotations
-        CollectSignalParameterTypeHints(script, semanticModel, startLine, endLine, hints);
+        CollectSignalParameterTypeHints(script, semanticModel, startLine, endLine, hints, classIndex);
 
         // Limit hints count
         if (hints.Count > MaxHintsPerRequest)
@@ -183,13 +185,14 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         GDSemanticModel semanticModel,
         int startLine,
         int endLine,
-        List<GDInlayHint> hints)
+        List<GDInlayHint> hints,
+        GDAstNodeIndex classIndex)
     {
         if (script.Class == null)
             return;
 
-        // Iterate through all nodes to find variable declarations
-        foreach (var node in script.Class.AllNodes)
+        // Iterate through indexed nodes to find variable declarations and for loops
+        foreach (var node in classIndex.AllNodes)
         {
             if (hints.Count >= MaxHintsPerRequest)
                 break;
@@ -293,18 +296,16 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         GDSemanticModel semanticModel,
         int startLine,
         int endLine,
-        List<GDInlayHint> hints)
+        List<GDInlayHint> hints,
+        GDAstNodeIndex classIndex)
     {
         if (script.Class == null)
             return;
 
-        foreach (var node in script.Class.AllNodes)
+        foreach (var methodDecl in classIndex.GetNodes<GDMethodDeclaration>())
         {
             if (hints.Count >= MaxHintsPerRequest)
                 break;
-
-            if (node is not GDMethodDeclaration methodDecl)
-                continue;
 
             var parameters = methodDecl.Parameters;
             if (parameters == null || !parameters.Any())
@@ -389,18 +390,16 @@ public class GDInlayHintHandler : IGDInlayHintHandler
         GDSemanticModel semanticModel,
         int startLine,
         int endLine,
-        List<GDInlayHint> hints)
+        List<GDInlayHint> hints,
+        GDAstNodeIndex classIndex)
     {
         if (script.Class == null)
             return;
 
-        foreach (var node in script.Class.AllNodes)
+        foreach (var signalDecl in classIndex.GetNodes<GDSignalDeclaration>())
         {
             if (hints.Count >= MaxHintsPerRequest)
                 break;
-
-            if (node is not GDSignalDeclaration signalDecl)
-                continue;
 
             var parameters = signalDecl.Parameters;
             if (parameters == null || !parameters.Any())

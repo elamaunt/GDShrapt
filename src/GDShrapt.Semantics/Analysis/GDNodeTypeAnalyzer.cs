@@ -370,7 +370,8 @@ internal sealed class GDNodeTypeAnalyzer
         }
 
         // Collect actual return types from return statements
-        foreach (var ret in method.AllNodes.OfType<GDReturnExpression>())
+        var methodIndex = GDAstNodeIndex.Build(method, typeof(GDReturnExpression));
+        foreach (var ret in methodIndex.GetNodes<GDReturnExpression>())
         {
             if (ret.Expression != null)
             {
@@ -387,7 +388,7 @@ internal sealed class GDNodeTypeAnalyzer
         }
 
         // If no explicit return and no return statements, method returns void
-        if (method.ReturnType == null && !method.AllNodes.OfType<GDReturnExpression>().Any())
+        if (method.ReturnType == null && !methodIndex.HasAny<GDReturnExpression>())
         {
             expectedUnion.AddTypeName("void", isHighConfidence: true);
             actualUnion.AddTypeName("void", isHighConfidence: true);
@@ -469,7 +470,8 @@ internal sealed class GDNodeTypeAnalyzer
         if (scriptFile?.Class == null)
             return;
 
-        foreach (var expr in scriptFile.Class.AllNodes.OfType<GDDualOperatorExpression>())
+        var classIndex = scriptFile.ClassIndex!;
+        foreach (var expr in classIndex.GetNodes<GDDualOperatorExpression>())
         {
             if (expr.Operator?.OperatorType != GDDualOperatorType.Assignment)
                 continue;
