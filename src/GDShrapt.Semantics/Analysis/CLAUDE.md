@@ -44,14 +44,18 @@ Flow analysis is the **single source of truth** for variable types within method
 
 | Folder | Contents |
 |--------|----------|
-| `FlowServices/` | Flow helpers + flow query/nullability/cross-method services |
+| `Callable/` | Callable/lambda analysis, call site collectors, expression dispatch |
+| `Containers/` | Container profiling (Array/Dictionary usage patterns, class-level registries) |
 | `CrossMethod/` | Cross-method flow analysis, @onready safety |
 | `DataFlow/` | SSA-style flow analyzer, variable types |
-| `Rules/` | Analysis rules |
 | `DeadCode/` | Dead code detection (`GDDeadCodeService`) |
 | `Dependencies/` | Dependency graph (`GDDependencyService`) |
+| `FlowServices/` | Flow helpers + flow query/nullability/cross-method services |
+| `Inference/` | Parameter/duck type inference, cycle detection, call site collection |
 | `Metrics/` | Code metrics (`GDMetricsService`) |
+| `Rules/` | Analysis rules |
 | `TypeCoverage/` | Type annotation coverage (`GDTypeCoverageService`) |
+| `Utilities/` | Helpers: union type ops, doc comment extraction, comparers |
 
 ## Key Classes
 
