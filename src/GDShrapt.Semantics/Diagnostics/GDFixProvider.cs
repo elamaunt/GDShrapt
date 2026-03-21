@@ -799,9 +799,9 @@ public class GDFixProvider : IGDFixProvider
         if (analyzer != null)
         {
             var exprType = analyzer.GetExpressionType(memberAccess.CallerExpression);
-            if (!string.IsNullOrEmpty(exprType))
+            if (exprType != null && !exprType.IsVariant)
             {
-                yield return exprType;
+                yield return exprType.DisplayName;
                 yield break;
             }
         }

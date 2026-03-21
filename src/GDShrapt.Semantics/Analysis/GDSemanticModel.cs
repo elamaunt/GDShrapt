@@ -101,7 +101,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     private IReadOnlyList<GDSignalConnectionEntry>? _externalSignalConnections;
 
-    private readonly Dictionary<GDNode, string> _nodeTypes = new();
+    private readonly Dictionary<GDNode, GDSemanticType> _nodeTypes = new();
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes = new();
     private readonly Dictionary<string, List<GDTypeUsage>> _typeUsages = new();
     private readonly List<GDStringReferenceWarning> _stringReferenceWarnings = new();
@@ -375,9 +375,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
                 if (!string.IsNullOrEmpty(memberName))
                 {
                     var callerType = GetExpressionType(memberAccessNode.CallerExpression);
-                    if (!string.IsNullOrEmpty(callerType))
+                    if (callerType != null)
                     {
-                        var betterSymbol = ResolveMember(callerType, memberName);
+                        var betterSymbol = ResolveMember(callerType.DisplayName, memberName);
                         if (betterSymbol != null)
                             return betterSymbol;
                     }
@@ -424,8 +424,8 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             if (!string.IsNullOrEmpty(memberName))
             {
                 var callerType = GetExpressionType(memberAccess.CallerExpression);
-                if (!string.IsNullOrEmpty(callerType))
-                    return ResolveMember(callerType, memberName);
+                if (callerType != null)
+                    return ResolveMember(callerType.DisplayName, memberName);
             }
         }
 
@@ -443,8 +443,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             {
                 var nodePath = GDNodePathExtractor.ExtractFromGetNodeExpression(getNodeExpr);
                 var nodeType = GetExpressionType(getNodeExpr);
-                if (!string.IsNullOrEmpty(nodeType))
-                    return new GDSymbolInfo("$" + (nodePath ?? ""), GDSymbolKind.Property, nodeType, nodeType);
+                if (nodeType != null)
+                {
+                    var nodeTypeName = nodeType.DisplayName;
+                    return new GDSymbolInfo("$" + (nodePath ?? ""), GDSymbolKind.Property, nodeTypeName, nodeTypeName);
+                }
                 return null;
             }
 
@@ -452,8 +455,11 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             {
                 var nodeName = GDNodePathExtractor.ExtractFromUniqueNodeExpression(uniqueNodeExpr);
                 var nodeType = GetExpressionType(uniqueNodeExpr);
-                if (!string.IsNullOrEmpty(nodeType))
-                    return new GDSymbolInfo("%" + (nodeName ?? ""), GDSymbolKind.Property, nodeType, nodeType);
+                if (nodeType != null)
+                {
+                    var nodeTypeName = nodeType.DisplayName;
+                    return new GDSymbolInfo("%" + (nodeName ?? ""), GDSymbolKind.Property, nodeTypeName, nodeTypeName);
+                }
                 return null;
             }
 
@@ -778,13 +784,13 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
             return null;
 
         if (_nodeTypes.TryGetValue(node, out var cachedType))
-            return GDSemanticType.FromRuntimeTypeName(cachedType);
+            return cachedType;
 
         if (node is GDExpression expr)
         {
             var exprType = GetExpressionType(expr);
-            if (!string.IsNullOrEmpty(exprType))
-                return GDSemanticType.FromRuntimeTypeName(exprType);
+            if (exprType != null)
+                return exprType;
         }
 
         if (node is GDParameterDeclaration paramDecl)
@@ -827,7 +833,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// Uses flow-sensitive analysis when available.
     /// Internal - use TypeSystem.GetType() for external access.
     /// </summary>
-    internal string? GetExpressionType(GDExpression? expression)
+    internal GDSemanticType? GetExpressionType(GDExpression? expression)
     {
         return _expressionTypeService.GetExpressionType(expression);
     }
@@ -1406,9 +1412,9 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         if (semanticType != null && !semanticType.IsVariant)
             return semanticType;
 
-        var typeString = GetExpressionType(expression);
-        if (!string.IsNullOrEmpty(typeString) && typeString != "Variant")
-            return GDSemanticType.FromRuntimeTypeName(typeString);
+        var exprSemType = GetExpressionType(expression);
+        if (exprSemType != null && !exprSemType.IsVariant)
+            return exprSemType;
 
         return GDVariantSemanticType.Instance;
     }
@@ -2034,12 +2040,12 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Sets the inferred type for a node.
     /// </summary>
-    internal void SetNodeType(GDNode node, string type, GDTypeNode? typeNode = null)
+    internal void SetNodeType(GDNode node, GDSemanticType type, GDTypeNode? typeNode = null)
     {
         if (node == null)
             return;
 
-        if (!string.IsNullOrEmpty(type))
+        if (type != null && !type.IsVariant)
             _nodeTypes[node] = type;
 
         if (typeNode != null)
@@ -2207,43 +2213,18 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// <summary>
     /// Explicit interface implementation for IGDMemberAccessAnalyzer.GetMemberAccessConfidence.
     /// </summary>
-    GDReferenceConfidence IGDMemberAccessAnalyzer.GetMemberAccessConfidence(object memberAccess)
+    GDReferenceConfidence IGDMemberAccessAnalyzer.GetMemberAccessConfidence(GDMemberOperatorExpression memberAccess)
     {
-        if (memberAccess is GDMemberOperatorExpression memberExpr)
-            return GetMemberAccessConfidence(memberExpr);
-        return GDReferenceConfidence.NameMatch;
+        return GetMemberAccessConfidence(memberAccess);
     }
 
     /// <summary>
     /// Explicit interface implementation for IGDMemberAccessAnalyzer.GetExpressionType.
+    /// Flow analysis already applies narrowing, so this is the single entry point.
     /// </summary>
-    string? IGDMemberAccessAnalyzer.GetExpressionType(object expression)
+    GDSemanticType? IGDMemberAccessAnalyzer.GetExpressionType(GDExpression expression)
     {
-        if (expression is GDExpression expr)
-            return GetExpressionType(expr);
-        return null;
-    }
-
-    /// <summary>
-    /// Gets the effective type of an expression considering type narrowing.
-    /// For identifier expressions inside type guard blocks, returns the narrowed type.
-    /// </summary>
-    string? IGDMemberAccessAnalyzer.GetEffectiveExpressionType(object expression, object atLocation)
-    {
-        if (expression is GDIdentifierExpression identExpr && atLocation is GDNode location)
-        {
-            var varName = identExpr.Identifier?.Sequence;
-            if (!string.IsNullOrEmpty(varName))
-            {
-                var narrowedType = GetNarrowedType(varName, location);
-                if (!string.IsNullOrEmpty(narrowedType))
-                    return narrowedType;
-            }
-        }
-
-        if (expression is GDExpression expr)
-            return GetExpressionType(expr);
-        return null;
+        return GetSemanticTypeForNode(expression);
     }
 
     bool IGDMemberAccessAnalyzer.IsLocalEnum(string typeName)
@@ -2262,44 +2243,24 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     #region IGDArgumentTypeAnalyzer Implementation
 
-    /// <summary>
-    /// Gets the type diff for a call expression argument at the given index.
-    /// </summary>
-    GDArgumentTypeDiff? IGDArgumentTypeAnalyzer.GetArgumentTypeDiff(object callExpression, int argumentIndex)
+    GDArgumentTypeDiff? IGDArgumentTypeAnalyzer.GetArgumentTypeDiff(GDCallExpression callExpression, int argumentIndex)
     {
-        if (callExpression is GDCallExpression call)
-            return _argumentTypeService.GetArgumentTypeDiff(call, argumentIndex);
-        return null;
+        return _argumentTypeService.GetArgumentTypeDiff(callExpression, argumentIndex);
     }
 
-    /// <summary>
-    /// Gets all argument type diffs for a call expression.
-    /// </summary>
-    IEnumerable<GDArgumentTypeDiff> IGDArgumentTypeAnalyzer.GetAllArgumentTypeDiffs(object callExpression)
+    IEnumerable<GDArgumentTypeDiff> IGDArgumentTypeAnalyzer.GetAllArgumentTypeDiffs(GDCallExpression callExpression)
     {
-        if (callExpression is GDCallExpression call)
-            return _argumentTypeService.GetAllArgumentTypeDiffs(call);
-        return Enumerable.Empty<GDArgumentTypeDiff>();
+        return _argumentTypeService.GetAllArgumentTypeDiffs(callExpression);
     }
 
-    /// <summary>
-    /// Gets the inferred type of an expression.
-    /// </summary>
-    string? IGDArgumentTypeAnalyzer.GetExpressionType(object expression)
+    GDSemanticType? IGDArgumentTypeAnalyzer.GetExpressionType(GDExpression expression)
     {
-        if (expression is GDExpression expr)
-            return GetExpressionType(expr);
-        return null;
+        return GetSemanticTypeForNode(expression);
     }
 
-    /// <summary>
-    /// Gets the source description for an expression type.
-    /// </summary>
-    string? IGDArgumentTypeAnalyzer.GetExpressionTypeSource(object expression)
+    GDExpressionSourceKind? IGDArgumentTypeAnalyzer.GetExpressionSourceKind(GDExpression expression)
     {
-        if (expression is GDExpression expr)
-            return _argumentTypeService.GetExpressionTypeSource(expr);
-        return null;
+        return _argumentTypeService.GetExpressionSourceKind(expression);
     }
 
     #endregion

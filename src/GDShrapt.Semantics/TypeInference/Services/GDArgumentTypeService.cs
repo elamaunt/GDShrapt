@@ -16,7 +16,7 @@ internal class GDArgumentTypeService
 
     // Delegates to avoid circular dependencies
     private Func<string, GDSymbolInfo?>? _findSymbol;
-    private Func<GDExpression?, string?>? _getExpressionType;
+    private Func<GDExpression?, GDSemanticType?>? _getExpressionType;
     private Func<string, string, GDRuntimeMemberInfo?>? _findMemberWithInheritance;
     private string? _baseTypeName;
 
@@ -39,7 +39,7 @@ internal class GDArgumentTypeService
     /// <summary>
     /// Sets the delegate for getting expression type.
     /// </summary>
-    internal void SetGetExpressionTypeDelegate(Func<GDExpression?, string?> getExpressionType)
+    internal void SetGetExpressionTypeDelegate(Func<GDExpression?, GDSemanticType?> getExpressionType)
     {
         _getExpressionType = getExpressionType;
     }
@@ -73,7 +73,8 @@ internal class GDArgumentTypeService
 
         var (methodDecl, parameterInfo) = ResolveCalledMethod(call, argumentIndex);
         var actualType = _getExpressionType?.Invoke(arg);
-        var actualSource = GetExpressionTypeSource(arg);
+        var actualTypeName = actualType?.DisplayName;
+        var actualSourceKind = GetExpressionSourceKind(arg);
 
         // If we have a method declaration with parameter info
         if (methodDecl != null)
@@ -90,24 +91,26 @@ internal class GDArgumentTypeService
                     return GDArgumentTypeDiff.Skip(argumentIndex, paramName);
                 }
 
-                var expectedTypes = new List<string> { explicitType };
+                var expectedTypeNames = new List<string> { explicitType };
                 var expectedSource = "type annotation";
 
-                var isCompatible = CheckTypeCompatibility(actualType, expectedTypes, null);
-                var reason = isCompatible ? null : FormatIncompatibilityReason(actualType, expectedTypes, null);
+                var isCompatible = CheckTypeCompatibility(actualTypeName, expectedTypeNames, null);
+                var reason = isCompatible ? null : FormatIncompatibilityReason(actualTypeName, expectedTypeNames, null);
+
+                var expectedSemTypes = expectedTypeNames.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList();
 
                 if (isCompatible)
                 {
                     return GDArgumentTypeDiff.Compatible(
-                        argumentIndex, paramName, actualType, actualSource,
-                        expectedTypes, expectedSource,
+                        argumentIndex, paramName, actualType, actualSourceKind,
+                        expectedSemTypes, expectedSource,
                         GDReferenceConfidence.Strict);
                 }
                 else
                 {
                     return GDArgumentTypeDiff.Incompatible(
-                        argumentIndex, paramName, actualType, actualSource,
-                        expectedTypes, expectedSource, reason!,
+                        argumentIndex, paramName, actualType, actualSourceKind,
+                        expectedSemTypes, expectedSource, reason!,
                         GDReferenceConfidence.Strict);
                 }
             }
@@ -128,22 +131,24 @@ internal class GDArgumentTypeService
                 return GDArgumentTypeDiff.Skip(argumentIndex, parameterInfo.Name);
             }
 
-            var expectedTypes = new List<string> { expectedType };
-            var isCompatible = CheckTypeCompatibility(actualType, expectedTypes, null);
-            var reason = isCompatible ? null : FormatIncompatibilityReason(actualType, expectedTypes, null);
+            var expectedTypeNames = new List<string> { expectedType };
+            var isCompatible = CheckTypeCompatibility(actualTypeName, expectedTypeNames, null);
+            var reason = isCompatible ? null : FormatIncompatibilityReason(actualTypeName, expectedTypeNames, null);
+
+            var expectedSemTypes = expectedTypeNames.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList();
 
             if (isCompatible)
             {
                 return GDArgumentTypeDiff.Compatible(
-                    argumentIndex, parameterInfo.Name, actualType, actualSource,
-                    expectedTypes, "function signature",
+                    argumentIndex, parameterInfo.Name, actualType, actualSourceKind,
+                    expectedSemTypes, "function signature",
                     GDReferenceConfidence.Strict);
             }
             else
             {
                 return GDArgumentTypeDiff.Incompatible(
-                    argumentIndex, parameterInfo.Name, actualType, actualSource,
-                    expectedTypes, "function signature", reason!,
+                    argumentIndex, parameterInfo.Name, actualType, actualSourceKind,
+                    expectedSemTypes, "function signature", reason!,
                     GDReferenceConfidence.Strict);
             }
         }
@@ -169,22 +174,24 @@ internal class GDArgumentTypeService
     }
 
     /// <summary>
-    /// Gets the source description for an expression type.
+    /// Gets the syntactic kind of an expression for diagnostic messages.
     /// </summary>
-    public string? GetExpressionTypeSource(GDExpression? expr)
+    public GDExpressionSourceKind? GetExpressionSourceKind(GDExpression? expr)
     {
         return expr switch
         {
-            GDStringExpression => "string literal",
-            GDNumberExpression num => num.Number?.Sequence?.Contains('.') == true ? "float literal" : "integer literal",
-            GDBoolExpression => "boolean literal",
-            GDArrayInitializerExpression => "array literal",
-            GDDictionaryInitializerExpression => "dictionary literal",
-            GDIdentifierExpression id when id.Identifier?.Sequence == "null" => "null literal",
-            GDIdentifierExpression id => $"variable '{id.Identifier?.Sequence}'",
-            GDMemberOperatorExpression => "property access",
-            GDCallExpression => "function call result",
-            GDIndexerExpression => "indexer access",
+            GDStringExpression => GDExpressionSourceKind.StringLiteral,
+            GDNumberExpression num => num.Number?.Sequence?.Contains('.') == true
+                ? GDExpressionSourceKind.FloatLiteral
+                : GDExpressionSourceKind.IntegerLiteral,
+            GDBoolExpression => GDExpressionSourceKind.BooleanLiteral,
+            GDArrayInitializerExpression => GDExpressionSourceKind.ArrayLiteral,
+            GDDictionaryInitializerExpression => GDExpressionSourceKind.DictionaryLiteral,
+            GDIdentifierExpression id when id.Identifier?.Sequence == "null" => GDExpressionSourceKind.NullLiteral,
+            GDIdentifierExpression => GDExpressionSourceKind.Variable,
+            GDMemberOperatorExpression => GDExpressionSourceKind.PropertyAccess,
+            GDCallExpression => GDExpressionSourceKind.FunctionCallResult,
+            GDIndexerExpression => GDExpressionSourceKind.IndexerAccess,
             _ => null
         };
     }
@@ -234,7 +241,8 @@ internal class GDArgumentTypeService
         else if (caller is GDMemberOperatorExpression memberExpr)
         {
             var methodName = memberExpr.Identifier?.Sequence;
-            var callerExprType = _getExpressionType?.Invoke(memberExpr.CallerExpression);
+            var callerExprSemType = _getExpressionType?.Invoke(memberExpr.CallerExpression);
+            var callerExprType = callerExprSemType?.DisplayName;
 
             if (!string.IsNullOrEmpty(methodName))
             {

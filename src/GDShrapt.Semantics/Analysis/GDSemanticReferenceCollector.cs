@@ -1602,7 +1602,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                     typeName = GDGenericTypeHelper.CreateDictionaryType(keyUnion, valueUnion);
                 }
 
-                _model!.SetNodeType(expression, typeName, typeNode);
+                _model!.SetNodeType(expression, GDSemanticType.FromRuntimeTypeName(typeName), typeNode);
             }
             else
             {
@@ -1611,7 +1611,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
                 var semType = _typeEngine.InferSemanticType(expression);
                 if (semType != null && !semType.IsVariant)
                 {
-                    _model!.SetNodeType(expression, semType.DisplayName);
+                    _model!.SetNodeType(expression, semType);
                 }
             }
         }

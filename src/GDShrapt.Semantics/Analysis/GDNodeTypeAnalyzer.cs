@@ -248,8 +248,9 @@ internal sealed class GDNodeTypeAnalyzer
         var actualUnion = new GDUnionType();
 
         // Get caller type
-        var callerType = _semanticModel.GetExpressionType(memberExpr.CallerExpression);
-        if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant && _runtimeProvider != null)
+        var callerSemType = _semanticModel.GetExpressionType(memberExpr.CallerExpression);
+        var callerType = callerSemType?.DisplayName;
+        if (callerSemType != null && !callerSemType.IsVariant && _runtimeProvider != null)
         {
             // Look up member in the type
             var memberInfo = _runtimeProvider.GetMember(callerType, memberName);
@@ -283,12 +284,13 @@ internal sealed class GDNodeTypeAnalyzer
         if (callExpr.CallerExpression is GDMemberOperatorExpression memberOp)
         {
             methodName = memberOp.Identifier?.Sequence;
-            var callerType = _semanticModel.GetExpressionType(memberOp.CallerExpression);
+            var callerSemType2 = _semanticModel.GetExpressionType(memberOp.CallerExpression);
+            var callerType2 = callerSemType2?.DisplayName;
 
-            if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant &&
+            if (callerSemType2 != null && !callerSemType2.IsVariant &&
                 !string.IsNullOrEmpty(methodName) && _runtimeProvider != null)
             {
-                var memberInfo = _runtimeProvider.GetMember(callerType, methodName);
+                var memberInfo = _runtimeProvider.GetMember(callerType2, methodName);
                 if (memberInfo != null && !string.IsNullOrEmpty(memberInfo.Type))
                 {
                     expectedUnion.AddTypeName(memberInfo.Type, isHighConfidence: true);
@@ -331,10 +333,11 @@ internal sealed class GDNodeTypeAnalyzer
         var actualUnion = new GDUnionType();
 
         // Get caller type and extract element type using structured parsing
-        var callerType = _semanticModel.GetExpressionType(indexerExpr.CallerExpression);
-        if (!string.IsNullOrEmpty(callerType))
+        var callerSemType3 = _semanticModel.GetExpressionType(indexerExpr.CallerExpression);
+        var callerType3 = callerSemType3?.DisplayName;
+        if (!string.IsNullOrEmpty(callerType3))
         {
-            var elementType = GDTypeInferenceUtilities.GetCollectionElementType(callerType);
+            var elementType = GDTypeInferenceUtilities.GetCollectionElementType(callerType3);
             if (!string.IsNullOrEmpty(elementType))
             {
                 // High confidence for typed collections, low for untyped

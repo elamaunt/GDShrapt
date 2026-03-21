@@ -44,7 +44,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "min(int, int) should return int");
     }
@@ -59,7 +59,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "min(float, float) should return float");
     }
@@ -74,7 +74,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "min(int, float) should return float (numeric promotion)");
     }
@@ -89,7 +89,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "min(int, int, int) with 3 args should return int");
     }
@@ -104,7 +104,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "min() with 5 int args (variadic) should return int");
     }
@@ -119,7 +119,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "max(int, int) should return int");
     }
@@ -134,7 +134,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "max(float, float) should return float");
     }
@@ -149,7 +149,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "max(int, float) should return float (numeric promotion)");
     }
@@ -164,7 +164,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "max(int, int, int, int) with 4 args (variadic) should return int");
     }
@@ -179,7 +179,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "max(int, int, int) with 3 args should return int");
     }
@@ -194,7 +194,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "min(int, float, int) should return float (numeric promotion)");
     }
@@ -209,7 +209,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "max(float, int, float, int) should return float");
     }
@@ -226,7 +226,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("Vector2", "min(Vector2, Vector2) should return Vector2");
     }
@@ -243,7 +243,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "max");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("Vector3", "max(Vector3, Vector3) should return Vector3");
     }
@@ -259,7 +259,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("Variant", "min(Vector2, int) has incompatible types → Variant");
     }
@@ -276,7 +276,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "min");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("Variant", "min(Vector2, Vector3) has different vector dims → Variant");
     }
@@ -295,7 +295,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "mini");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "mini() should return int");
     }
@@ -310,7 +310,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "mini");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "mini(a, b, c) with 3 args (variadic) should return int");
     }
@@ -325,7 +325,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "maxi");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "maxi() should return int");
     }
@@ -340,7 +340,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "maxi");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "maxi(a, b, c, d) with 4 args (variadic) should return int");
     }
@@ -359,7 +359,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "minf");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "minf() should return float");
     }
@@ -374,7 +374,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "maxf");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "maxf() should return float");
     }
@@ -393,7 +393,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "clampi");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "clampi() should return int");
     }
@@ -408,7 +408,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "clampf");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "clampf() should return float");
     }
@@ -427,7 +427,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "abs");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "abs(int) should return int");
     }
@@ -442,7 +442,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "abs");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "abs(float) should return float");
     }
@@ -457,7 +457,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "absi");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "absi() should return int");
     }
@@ -472,7 +472,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "absf");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "absf() should return float");
     }
@@ -491,7 +491,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "clamp");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("int", "clamp(int, int, int) should return int (first arg type)");
     }
@@ -506,7 +506,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "clamp");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "clamp(float, float, float) should return float (first arg type)");
     }
@@ -521,7 +521,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "lerp");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("float", "lerp(float, float, float) should return float (common type of a, b)");
     }
@@ -536,7 +536,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "lerp");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         // lerp(int, int, float) - common type of first two args is int
         typeName.Should().Be("int", "lerp(int, int, float) should return int (common type of a, b)");
@@ -552,7 +552,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "range");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("Array", "range() should return Array");
     }
@@ -567,7 +567,7 @@ func test():
         var model = CreateSemanticModel(code);
         var callExpr = FindCallExpression(model, "range");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         typeName.Should().Be("Array", "range(start, end, step) should return Array");
     }
@@ -597,7 +597,7 @@ func test():
             .First(m => m.Identifier?.Sequence == "position");
 
         var callerExpr = memberAccess.CallerExpression;
-        var typeName = model.GetExpressionType(callerExpr);
+        var typeName = model.GetExpressionType(callerExpr)?.DisplayName;
 
         typeName.Should().Be("Node2D", "typed variable with null initializer should return explicit type Node2D");
     }

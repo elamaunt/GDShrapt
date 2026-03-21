@@ -128,7 +128,8 @@ public class GDCrossFileReferenceFinder
 
                 if (confidence == GDReferenceConfidence.Strict)
                 {
-                    var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
+                    var callerSemType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
+                    var callerType = callerSemType?.DisplayName;
                     if (!string.IsNullOrEmpty(callerType)
                         && callerType != GDWellKnownTypes.Self
                         && !IsTypeCompatible(callerType, declaringTypeName))
@@ -500,13 +501,14 @@ public class GDCrossFileReferenceFinder
         if (memberAccess.CallerExpression == null)
             return "Caller expression is null";
 
-        var callerType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
+        var callerSemType = semanticModel.GetExpressionType(memberAccess.CallerExpression);
+        var callerTypeName = callerSemType?.DisplayName;
         var varName = GetRootVariableName(memberAccess.CallerExpression);
 
         return confidence switch
         {
-            GDReferenceConfidence.Strict when !string.IsNullOrEmpty(callerType) =>
-                $"Caller type '{callerType}' matches target type '{targetTypeName}'",
+            GDReferenceConfidence.Strict when !string.IsNullOrEmpty(callerTypeName) =>
+                $"Caller type '{callerTypeName}' matches target type '{targetTypeName}'",
 
             GDReferenceConfidence.Strict when varName != null =>
                 $"Variable '{varName}' type narrowed to '{targetTypeName}' by control flow",
@@ -517,8 +519,8 @@ public class GDCrossFileReferenceFinder
             GDReferenceConfidence.Potential =>
                 $"Caller expression type unknown; may reference '{targetTypeName}'",
 
-            GDReferenceConfidence.NameMatch when !string.IsNullOrEmpty(callerType) =>
-                $"Caller type '{callerType}' does not match target type '{targetTypeName}'",
+            GDReferenceConfidence.NameMatch when !string.IsNullOrEmpty(callerTypeName) =>
+                $"Caller type '{callerTypeName}' does not match target type '{targetTypeName}'",
 
             _ => "Unknown confidence reason"
         };

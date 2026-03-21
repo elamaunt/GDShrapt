@@ -19,7 +19,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
     private readonly GDUnionTypeService _unionTypeService;
     private readonly GDDuckTypeService _duckTypeService;
     private readonly GDFlowAnalysisRegistry _flowRegistry;
-    private readonly Dictionary<GDNode, string> _nodeTypes;
+    private readonly Dictionary<GDNode, GDSemanticType> _nodeTypes;
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes;
     private readonly GDMemberResolver _memberResolver;
 
@@ -44,7 +44,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
         GDUnionTypeService unionTypeService,
         GDDuckTypeService duckTypeService,
         GDFlowAnalysisRegistry flowRegistry,
-        Dictionary<GDNode, string> nodeTypes,
+        Dictionary<GDNode, GDSemanticType> nodeTypes,
         Dictionary<GDNode, GDTypeNode> nodeTypeNodes)
     {
         _runtimeProvider = runtimeProvider;
@@ -99,8 +99,8 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 if (methodName == GDWellKnownFunctions.Constructor)
                 {
                     var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
-                    if (!string.IsNullOrEmpty(callerType))
-                        return GDSemanticType.FromRuntimeTypeName(callerType);
+                    if (callerType != null)
+                        return callerType;
                 }
             }
 
@@ -177,7 +177,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
     /// Gets the inferred type for an expression.
     /// Uses flow-sensitive analysis when available.
     /// </summary>
-    public string? GetExpressionType(GDExpression? expression)
+    public GDSemanticType? GetExpressionType(GDExpression? expression)
     {
         if (expression == null)
             return null;
@@ -200,12 +200,12 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                         {
                             var containerType = _containerTypeService.GetInferredContainerType(varName);
                             if (containerType != null && containerType.HasElementTypes)
-                                return containerType.ToString();
+                                return GDSemanticType.FromRuntimeTypeName(containerType.ToString());
                         }
-                        // Signal with signature → return base "Signal" for string API
+                        // Signal with signature → return base "Signal"
                         if (flowType.IsSignal)
-                            return "Signal";
-                        return flowType.DisplayName;
+                            return GDSemanticType.FromRuntimeTypeName("Signal");
+                        return flowType;
                     }
                 }
 
@@ -213,7 +213,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 var containerFallback = _containerTypeService.GetInferredContainerType(varName);
                 if (containerFallback != null && containerFallback.HasElementTypes)
                 {
-                    return containerFallback.ToString();
+                    return GDSemanticType.FromRuntimeTypeName(containerFallback.ToString());
                 }
 
                 // Call-site injected types for parameters — fallback when flow has no data
@@ -225,7 +225,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                     {
                         var effectiveType = unionType.EffectiveType;
                         if (!effectiveType.IsVariant && !effectiveType.IsNull)
-                            return effectiveType.DisplayName;
+                            return effectiveType;
                     }
                 }
             }
@@ -243,7 +243,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
             {
                 var combined = GDContainerElementType.CombineArrays(leftContainer, rightContainer);
                 if (combined != null)
-                    return combined.ToString();
+                    return GDSemanticType.FromRuntimeTypeName(combined.ToString());
             }
         }
 
@@ -279,7 +279,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
     /// <summary>
     /// Core implementation of GetExpressionType without recursion guard.
     /// </summary>
-    private string? GetExpressionTypeCore(GDExpression expression)
+    private GDSemanticType? GetExpressionTypeCore(GDExpression expression)
     {
         // For identifier expressions
         if (expression is GDIdentifierExpression identExpr)
@@ -299,19 +299,19 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                         {
                             var containerType = _containerTypeService.GetInferredContainerType(varName);
                             if (containerType != null && containerType.HasElementTypes)
-                                return containerType.ToString();
+                                return GDSemanticType.FromRuntimeTypeName(containerType.ToString());
                         }
-                        // Signal with signature → return base "Signal" for string API
+                        // Signal with signature → return base "Signal"
                         if (flowType.IsSignal)
-                            return "Signal";
-                        return flowType.DisplayName;
+                            return GDSemanticType.FromRuntimeTypeName("Signal");
+                        return flowType;
                     }
                 }
 
                 // Container profile fallback when flow has no data
                 var containerFallback = _containerTypeService.GetInferredContainerType(varName);
                 if (containerFallback != null && containerFallback.HasElementTypes)
-                    return containerFallback.ToString();
+                    return GDSemanticType.FromRuntimeTypeName(containerFallback.ToString());
 
                 // Fall back to union type
                 var symbol = _findSymbol?.Invoke(varName);
@@ -320,27 +320,28 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 {
                     var effectiveType = unionType.EffectiveType;
                     if (!effectiveType.IsVariant && !effectiveType.IsNull)
-                        return effectiveType.DisplayName;
+                        return effectiveType;
                 }
 
                 // Check if method reference
                 if (symbol?.Kind == GDSymbolKind.Method)
-                    return "Callable";
+                    return GDSemanticType.FromRuntimeTypeName("Callable");
 
                 // Enum type reference (e.g., AIState in AIState.PATROL)
                 if (symbol?.Kind == GDSymbolKind.Enum)
-                    return symbol.Name;
+                    return GDSemanticType.FromRuntimeTypeName(symbol.Name);
 
                 // Class name identifier represents the class type itself
                 if (symbol?.Kind == GDSymbolKind.Class)
-                    return symbol.Name;
+                    return GDSemanticType.FromRuntimeTypeName(symbol.Name);
 
                 // For class members with explicit type annotation, return the declared type
                 if (symbol != null && symbol.Kind != GDSymbolKind.Method
-                    && !string.IsNullOrEmpty(symbol.TypeName)
-                    && !GDSemanticType.FromRuntimeTypeName(symbol.TypeName).IsVariant)
+                    && !string.IsNullOrEmpty(symbol.TypeName))
                 {
-                    return symbol.TypeName;
+                    var declaredType = GDSemanticType.FromRuntimeTypeName(symbol.TypeName);
+                    if (!declaredType.IsVariant)
+                        return declaredType;
                 }
 
                 // Fall back to initializer
@@ -351,7 +352,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                         !(GetOrCreateFlowAnalyzer(scope)?.HasReassignment(varName) ?? false))
                     {
                         var initType = GetExpressionType(localVarDecl.Initializer);
-                        if (!string.IsNullOrEmpty(initType) && !GDSemanticType.FromRuntimeTypeName(initType).IsVariant)
+                        if (initType != null && !initType.IsVariant)
                             return initType;
                     }
                 }
@@ -364,20 +365,22 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
             var callerType = GetExpressionType(memberExpr.CallerExpression);
             var memberName = memberExpr.Identifier?.Sequence;
 
-            if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant &&
+            if (callerType != null && !callerType.IsVariant &&
                 !string.IsNullOrEmpty(memberName))
             {
+                var callerTypeName = callerType.DisplayName;
+
                 // Check if this is a local enum value access (e.g., AIState.IDLE)
-                if (_localTypeService != null && _localTypeService.IsLocalEnum(callerType))
+                if (_localTypeService != null && _localTypeService.IsLocalEnum(callerTypeName))
                 {
-                    if (_localTypeService.IsLocalEnumValue(callerType, memberName))
+                    if (_localTypeService.IsLocalEnumValue(callerTypeName, memberName))
                         return callerType;
                 }
 
                 // Fall back to runtime provider for other member access
                 if (_runtimeProvider != null)
                 {
-                    var memberInfo = FindMemberWithInheritance(callerType, memberName);
+                    var memberInfo = FindMemberWithInheritance(callerTypeName, memberName);
                     if (memberInfo != null)
                     {
                         if (memberInfo.Kind == GDRuntimeMemberKind.Method)
@@ -385,9 +388,11 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                             bool isCalledDirectly = memberExpr.Parent is GDCallExpression call
                                 && call.CallerExpression == memberExpr;
                             if (!isCalledDirectly)
-                                return BuildCallableSignatureString(memberInfo);
+                                return GDSemanticType.FromRuntimeTypeName(BuildCallableSignatureString(memberInfo));
                         }
-                        return memberInfo.Type;
+                        return !string.IsNullOrEmpty(memberInfo.Type)
+                            ? GDSemanticType.FromRuntimeTypeName(memberInfo.Type)
+                            : null;
                     }
                 }
             }
@@ -402,7 +407,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 if (methodName == GDWellKnownFunctions.Constructor)
                 {
                     var callerType = GetExpressionType(callMemberExpr.CallerExpression);
-                    if (!string.IsNullOrEmpty(callerType))
+                    if (callerType != null)
                         return callerType;
                 }
             }
@@ -410,7 +415,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
             // Type engine first — handles generics (Array[T].front() -> T), special methods, etc.
             var callResult = _typeEngine?.InferSemanticType(expression);
             if (callResult != null && !callResult.IsVariant)
-                return callResult.DisplayName;
+                return callResult;
 
             // Flow-aware fallback: when type engine returns Variant (can't resolve receiver),
             // use flow-narrowed receiver type to look up method return type.
@@ -421,13 +426,12 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 if (!string.IsNullOrEmpty(methodName))
                 {
                     var receiverType = GetExpressionType(fallbackMemberExpr.CallerExpression);
-                    if (!string.IsNullOrEmpty(receiverType) &&
-                        !GDSemanticType.FromRuntimeTypeName(receiverType).IsVariant)
+                    if (receiverType != null && !receiverType.IsVariant)
                     {
-                        var memberInfo = FindMemberWithInheritance(receiverType, methodName);
+                        var memberInfo = FindMemberWithInheritance(receiverType.DisplayName, methodName);
                         if (memberInfo != null && memberInfo.Kind == GDRuntimeMemberKind.Method
                             && !string.IsNullOrEmpty(memberInfo.Type))
-                            return memberInfo.Type;
+                            return GDSemanticType.FromRuntimeTypeName(memberInfo.Type);
                     }
                 }
             }
@@ -440,7 +444,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
 
             if (opType == GDDualOperatorType.As)
             {
-                return _typeEngine?.InferSemanticType(expression)?.DisplayName;
+                return _typeEngine?.InferSemanticType(expression);
             }
 
             var leftType = GetExpressionType(dualOp.LeftExpression);
@@ -448,9 +452,9 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
 
             if (opType.HasValue)
             {
-                var resultType = GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType, rightType);
+                var resultType = GDOperatorTypeResolver.ResolveOperatorType(opType.Value, leftType?.DisplayName, rightType?.DisplayName);
                 if (!string.IsNullOrEmpty(resultType))
-                    return resultType;
+                    return GDSemanticType.FromRuntimeTypeName(resultType);
 
                 if (opType.Value == GDDualOperatorType.Addition)
                 {
@@ -462,7 +466,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                     {
                         var combined = GDContainerElementType.CombineArrays(leftContainer, rightContainer);
                         if (combined != null)
-                            return combined.ToString();
+                            return GDSemanticType.FromRuntimeTypeName(combined.ToString());
                     }
                 }
             }
@@ -476,9 +480,9 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
 
             if (opType.HasValue)
             {
-                var resultType = GDOperatorTypeResolver.ResolveSingleOperatorType(opType.Value, operandType);
+                var resultType = GDOperatorTypeResolver.ResolveSingleOperatorType(opType.Value, operandType?.DisplayName);
                 if (!string.IsNullOrEmpty(resultType))
-                    return resultType;
+                    return GDSemanticType.FromRuntimeTypeName(resultType);
             }
         }
 
@@ -489,8 +493,12 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
             if (typeNode != null)
             {
                 var typeName = typeNode.BuildName();
-                if (!string.IsNullOrEmpty(typeName) && !GDSemanticType.FromRuntimeTypeName(typeName).IsVariant)
-                    return typeName;
+                if (!string.IsNullOrEmpty(typeName))
+                {
+                    var semType = GDSemanticType.FromRuntimeTypeName(typeName);
+                    if (!semType.IsVariant)
+                        return semType;
+                }
             }
 
             var varName = GetRootVariableName(indexerExpr.CallerExpression);
@@ -501,7 +509,7 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 {
                     var elementType = containerType.EffectiveElementType;
                     if (!elementType.IsVariant)
-                        return elementType.DisplayName;
+                        return elementType;
                 }
             }
         }
@@ -510,17 +518,17 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
         if (expression is Reader.GDArrayInitializerExpression arrayInit && _typeEngine != null)
         {
             var unionType = ComputeArrayInitializerUnionType(arrayInit);
-            if (!string.IsNullOrEmpty(unionType))
+            if (unionType != null)
                 return unionType;
         }
 
-        return _typeEngine?.InferSemanticType(expression)?.DisplayName;
+        return _typeEngine?.InferSemanticType(expression);
     }
 
     /// <summary>
     /// Gets expression type without using flow analysis (to avoid recursion).
     /// </summary>
-    public string? GetExpressionTypeWithoutFlow(GDExpression? expression)
+    public GDSemanticType? GetExpressionTypeWithoutFlow(GDExpression? expression)
     {
         if (expression == null)
             return null;
@@ -533,13 +541,13 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 if (methodName == GDWellKnownFunctions.Constructor)
                 {
                     var callerType = GetExpressionTypeWithoutFlow(callMemberExpr.CallerExpression);
-                    if (!string.IsNullOrEmpty(callerType))
+                    if (callerType != null)
                         return callerType;
                 }
             }
 
-            var callResult = _typeEngine?.InferSemanticType(expression)?.DisplayName;
-            if (!string.IsNullOrEmpty(callResult))
+            var callResult = _typeEngine?.InferSemanticType(expression);
+            if (callResult != null && !callResult.IsVariant)
                 return callResult;
         }
 
@@ -551,14 +559,14 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 var symbol = _findSymbol?.Invoke(varName);
                 if (symbol?.Kind == GDSymbolKind.Method)
                 {
-                    return "Callable";
+                    return GDSemanticType.FromRuntimeTypeName("Callable");
                 }
 
                 // Class name identifier represents the class type itself,
                 // not an instance of the base class (TypeName stores extends type)
                 if (symbol?.Kind == GDSymbolKind.Class)
                 {
-                    return symbol.Name;
+                    return GDSemanticType.FromRuntimeTypeName(symbol.Name);
                 }
 
                 var unionType = _unionTypeService.GetUnionType(varName, symbol, null);
@@ -567,13 +575,13 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                     var effectiveType = unionType.EffectiveType;
                     if (!effectiveType.IsVariant && !effectiveType.IsNull)
                     {
-                        return effectiveType.DisplayName;
+                        return effectiveType;
                     }
                 }
             }
         }
 
-        return _typeEngine?.InferSemanticType(expression)?.DisplayName;
+        return _typeEngine?.InferSemanticType(expression);
     }
 
     /// <summary>
@@ -818,29 +826,29 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
         return null;
     }
 
-    private string? ComputeArrayInitializerUnionType(Reader.GDArrayInitializerExpression arrayInit)
+    private GDSemanticType? ComputeArrayInitializerUnionType(Reader.GDArrayInitializerExpression arrayInit)
     {
         if (arrayInit.Values == null || !arrayInit.Values.Any())
-            return "Array";
+            return GDSemanticType.FromRuntimeTypeName("Array");
 
         var elementTypes = new HashSet<string>();
         foreach (var element in arrayInit.Values)
         {
             var elementType = GetExpressionType(element);
-            if (!string.IsNullOrEmpty(elementType) && !GDSemanticType.FromRuntimeTypeName(elementType).IsVariant)
+            if (elementType != null && !elementType.IsVariant)
             {
-                elementTypes.Add(elementType);
+                elementTypes.Add(elementType.DisplayName);
             }
         }
 
         if (elementTypes.Count == 0)
-            return "Array";
+            return GDSemanticType.FromRuntimeTypeName("Array");
 
         if (elementTypes.Count == 1)
-            return $"Array[{elementTypes.First()}]";
+            return GDSemanticType.FromRuntimeTypeName($"Array[{elementTypes.First()}]");
 
         var sortedTypes = elementTypes.OrderBy(t => t).ToList();
-        return $"Array[{string.Join("|", sortedTypes)}]";
+        return GDSemanticType.FromRuntimeTypeName($"Array[{string.Join("|", sortedTypes)}]");
     }
 
     #region Semantic Type Resolution

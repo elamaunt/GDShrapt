@@ -601,7 +601,7 @@ func safe_get_nested(data, path):
         // Act - get type for the caller expression (current)
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
-        var currentType = semanticModel.GetExpressionType(memberOp.CallerExpression);
+        var currentType = semanticModel.GetExpressionType(memberOp.CallerExpression)?.DisplayName;
 
         // Assert - current should be Dictionary inside the "if current is Dictionary:" branch
         Assert.IsNotNull(currentType, "Should get type for 'current'");
@@ -636,7 +636,7 @@ func process(data):
         // Act
         Assert.IsNotNull(semanticModel, "SemanticModel should be available");
 
-        var callReturnType = semanticModel.GetExpressionType(getCall);
+        var callReturnType = semanticModel.GetExpressionType(getCall)?.DisplayName;
 
         // Assert - Dictionary.get returns Variant
         Assert.IsNotNull(callReturnType, "Should get return type for data.get()");

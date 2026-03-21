@@ -218,9 +218,9 @@ internal class GDCallSiteTypeAnalyzer
         // First try using the semantic model (which includes flow-sensitive types)
         if (semanticModel != null)
         {
-            var type = semanticModel.GetExpressionType(argExpr);
-            if (!string.IsNullOrEmpty(type) && type != GDWellKnownTypes.Variant)
-                return type;
+            var semType = semanticModel.GetExpressionType(argExpr);
+            if (semType != null && !semType.IsVariant)
+                return semType.DisplayName;
         }
 
         // Fall back to simple type inference

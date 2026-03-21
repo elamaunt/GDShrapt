@@ -280,13 +280,10 @@ var MyVariable = 1
 
     private class AlwaysUnguardedAnalyzer : IGDMemberAccessAnalyzer
     {
-        public GDReferenceConfidence GetMemberAccessConfidence(object memberAccess)
+        public GDReferenceConfidence GetMemberAccessConfidence(GDMemberOperatorExpression memberAccess)
             => GDReferenceConfidence.NameMatch;
 
-        public string? GetExpressionType(object expression)
-            => null;
-
-        public string? GetEffectiveExpressionType(object expression, object atLocation)
+        public GDSemanticType? GetExpressionType(GDExpression expression)
             => null;
 
         public bool IsLocalEnum(string typeName) => false;

@@ -300,7 +300,7 @@ func add_score():
         Assert.IsNotNull(scoresRef);
 
         // Act
-        var type = model.GetExpressionType(scoresRef);
+        var type = model.GetExpressionType(scoresRef)?.DisplayName;
 
         // Assert - should be refined to Dictionary[String, int] via container profile fallback
         Assert.IsNotNull(type, "Expression type should not be null");
@@ -371,7 +371,7 @@ func test(key):
         Assert.IsNotNull(valueRef);
 
         // Act
-        var type = model.GetExpressionType(valueRef);
+        var type = model.GetExpressionType(valueRef)?.DisplayName;
 
         // Assert - should be "int" from container profile, not "Variant"
         Assert.AreEqual("int", type, "Dictionary.get() should return concrete value type from container profile");

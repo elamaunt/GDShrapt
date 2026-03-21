@@ -11,7 +11,7 @@ namespace GDShrapt.Semantics;
 internal class GDTypeRegistry
 {
     // Type tracking
-    private readonly Dictionary<GDNode, string> _nodeTypes = new();
+    private readonly Dictionary<GDNode, GDSemanticType> _nodeTypes = new();
     private readonly Dictionary<GDNode, GDTypeNode> _nodeTypeNodes = new();
 
     // Duck typing
@@ -41,13 +41,12 @@ internal class GDTypeRegistry
     /// </summary>
     public string? GetTypeForNode(GDNode node)
     {
-        return _nodeTypes.TryGetValue(node, out var type) ? type : null;
+        return _nodeTypes.TryGetValue(node, out var type) ? type.DisplayName : null;
     }
 
     public GDSemanticType? GetSemanticTypeForNode(GDNode node)
     {
-        var typeName = GetTypeForNode(node);
-        return typeName != null ? GDSemanticType.FromRuntimeTypeName(typeName) : null;
+        return _nodeTypes.TryGetValue(node, out var type) ? type : null;
     }
 
     /// <summary>
@@ -131,11 +130,11 @@ internal class GDTypeRegistry
     /// <summary>
     /// Registers a type for a node.
     /// </summary>
-    internal void RegisterNodeType(GDNode node, string typeName)
+    internal void RegisterNodeType(GDNode node, GDSemanticType type)
     {
-        if (node != null && !string.IsNullOrEmpty(typeName))
+        if (node != null && type != null && !type.IsVariant)
         {
-            _nodeTypes[node] = typeName;
+            _nodeTypes[node] = type;
         }
     }
 

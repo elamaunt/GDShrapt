@@ -422,7 +422,7 @@ func test():
             .First(c => c.CallerExpression is GDMemberOperatorExpression m &&
                        m.Identifier?.Sequence == "get");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         // Assert - Should resolve to Vector2 (Node2D.scale property)
         // If not available, will be null/Variant
@@ -464,7 +464,7 @@ func test():
             .First(c => c.CallerExpression is GDMemberOperatorExpression m &&
                        m.Identifier?.Sequence == "call");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         // Assert - Should resolve to Vector2 (Node2D.get_position return type)
         (typeName == "Vector2" || typeName == null || typeName == "Variant").Should().BeTrue(
@@ -500,7 +500,7 @@ func test():
             .Last(c => c.CallerExpression is GDMemberOperatorExpression m &&
                       m.Identifier?.Sequence == "call");
 
-        var typeName = model.GetExpressionType(callExpr);
+        var typeName = model.GetExpressionType(callExpr)?.DisplayName;
 
         // Assert - Dynamic method name returns null/Variant
         (typeName == null || typeName == "Variant").Should().BeTrue(

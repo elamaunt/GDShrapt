@@ -94,7 +94,7 @@ public class GDMemberAccessValidator : GDValidationVisitor
             return;
 
         var confidence = _analyzer.GetMemberAccessConfidence(memberAccess);
-        var callerType = _analyzer.GetEffectiveExpressionType(callerExpr, memberAccess);
+        var callerType = _analyzer.GetExpressionType(callerExpr)?.DisplayName;
 
         switch (confidence)
         {
@@ -143,7 +143,7 @@ public class GDMemberAccessValidator : GDValidationVisitor
             return;
 
         var confidence = _analyzer.GetMemberAccessConfidence(memberExpr);
-        var callerType = _analyzer.GetEffectiveExpressionType(callerExpr, memberExpr);
+        var callerType = _analyzer.GetExpressionType(callerExpr)?.DisplayName;
 
         switch (confidence)
         {

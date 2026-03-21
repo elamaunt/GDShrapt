@@ -50,7 +50,7 @@ func test() -> void:
 
             Assert.IsTrue(allIdents.Count > 0, "Should find 'x' identifier expressions");
 
-            var exprType = model.GetExpressionType(allIdents[0]);
+            var exprType = model.GetExpressionType(allIdents[0])?.DisplayName;
             Assert.AreEqual("ChildClass", exprType,
                 $"var x: = ChildClass.new() should infer type 'ChildClass', got '{exprType}'");
         }
@@ -150,7 +150,7 @@ static func restore() -> Inventory:
 
             Assert.IsTrue(allIdents.Count > 0, "Should find 'new_inventory' identifier expressions");
 
-            var exprType = model.GetExpressionType(allIdents[0]);
+            var exprType = model.GetExpressionType(allIdents[0])?.DisplayName;
             Assert.AreEqual("Inventory", exprType,
                 $"var new_inventory: = Inventory.new() should infer 'Inventory', got '{exprType}'");
 

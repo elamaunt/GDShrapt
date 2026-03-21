@@ -692,7 +692,7 @@ public class GDProjectSemanticModel : IDisposable
     /// <summary>
     /// Gets the inferred type for an expression. Auto-finds the containing file.
     /// </summary>
-    internal string? GetExpressionType(GDExpression expr)
+    internal GDSemanticType? GetExpressionType(GDExpression expr)
     {
         if (expr == null)
             return null;

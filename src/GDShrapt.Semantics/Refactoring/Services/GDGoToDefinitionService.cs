@@ -757,8 +757,9 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (semanticModel == null)
             return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
 
-        var callerType = semanticModel.GetExpressionType(expr.CallerExpression);
-        if (string.IsNullOrEmpty(callerType) || callerType == "Variant")
+        var callerSemType = semanticModel.GetExpressionType(expr.CallerExpression);
+        var callerType = callerSemType?.DisplayName;
+        if (callerSemType == null || callerSemType.IsVariant)
             return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalMember, memberName);
 
         var symbolInfo = semanticModel.ResolveMember(callerType, memberName);

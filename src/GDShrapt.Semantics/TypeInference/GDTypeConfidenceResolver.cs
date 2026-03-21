@@ -219,7 +219,8 @@ internal class GDTypeConfidenceResolver
         // Infer from collection type
         if (forStmt.Collection != null && _semanticModel != null)
         {
-            var collectionType = _semanticModel.GetExpressionType(forStmt.Collection);
+            var collectionSemType = _semanticModel.GetExpressionType(forStmt.Collection);
+            var collectionType = collectionSemType?.DisplayName;
             if (!string.IsNullOrEmpty(collectionType))
             {
                 var elementType = GDLoopFlowHelper.InferIteratorElementType(collectionType,
@@ -255,9 +256,10 @@ internal class GDTypeConfidenceResolver
             return GDInferredType.Unknown("Cannot find enclosing match statement");
 
         // Infer from match subject
-        var subjectType = _semanticModel != null
+        var subjectSemType = _semanticModel != null
             ? _semanticModel.GetExpressionType(matchStmt.Value)
             : null;
+        var subjectType = subjectSemType?.DisplayName;
 
         if (string.IsNullOrEmpty(subjectType) || subjectType == GDWellKnownTypes.Variant)
             return InferExpressionType(matchStmt.Value);

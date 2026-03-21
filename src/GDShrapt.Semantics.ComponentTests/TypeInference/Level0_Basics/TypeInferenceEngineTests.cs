@@ -618,7 +618,7 @@ func test():
                 .First(m => m.Identifier?.Sequence == "position");
 
             var entityExpr = memberAccess.CallerExpression;
-            var typeName = model.GetExpressionType(entityExpr);
+            var typeName = model.GetExpressionType(entityExpr)?.DisplayName;
 
             // Assert: Should return Node2D (explicit type), NOT null or Variant
             typeName.Should().Be("Node2D", "explicit type annotation should take priority over null initializer");

@@ -268,7 +268,7 @@ func test():
 
         if (identifier != null)
         {
-            return model.GetExpressionType(identifier);
+            return model.GetExpressionType(identifier)?.DisplayName;
         }
 
         // If no identifier usage found (variable not used after declaration),
@@ -279,7 +279,7 @@ func test():
 
         if (varDecl?.Initializer != null)
         {
-            return model.GetExpressionType(varDecl.Initializer);
+            return model.GetExpressionType(varDecl.Initializer)?.DisplayName;
         }
 
         return null;

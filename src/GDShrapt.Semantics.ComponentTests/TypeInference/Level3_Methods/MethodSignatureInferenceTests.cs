@@ -813,7 +813,7 @@ func process():
         Assert.IsNotNull(entityVarDecl, "entity variable not found");
 
         // Check initializer type
-        var initializerType = model.GetExpressionType(entityVarDecl.Initializer);
+        var initializerType = model.GetExpressionType(entityVarDecl.Initializer)?.DisplayName;
         System.Console.WriteLine($"entity initializer type: {initializerType}");
 
         // Check that identifier expression for entity resolves correctly
@@ -837,7 +837,7 @@ func process():
         var confidence = model.GetMemberAccessConfidence(entityIdAccess);
         System.Console.WriteLine($"entity.id confidence: {confidence}");
 
-        var callerType = model.GetExpressionType(entityIdAccess.CallerExpression);
+        var callerType = model.GetExpressionType(entityIdAccess.CallerExpression)?.DisplayName;
         System.Console.WriteLine($"entity type (caller of .id): {callerType}");
 
         // Debug: check what symbol 'entity' resolves to
@@ -845,7 +845,7 @@ func process():
         System.Console.WriteLine($"FindSymbol(entity): {entitySymbol?.Name}, TypeName={entitySymbol?.TypeName}, Kind={entitySymbol?.Kind}");
 
         // Check the identifier expression type directly
-        var entityIdentifierType = model.GetExpressionType(entityIdentifier);
+        var entityIdentifierType = model.GetExpressionType(entityIdentifier)?.DisplayName;
         System.Console.WriteLine($"GetExpressionType(entityIdentifier): {entityIdentifierType}");
 
         // Debug: Check if symbol has Declaration
@@ -853,7 +853,7 @@ func process():
         if (entitySymbol?.DeclarationNode is GDVariableDeclarationStatement varDeclSymbol)
         {
             System.Console.WriteLine($"Symbol Declaration Initializer: {varDeclSymbol.Initializer?.GetType().Name}");
-            var initType = model.GetExpressionType(varDeclSymbol.Initializer);
+            var initType = model.GetExpressionType(varDeclSymbol.Initializer)?.DisplayName;
             System.Console.WriteLine($"Symbol Declaration Initializer Type: {initType}");
         }
 

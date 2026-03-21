@@ -34,11 +34,11 @@ func test():
         // Verify caller type resolves correctly
         var callerIdent = memberExpr!.CallerExpression as GDIdentifierExpression;
         callerIdent.Should().NotBeNull();
-        var callerType = semanticModel.GetExpressionType(callerIdent!);
+        var callerType = semanticModel.GetExpressionType(callerIdent!)?.DisplayName;
         callerType.Should().Be("Dictionary",
             $"Caller 'd' should resolve to Dictionary, got: {callerType}");
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().StartWith("Callable(")
             .And.Contain("-> Dictionary",
             $"Dictionary.duplicate member reference should be Callable with signature, got: {type}");
@@ -63,7 +63,7 @@ func test():
 
         memberExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().StartWith("Callable(")
             .And.Contain("-> Array",
             $"Array.duplicate member reference should be Callable with signature, got: {type}");
@@ -88,7 +88,7 @@ func test():
 
         memberExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().StartWith("Callable(")
             .And.Contain("-> Vector2",
             $"Vector2.move_toward member reference should be Callable with signature, got: {type}");
@@ -113,7 +113,7 @@ func test():
 
         memberExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().StartWith("Callable(")
             .And.Contain("-> float",
             $"Vector2.distance_to member reference should be Callable with signature, got: {type}");
@@ -138,7 +138,7 @@ func test():
 
         memberExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().StartWith("Callable(")
             .And.Contain("-> String",
             $"String.to_upper member reference should be Callable with signature, got: {type}");
@@ -163,7 +163,7 @@ func test():
 
         memberExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().StartWith("Callable(")
             .And.Contain("-> int",
             $"Array.size member reference should be Callable with signature, got: {type}");
@@ -190,7 +190,7 @@ func test():
 
         memberExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(memberExpr!);
+        var type = semanticModel.GetExpressionType(memberExpr!)?.DisplayName;
         type.Should().Be("float",
             "Vector2.x is a property, should return property type, not Callable");
     }
@@ -216,7 +216,7 @@ func test():
 
         callExpr.Should().NotBeNull();
 
-        var type = semanticModel.GetExpressionType(callExpr!);
+        var type = semanticModel.GetExpressionType(callExpr!)?.DisplayName;
         type.Should().Be("int",
             "Direct call a.size() should return int, not Callable");
     }

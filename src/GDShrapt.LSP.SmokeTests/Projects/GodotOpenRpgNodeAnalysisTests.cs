@@ -259,16 +259,12 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
             Console.WriteLine($"[DIAG] GetSymbolForNode(_dummy_gp) at line {callerExpr.FirstLeafToken?.StartLine}: " +
                 $"TypeName='{callerSymbol?.TypeName}', Kind={callerSymbol?.Kind}");
 
-            // Check GetExpressionType separately (bypasses narrowing in GetEffectiveExpressionType)
-            var exprType = ((IGDMemberAccessAnalyzer)semanticModel).GetExpressionType(callerExpr);
-            Console.WriteLine($"[DIAG] GetExpressionType(_dummy_gp) = '{exprType}'");
-
-            // Also check via IGDMemberAccessAnalyzer.GetEffectiveExpressionType (used by validator)
+            // Check GetExpressionType (flow analysis already applies narrowing)
             var analyzer = (IGDMemberAccessAnalyzer)semanticModel;
-            var effectiveType = analyzer.GetEffectiveExpressionType(callerExpr, memberAccess);
-            Console.WriteLine($"[DIAG] GetEffectiveExpressionType(_dummy_gp) = '{effectiveType}'");
+            var exprType = analyzer.GetExpressionType(callerExpr as GDExpression);
+            Console.WriteLine($"[DIAG] GetExpressionType(_dummy_gp) = '{exprType?.DisplayName}'");
 
-            effectiveType.Should().NotBe("null",
+            exprType?.DisplayName.Should().NotBe("null",
                 "type of _dummy_gp should not be 'null' — it has explicit type annotation Gamepiece");
         }
 
@@ -1265,7 +1261,7 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
         Console.WriteLine($"[DIAG] Found {allIdents.Count} 'new_inventory' identifier expressions");
         allIdents.Should().NotBeEmpty("inventory.gd should contain 'new_inventory' identifier");
 
-        var exprType = ((IGDMemberAccessAnalyzer)semanticModel!).GetExpressionType(allIdents[0]);
+        var exprType = ((IGDMemberAccessAnalyzer)semanticModel!).GetExpressionType(allIdents[0])?.DisplayName;
         Console.WriteLine($"[DIAG] GetExpressionType(new_inventory) = '{exprType}'");
 
         exprType.Should().Be("Inventory",

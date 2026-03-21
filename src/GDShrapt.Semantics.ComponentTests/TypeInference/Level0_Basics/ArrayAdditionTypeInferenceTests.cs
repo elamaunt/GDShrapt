@@ -323,7 +323,7 @@ func test():
 
         if (varDecl?.Initializer != null)
         {
-            return model.GetExpressionType(varDecl.Initializer);
+            return model.GetExpressionType(varDecl.Initializer)?.DisplayName;
         }
 
         return null;

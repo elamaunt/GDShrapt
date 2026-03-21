@@ -95,7 +95,7 @@ func test():
 
         methodIdentifier.Should().NotBeNull("_on_timeout identifier should exist in member expression");
 
-        var type = semanticModel.GetExpressionType(methodIdentifier!);
+        var type = semanticModel.GetExpressionType(methodIdentifier!)?.DisplayName;
         type.Should().Be("Callable",
             $"Method reference should return Callable. Actual: {type ?? "null"}");
     }

@@ -196,7 +196,7 @@ func get_cell_x(cell: Vector2i) -> int:
             Assert.IsTrue(allIdents.Count > 0, "Should find 'properties' identifier expressions");
 
             var firstIdent = allIdents[0];
-            var exprType = model.GetExpressionType(firstIdent);
+            var exprType = model.GetExpressionType(firstIdent)?.DisplayName;
             Assert.AreEqual("GameboardProperties", exprType,
                 $"GetExpressionType('properties' identifier) should return 'GameboardProperties', got '{exprType}'");
 
@@ -210,7 +210,7 @@ func get_cell_x(cell: Vector2i) -> int:
             Assert.IsTrue(memberAccesses.Count > 0, "Should find 'properties.cell_size' member access");
 
             var cellSizeAccess = memberAccesses[0];
-            var cellSizeType = model.GetExpressionType(cellSizeAccess);
+            var cellSizeType = model.GetExpressionType(cellSizeAccess)?.DisplayName;
             Assert.IsNotNull(cellSizeType,
                 $"GetExpressionType('properties.cell_size') should not be null, got '{cellSizeType}'");
 

@@ -28,9 +28,9 @@ public class GDArgumentTypeDiff
     public GDSemanticType? ActualType { get; set; }
 
     /// <summary>
-    /// Source of the actual type (e.g., "string literal", "variable 'x'", "function call result").
+    /// The syntactic kind of the actual expression (e.g., StringLiteral, Variable, FunctionCallResult).
     /// </summary>
-    public string? ActualTypeSource { get; set; }
+    public GDExpressionSourceKind? ActualSourceKind { get; set; }
 
     #endregion
 
@@ -104,9 +104,9 @@ public class GDArgumentTypeDiff
     public static GDArgumentTypeDiff Compatible(
         int index,
         string? parameterName,
-        string? actualType,
-        string? actualSource,
-        IReadOnlyList<string> expectedTypes,
+        GDSemanticType? actualType,
+        GDExpressionSourceKind? actualSourceKind,
+        IReadOnlyList<GDSemanticType> expectedTypes,
         string? expectedSource,
         GDReferenceConfidence confidence = GDReferenceConfidence.Strict)
     {
@@ -114,9 +114,9 @@ public class GDArgumentTypeDiff
         {
             ParameterIndex = index,
             ParameterName = parameterName,
-            ActualType = actualType != null ? GDSemanticType.FromRuntimeTypeName(actualType) : null,
-            ActualTypeSource = actualSource,
-            ExpectedTypes = expectedTypes.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList(),
+            ActualType = actualType,
+            ActualSourceKind = actualSourceKind,
+            ExpectedTypes = expectedTypes,
             ExpectedTypeSource = expectedSource,
             IsCompatible = true,
             Confidence = confidence
@@ -129,9 +129,9 @@ public class GDArgumentTypeDiff
     public static GDArgumentTypeDiff Incompatible(
         int index,
         string? parameterName,
-        string? actualType,
-        string? actualSource,
-        IReadOnlyList<string> expectedTypes,
+        GDSemanticType? actualType,
+        GDExpressionSourceKind? actualSourceKind,
+        IReadOnlyList<GDSemanticType> expectedTypes,
         string? expectedSource,
         string incompatibilityReason,
         GDReferenceConfidence confidence = GDReferenceConfidence.Strict)
@@ -140,9 +140,9 @@ public class GDArgumentTypeDiff
         {
             ParameterIndex = index,
             ParameterName = parameterName,
-            ActualType = actualType != null ? GDSemanticType.FromRuntimeTypeName(actualType) : null,
-            ActualTypeSource = actualSource,
-            ExpectedTypes = expectedTypes.Select(t => GDSemanticType.FromRuntimeTypeName(t)).ToList(),
+            ActualType = actualType,
+            ActualSourceKind = actualSourceKind,
+            ExpectedTypes = expectedTypes,
             ExpectedTypeSource = expectedSource,
             IsCompatible = false,
             IncompatibilityReason = incompatibilityReason,
@@ -166,8 +166,8 @@ public class GDArgumentTypeDiff
 
         // What was passed
         sb.Append($"  Actual type:    {ActualType?.DisplayName ?? "unknown"}");
-        if (!string.IsNullOrEmpty(ActualTypeSource))
-            sb.Append($" (from {ActualTypeSource})");
+        if (ActualSourceKind != null)
+            sb.Append($" (from {FormatSourceKind(ActualSourceKind.Value)})");
         sb.AppendLine();
 
         // What was expected
@@ -242,6 +242,28 @@ public class GDArgumentTypeDiff
         }
 
         return IncompatibilityReason ?? "Type mismatch";
+    }
+
+    /// <summary>
+    /// Formats a GDExpressionSourceKind as a human-readable description.
+    /// </summary>
+    public static string FormatSourceKind(GDExpressionSourceKind kind)
+    {
+        return kind switch
+        {
+            GDExpressionSourceKind.StringLiteral => "string literal",
+            GDExpressionSourceKind.IntegerLiteral => "integer literal",
+            GDExpressionSourceKind.FloatLiteral => "float literal",
+            GDExpressionSourceKind.BooleanLiteral => "boolean literal",
+            GDExpressionSourceKind.NullLiteral => "null literal",
+            GDExpressionSourceKind.ArrayLiteral => "array literal",
+            GDExpressionSourceKind.DictionaryLiteral => "dictionary literal",
+            GDExpressionSourceKind.Variable => "variable",
+            GDExpressionSourceKind.PropertyAccess => "property access",
+            GDExpressionSourceKind.FunctionCallResult => "function call result",
+            GDExpressionSourceKind.IndexerAccess => "indexer access",
+            _ => kind.ToString()
+        };
     }
 
     public override string ToString() => IsCompatible

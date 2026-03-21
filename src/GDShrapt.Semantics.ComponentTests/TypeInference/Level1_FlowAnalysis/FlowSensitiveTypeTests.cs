@@ -36,7 +36,7 @@ func test():
         Assert.IsNotNull(xRef);
 
         // Act
-        var type = model.GetExpressionType(xRef);
+        var type = model.GetExpressionType(xRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("int", type);
@@ -65,7 +65,7 @@ func test():
         Assert.IsNotNull(xRef);
 
         // Act
-        var type = model.GetExpressionType(xRef);
+        var type = model.GetExpressionType(xRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("String", type);
@@ -94,7 +94,7 @@ func test():
         Assert.IsNotNull(xRef);
 
         // Act
-        var type = model.GetExpressionType(xRef);
+        var type = model.GetExpressionType(xRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("float", type);
@@ -204,7 +204,7 @@ func test(data):
         Assert.IsNotNull(dataRef);
 
         // Act
-        var type = model.GetExpressionType(dataRef);
+        var type = model.GetExpressionType(dataRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("Dictionary", type, "data should be narrowed to Dictionary inside if branch");
@@ -274,7 +274,7 @@ func test(data):
         Assert.IsNotNull(dataRef);
 
         // Act
-        var type = model.GetExpressionType(dataRef);
+        var type = model.GetExpressionType(dataRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("Array", type, "data should be narrowed to Array in elif branch");
@@ -1062,7 +1062,7 @@ func test():
         Assert.IsNotNull(itemNameRef);
 
         // Act
-        var type = model.GetExpressionType(itemNameRef);
+        var type = model.GetExpressionType(itemNameRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("String", type, "Iterating over enum should yield String keys");
@@ -1096,7 +1096,7 @@ func test():
         Assert.IsNotNull(objRef);
 
         // Act
-        var type = model.GetExpressionType(objRef);
+        var type = model.GetExpressionType(objRef)?.DisplayName;
 
         // Assert - reference type should be nullable
         Assert.IsNotNull(type);
@@ -1126,7 +1126,7 @@ func test():
         Assert.IsNotNull(xRef);
 
         // Act
-        var type = model.GetExpressionType(xRef);
+        var type = model.GetExpressionType(xRef)?.DisplayName;
 
         // Assert - value type should NOT be nullable
         Assert.AreEqual("int", type, "'as int' should be non-nullable (returns 0 on failure)");
@@ -1153,7 +1153,7 @@ func test():
         Assert.IsNotNull(sRef);
 
         // Act
-        var type = model.GetExpressionType(sRef);
+        var type = model.GetExpressionType(sRef)?.DisplayName;
 
         // Assert
         Assert.AreEqual("String", type, "'as String' should be non-nullable (returns empty string on failure)");
@@ -1181,7 +1181,7 @@ func test():
         var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
         Assert.IsNotNull(objRef);
 
-        var type = model.GetExpressionType(objRef);
+        var type = model.GetExpressionType(objRef)?.DisplayName;
 
         Assert.AreEqual("Node", type, "'Node2D as Node' should be non-nullable (upcast always succeeds)");
     }
@@ -1208,7 +1208,7 @@ func test():
         var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
         Assert.IsNotNull(objRef);
 
-        var type = model.GetExpressionType(objRef);
+        var type = model.GetExpressionType(objRef)?.DisplayName;
 
         Assert.IsNotNull(type);
         Assert.IsTrue(type.Contains("Node2D") && type.Contains("null"),
@@ -1237,7 +1237,7 @@ func test():
         var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
         Assert.IsNotNull(objRef);
 
-        var type = model.GetExpressionType(objRef);
+        var type = model.GetExpressionType(objRef)?.DisplayName;
 
         Assert.AreEqual("null", type, "'Resource as Node' should be 'null' (impossible cast)");
     }
@@ -1267,7 +1267,7 @@ func get_something():
         var objRef = printCall.Parameters?.FirstOrDefault() as GDIdentifierExpression;
         Assert.IsNotNull(objRef);
 
-        var type = model.GetExpressionType(objRef);
+        var type = model.GetExpressionType(objRef)?.DisplayName;
 
         Assert.IsNotNull(type);
         Assert.IsTrue(type.Contains("Node") && type.Contains("null"),

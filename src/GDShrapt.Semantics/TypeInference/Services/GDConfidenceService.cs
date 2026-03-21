@@ -17,7 +17,7 @@ internal class GDConfidenceService
     /// <summary>
     /// Delegate for getting expression type.
     /// </summary>
-    public delegate string? GetExpressionTypeDelegate(GDExpression? expression);
+    public delegate GDSemanticType? GetExpressionTypeDelegate(GDExpression? expression);
 
     /// <summary>
     /// Delegate for finding a symbol by name.
@@ -75,7 +75,7 @@ internal class GDConfidenceService
         var callerType = _getExpressionType?.Invoke(memberAccess.CallerExpression);
 
         // Type is known and concrete
-        if (IsConcreteType(callerType))
+        if (callerType != null && IsConcreteType(callerType.DisplayName))
             return GDReferenceConfidence.Strict;
 
         // For indexer-based member access
@@ -303,8 +303,8 @@ internal class GDConfidenceService
                 ? _getExpressionType?.Invoke(memberOp.CallerExpression)
                 : null;
 
-            if (!string.IsNullOrEmpty(callerType) && !GDSemanticType.FromRuntimeTypeName(callerType).IsVariant)
-                return $"Caller type is '{callerType}'";
+            if (callerType != null && !callerType.IsVariant)
+                return $"Caller type is '{callerType.DisplayName}'";
 
             var varName = memberOp.CallerExpression != null
                 ? _getRootVariableName?.Invoke(memberOp.CallerExpression)
