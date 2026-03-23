@@ -14,9 +14,10 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
 {
     private const string RepoUrl = "https://github.com/gdquest-demos/godot-open-rpg.git";
     private const string RepoName = "godot-open-rpg";
+    private const string PinnedCommit = "7cd2deb44e6020d0bbca4a6bedfc7ed070bd2557";
 
     [ClassInitialize]
-    public static void Init(TestContext _) => InitProject(RepoUrl, RepoName);
+    public static void Init(TestContext _) => InitProject(RepoUrl, RepoName, PinnedCommit);
 
     [ClassCleanup]
     public static void Cleanup() => CleanupProject();
@@ -508,6 +509,44 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
         if (result != null)
         {
             Console.WriteLine($"[SMOKE] GameboardLayer group hover: {result.Contents.Value}");
+        }
+    }
+
+    // ========================================================================
+    // GoToDef hang regression — Transition.cover() autoload member access
+    // ========================================================================
+
+    [TestMethod]
+    [Timeout(30000)]
+    public void GoToDef_CombatGd_TransitionCover_DoesNotHang()
+    {
+        var script = FindScript("combat/combat.gd");
+        script.Should().NotBeNull("combat.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "await Transition.cover");
+        line.Should().BeGreaterThanOrEqualTo(0, "combat.gd should contain await Transition.cover");
+
+        var col = GetColumnOf(script!, line, "cover");
+
+        var handler = Registry.GetService<IGDGoToDefHandler>()!;
+        var lspHandler = new GDDefinitionHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var (links, infoMessage) = lspHandler.HandleAsync(new GDDefinitionParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        var hasResult = (links != null && links.Length > 0) || !string.IsNullOrEmpty(infoMessage);
+        hasResult.Should().BeTrue(
+            "GoToDef on Transition.cover should return a location or info");
+
+        if (links != null && links.Length > 0)
+        {
+            Console.WriteLine($"[SMOKE] Transition.cover → {links[0].TargetUri}");
+            links[0].TargetUri.Should().Contain("screen_transition",
+                "cover() definition should be in screen_transition.gd");
         }
     }
 }

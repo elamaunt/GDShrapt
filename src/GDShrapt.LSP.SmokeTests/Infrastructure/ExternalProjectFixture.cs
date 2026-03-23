@@ -11,32 +11,71 @@ internal static class ExternalProjectFixture
     private static readonly string CacheRoot = Path.Combine(
         Path.GetTempPath(), "GDShrapt.SmokeTests");
 
-    public static string EnsureRepo(string repoUrl, string repoName)
+    public static string EnsureRepo(string repoUrl, string repoName, string? pinnedCommit = null)
     {
         var repoPath = Path.Combine(CacheRoot, repoName);
 
         if (Directory.Exists(Path.Combine(repoPath, ".git")))
         {
-            // Already cloned — try to update (best-effort)
-            try
+            if (pinnedCommit != null)
             {
-                RunGit(repoPath, "pull --ff-only");
-            }
-            catch
-            {
-                // If pull fails (e.g., force-pushed), re-clone
+                var currentCommit = GetCurrentCommit(repoPath);
+                if (currentCommit != null && currentCommit.StartsWith(pinnedCommit, StringComparison.Ordinal))
+                    return repoPath;
+
                 Directory.Delete(repoPath, true);
-                Directory.CreateDirectory(CacheRoot);
-                RunGit(CacheRoot, $"clone --depth 1 {repoUrl} {repoName}");
             }
+            else
+            {
+                try
+                {
+                    RunGit(repoPath, "pull --ff-only");
+                    return repoPath;
+                }
+                catch
+                {
+                    Directory.Delete(repoPath, true);
+                }
+            }
+        }
+
+        Directory.CreateDirectory(CacheRoot);
+
+        if (pinnedCommit != null)
+        {
+            RunGit(CacheRoot, $"clone {repoUrl} {repoName}");
+            RunGit(repoPath, $"checkout {pinnedCommit}");
         }
         else
         {
-            Directory.CreateDirectory(CacheRoot);
             RunGit(CacheRoot, $"clone --depth 1 {repoUrl} {repoName}");
         }
 
         return repoPath;
+    }
+
+    private static string? GetCurrentCommit(string repoPath)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo("git", "rev-parse HEAD")
+            {
+                WorkingDirectory = repoPath,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using var process = Process.Start(psi)!;
+            var output = process.StandardOutput.ReadToEnd().Trim();
+            process.WaitForExit(10_000);
+            return process.ExitCode == 0 ? output : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     public static string FindGodotProjectRoot(string repoPath)

@@ -16,6 +16,7 @@ public class GodotOpenRpgDeadCodeTests : SmokeTestBase
 {
     private const string RepoUrl = "https://github.com/gdquest-demos/godot-open-rpg.git";
     private const string RepoName = "godot-open-rpg";
+    private const string PinnedCommit = "7cd2deb44e6020d0bbca4a6bedfc7ed070bd2557";
 
     private static readonly string VerificationDir = Path.GetFullPath(
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "verification"));
@@ -25,7 +26,7 @@ public class GodotOpenRpgDeadCodeTests : SmokeTestBase
     private static readonly string AddonVerifiedFile = Path.Combine(VerificationDir, "DEAD_CODE_ADDON_VERIFIED.txt");
 
     [ClassInitialize]
-    public static void Init(TestContext _) => InitProject(RepoUrl, RepoName);
+    public static void Init(TestContext _) => InitProject(RepoUrl, RepoName, PinnedCommit);
 
     [ClassCleanup]
     public static void Cleanup() => CleanupProject();

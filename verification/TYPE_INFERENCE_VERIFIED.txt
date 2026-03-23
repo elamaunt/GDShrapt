@@ -12038,6 +12038,27 @@ test_scripts/rename_test.gd
 132:1 GDReturnExpression return result -> Variant # OK
 132:8 GDIdentifierExpression result -> float # OK
 
+test_scripts/scene_autoload_usage.gd
+3:0 Method play_transition -> void # OK
+4:1 GDAwaitExpression await Transition.cover() -> void # OK
+4:7 GDCallExpression Transition.cover() -> void # OK
+4:7 GDMemberOperatorExpression Transition.cover -> void # OK
+4:7 GDIdentifierExpression Transition -> Transition # OK
+4:24 GDNumberExpression 0.2 -> float # OK
+5:1 GDAwaitExpression await Transition.dissolve() -> void # OK
+5:7 GDCallExpression Transition.dissolve() -> void # OK
+5:7 GDMemberOperatorExpression Transition.dissolve -> void # OK
+5:7 GDIdentifierExpression Transition -> Transition # OK
+5:27 GDNumberExpression 0.5 -> float # OK
+
+test_scripts/screen_transition.gd
+3:0 Method cover -> void # OK
+3:11 Parameter duration -> float # OK
+4:1 GDPassExpression pass -> void # OK
+6:0 Method dissolve -> void # OK
+6:14 Parameter duration -> float # OK
+7:1 GDPassExpression pass -> void # OK
+
 test_scripts/scene_nodes.gd
 2:0 Class SceneNodes -> Variant # OK
 9:9 Variable player -> CharacterBody2D # OK
@@ -15592,7 +15613,7 @@ test_scripts/type_guards.gd
 58:1 GDReturnExpression return null -> Variant # OK
 58:8 GDIdentifierExpression null -> null # OK
 61:0 Method type_guard_with_or -> float | null | Variant # OK
-61:24 Parameter value -> float | int | Quaternion | String | StringName | Vector2 | Vector2i | Vector3 | Vector3i | Vector4 | Vector4i # OK
+61:24 Parameter value -> (+8 more)|Quaternion|String|StringName|float|int # OK
 63:4 GDDualOperatorExpression valueIsintOr2valueIsfloat -> bool # OK
 63:4 GDDualOperatorExpression valueIsint -> bool # OK
 63:4 GDIdentifierExpression value -> Variant # OK

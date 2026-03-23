@@ -15828,6 +15828,15 @@ test_scripts/rename_test.gd
     nullable: no
 
 
+test_scripts/scene_autoload_usage.gd
+  3:0 Method play_transition
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
 test_scripts/scene_nodes.gd
   2:0 Class SceneNodes
     declared: (none)
@@ -16546,6 +16555,36 @@ test_scripts/scene_references.gd
     inferred: Node
     effective: Node
     confidence: High
+    nullable: no
+
+
+test_scripts/screen_transition.gd
+  3:0 Method cover
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  3:11 Parameter duration
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  6:0 Method dissolve
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  6:14 Parameter duration
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
     nullable: no
 
 
@@ -23732,4 +23771,4 @@ test_scripts/validation_edge_cases.gd
     nullable: no
 
 
-# Summary: 3365 entries in 61 files
+# Summary: 3370 entries in 63 files

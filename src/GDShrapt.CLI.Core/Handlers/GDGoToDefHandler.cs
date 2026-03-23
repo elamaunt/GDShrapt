@@ -62,7 +62,8 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         if (result.Success && result.FilePath != null)
             _logger.Debug($"[DEF] Location: L{result.Line}:C{result.Column}");
 
-        return ConvertResultToLocation(result, filePath);
+        var location = ConvertResultToLocation(result, filePath);
+        return location;
     }
 
     /// <inheritdoc />
@@ -279,6 +280,15 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return null;
 
         var script = _project.GetScriptByResourcePath(autoload.Path);
+
+        // Scene autoloads: resolve .tscn → root script via SceneTypesProvider
+        if (script == null && autoload.IsScene && _project.SceneTypesProvider != null)
+        {
+            var rootScriptPath = _project.SceneTypesProvider.GetNodeScript(autoload.Path, ".");
+            if (!string.IsNullOrEmpty(rootScriptPath))
+                script = _project.GetScriptByResourcePath(rootScriptPath);
+        }
+
         if (script?.Class == null)
             return null;
 
@@ -304,6 +314,15 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return null;
 
         var script = _project.GetScriptByResourcePath(autoload.Path);
+
+        // Scene autoloads: resolve .tscn → root script via SceneTypesProvider
+        if (script == null && autoload.IsScene && _project.SceneTypesProvider != null)
+        {
+            var rootScriptPath = _project.SceneTypesProvider.GetNodeScript(autoload.Path, ".");
+            if (!string.IsNullOrEmpty(rootScriptPath))
+                script = _project.GetScriptByResourcePath(rootScriptPath);
+        }
+
         if (script == null)
             return null;
 
@@ -402,7 +421,6 @@ public class GDGoToDefHandler : IGDGoToDefHandler
 
             var methods = typeInfo.Members
                 .Where(m => m.Kind == GDRuntimeMemberKind.Method)
-                .Where(m => m.Description != null)
                 .ToList();
             if (methods.Count > 0)
             {
@@ -819,8 +837,9 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             return null;
 
         // Walk inheritance chain to find the declaring type
+        var visited = new HashSet<string>(StringComparer.Ordinal);
         var currentType = typeName;
-        while (currentType != null)
+        while (currentType != null && visited.Add(currentType))
         {
             var location = GenerateBuiltInTypeDefinition(currentType);
             if (location == null || string.IsNullOrEmpty(location.FilePath))

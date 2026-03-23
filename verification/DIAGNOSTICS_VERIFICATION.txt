@@ -1,16 +1,32 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-23 04:59:47
+Generated: 2026-03-23 16:11:16
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           951
+Total:           956
 Verified (OK):   949
-Unverified:      0
+Unverified:      5
 False Positives: 0
 Skipped:         2
 Orphaned Markers:0
+
+================================================================================
+UNVERIFIED DIAGNOSTICS
+================================================================================
+
+--- test_scripts/screen_transition.gd (5 diagnostics) ---
+  3:5 [GDL203] Function 'cover' only contains 'pass'
+    Add: # 3:5-GDL203-OK
+  3:11 [GDL202] Parameter 'duration' is declared but never used
+    Add: # 3:11-GDL202-OK
+  6:0 [GDL513] Expected 2 empty line(s) before function, found 1
+    Add: # 6:0-GDL513-OK
+  6:5 [GDL203] Function 'dissolve' only contains 'pass'
+    Add: # 6:5-GDL203-OK
+  6:14 [GDL202] Parameter 'duration' is declared but never used
+    Add: # 6:14-GDL202-OK
 
 ================================================================================
 SKIPPED (NEEDS ANALYSIS)

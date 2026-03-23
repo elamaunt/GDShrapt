@@ -14,9 +14,10 @@ public class DialogueManagerSmokeTests : SmokeTestBase
 {
     private const string RepoUrl = "https://github.com/nathanhoad/godot_dialogue_manager.git";
     private const string RepoName = "godot_dialogue_manager";
+    private const string PinnedCommit = "0bba5c7c78d86e2d7dde912372d70d1f394198a6";
 
     [ClassInitialize]
-    public static void Init(TestContext _) => InitProject(RepoUrl, RepoName);
+    public static void Init(TestContext _) => InitProject(RepoUrl, RepoName, PinnedCommit);
 
     [ClassCleanup]
     public static void Cleanup() => CleanupProject();

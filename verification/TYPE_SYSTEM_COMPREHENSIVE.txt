@@ -10314,7 +10314,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|String|Vector2|bool|float|int
+    inferred:     (+6 more)|Array|Color|Dictionary|Object|String
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -21892,6 +21892,18 @@ test_scripts/rename_test.gd
       132:8 result -> float (base: float)
 
 
+test_scripts/scene_autoload_usage.gd
+================================================================================
+
+--- 3:0 Method play_transition ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+
 test_scripts/scene_nodes.gd
 ================================================================================
 
@@ -22949,6 +22961,50 @@ test_scripts/scene_references.gd
       75:41 type_name -> String (base: String)
       76:5 found -> Node (base: Node)
       77:10 found -> Node (base: Node)
+
+
+test_scripts/screen_transition.gd
+================================================================================
+
+--- 3:0 Method cover ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 3:11 Parameter duration ---
+  Type Info:
+    declared:     (none)
+    inferred:     float
+    effective:    float
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     float
+    confidence:   Certain
+    reason:       explicit type annotation
+
+--- 6:0 Method dissolve ---
+  Type Info:
+    declared:     (none)
+    inferred:     Variant
+    effective:    Variant
+    confidence:   Unknown
+    nullable:     no
+
+--- 6:14 Parameter duration ---
+  Type Info:
+    declared:     (none)
+    inferred:     float
+    effective:    float
+    confidence:   Certain
+    nullable:     no
+  Parameter Inference:
+    inferred:     float
+    confidence:   Certain
+    reason:       explicit type annotation
 
 
 test_scripts/semantic_tokens_test.gd
@@ -29156,7 +29212,7 @@ test_scripts/type_guards.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+8 more)|String|StringName|Vector2i|float|int
+    inferred:     (+8 more)|Quaternion|String|StringName|float|int
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -33038,4 +33094,4 @@ test_scripts/validation_edge_cases.gd
       62:17 sn -> String (base: StringName)
 
 
-# Summary: 61 files analyzed
+# Summary: 63 files analyzed

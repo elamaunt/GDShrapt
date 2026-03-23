@@ -15828,6 +15828,45 @@ test_scripts/rename_test.gd
     nullable: no
 
 
+test_scripts/scene_autoload_usage.gd
+  3:0 Method play_transition # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+
+test_scripts/screen_transition.gd
+  3:0 Method cover # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  3:11 Parameter duration # OK
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+  6:0 Method dissolve # OK
+    declared: (none)
+    inferred: Variant
+    effective: Variant
+    confidence: Unknown
+    nullable: no
+
+  6:14 Parameter duration # OK
+    declared: (none)
+    inferred: float
+    effective: float
+    confidence: Certain
+    nullable: no
+
+
 test_scripts/scene_nodes.gd
   2:0 Class SceneNodes # OK
     declared: (none)

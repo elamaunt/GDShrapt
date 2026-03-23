@@ -2836,6 +2836,18 @@ test_scripts/rename_test.gd
     reason: explicit type annotation
 
 
+test_scripts/screen_transition.gd
+  3:11 Parameter duration in cover # OK
+    inferred-type: float
+    confidence: Certain
+    reason: explicit type annotation
+
+  6:14 Parameter duration in dissolve # OK
+    inferred-type: float
+    confidence: Certain
+    reason: explicit type annotation
+
+
 test_scripts/scene_nodes.gd
   51:18 Parameter p in setup_player # OK
     inferred-type: CharacterBody2D

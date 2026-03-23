@@ -5218,7 +5218,7 @@ test_scripts/dynamic_dispatch.gd
 135:1 GDReturnExpression return data -> Variant
 135:8 GDIdentifierExpression data -> Dictionary
 138:0 Method _serialize_value -> Array|Dictionary|Dictionary[String, String]|String|Variant|null
-138:22 Parameter value -> (+6 more)|String|Vector2|bool|float|int
+138:22 Parameter value -> (+6 more)|Array|Color|Dictionary|Object|String
 139:4 GDDualOperatorExpression valueEqualnull -> bool
 139:4 GDIdentifierExpression value -> Variant
 139:13 GDIdentifierExpression null -> null
@@ -12038,6 +12038,19 @@ test_scripts/rename_test.gd
 132:1 GDReturnExpression return result -> Variant
 132:8 GDIdentifierExpression result -> float
 
+test_scripts/scene_autoload_usage.gd
+3:0 Method play_transition -> void
+4:1 GDAwaitExpression await Transition.cover() -> void
+4:7 GDCallExpression Transition.cover() -> void
+4:7 GDMemberOperatorExpression Transition.cover -> void
+4:7 GDIdentifierExpression Transition -> Transition
+4:24 GDNumberExpression 0.2 -> float
+5:1 GDAwaitExpression await Transition.dissolve() -> void
+5:7 GDCallExpression Transition.dissolve() -> void
+5:7 GDMemberOperatorExpression Transition.dissolve -> void
+5:7 GDIdentifierExpression Transition -> Transition
+5:27 GDNumberExpression 0.5 -> float
+
 test_scripts/scene_nodes.gd
 2:0 Class SceneNodes -> Variant
 9:9 Variable player -> CharacterBody2D
@@ -12527,6 +12540,14 @@ test_scripts/scene_references.gd
 77:10 GDIdentifierExpression found -> Node
 78:1 GDReturnExpression return null -> Variant
 78:8 GDIdentifierExpression null -> null
+
+test_scripts/screen_transition.gd
+3:0 Method cover -> void
+3:11 Parameter duration -> float
+4:1 GDPassExpression pass -> void
+6:0 Method dissolve -> void
+6:14 Parameter duration -> float
+7:1 GDPassExpression pass -> void
 
 test_scripts/semantic_tokens_test.gd
 2:0 Class SemanticTokensTest -> Variant
@@ -15592,7 +15613,7 @@ test_scripts/type_guards.gd
 58:1 GDReturnExpression return null -> Variant
 58:8 GDIdentifierExpression null -> null
 61:0 Method type_guard_with_or -> Variant|float|null
-61:24 Parameter value -> (+8 more)|String|StringName|Vector2i|float|int
+61:24 Parameter value -> (+8 more)|Quaternion|String|StringName|float|int
 63:4 GDDualOperatorExpression valueIsintOr2valueIsfloat -> bool
 63:4 GDDualOperatorExpression valueIsint -> bool
 63:4 GDIdentifierExpression value -> Variant
@@ -17992,4 +18013,4 @@ test_scripts/validation_edge_cases.gd
 69:1 GDReturnExpression return "hello" -> Variant
 69:8 GDStringExpression "hello" -> String
 
-# Summary: 17868 nodes in 61 files
+# Summary: 17885 nodes in 63 files

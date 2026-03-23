@@ -42,6 +42,21 @@ public class GDDefinitionHandlerTests
         return (project, handler);
     }
 
+    private static (GDScriptProject project, GDDefinitionHandler handler) SetupProjectWithScenesAndHandler()
+    {
+        var context = new GDDefaultProjectContext(TestProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions
+        {
+            EnableSceneTypesProvider = true
+        });
+        project.LoadScripts();
+        project.LoadScenes();
+        project.AnalyzeAll();
+
+        var handler = CreateHandler(project);
+        return (project, handler);
+    }
+
     private static GDDefinitionParams CreateParams(string scriptName, int line, int character)
     {
         return new GDDefinitionParams
@@ -657,5 +672,46 @@ public class GDDefinitionHandlerTests
         location.FilePath.Should().Contain("global.gd",
             "Should navigate to the autoload source file, not a generated stub");
         location.FilePath.Should().NotContain("builtin_types");
+    }
+
+    [TestMethod]
+    public void FindDefinition_SceneAutoloadMember_NavigatesToScriptMethod()
+    {
+        var (project, _) = SetupProjectWithScenesAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // scene_autoload_usage.gd line 4 (1-based): \tawait Transition.cover(0.2)
+        // "cover" starts at column 19 (1-based, after "\tawait Transition.")
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "scene_autoload_usage.gd"),
+            4, 19);
+
+        location.Should().NotBeNull("GoToDefinition on scene autoload member 'cover' should return a result");
+        location!.IsInfoOnly.Should().BeFalse();
+        location.FilePath.Should().Contain("screen_transition.gd",
+            "Should navigate to the scene's root script");
+        location.FilePath.Should().NotContain("builtin_types",
+            "Should NOT navigate to a generated built-in type file");
+    }
+
+    [TestMethod]
+    public void FindDefinition_SceneAutoloadName_NavigatesToScriptFile()
+    {
+        var (project, _) = SetupProjectWithScenesAndHandler();
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule());
+        var goToDefHandler = registry.GetService<IGDGoToDefHandler>()!;
+
+        // scene_autoload_usage.gd line 4 (1-based): \tawait Transition.cover(0.2)
+        // "Transition" starts at column 8 (1-based, after "\tawait ")
+        var location = goToDefHandler.FindDefinition(
+            System.IO.Path.Combine(TestProjectPath, "test_scripts", "scene_autoload_usage.gd"),
+            4, 8);
+
+        location.Should().NotBeNull("GoToDefinition on scene autoload name 'Transition' should return a result");
+        location!.FilePath.Should().Contain("screen_transition",
+            "Should navigate to the scene's root script file");
     }
 }

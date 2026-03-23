@@ -242,7 +242,7 @@ internal class GDParameterTypeResolver
             }
         }
 
-        return intersection?.ToList() ?? new List<string>();
+        return intersection?.OrderBy(t => t, StringComparer.Ordinal).ToList() ?? new List<string>();
     }
 
     /// <summary>
@@ -320,6 +320,7 @@ internal class GDParameterTypeResolver
             var sorted = others
                 .Where(c => !c.Type.StartsWith("(+"))
                 .OrderBy(c => c.Confidence)
+                .ThenBy(c => c.Type, StringComparer.Ordinal)
                 .ToList();
 
             var summaries = others.Where(c => c.Type.StartsWith("(+")).ToList();

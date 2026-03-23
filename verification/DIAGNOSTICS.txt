@@ -1,22 +1,22 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-23 04:57:15
+Generated: 2026-03-23 16:08:39
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 742
-Scripts analyzed:  61
+Total diagnostics: 747
+Scripts analyzed:  63
 
 By Severity:
   Error     :    30
-  Hint      :    98
-  Info      :    36
+  Hint      :    99
+  Info      :    40
   Warning   :   578
 
 By Source:
-  Linter              :   304
+  Linter              :   309
   SemanticValidator   :   404
   Validator           :    34
 
@@ -27,15 +27,15 @@ By Code (Top 30):
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
   GD3023    :   33  (Function 'create_game_object' returns inconsistent types:...)
   GD7003    :   31  (Calling method 'visit' on untyped variable 'visitor' with...)
-  GDL203    :   28  (Function '_process_idle' only contains 'pass')
+  GDL203    :   30  (Function '_process_idle' only contains 'pass')
   GD7005    :   21  (Variable 'child_sprite' is @onready - _ready() may not ha...)
-  GDL513    :   20  (Expected 2 empty line(s) before function, found 1)
+  GDL513    :   21  (Expected 2 empty line(s) before function, found 1)
   GDL001    :   13  (Class name 'DiagnosticsTest_BestPractices' should use Pas...)
   GD2001    :   12  (Undefined identifier: 'undefined_var_not_suppressed_1')
   GDL222    :   11  ('CyclicInference' has 22 public methods (max 20))
+  GDL202    :   10  (Parameter 'delta' is declared but never used)
   GDL003    :    9  (Variable name 'InvalidVariableName' should use snake_case)
   GDL101    :    8  (Line 212 exceeds 120 characters (length: 146))
-  GDL202    :    8  (Parameter 'delta' is declared but never used)
   GDL211    :    7  (Local variable 'class_level_var' shadows a class-level va...)
   GD3009    :    6  (Property 'nonexistent_property_xyz' not found on type 'Node')
   GDL223    :    6  ('test_gdl223_invalid' has 8 return statements (max 6))
@@ -677,6 +677,14 @@ DIAGNOSTICS BY FILE
     56:14  [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'. Accessed in scene_references.gd:54:0 get_enemies (no in-file callers)
     63:14  [GD7007] Hint - Variable 'enemy_container' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'get_children'. Accessed in scene_references.gd:62:0 clear_enemies (no in-file callers)
     71:0   [GD3023] Warning - Function 'find_child_of_type' returns inconsistent types: Array[Node], Node, null
+
+--- test_scripts/screen_transition.gd (5 diagnostics) ---
+
+     3:5   [GDL203] Info - Function 'cover' only contains 'pass'
+     3:11  [GDL202] Info - Parameter 'duration' is declared but never used
+     6:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
+     6:5   [GDL203] Info - Function 'dissolve' only contains 'pass'
+     6:14  [GDL202] Info - Parameter 'duration' is declared but never used
 
 --- test_scripts/semantic_tokens_test.gd (1 diagnostics) ---
 

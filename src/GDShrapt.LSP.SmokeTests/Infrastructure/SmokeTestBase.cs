@@ -17,9 +17,9 @@ public abstract class SmokeTestBase
     protected static GDServiceRegistry Registry => _registry!;
     protected static string ProjectRoot => _projectRoot!;
 
-    protected static void InitProject(string repoUrl, string repoName)
+    protected static void InitProject(string repoUrl, string repoName, string? pinnedCommit = null)
     {
-        var repoPath = ExternalProjectFixture.EnsureRepo(repoUrl, repoName);
+        var repoPath = ExternalProjectFixture.EnsureRepo(repoUrl, repoName, pinnedCommit);
         _projectRoot = ExternalProjectFixture.FindGodotProjectRoot(repoPath);
         _project = ExternalProjectFixture.LoadProject(_projectRoot);
 

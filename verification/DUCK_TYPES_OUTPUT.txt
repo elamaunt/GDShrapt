@@ -1192,7 +1192,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   138:22 Parameter value in _serialize_value
-    inferred-type: (+6 more)|String|Vector2|bool|float|int
+    inferred-type: (+6 more)|Array|Color|Dictionary|Object|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2952,6 +2952,18 @@ test_scripts/scene_references.gd
     reason: explicit type annotation
 
 
+test_scripts/screen_transition.gd
+  3:11 Parameter duration in cover
+    inferred-type: float
+    confidence: Certain
+    reason: explicit type annotation
+
+  6:14 Parameter duration in dissolve
+    inferred-type: float
+    confidence: Certain
+    reason: explicit type annotation
+
+
 test_scripts/semantic_validation_demo.gd
   155:14 Parameter x in take_int
     inferred-type: int
@@ -3571,7 +3583,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   61:24 Parameter value in type_guard_with_or
-    inferred-type: (+8 more)|String|StringName|Vector2i|float|int
+    inferred-type: (+8 more)|Quaternion|String|StringName|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4218,4 +4230,4 @@ test_scripts/validation_edge_cases.gd
     confidence: Unknown
 
 
-# Summary: 708 parameters in 43 files (249 duck-typed)
+# Summary: 710 parameters in 44 files (249 duck-typed)

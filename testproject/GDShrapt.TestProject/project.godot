@@ -19,6 +19,7 @@ config/icon="uid://c1hfe6puisgqm"
 [autoload]
 
 Global="*res://test_scripts/global.gd"
+Transition="*res://test_scenes/screen_transition.tscn"
 
 [dotnet]
 
