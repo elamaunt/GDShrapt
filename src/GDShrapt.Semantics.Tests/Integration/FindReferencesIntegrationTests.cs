@@ -484,7 +484,7 @@ public class FindReferencesIntegrationTests
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 
@@ -523,7 +523,7 @@ public class FindReferencesIntegrationTests
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 
@@ -568,7 +568,7 @@ public class FindReferencesIntegrationTests
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 
@@ -611,7 +611,7 @@ public class FindReferencesIntegrationTests
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 
@@ -649,7 +649,7 @@ public class FindReferencesIntegrationTests
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 
@@ -676,7 +676,7 @@ public class FindReferencesIntegrationTests
 
     private static void DeleteTempProject(string path)
     {
-        try { if (Directory.Exists(path)) Directory.Delete(path, true); } catch { }
+        try { if (Directory.Exists(path)) Directory.Delete(path, true); } catch { /* Best-effort cleanup */ }
     }
 
     [TestMethod]

@@ -107,7 +107,7 @@ internal partial class ReplDock : Control
         {
             _refreshButton.Icon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon("Reload", "EditorIcons");
         }
-        catch { }
+        catch { /* Icon may not exist in all Godot versions */ }
         _refreshButton.Pressed += OnRefreshPressed;
         toolbar.AddChild(_refreshButton);
 

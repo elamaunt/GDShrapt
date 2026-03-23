@@ -172,7 +172,7 @@ func _execute_dict_action(action_dict):
 
 # === Recursive type inference challenge ===
 
-func transform_data(data, transformer):
+func transform_data(data, transformer):  # 175:26-GD7020-OK
 	# data could be: primitive, Array, Dictionary
 	# transformer is a Callable
 	# Return type matches input structure but with transformed values

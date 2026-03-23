@@ -135,9 +135,9 @@ public class GDDiagnosticPublisher : IAsyncDisposable
             {
                 await _analysisReady.ConfigureAwait(false);
             }
-            catch
+            catch (Exception ex)
             {
-                // Analysis may have failed, but we should still publish with whatever state we have
+                GDLspPerformanceTrace.Log("diagnostics", $"ANALYSIS-FAILED {filename}: {ex.Message}");
             }
             GDLspPerformanceTrace.Log("diagnostics", $"ANALYSIS-READY {filename}");
         }

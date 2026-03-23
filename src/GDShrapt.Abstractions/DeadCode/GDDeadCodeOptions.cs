@@ -128,6 +128,19 @@ public class GDDeadCodeOptions
     public HashSet<string> FrameworkBaseClasses { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// When true, methods that are polymorphic virtual overrides (defined in a base class,
+    /// overridden in multiple subclasses, and called via dynamic dispatch on the base type)
+    /// are skipped from dead code analysis.
+    /// </summary>
+    public bool SkipPolymorphicVirtuals { get; set; } = true;
+
+    /// <summary>
+    /// Path prefixes for addon/library directories. Files within these paths have their
+    /// non-private methods downgraded from Strict to Potential confidence (public API assumption).
+    /// </summary>
+    public List<string> AddonPathsAsPublicAPI { get; set; } = new();
+
+    /// <summary>
     /// Checks if a file should be skipped based on test path patterns.
     /// </summary>
     public bool ShouldSkipFile(string filePath)
@@ -194,6 +207,8 @@ public class GDDeadCodeOptions
             CollectDroppedByReflection = CollectDroppedByReflection,
             FrameworkMethodPrefixes = FrameworkMethodPrefixes,
             FrameworkBaseClasses = FrameworkBaseClasses,
+            SkipPolymorphicVirtuals = SkipPolymorphicVirtuals,
+            AddonPathsAsPublicAPI = AddonPathsAsPublicAPI,
             TreatClassNameAsPublicAPI = TreatClassNameAsPublicAPI,
             RespectSuppressionAnnotations = RespectSuppressionAnnotations,
             CustomSuppressionAnnotations = CustomSuppressionAnnotations

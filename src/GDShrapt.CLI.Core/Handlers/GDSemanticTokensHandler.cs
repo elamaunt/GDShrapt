@@ -20,13 +20,36 @@ public class GDSemanticTokensHandler : IGDSemanticTokensHandler
     public IReadOnlyList<GDClassifiedToken> GetClassifiedTokens(string filePath)
     {
         var script = _project.GetScript(filePath);
+        GDSemanticModel? model;
+        bool isBuiltInFile = false;
+
         if (script == null)
-            return [];
+        {
+            if (GDBuiltInFileHelper.IsBuiltInTypeFile(filePath))
+            {
+                var builtInFile = GDBuiltInFileHelper.GetOrParse(filePath, _projectModel?.RuntimeProvider);
+                if (builtInFile?.SemanticModel == null)
+                    return [];
+                model = builtInFile.SemanticModel;
+                isBuiltInFile = true;
+            }
+            else
+            {
+                return [];
+            }
+        }
+        else
+        {
+            model = _projectModel?.ResolveModel(script);
+            if (model == null)
+                return [];
+        }
 
-        var model = _projectModel.ResolveModel(script);
-        if (model == null)
-            return [];
+        return ClassifyTokens(model, isBuiltInFile);
+    }
 
+    private IReadOnlyList<GDClassifiedToken> ClassifyTokens(GDSemanticModel model, bool skipOverrideCheck)
+    {
         var tokens = new List<GDClassifiedToken>();
 
         foreach (var symbol in model.Symbols)
@@ -44,7 +67,7 @@ public class GDSemanticTokensHandler : IGDSemanticTokensHandler
                     isAbstract = methodDecl.AttributesDeclaredBefore
                         .Any(attr => attr.Attribute?.IsAbstract() == true);
 
-                    if (!isAbstract)
+                    if (!isAbstract && !skipOverrideCheck)
                         isOverride = IsMethodOverride(model, symbol.Name);
                 }
 

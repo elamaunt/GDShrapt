@@ -23,7 +23,7 @@ func remove_item(index):
 	return inventory.pop_at(index)
 
 
-func find_item(predicate):
+func find_item(predicate):  # 26:15-GD7020-OK
 	# predicate: (item) -> bool
 	# Returns first matching item or null
 	for item in inventory:
@@ -32,7 +32,7 @@ func find_item(predicate):
 	return null
 
 
-func find_all_items(predicate):
+func find_all_items(predicate):  # 35:20-GD7020-OK
 	var result = []
 	for item in inventory:
 		if predicate.call(item):  # 38:5-GD7007-OK
@@ -40,7 +40,7 @@ func find_all_items(predicate):
 	return result
 
 
-func get_item_property(item, prop_name, default_val = null):
+func get_item_property(item, prop_name, default_val = null):  # 43:23-GD7020-OK
 	# item could be Dictionary or Object
 	if item is Dictionary:
 		return item.get(prop_name, default_val)
@@ -140,7 +140,7 @@ func get_dialog_choices():
 	return available
 
 
-func _check_choice_condition(choice):  # 143:5-GDL223-OK
+func _check_choice_condition(choice):  # 143:5-GDL223-OK, 143:29-GD7020-OK
 	var condition = choice.get("condition")  # 144:17-GD7007-OK
 	if condition == null:
 		return true
@@ -205,7 +205,7 @@ var completed_quests = [] # Array[String] - quest ids
 var quest_progress = {}   # Dict[String, Dict] - quest_id -> progress data
 
 
-func accept_quest(quest_data):
+func accept_quest(quest_data):  # 208:18-GD7020-OK
 	var quest_id = quest_data.get("id", str(randi()))  # 209:16-GD7007-OK
 	active_quests[quest_id] = quest_data
 	quest_progress[quest_id] = {}
@@ -503,7 +503,7 @@ func save_game_state():
 	}
 
 
-func load_game_state(data):
+func load_game_state(data):  # 506:21-GD7020-OK
 	inventory = _deserialize_array(data.get("inventory", []))  # 507:32-GD7007-OK
 	equipped = _deserialize_dict(data.get("equipped", {}))
 	dialog_variables = data.get("dialog_variables", {})

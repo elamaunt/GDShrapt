@@ -1,13 +1,3 @@
 # FLOW_NARROWING_UNVERIFIED.txt
 # Copy entries to FLOW_NARROWING_VERIFIED.txt and add # OK
 
-test_scripts/scene_nodes.gd
-  duplicate_node()
-    166:8 copy -> Node2D|null (base: Node2D|null)
-
-test_scripts/scene_references.gd
-  spawn_enemy()
-    49:1 enemy -> Node2D|null (base: Node2D|null)
-    50:27 enemy -> Node2D|null (base: Node2D|null)
-    51:8 enemy -> Node2D|null (base: Node2D|null)
-

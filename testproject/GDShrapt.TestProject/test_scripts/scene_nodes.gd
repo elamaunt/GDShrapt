@@ -135,7 +135,7 @@ func instantiate_typed(scene: PackedScene) -> CharacterBody2D:
 	if instance:
 		add_child(instance)
 		return instance
-	return null
+	return null  # 137:2-GD3007-OK
 
 
 func queue_free_child(child_name: String):
@@ -163,7 +163,7 @@ func find_owner() -> Node:
 func duplicate_node() -> Node2D:
 	# Node duplication
 	var copy = duplicate() as Node2D
-	return copy
+	return copy  # 166:1-GD3007-OK
 
 
 func get_node_configuration_warnings() -> PackedStringArray:

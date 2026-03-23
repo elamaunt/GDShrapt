@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using GDShrapt.Abstractions;
@@ -19,8 +20,11 @@ public static class GDProvenanceTracer
         string argVarName,
         GDExpression? argExpr,
         int maxDepth = 3,
-        int callSiteLine = 0)
+        int callSiteLine = 0,
+        IGDLogger? logger = null)
     {
+        logger ??= GDNullLogger.Instance;
+
         if (maxDepth <= 0 || projectModel == null)
             return new List<GDCallSiteProvenanceEntry>();
 
@@ -104,7 +108,10 @@ public static class GDProvenanceTracer
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        logger.Debug($"Failed to trace signal connection for {enclosingType}.{methodName}: {ex.Message}");
+                    }
 
                     // 2b: Direct call sites -> recurse into argument
                     if (chain.Count == 0)
@@ -127,7 +134,10 @@ public static class GDProvenanceTracer
                                     arg.ExpressionText, innerChain));
                             }
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            logger.Debug($"Failed to collect call sites for {enclosingType}.{methodName}: {ex.Message}");
+                        }
                     }
                 }
             }
@@ -176,8 +186,11 @@ public static class GDProvenanceTracer
         GDProjectSemanticModel? projectModel,
         IGDRuntimeProvider? runtimeProvider,
         GDScriptFile file, string enclosingType,
-        string containerVarName, int maxDepth)
+        string containerVarName, int maxDepth,
+        IGDLogger? logger = null)
     {
+        logger ??= GDNullLogger.Instance;
+
         var chain = new List<GDCallSiteProvenanceEntry>();
         if (maxDepth <= 0 || projectModel == null) return chain;
 
@@ -288,7 +301,10 @@ public static class GDProvenanceTracer
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logger.Debug($"Failed to trace container usage for {containerVarName}: {ex.Message}");
+            }
         }
 
         return chain;
@@ -312,7 +328,9 @@ public static class GDProvenanceTracer
                 return member.Parameters.Select(p => p.Type ?? "Variant").ToList();
             }
 
-            var script = project.GetScriptByTypeName(current);
+            var script = current.StartsWith("res://", StringComparison.OrdinalIgnoreCase)
+                ? project.GetScriptByResourcePath(current)
+                : project.GetScriptByTypeName(current);
             if (script?.Class != null)
             {
                 var signalDecl = script.Class.Members

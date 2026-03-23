@@ -42,7 +42,7 @@ func dictionary_chain(dict: Dictionary) -> Array:
 	return filtered_keys
 
 
-func optional_chain_pattern(data):
+func optional_chain_pattern(data):  # 45:28-GD7020-OK
 	# Simulating optional chaining with null checks
 	if data == null:
 		return null

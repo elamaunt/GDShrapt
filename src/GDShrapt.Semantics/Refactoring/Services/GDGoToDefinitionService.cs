@@ -1,3 +1,6 @@
+using System.Linq;
+using GDShrapt.Abstractions;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -80,6 +83,9 @@ public class GDGoToDefinitionResult : GDRefactoringResult
     /// <summary>Indicates if the definition requires Godot runtime lookup (node paths, resources).</summary>
     public bool RequiresGodotLookup { get; }
 
+    /// <summary>Sub-results for union types (one per constituent type).</summary>
+    public IReadOnlyList<GDGoToDefinitionResult>? SubResults { get; }
+
     private GDGoToDefinitionResult(
         bool success,
         string? errorMessage,
@@ -92,7 +98,8 @@ public class GDGoToDefinitionResult : GDRefactoringResult
         string? typeName,
         GDNode? declarationNode,
         GDIdentifier? declarationIdentifier,
-        bool requiresGodotLookup)
+        bool requiresGodotLookup,
+        IReadOnlyList<GDGoToDefinitionResult>? subResults = null)
         : base(success, errorMessage, null)
     {
         DefinitionType = definitionType;
@@ -105,6 +112,7 @@ public class GDGoToDefinitionResult : GDRefactoringResult
         DeclarationNode = declarationNode;
         DeclarationIdentifier = declarationIdentifier;
         RequiresGodotLookup = requiresGodotLookup;
+        SubResults = subResults;
     }
 
     /// <summary>Creates a successful result with file location.</summary>
@@ -203,6 +211,25 @@ public class GDGoToDefinitionResult : GDRefactoringResult
             declarationNode: null,
             declarationIdentifier: null,
             requiresGodotLookup: true);
+    }
+
+    /// <summary>Creates a result for a union type with sub-results for each constituent type.</summary>
+    public static GDGoToDefinitionResult Union(IReadOnlyList<GDGoToDefinitionResult> subResults)
+    {
+        return new GDGoToDefinitionResult(
+            success: true,
+            errorMessage: null,
+            definitionType: GDDefinitionType.BuiltInType,
+            filePath: null,
+            line: 0,
+            column: 0,
+            endColumn: 0,
+            symbolName: "Union type",
+            typeName: null,
+            declarationNode: null,
+            declarationIdentifier: null,
+            requiresGodotLookup: false,
+            subResults: subResults);
     }
 
     /// <summary>Creates a failed result.</summary>
@@ -609,11 +636,36 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (string.IsNullOrEmpty(typeName))
             return GDGoToDefinitionResult.Failed("Type name is empty");
 
-        var baseTypeName = GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType ct
-            ? (ct.IsDictionary ? "Dictionary" : "Array")
-            : typeName;
+        var semanticModel = context.GetSemanticModel();
+        if (semanticModel == null)
+            return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalType, typeName);
 
-        var typeInfo = context.GetSemanticModel()?.RuntimeProvider?.GetTypeInfo(baseTypeName);
+        var semType = semanticModel.ResolveSemanticType(typeName);
+
+        if (semType.IsUnion)
+        {
+            var unionType = (GDUnionSemanticType)semType;
+            var subResults = unionType.Types
+                .Select(t => ResolveType(context, t.RuntimeTypeName))
+                .Where(r => r.Success)
+                .ToList();
+
+            if (subResults.Count == 1)
+                return subResults[0];
+
+            return GDGoToDefinitionResult.Union(subResults);
+        }
+
+        if (semType.IsProjectType)
+        {
+            var source = semType.SourceInfo!;
+            return GDGoToDefinitionResult.Found(
+                GDDefinitionType.ExternalType, source.FilePath,
+                source.Line, source.StartColumn, source.EndColumn,
+                semType.DisplayName);
+        }
+
+        var typeInfo = semanticModel.RuntimeProvider?.GetTypeInfo(semType.RuntimeTypeName);
         if (typeInfo != null)
             return GDGoToDefinitionResult.BuiltIn(typeInfo.Name);
 

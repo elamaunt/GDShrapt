@@ -34,7 +34,7 @@ public sealed class GDBaseModule : IGDModule
         registry.Register<IGDCompletionHandler>(new GDCompletionHandler(project, projectModel.RuntimeProvider, projectModel, project.SceneTypesProvider));
         var goToDefHandler = new GDGoToDefHandler(project, projectModel.RuntimeProvider);
         registry.Register<IGDGoToDefHandler>(goToDefHandler);
-        registry.Register<IGDSymbolsHandler>(new GDSymbolsHandler(project));
+        registry.Register<IGDSymbolsHandler>(new GDSymbolsHandler(project, projectModel.RuntimeProvider));
 
         // Rename and refactoring
         registry.Register<IGDRenameHandler>(new GDRenameHandler(project, projectModel, goToDefHandler));

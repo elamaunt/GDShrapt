@@ -24,6 +24,11 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
     /// </summary>
     internal GDGodotTypesProvider? GodotTypesProvider { get; }
 
+    /// <summary>
+    /// Gets the autoloads provider if available.
+    /// </summary>
+    internal GDAutoloadsProvider? AutoloadsProvider { get; }
+
     public GDCompositeRuntimeProvider(params IGDRuntimeProvider?[] providers)
     {
         _providers = providers.Where(p => p != null).Cast<IGDRuntimeProvider>().ToArray();
@@ -35,6 +40,8 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
                 ProjectTypesProvider = projectProvider;
             else if (provider is GDGodotTypesProvider godotProvider)
                 GodotTypesProvider = godotProvider;
+            else if (provider is GDAutoloadsProvider autoloadsProvider)
+                AutoloadsProvider = autoloadsProvider;
         }
     }
 
@@ -51,6 +58,7 @@ public class GDCompositeRuntimeProvider : IGDRuntimeProvider
         // Store direct references
         GodotTypesProvider = godotTypesProvider;
         ProjectTypesProvider = projectTypesProvider;
+        AutoloadsProvider = autoloadsProvider;
 
         // Set composite provider for lazy return type inference
         projectTypesProvider?.SetCompositeProvider(this);

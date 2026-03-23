@@ -70,4 +70,11 @@ public interface IGDLogger
     /// Logs an error with exception details.
     /// </summary>
     void Error(string message, Exception ex);
+
+    /// <summary>
+    /// Creates a child logger with an additional context prefix.
+    /// </summary>
+    /// <param name="context">Context name to add (e.g., "Parser", "Validator").</param>
+    /// <returns>New logger with combined context prefix.</returns>
+    IGDLogger WithContext(string context);
 }

@@ -1,6 +1,6 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-18 19:27:23
+Generated: 2026-03-23 04:57:15
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
@@ -756,7 +756,7 @@ DIAGNOSTICS BY FILE
    343:1   [GD7007] Warning - Variable 'callback' may be null when accessing 'call'
    363:2   [GD7007] Warning - Variable 'on_success' may be null when accessing 'call'
    365:2   [GD7007] Warning - Variable 'on_failure' may be null when accessing 'call'
-   373:0   [GDL101] Warning - Line 373 exceeds 120 characters (length: 150)
+   373:0   [GDL101] Warning - Line 373 exceeds 120 characters (length: 168)
    374:4   [GD3020] Warning - Variable 'index' may be null; comparison with '>=' would cause runtime error
    374:13  [GD7007] Warning - Variable 'operations' may be null when accessing 'size'
    375:2   [GD7007] Warning - Variable 'on_complete' may be null when accessing 'call'

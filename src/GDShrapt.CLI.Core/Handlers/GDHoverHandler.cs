@@ -32,8 +32,23 @@ public class GDHoverHandler : IGDHoverHandler
 
         var script = _projectModel.Project.GetScript(filePath);
         var semanticModel = script != null ? _projectModel.GetSemanticModel(script) : null;
+        GDScriptFile? effectiveFile = script;
+
         if (semanticModel == null || script?.Class == null)
-            return null;
+        {
+            if (GDBuiltInFileHelper.IsBuiltInTypeFile(filePath))
+            {
+                var builtInFile = GDBuiltInFileHelper.GetOrParse(filePath, _projectModel.RuntimeProvider);
+                if (builtInFile?.SemanticModel == null)
+                    return null;
+                semanticModel = builtInFile.SemanticModel;
+                effectiveFile = builtInFile;
+            }
+            else
+            {
+                return null;
+            }
+        }
 
         // Convert 1-based CLI position to 0-based AST position
         var node = semanticModel.GetNodeAtPosition(line - 1, column - 1);
@@ -42,14 +57,28 @@ public class GDHoverHandler : IGDHoverHandler
 
         var symbol = semanticModel.GetSymbolForNode(node);
         if (symbol == null)
+        {
+            var token = semanticModel.GetTokenAtPosition(line - 1, column - 1);
+            if (token != null)
+            {
+                var specialHover = TryGetSpecialIdentifierHover(token, semanticModel);
+                if (specialHover != null)
+                    return specialHover;
+
+                return GDKeywordHoverProvider.GetKeywordHover(token);
+            }
             return null;
+        }
 
         var content = BuildHoverContent(symbol, semanticModel, node);
 
-        // Show cross-hierarchy bridge info for class members
-        var crossHierarchyInfo = BuildCrossHierarchyInfo(symbol, script);
-        if (!string.IsNullOrEmpty(crossHierarchyInfo))
-            content += "\n\n" + crossHierarchyInfo;
+        // Show cross-hierarchy bridge info for class members (skip for built-in files)
+        if (script != null)
+        {
+            var crossHierarchyInfo = BuildCrossHierarchyInfo(symbol, script);
+            if (!string.IsNullOrEmpty(crossHierarchyInfo))
+                content += "\n\n" + crossHierarchyInfo;
+        }
 
         // Use pre-cached documentation (built-in docs or cross-file ## comments)
         var documentation = symbol.Documentation;
@@ -792,6 +821,66 @@ public class GDHoverHandler : IGDHoverHandler
             StartColumn = startCol,
             EndLine = line,
             EndColumn = endCol
+        };
+    }
+
+    private GDHoverInfo? TryGetSpecialIdentifierHover(GDSyntaxToken token, GDSemanticModel semanticModel)
+    {
+        if (token is not GDIdentifier identifier)
+            return null;
+
+        if (identifier.IsSelf)
+        {
+            var typeName = semanticModel.ScriptFile?.TypeName;
+            var baseType = semanticModel.BaseTypeName;
+            var content = "```gdscript\n(keyword) self\n```\n\n";
+            content += !string.IsNullOrEmpty(typeName)
+                ? $"Reference to the current instance of `{typeName}`."
+                : "Reference to the current class instance.";
+            if (!string.IsNullOrEmpty(baseType))
+                content += $" Extends `{baseType}`.";
+
+            return BuildSpecialHover("self", content, identifier);
+        }
+
+        if (identifier.Sequence == "super")
+        {
+            var baseType = semanticModel.BaseTypeName ?? "Object";
+            return BuildSpecialHover("super",
+                $"```gdscript\n(keyword) super\n```\n\nCalls the parent class (`{baseType}`) implementation.",
+                identifier);
+        }
+
+        if (identifier.Sequence == "null")
+            return BuildSpecialHover("null",
+                "```gdscript\n(keyword) null\n```\n\nRepresents the absence of a value.", identifier);
+
+        if (identifier.IsPi)
+            return BuildSpecialHover("PI",
+                "```gdscript\n(constant) PI = 3.141592653589793\n```\n\nRatio of a circle's circumference to its diameter.", identifier);
+        if (identifier.IsTau)
+            return BuildSpecialHover("TAU",
+                "```gdscript\n(constant) TAU = 6.283185307179586\n```\n\nCircle constant, equal to 2 × PI.", identifier);
+        if (identifier.IsInfinity)
+            return BuildSpecialHover("INF",
+                "```gdscript\n(constant) INF\n```\n\nPositive floating-point infinity.", identifier);
+        if (identifier.IsNaN)
+            return BuildSpecialHover("NAN",
+                "```gdscript\n(constant) NAN\n```\n\nNot a Number — result of undefined floating-point operations.", identifier);
+
+        return null;
+    }
+
+    private static GDHoverInfo BuildSpecialHover(string name, string content, GDSyntaxToken token)
+    {
+        return new GDHoverInfo
+        {
+            Content = content,
+            SymbolName = name,
+            StartLine = token.StartLine + 1,
+            StartColumn = token.StartColumn,
+            EndLine = token.EndLine + 1,
+            EndColumn = token.StartColumn + name.Length
         };
     }
 }

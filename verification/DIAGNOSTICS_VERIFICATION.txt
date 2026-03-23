@@ -1,44 +1,16 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-18 19:23:27
+Generated: 2026-03-23 04:59:47
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           907
-Verified (OK):   897
-Unverified:      8
+Total:           951
+Verified (OK):   949
+Unverified:      0
 False Positives: 0
 Skipped:         2
 Orphaned Markers:0
-
-================================================================================
-UNVERIFIED DIAGNOSTICS
-================================================================================
-
---- test_scripts/enemy_entity.gd (2 diagnostics) ---
-  94:2 [GD4002] Method 'gain_experience' not found on type 'PlayerEntity|null'
-    Add: # 94:2-GD4002-OK
-  104:13 [GD3010] Argument type mismatch for 'new_target' in call to 'set_target': expected 'BaseEntity', got 'BaseEntity|null'
-    Add: # 104:13-GD3010-OK
-
---- test_scripts/scene_nodes.gd (2 diagnostics) ---
-  137:2 [GD3007] Cannot return 'CharacterBody2D|null' from function with return type 'CharacterBody2D'
-    Add: # 137:2-GD3007-OK
-  166:1 [GD3007] Cannot return 'Node2D|null' from function with return type 'Node2D'
-    Add: # 166:1-GD3007-OK
-
---- test_scripts/scene_references.gd (2 diagnostics) ---
-  49:1 [GD3009] Property 'position' not found on type 'Node2D|null'
-    Add: # 49:1-GD3009-OK
-  51:1 [GD3007] Cannot return 'Node2D|null' from function with return type 'Node2D'
-    Add: # 51:1-GD3007-OK
-
---- test_scripts/type_guards.gd (2 diagnostics) ---
-  249:23 [GD7020] All callers pass 'Dictionary' for parameter 'value'
-    Add: # 249:23-GD7020-OK
-  262:23 [GD7020] All callers pass 'Dictionary' for parameter 'outer'
-    Add: # 262:23-GD7020-OK
 
 ================================================================================
 SKIPPED (NEEDS ANALYSIS)

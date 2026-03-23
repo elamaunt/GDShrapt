@@ -147,7 +147,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             if (_autoloadEntries == null)
             {
                 var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
-                _autoloadEntries = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
+                _autoloadEntries = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem, _logger);
             }
             return _autoloadEntries;
         }
@@ -164,7 +164,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             if (!_godotVersionParsed)
             {
                 var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
-                _godotVersion = GDGodotProjectParser.ParseGodotVersion(projectGodotPath, _fileSystem);
+                _godotVersion = GDGodotProjectParser.ParseGodotVersion(projectGodotPath, _fileSystem, _logger);
                 _godotVersionParsed = true;
             }
             return _godotVersion;
@@ -584,7 +584,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
         // Load autoloads from project.godot
         var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
-        var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
+        var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem, _logger);
         var autoloadsProvider = new GDAutoloadsProvider(autoloads, this, _sceneTypesProvider);
 
         return new GDCompositeRuntimeProvider(
@@ -604,7 +604,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
 
         // Load autoloads from project.godot
         var projectGodotPath = Path.Combine(_context.ProjectPath, "project.godot");
-        var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem);
+        var autoloads = GDGodotProjectParser.ParseAutoloads(projectGodotPath, _fileSystem, _logger);
         var autoloadsProvider = new GDAutoloadsProvider(autoloads, this, _sceneTypesProvider);
 
         return new GDTypeResolver(

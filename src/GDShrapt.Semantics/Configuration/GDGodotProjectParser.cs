@@ -31,8 +31,9 @@ public static class GDGodotProjectParser
     /// <param name="projectGodotPath">Full path to project.godot file.</param>
     /// <param name="fileSystem">File system abstraction (optional, uses default if null).</param>
     /// <returns>List of autoload entries.</returns>
-    public static IReadOnlyList<GDAutoloadEntry> ParseAutoloads(string projectGodotPath, IGDFileSystem? fileSystem = null)
+    public static IReadOnlyList<GDAutoloadEntry> ParseAutoloads(string projectGodotPath, IGDFileSystem? fileSystem = null, IGDLogger? logger = null)
     {
+        logger ??= GDNullLogger.Instance;
         var fs = fileSystem ?? new GDDefaultFileSystem();
         var autoloads = new List<GDAutoloadEntry>();
 
@@ -80,13 +81,13 @@ public static class GDGodotProjectParser
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Return empty list on parse errors
+            logger.Debug($"Failed to parse autoloads from {projectGodotPath}: {ex.Message}");
         }
 
         // Resolve uid:// paths if any autoloads use them
-        ResolveUidPaths(autoloads, projectGodotPath, fs);
+        ResolveUidPaths(autoloads, projectGodotPath, fs, logger);
 
         return autoloads;
     }
@@ -95,8 +96,9 @@ public static class GDGodotProjectParser
     /// Parses the Godot engine version from the project.godot config/features field.
     /// Returns null if version cannot be determined.
     /// </summary>
-    public static Version? ParseGodotVersion(string projectGodotPath, IGDFileSystem? fileSystem = null)
+    public static Version? ParseGodotVersion(string projectGodotPath, IGDFileSystem? fileSystem = null, IGDLogger? logger = null)
     {
+        logger ??= GDNullLogger.Instance;
         var fs = fileSystem ?? new GDDefaultFileSystem();
 
         if (!fs.FileExists(projectGodotPath))
@@ -130,14 +132,15 @@ public static class GDGodotProjectParser
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
+            logger.Debug($"Failed to parse Godot version from {projectGodotPath}: {ex.Message}");
         }
 
         return null;
     }
 
-    private static void ResolveUidPaths(List<GDAutoloadEntry> autoloads, string projectGodotPath, IGDFileSystem fs)
+    private static void ResolveUidPaths(List<GDAutoloadEntry> autoloads, string projectGodotPath, IGDFileSystem fs, IGDLogger logger)
     {
         var neededUids = new HashSet<string>(
             autoloads.Where(a => a.Path.StartsWith("uid://")).Select(a => a.Path));
@@ -149,7 +152,7 @@ public static class GDGodotProjectParser
         if (string.IsNullOrEmpty(projectDir))
             return;
 
-        var uidMap = BuildUidMap(projectDir, fs, neededUids);
+        var uidMap = BuildUidMap(projectDir, fs, neededUids, logger);
 
         for (int i = 0; i < autoloads.Count; i++)
         {
@@ -167,7 +170,7 @@ public static class GDGodotProjectParser
     }
 
     private static Dictionary<string, string> BuildUidMap(
-        string projectDir, IGDFileSystem fs, HashSet<string> neededUids)
+        string projectDir, IGDFileSystem fs, HashSet<string> neededUids, IGDLogger logger)
     {
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
 
@@ -194,7 +197,10 @@ public static class GDGodotProjectParser
                         }
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    logger.Debug($"Failed to read UID sidecar file {uidFile}: {ex.Message}");
+                }
             }
 
             // 2. Scan .tscn/.tres headers for uid (if any UIDs still unresolved)
@@ -202,11 +208,11 @@ public static class GDGodotProjectParser
             {
                 IEnumerable<string> sceneFiles;
                 try { sceneFiles = fs.GetFiles(projectDir, "*.tscn", true); }
-                catch { sceneFiles = Enumerable.Empty<string>(); }
+                catch (Exception ex) { logger.Debug($"Failed to enumerate .tscn files: {ex.Message}"); sceneFiles = Enumerable.Empty<string>(); }
 
                 IEnumerable<string> resFiles;
                 try { resFiles = fs.GetFiles(projectDir, "*.tres", true); }
-                catch { resFiles = Enumerable.Empty<string>(); }
+                catch (Exception ex) { logger.Debug($"Failed to enumerate .tres files: {ex.Message}"); resFiles = Enumerable.Empty<string>(); }
 
                 foreach (var file in sceneFiles.Concat(resFiles))
                 {
@@ -236,11 +242,17 @@ public static class GDGodotProjectParser
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        logger.Debug($"Failed to parse UID header from {file}: {ex.Message}");
+                    }
                 }
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            logger.Debug($"Failed to build UID map for {projectDir}: {ex.Message}");
+        }
 
         return map;
     }

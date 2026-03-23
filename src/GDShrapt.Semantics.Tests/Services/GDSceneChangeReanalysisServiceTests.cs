@@ -16,7 +16,7 @@ public class GDSceneChangeReanalysisServiceTests
     {
         if (_tempProjectPath != null)
         {
-            try { Directory.Delete(_tempProjectPath, true); } catch { }
+            try { Directory.Delete(_tempProjectPath, true); } catch { /* Best-effort cleanup */ }
         }
     }
 

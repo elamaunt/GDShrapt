@@ -1,3 +1,5 @@
+using System;
+
 namespace GDShrapt.Semantics;
 
 /// <summary>
@@ -160,7 +162,11 @@ public class GDImplementationService : GDRefactoringServiceBase
                 return true;
 
             // Walk up the inheritance chain via project scripts
-            var parentScript = _project.GetScriptByTypeName(current);
+            GDScriptFile? parentScript;
+            if (current.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                parentScript = _project.GetScriptByResourcePath(current);
+            else
+                parentScript = _project.GetScriptByTypeName(current);
             current = parentScript?.SemanticModel?.BaseTypeName;
         }
 

@@ -234,7 +234,7 @@ func _handle_union(value):
 	return union_handler.process_by_type(value) # 234:8-GD7007-OK
 
 
-func create_game_object(object_type, params = {}):  # 237:0-GD3023-OK
+func create_game_object(object_type, params = {}):  # 237:0-GD3023-OK, 237:37-GD7020-OK
 	# Returns different types based on object_type
 	match object_type:
 		"player":

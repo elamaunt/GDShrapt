@@ -12,10 +12,12 @@ namespace GDShrapt.CLI.Core;
 public class GDSymbolsHandler : IGDSymbolsHandler
 {
     protected readonly GDScriptProject _project;
+    protected readonly IGDRuntimeProvider? _runtimeProvider;
 
-    public GDSymbolsHandler(GDScriptProject project)
+    public GDSymbolsHandler(GDScriptProject project, IGDRuntimeProvider? runtimeProvider = null)
     {
         _project = project;
+        _runtimeProvider = runtimeProvider;
     }
 
     /// <inheritdoc />
@@ -23,9 +25,22 @@ public class GDSymbolsHandler : IGDSymbolsHandler
     {
         var file = _project.GetScript(filePath);
         if (file?.SemanticModel == null)
+        {
+            if (GDBuiltInFileHelper.IsBuiltInTypeFile(filePath))
+            {
+                var builtInFile = GDBuiltInFileHelper.GetOrParse(filePath, _runtimeProvider);
+                if (builtInFile?.SemanticModel != null)
+                    return ExtractSymbols(builtInFile.SemanticModel);
+            }
             return [];
+        }
 
-        return file.SemanticModel.Symbols
+        return ExtractSymbols(file.SemanticModel);
+    }
+
+    private static IReadOnlyList<GDDocumentSymbol> ExtractSymbols(GDSemanticModel model)
+    {
+        return model.Symbols
             .Select(s => new GDDocumentSymbol
             {
                 Name = s.Name,

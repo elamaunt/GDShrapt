@@ -71,4 +71,33 @@ internal sealed class SemanticLoggerAdapter : IGDLogger
     public void Error(string message) => Logger.Error($"[Semantics] {message}");
 
     public void Error(string message, Exception ex) => Logger.Error($"[Semantics] {message}", ex);
+
+    public IGDLogger WithContext(string context) => new SemanticLoggerContextAdapter($"Semantics/{context}");
+
+    private sealed class SemanticLoggerContextAdapter : IGDLogger
+    {
+        private readonly string _prefix;
+
+        public SemanticLoggerContextAdapter(string prefix)
+        {
+            _prefix = prefix;
+        }
+
+        public GDLogLevel MinLevel
+        {
+            get => Instance.MinLevel;
+            set => Instance.MinLevel = value;
+        }
+
+        public bool IsEnabled(GDLogLevel level) => Instance.IsEnabled(level);
+
+        public void Verbose(string message) => Logger.Verbose($"[{_prefix}] {message}");
+        public void Debug(string message) => Logger.Debug($"[{_prefix}] {message}");
+        public void Info(string message) => Logger.Info($"[{_prefix}] {message}");
+        public void Warning(string message) => Logger.Warning($"[{_prefix}] {message}");
+        public void Error(string message) => Logger.Error($"[{_prefix}] {message}");
+        public void Error(string message, Exception ex) => Logger.Error($"[{_prefix}] {message}", ex);
+
+        public IGDLogger WithContext(string context) => new SemanticLoggerContextAdapter($"{_prefix}/{context}");
+    }
 }

@@ -289,7 +289,7 @@ func test(obj):
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 

@@ -126,7 +126,7 @@ func start_async_task(task_func):
 	return op
 
 
-func _run_task(task_func, operation):
+func _run_task(task_func, operation):  # 129:15-GD7020-OK
 	var resolve = func(value): operation.resolve(value) # 130:28-GD7007-OK
 	var reject = func(error): operation.reject(error)
 
@@ -269,7 +269,7 @@ class Observable:
 				sub["on_complete"].call() # 269:4-GD7007-OK
 			sub["active"] = false
 
-	func map(transform):
+	func map(transform):  # 272:10-GD7020-OK
 		var mapped = Observable.new()
 		subscribe(
 			func(value): mapped.emit_next(transform.call(value)), # 275:33-GD7007-OK
@@ -278,7 +278,7 @@ class Observable:
 		)
 		return mapped
 
-	func filter(predicate):
+	func filter(predicate):  # 281:13-GD7020-OK
 		var filtered = Observable.new()
 		var on_next_filter = func(value):
 			if predicate.call(value): # 284:6-GD7007-OK
@@ -335,7 +335,7 @@ func _on_throttle_timeout(key: String, timer: Timer):
 	timer.queue_free()
 
 
-func throttle(key, delay, callback):
+func throttle(key, delay, callback):  # 338:26-GD7020-OK
 	if throttle_locks.get(key, false):
 		return false  # Locked
 
@@ -355,7 +355,7 @@ func throttle(key, delay, callback):
 
 # === Continuation passing ===
 
-func async_fetch(url, on_success, on_failure):
+func async_fetch(url, on_success, on_failure):  # 358:22-GD7020-OK, 358:34-GD7020-OK
 	# Simulates async HTTP request
 	var result = _simulate_fetch(url)
 
@@ -370,7 +370,7 @@ func async_chain(operations, on_all_complete, on_any_error):
 	_run_chain_step(operations, 0, null, on_all_complete, on_any_error)
 
 
-func _run_chain_step(operations, index, previous_result, on_complete, on_error): # 373:0-GDL101-OK, 374:4-GD3020-OK 374:13-GD7007-OK, 373:21-GD7020-OK
+func _run_chain_step(operations, index, previous_result, on_complete, on_error): # 373:0-GDL101-OK, 374:4-GD3020-OK 374:13-GD7007-OK, 373:21-GD7020-OK, 373:57-GD7020-OK
 	if index >= operations.size():
 		on_complete.call(previous_result) # 375:2-GD7007-OK
 		return
@@ -453,7 +453,7 @@ func _on_wait_timeout(ctx: SignalWaitContext):
 		ctx.operation.reject("Timeout")
 
 
-func wait_for_signal(target, signal_name, timeout = 5.0):
+func wait_for_signal(target, signal_name, timeout = 5.0):  # 456:21-GD7020-OK
 	var operation = create_operation()
 
 	var ctx = SignalWaitContext.new()

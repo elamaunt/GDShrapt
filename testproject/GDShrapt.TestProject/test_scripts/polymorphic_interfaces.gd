@@ -174,7 +174,7 @@ func process_tree(component): # 164:18-GD7020-OK
 	return {"self": result, "children": children_results}
 
 
-func find_in_tree(component, predicate):  # 177:18-GD7020-OK
+func find_in_tree(component, predicate):  # 177:18-GD7020-OK, 177:29-GD7020-OK
 	# predicate: (component) -> bool
 	if predicate.call(component):  # 179:4-GD7007-OK
 		return component
@@ -188,7 +188,7 @@ func find_in_tree(component, predicate):  # 177:18-GD7020-OK
 	return null
 
 
-func collect_from_tree(component, collector):  # 191:23-GD7020-OK
+func collect_from_tree(component, collector):  # 191:23-GD7020-OK, 191:34-GD7020-OK
 	# collector: (component) -> Variant|null
 	var results = []
 
@@ -300,7 +300,7 @@ func iterate_all(iterator):
 	return results
 
 
-func iterate_with_transform(iterator, transform):
+func iterate_with_transform(iterator, transform):  # 303:38-GD7020-OK
 	var results = []
 	iterator.reset()  # 305:1-GD7007-OK
 	while iterator.has_next():  # 306:7-GD7003-OK
@@ -309,7 +309,7 @@ func iterate_with_transform(iterator, transform):
 	return results
 
 
-func iterate_until(iterator, predicate):
+func iterate_until(iterator, predicate):  # 312:29-GD7020-OK
 	# Stop when predicate returns true
 	var results = []
 	iterator.reset()  # 315:1-GD7007-OK

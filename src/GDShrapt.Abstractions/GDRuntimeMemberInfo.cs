@@ -75,6 +75,12 @@ public class GDRuntimeMemberInfo
     public string? ConstantValue { get; set; }
 
     /// <summary>
+    /// True if the type was explicitly annotated (e.g., var x: Array),
+    /// false if inferred from initializer (e.g., var x = []).
+    /// </summary>
+    public bool HasExplicitType { get; set; }
+
+    /// <summary>
     /// Documentation text for this member.
     /// For built-in Godot types, populated from extension_api.json.
     /// For user-defined symbols, populated from ## doc comments.

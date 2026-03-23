@@ -152,16 +152,9 @@ namespace GDShrapt.Semantics.Validator
                 var varName = identExpr.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(varName))
                 {
-                    try
-                    {
-                        var narrowedType = _semanticModel.TypeSystem.GetNarrowedType(varName, arg);
-                        if (!string.IsNullOrEmpty(narrowedType))
-                            return narrowedType;
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.Error.WriteLine($"[GD3010] GetNarrowedType failed for '{varName}': {ex}");
-                    }
+                    var narrowedType = _semanticModel.TypeSystem.GetNarrowedType(varName, arg);
+                    if (!string.IsNullOrEmpty(narrowedType))
+                        return narrowedType;
                 }
             }
 

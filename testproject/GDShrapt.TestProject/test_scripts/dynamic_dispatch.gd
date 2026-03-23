@@ -47,7 +47,7 @@ func call_all_matching(obj, prefix, args = []):  # 35:23-GD7020-OK
 var dynamic_properties = {}  # Mirror of object properties
 
 
-func get_property(obj, prop_name, default_value = null):
+func get_property(obj, prop_name, default_value = null):  # 50:18-GD7020-OK
 	if obj and prop_name in obj:
 		return obj.get(prop_name)
 	return default_value
@@ -60,13 +60,13 @@ func set_property(obj, prop_name, value):  # 56:18-GD7020-OK
 	return false
 
 
-func copy_properties(source, target, prop_names):  # 63:37-GD7020-OK
+func copy_properties(source, target, prop_names):  # 63:37-GD7020-OK, 63:21-GD7020-OK
 	for prop in prop_names:
 		if prop in source:
 			target.set(prop, source.get(prop)) # 66:3-GD7007-OK, 66:20-GD7007-OK
 
 
-func sync_properties(obj):
+func sync_properties(obj):  # 69:21-GD7020-OK
 	# Sync dynamic_properties with obj's current values
 	for prop in dynamic_properties:
 		if prop in obj:
@@ -89,7 +89,7 @@ func register_handler(message_type, handler):
 	message_handlers[message_type] = handler
 
 
-func send_message(target, message):
+func send_message(target, message):  # 92:26-GD7020-OK
 	# message is Dictionary with "type" and "data"
 	var msg_type = message.get("type", "") # 94:16-GD7007-OK
 	var msg_data = message.get("data")
@@ -303,7 +303,7 @@ func register_dispatch(event_type, handler_name, handler):
 	dispatch_table[event_type][handler_name] = handler
 
 
-func dispatch(event):
+func dispatch(event):  # 306:14-GD7020-OK
 	var event_type = event.get("type", "unknown") # 307:18-GD7007-OK
 	var results = {}
 
@@ -315,7 +315,7 @@ func dispatch(event):
 	return results
 
 
-func dispatch_to_handler(event, handler_name):
+func dispatch_to_handler(event, handler_name):  # 318:25-GD7020-OK
 	var event_type = event.get("type", "unknown") # 319:18-GD7007-OK
 
 	if dispatch_table.has(event_type):
@@ -366,7 +366,7 @@ func create_logging_proxy(target, logger):  # 357:26-GD7020-OK
 	return proxy
 
 
-func _create_logging_interceptor(logger):
+func _create_logging_interceptor(logger):  # 369:33-GD7020-OK
 	return func(t, m, args):
 		logger.call("Calling " + m + " with " + str(args)) # 371:2-GD7007-OK
 		var result = t.callv(m, args)
@@ -397,7 +397,7 @@ func add_around(method_pattern, advice):
 	around_advice[method_pattern] = advice
 
 
-func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK
+func advised_call(obj, method_name, args = []):  # 400:23-GD7020-OK, 400:18-GD7020-OK
 	# Apply before advice
 	for pattern in before_advice:
 		if method_name.match(pattern):  # 403:5-GD4002-SKIP, 403:5-GD7007-OK

@@ -238,8 +238,8 @@ func access():
         var confidence = model.GetMemberAccessConfidence(memberAccess);
 
         // Assert
-        Assert.AreEqual(GDReferenceConfidence.Potential, confidence,
-            "Access to known container element should have Potential confidence");
+        Assert.AreEqual(GDReferenceConfidence.Strict, confidence,
+            "Access to known container element with resolved type should have Strict confidence");
     }
 
     [TestMethod]

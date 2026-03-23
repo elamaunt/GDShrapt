@@ -35,7 +35,7 @@ public class GDLspTraceTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
         written.Should().Contain("\"id\":1");
@@ -64,7 +64,7 @@ public class GDLspTraceTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
         written.Should().Contain("\"id\":1");
@@ -92,7 +92,7 @@ public class GDLspTraceTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
         written.Should().NotContain("$/logTrace");

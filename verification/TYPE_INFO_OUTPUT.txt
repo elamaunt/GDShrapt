@@ -1569,9 +1569,9 @@ test_scripts/cross_file_inference.gd
 
   217:2 Variable callback
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Callable
+    effective: Callable
+    confidence: High
     nullable: no
 
   225:0 Method _on_effect_result
@@ -2687,9 +2687,9 @@ test_scripts/cyclic_inference.gd
 
   215:1 Variable state
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Medium
     nullable: no
 
   216:1 Variable current
@@ -2722,9 +2722,9 @@ test_scripts/cyclic_inference.gd
 
   226:24 Parameter state
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary[String, int]
+    effective: Dictionary[String, int]
+    confidence: Medium
     nullable: no
 
   228:1 Variable current
@@ -10820,7 +10820,7 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   155:2 Variable value
@@ -11305,14 +11305,14 @@ test_scripts/game_patterns.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   358:4 Variable scaling
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   359:4 Variable total
@@ -11366,9 +11366,9 @@ test_scripts/game_patterns.gd
 
   384:2 Variable effect
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary[String, Variant]
+    effective: Dictionary[String, Variant]
+    confidence: Medium
     nullable: no
 
   395:1 Iterator i
@@ -12852,23 +12852,23 @@ test_scripts/local_variables.gd
 
   30:1 Variable sum
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   31:1 Variable product
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   32:1 Variable combined
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: int
+    effective: int
+    confidence: High
     nullable: no
 
   36:0 Method conditional_assignment
@@ -13472,9 +13472,9 @@ test_scripts/method_chains.gd
 
   50:1 Variable level1
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary
+    effective: Dictionary
+    confidence: High
     nullable: no
 
   54:1 Variable level2
@@ -17830,9 +17830,9 @@ test_scripts/signal_callback_chains.gd
 
   172:2 Variable handlers
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Array
+    effective: Array
+    confidence: High
     nullable: no
 
   174:2 Iterator handler
@@ -21115,7 +21115,7 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   44:0 Method type_guard_with_and
@@ -21368,7 +21368,7 @@ test_scripts/type_guards.gd
     declared: (none)
     inferred: Variant
     effective: Variant
-    confidence: Unknown
+    confidence: Medium
     nullable: no
 
   207:0 Method guard_with_method_call
@@ -23074,9 +23074,9 @@ test_scripts/union_types_complex.gd
 
   188:1 Variable current
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary[String, Dictionary[String, Dictionary[String, String]]]
+    effective: Dictionary[String, Dictionary[String, Dictionary[String, String]]]
+    confidence: Medium
     nullable: no
 
   189:1 Iterator key
@@ -23454,9 +23454,9 @@ test_scripts/union_types_complex.gd
 
   351:1 Variable type_field
     declared: (none)
-    inferred: Variant
-    effective: Variant
-    confidence: Unknown
+    inferred: Dictionary[String, Dictionary[String, String]]
+    effective: Dictionary[String, Dictionary[String, String]]
+    confidence: Medium
     nullable: no
 
   359:0 Method _process_typed_data

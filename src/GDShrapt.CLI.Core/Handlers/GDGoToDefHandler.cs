@@ -18,15 +18,16 @@ public class GDGoToDefHandler : IGDGoToDefHandler
 {
     protected readonly GDScriptProject _project;
     protected readonly IGDRuntimeProvider? _runtimeProvider;
+    protected readonly IGDLogger _logger;
     private readonly GDGoToDefinitionService _service = new();
 
-    private static readonly string BuiltInTypesDir =
-        Path.Combine(Path.GetTempPath(), "gdshrapt", "builtin_types");
+    private static string BuiltInTypesDir => GDBuiltInFileHelper.BuiltInTypesDir;
 
-    public GDGoToDefHandler(GDScriptProject project, IGDRuntimeProvider? runtimeProvider = null)
+    public GDGoToDefHandler(GDScriptProject project, IGDRuntimeProvider? runtimeProvider = null, IGDLogger? logger = null)
     {
         _project = project;
         _runtimeProvider = runtimeProvider;
+        _logger = logger ?? GDNullLogger.Instance;
     }
 
     /// <inheritdoc />
@@ -41,26 +42,78 @@ public class GDGoToDefHandler : IGDGoToDefHandler
             if (IsBuiltInTypeFile(filePath))
                 return FindDefinitionInBuiltInFile(filePath, line, column);
 
-            Console.Error.WriteLine($"[DEF] Script or Class null for: {filePath}");
+            _logger.Debug($"[DEF] Script or Class null for: {filePath}");
             return null;
         }
 
         var cursor = new GDCursorPosition(line - 1, column - 1);
         var context = new GDRefactoringContext(script, script.Class, cursor, GDSelectionInfo.None, _project);
 
-        Console.Error.WriteLine($"[DEF] Cursor 0-based: L{cursor.Line}:C{cursor.Column}");
-        Console.Error.WriteLine($"[DEF] TokenAtCursor: {(context.TokenAtCursor != null ? $"'{context.TokenAtCursor}' ({context.TokenAtCursor.GetType().Name})" : "null")}");
-        Console.Error.WriteLine($"[DEF] NodeAtCursor: {(context.NodeAtCursor != null ? $"'{context.NodeAtCursor}' ({context.NodeAtCursor.GetType().Name})" : "null")}");
-        Console.Error.WriteLine($"[DEF] CanExecute: {_service.CanExecute(context)}");
+        _logger.Debug($"[DEF] Cursor 0-based: L{cursor.Line}:C{cursor.Column}");
+        _logger.Debug($"[DEF] TokenAtCursor: {(context.TokenAtCursor != null ? $"'{context.TokenAtCursor}' ({context.TokenAtCursor.GetType().Name})" : "null")}");
+        _logger.Debug($"[DEF] NodeAtCursor: {(context.NodeAtCursor != null ? $"'{context.NodeAtCursor}' ({context.NodeAtCursor.GetType().Name})" : "null")}");
+        _logger.Debug($"[DEF] CanExecute: {_service.CanExecute(context)}");
 
         if (!_service.CanExecute(context))
             return null;
 
         var result = _service.GoToDefinition(context);
-        Console.Error.WriteLine($"[DEF] GoToDefinition: Success={result.Success}, Type={result.DefinitionType}, FilePath={result.FilePath}, Symbol={result.SymbolName}, RequiresGodot={result.RequiresGodotLookup}");
+        _logger.Debug($"[DEF] GoToDefinition: Success={result.Success}, Type={result.DefinitionType}, FilePath={result.FilePath}, Symbol={result.SymbolName}, RequiresGodot={result.RequiresGodotLookup}");
         if (result.Success && result.FilePath != null)
-            Console.Error.WriteLine($"[DEF] Location: L{result.Line}:C{result.Column}");
+            _logger.Debug($"[DEF] Location: L{result.Line}:C{result.Column}");
 
+        return ConvertResultToLocation(result, filePath);
+    }
+
+    /// <inheritdoc />
+    public virtual IReadOnlyList<GDDefinitionLocation> FindDefinitions(string filePath, int line, int column)
+    {
+        if (IsTscnFile(filePath))
+        {
+            var loc = FindDefinitionInTscn(filePath, line, column);
+            return loc != null ? new[] { loc } : Array.Empty<GDDefinitionLocation>();
+        }
+
+        var script = _project.GetScript(filePath);
+        if (script?.Class == null)
+        {
+            if (IsBuiltInTypeFile(filePath))
+            {
+                var loc = FindDefinitionInBuiltInFile(filePath, line, column);
+                return loc != null ? new[] { loc } : Array.Empty<GDDefinitionLocation>();
+            }
+            return Array.Empty<GDDefinitionLocation>();
+        }
+
+        var cursor = new GDCursorPosition(line - 1, column - 1);
+        var context = new GDRefactoringContext(script, script.Class, cursor, GDSelectionInfo.None, _project);
+
+        if (!_service.CanExecute(context))
+            return Array.Empty<GDDefinitionLocation>();
+
+        var result = _service.GoToDefinition(context);
+
+        if (!result.Success)
+            return Array.Empty<GDDefinitionLocation>();
+
+        if (result.SubResults != null && result.SubResults.Count > 0)
+        {
+            var locations = new List<GDDefinitionLocation>();
+            foreach (var sub in result.SubResults)
+            {
+                var loc = ConvertResultToLocation(sub, filePath);
+                if (loc != null)
+                    locations.Add(loc);
+            }
+            return locations;
+        }
+
+        var single = ConvertResultToLocation(result, filePath);
+        return single != null ? new[] { single } : Array.Empty<GDDefinitionLocation>();
+    }
+
+    private GDDefinitionLocation? ConvertResultToLocation(GDGoToDefinitionResult result, string filePath)
+    {
         if (!result.Success)
             return null;
 
@@ -707,42 +760,16 @@ public class GDGoToDefHandler : IGDGoToDefHandler
         return GDDefinitionLocation.WithInfo($"File not found: {path}");
     }
 
-    private bool IsBuiltInTypeFile(string filePath)
-    {
-        try
-        {
-            var fullPath = Path.GetFullPath(filePath);
-            var builtInDir = Path.GetFullPath(BuiltInTypesDir);
-            return fullPath.StartsWith(builtInDir, StringComparison.OrdinalIgnoreCase)
-                && fullPath.EndsWith(".gd", StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            return false;
-        }
-    }
+    private static bool IsBuiltInTypeFile(string filePath)
+        => GDBuiltInFileHelper.IsBuiltInTypeFile(filePath);
 
     private GDDefinitionLocation? FindDefinitionInBuiltInFile(string filePath, int line, int column)
     {
         if (_runtimeProvider == null)
             return null;
 
-        string content;
-        try
-        {
-            content = File.ReadAllText(filePath);
-        }
-        catch
-        {
-            return null;
-        }
-
-        // Parse the generated file to get AST
-        var reference = new GDScriptReference(filePath);
-        var scriptFile = new GDScriptFile(reference);
-        scriptFile.Reload(content);
-
-        if (scriptFile.Class == null)
+        var scriptFile = GDBuiltInFileHelper.GetOrParse(filePath, _runtimeProvider);
+        if (scriptFile?.Class == null)
             return null;
 
         // Use GDGoToDefinitionService for AST-based resolution

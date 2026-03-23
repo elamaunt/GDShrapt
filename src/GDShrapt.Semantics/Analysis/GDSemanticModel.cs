@@ -119,6 +119,14 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     public IGDRuntimeProvider? RuntimeProvider => _runtimeProvider;
 
     /// <summary>
+    /// Creates a semantic type from a type name with source info resolution via the runtime provider.
+    /// </summary>
+    public GDSemanticType ResolveSemanticType(string typeName)
+    {
+        return GDSemanticType.FromRuntimeTypeName(typeName, _runtimeProvider);
+    }
+
+    /// <summary>
     /// The Callable call site registry for lambda parameter inference.
     /// </summary>
     internal GDCallableCallSiteRegistry? CallSiteRegistry => _callSiteRegistry;
@@ -2224,7 +2232,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
     /// </summary>
     GDSemanticType? IGDMemberAccessAnalyzer.GetExpressionType(GDExpression expression)
     {
-        return GetSemanticTypeForNode(expression);
+        return GetExpressionType(expression) ?? GetSemanticTypeForNode(expression);
     }
 
     bool IGDMemberAccessAnalyzer.IsLocalEnum(string typeName)
@@ -2255,7 +2263,7 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
 
     GDSemanticType? IGDArgumentTypeAnalyzer.GetExpressionType(GDExpression expression)
     {
-        return GetSemanticTypeForNode(expression);
+        return GetExpressionType(expression) ?? GetSemanticTypeForNode(expression);
     }
 
     GDExpressionSourceKind? IGDArgumentTypeAnalyzer.GetExpressionSourceKind(GDExpression expression)

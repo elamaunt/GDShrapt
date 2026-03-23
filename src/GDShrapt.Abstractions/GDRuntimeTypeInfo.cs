@@ -141,5 +141,10 @@ public class GDRuntimeTypeInfo
         IsNative = isNative;
     }
 
+    /// <summary>
+    /// Source location info for project-defined types. Null for built-in Godot types.
+    /// </summary>
+    public GDTypeSourceInfo? SourceInfo { get; set; }
+
     public override string ToString() => Name;
 }

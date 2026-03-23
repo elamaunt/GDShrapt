@@ -128,7 +128,7 @@ func query_by_tag(tag):
 	return result
 
 
-func query_by_predicate(predicate):
+func query_by_predicate(predicate):  # 131:24-GD7020-OK
 	# predicate: (entity_id, entity, components) -> bool
 	var result = []
 	for eid in entities:
@@ -283,7 +283,7 @@ func emit_event(event_type, data = null, source_entity = -1):
 	})
 
 
-func process_events(handler):
+func process_events(handler):  # 286:20-GD7020-OK
 	# handler: (event) -> void
 	while not event_queue.is_empty():
 		var event = event_queue.pop_front()  # 290:2-GD7007-OK
@@ -365,7 +365,7 @@ func serialize_world():
 
 	return data
 
-func deserialize_world(data):  # 368:0-GDL513-OK
+func deserialize_world(data):  # 368:0-GDL513-OK, 368:23-GD7020-OK
 	entities.clear()
 	components.clear()
 

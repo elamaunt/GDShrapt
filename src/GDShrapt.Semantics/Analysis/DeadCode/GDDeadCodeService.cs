@@ -302,6 +302,13 @@ public class GDDeadCodeService
                     reasonCode = GDDeadCodeReasonCode.VDA;
                 }
 
+                if (!isPrivate && confidence == GDReferenceConfidence.Strict
+                    && IsInAddonPath(file, options))
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.APA;
+                }
+
                 var token = symbol.PositionToken;
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Variable, varName, file.FullPath ?? "")
                 {
@@ -358,6 +365,9 @@ public class GDDeadCodeService
             if (IsFrameworkMethod(file, methodName, options))
                 continue;
 
+            if (options.SkipPolymorphicVirtuals && IsPolymorphicVirtual(file, methodName))
+                continue;
+
             if (options.RespectSuppressionAnnotations && IsAnnotationSuppressed(semanticModel, methodName, options))
             {
                 _annotationSuppressedCount++;
@@ -408,6 +418,13 @@ public class GDDeadCodeService
                 {
                     confidence = GDReferenceConfidence.Potential;
                     reasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
+                if (!isPrivate && confidence == GDReferenceConfidence.Strict
+                    && IsInAddonPath(file, options))
+                {
+                    confidence = GDReferenceConfidence.Potential;
+                    reasonCode = GDDeadCodeReasonCode.APA;
                 }
 
                 var posToken = symbol.PositionToken;
@@ -592,7 +609,7 @@ public class GDDeadCodeService
 
         foreach (var parentTypeName in chain)
         {
-            var parentFile = _project.GetScriptByTypeName(parentTypeName);
+            var parentFile = _projectModel.ResolveScriptByTypeNameOrPath(parentTypeName);
             if (parentFile == null)
                 continue;
 
@@ -683,7 +700,7 @@ public class GDDeadCodeService
 
         foreach (var parentTypeName in chain)
         {
-            var parentFile = _project.GetScriptByTypeName(parentTypeName);
+            var parentFile = _projectModel.ResolveScriptByTypeNameOrPath(parentTypeName);
             if (parentFile == null)
                 continue;
 
@@ -763,6 +780,43 @@ public class GDDeadCodeService
         foreach (var baseClass in options.FrameworkBaseClasses)
         {
             if (_projectModel.IsSubclassOf(file, baseClass))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsInAddonPath(GDScriptFile file, GDDeadCodeOptions options)
+    {
+        if (options.AddonPathsAsPublicAPI.Count == 0)
+            return false;
+
+        var filePath = file.FullPath;
+        if (string.IsNullOrEmpty(filePath))
+            return false;
+
+        var projectPath = _project.ProjectPath;
+        if (string.IsNullOrEmpty(projectPath))
+            return false;
+
+        var normalized = filePath.Replace('\\', '/');
+        var normalizedProject = projectPath.Replace('\\', '/');
+
+        string relative;
+        if (normalized.StartsWith(normalizedProject, StringComparison.OrdinalIgnoreCase))
+        {
+            relative = normalized.Substring(normalizedProject.Length)
+                .TrimStart('/');
+        }
+        else
+        {
+            relative = normalized;
+        }
+
+        foreach (var addonPath in options.AddonPathsAsPublicAPI)
+        {
+            var normalizedAddon = addonPath.Replace('\\', '/').TrimEnd('/') + "/";
+            if (relative.StartsWith(normalizedAddon, StringComparison.OrdinalIgnoreCase))
                 return true;
         }
 
@@ -879,6 +933,13 @@ public class GDDeadCodeService
                 {
                     signalConfidence = GDReferenceConfidence.Potential;
                     signalReasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
+                if (!isPrivate && signalConfidence == GDReferenceConfidence.Strict
+                    && IsInAddonPath(file, options))
+                {
+                    signalConfidence = GDReferenceConfidence.Potential;
+                    signalReasonCode = GDDeadCodeReasonCode.APA;
                 }
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Signal, signalName, file.FullPath ?? "")
@@ -1012,16 +1073,108 @@ public class GDDeadCodeService
         }
 
         // If the chain ends at an unknown type (not in TypesMap),
-        // check root types as fallback — the script likely inherits from them.
+        // walk all known ancestors via TypesMap to check for virtual methods.
+        // This handles cases like EditorPlugin (after TypesMap update) or
+        // intermediate custom classes where the chain breaks.
         if (chain.Count > 0)
         {
             var lastType = chain[chain.Count - 1];
             if (!provider.IsKnownType(lastType))
             {
+                // Check Node and Object as common root types
                 if (provider.IsVirtualMethod("Node", methodName)
                     || provider.IsVirtualMethod("Object", methodName))
                     return true;
+
+                // Walk all known types in the chain's ancestry
+                // to catch virtuals on types like CodeEdit, EditorPlugin, etc.
+                var baseType = provider.GetBaseType(lastType);
+                var visited = new HashSet<string>(StringComparer.Ordinal) { lastType };
+                while (!string.IsNullOrEmpty(baseType) && visited.Add(baseType))
+                {
+                    if (provider.IsVirtualMethod(baseType, methodName))
+                        return true;
+                    baseType = provider.GetBaseType(baseType);
+                }
             }
+        }
+
+        return false;
+    }
+
+    private bool IsPolymorphicVirtual(GDScriptFile file, string methodName)
+    {
+        // 1. Find a base class (in project scripts) that also defines this method
+        GDScriptFile? baseDefiningFile = null;
+        var chain = _projectModel.GetInheritanceChain(file);
+
+        foreach (var parentTypeName in chain)
+        {
+            var parentFile = _projectModel.ResolveScriptByTypeNameOrPath(parentTypeName);
+            if (parentFile == null)
+                continue;
+
+            var parentModel = _projectModel.GetSemanticModel(parentFile);
+            if (parentModel == null)
+                continue;
+
+            var parentSymbol = parentModel.FindSymbol(methodName);
+            if (parentSymbol != null && parentSymbol.Kind == GDSymbolKind.Method)
+            {
+                baseDefiningFile = parentFile;
+                break;
+            }
+        }
+
+        if (baseDefiningFile == null)
+            return false;
+
+        // 2. Check if at least one OTHER subclass also overrides this method
+        bool hasOtherOverride = false;
+        foreach (var otherFile in _project.ScriptFiles)
+        {
+            if (otherFile == file || otherFile == baseDefiningFile || otherFile.Class == null)
+                continue;
+
+            if (!_projectModel.IsSubclassOf(otherFile, baseDefiningFile))
+                continue;
+
+            var otherModel = _projectModel.GetSemanticModel(otherFile);
+            var otherSymbol = otherModel?.FindSymbol(methodName);
+            if (otherSymbol != null && otherSymbol.Kind == GDSymbolKind.Method)
+            {
+                hasOtherOverride = true;
+                break;
+            }
+        }
+
+        if (!hasOtherOverride)
+            return false;
+
+        // 3. Check if the method is called on the base type or via duck-typing
+        var baseNames = GetEffectiveClassNames(baseDefiningFile, baseDefiningFile.TypeName);
+
+        if (_callSiteRegistry != null)
+        {
+            foreach (var name in baseNames)
+            {
+                if (_callSiteRegistry.GetCallersOf(name, methodName).Count > 0)
+                    return true;
+            }
+
+            if (_callSiteRegistry.GetCallersOf("*", methodName).Count > 0)
+                return true;
+        }
+
+        if (HasCrossFileMemberAccess(baseDefiningFile, baseNames, methodName))
+            return true;
+
+        var baseModel = _projectModel.GetSemanticModel(baseDefiningFile);
+        if (baseModel != null)
+        {
+            var baseSymbol = baseModel.FindSymbol(methodName);
+            if (baseSymbol != null && baseModel.GetReferencesTo(baseSymbol).Count > 0)
+                return true;
         }
 
         return false;
@@ -1074,6 +1227,13 @@ public class GDDeadCodeService
                 {
                     constConfidence = GDReferenceConfidence.Potential;
                     constReasonCode = GDDeadCodeReasonCode.CSI;
+                }
+
+                if (!isPrivate && constConfidence == GDReferenceConfidence.Strict
+                    && IsInAddonPath(file, options))
+                {
+                    constConfidence = GDReferenceConfidence.Potential;
+                    constReasonCode = GDDeadCodeReasonCode.APA;
                 }
 
                 yield return new GDDeadCodeItem(GDDeadCodeKind.Constant, constName, file.FullPath ?? "")

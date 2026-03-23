@@ -1306,7 +1306,7 @@ test_scripts/cross_file_inference.gd
 234:38 GDIdentifierExpression value -> Variant
 237:0 Method create_game_object -> AsyncOperation|Dictionary[String, Callable]|Entity|null
 237:24 Parameter object_type -> Variant
-237:37 Parameter params -> Dictionary[String, Variant]|Object
+237:37 Parameter params -> Dictionary[String, Variant]
 237:46 GDDictionaryInitializerExpression {...} -> Dictionary
 239:7 GDIdentifierExpression object_type -> Variant
 240:2 GDStringExpression "player" -> String
@@ -1593,7 +1593,7 @@ test_scripts/cycles_test.gd
 19:9 GDStringExpression "level" -> String
 19:18 GDNumberExpression 0 -> int
 22:0 Method transform -> Dictionary[String, Variant]
-22:15 Parameter input -> Dictionary[String, Variant]|Object
+22:15 Parameter input -> Dictionary[String, Variant]
 23:1 GDReturnExpression return {...} -> Variant
 23:8 GDDictionaryInitializerExpression {...} -> Dictionary[String, Variant]
 23:9 GDStringExpression "level" -> String
@@ -1995,7 +1995,7 @@ test_scripts/cyclic_inference.gd
 67:23 GDNumberExpression 1 -> int
 72:0 Variable state_machine_value -> Variant
 75:0 Method state_idle -> Dictionary[String, String]|Dictionary[String, null]
-75:16 Parameter context -> Array|Dictionary|PackedStringArray
+75:16 Parameter context -> Array|Dictionary|EditorExportPreset|PackedStringArray
 77:4 GDCallExpression context.has() -> bool
 77:4 GDMemberOperatorExpression context.has -> Variant
 77:4 GDIdentifierExpression context -> Variant
@@ -2011,7 +2011,7 @@ test_scripts/cyclic_inference.gd
 79:26 GDStringExpression "data" -> String
 79:34 GDIdentifierExpression null -> null
 82:0 Method state_active -> Dictionary[String, String]|Dictionary[String, null]
-82:18 Parameter context -> Dictionary[String, Variant]|Object
+82:18 Parameter context -> Dictionary[String, Variant]
 84:1 Variable data -> Variant
 84:12 GDCallExpression context.get() -> Variant
 84:12 GDMemberOperatorExpression context.get -> Variant
@@ -2094,7 +2094,7 @@ test_scripts/cyclic_inference.gd
 116:8 GDNumberExpression 0 -> int
 121:0 Method accumulate_left -> Variant
 121:21 Parameter list -> Array
-121:27 Parameter func_ref -> Callable|Object
+121:27 Parameter func_ref -> Callable
 121:37 Parameter initial -> Variant
 123:4 GDCallExpression list.is_empty() -> bool
 123:4 GDMemberOperatorExpression list.is_empty -> Variant
@@ -2124,7 +2124,7 @@ test_scripts/cyclic_inference.gd
 128:40 GDIdentifierExpression new_acc -> Variant
 131:0 Method accumulate_right -> Variant
 131:22 Parameter list -> Array
-131:28 Parameter func_ref -> Callable|Object
+131:28 Parameter func_ref -> Callable
 131:38 Parameter initial -> Variant
 133:4 GDCallExpression list.is_empty() -> bool
 133:4 GDMemberOperatorExpression list.is_empty -> Variant
@@ -2213,7 +2213,7 @@ test_scripts/cyclic_inference.gd
 175:8 GDIdentifierExpression z_val -> Variant
 175:16 GDNumberExpression 2 -> int
 180:0 Method visit_node -> void
-180:16 Parameter node -> Array|Dictionary[String, Variant]|PackedStringArray
+180:16 Parameter node -> Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
 180:22 Parameter visitor -> Variant
 182:1 Variable result -> Variant
 182:14 GDCallExpression visitor.visit() -> Variant
@@ -2243,7 +2243,7 @@ test_scripts/cyclic_inference.gd
 189:1 GDReturnExpression return result -> Variant
 189:8 GDIdentifierExpression result -> Variant
 192:0 Method traverse_and_transform -> Dictionary[String, Variant]
-192:28 Parameter root -> Array|Dictionary[String, Variant]|PackedStringArray
+192:28 Parameter root -> Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
 192:34 Parameter transformer -> CyclesTest
 194:1 Variable new_node -> Dictionary[String, Variant]
 194:16 GDCallExpression transformer.transform() -> Dictionary[String, Variant]
@@ -4694,7 +4694,7 @@ test_scripts/duck_typing_advanced.gd
 149:1 GDReturnExpression return result -> Variant
 149:8 GDIdentifierExpression result -> Variant
 152:0 Method _execute_action -> String|Variant|null
-152:21 Parameter action -> Callable|Dictionary|Object|String
+152:21 Parameter action -> Callable|Dictionary|String
 154:4 GDDualOperatorExpression actionIsString -> bool
 154:4 GDIdentifierExpression action -> Variant
 154:14 GDIdentifierExpression String -> String
@@ -4725,7 +4725,7 @@ test_scripts/duck_typing_advanced.gd
 164:8 GDStringExpression "executed: " -> String
 164:23 GDIdentifierExpression cmd -> Variant
 167:0 Method _execute_dict_action -> String|Variant
-167:26 Parameter action_dict -> Array|Dictionary[String, Variant]|PackedStringArray
+167:26 Parameter action_dict -> Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
 168:4 GDCallExpression action_dict.has() -> bool
 168:4 GDMemberOperatorExpression action_dict.has -> Variant
 168:4 GDIdentifierExpression action_dict -> Variant
@@ -4738,7 +4738,7 @@ test_scripts/duck_typing_advanced.gd
 170:8 GDStringExpression "unknown_ac..." -> String
 175:0 Method transform_data -> Dictionary|Variant
 175:20 Parameter data -> Array|Dictionary
-175:26 Parameter transformer -> Callable|Object
+175:26 Parameter transformer -> Callable
 180:4 GDDualOperatorExpression dataIsArray -> bool
 180:4 GDIdentifierExpression data -> Variant
 180:12 GDIdentifierExpression Array -> Array
@@ -5031,7 +5031,7 @@ test_scripts/dynamic_dispatch.gd
 47:0 Variable dynamic_properties -> Dictionary[Variant, Variant]
 47:25 GDDictionaryInitializerExpression {...} -> Dictionary
 50:0 Method get_property -> Variant
-50:18 Parameter obj -> Dictionary|Object
+50:18 Parameter obj -> Dictionary
 50:23 Parameter prop_name -> Variant
 50:34 Parameter default_value -> null
 50:50 GDIdentifierExpression null -> null
@@ -5062,8 +5062,8 @@ test_scripts/dynamic_dispatch.gd
 60:1 GDReturnExpression return false -> Variant
 60:8 GDBoolExpression false -> bool
 63:0 Method copy_properties -> void
-63:21 Parameter source -> Dictionary|Object
-63:29 Parameter target -> (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+63:21 Parameter source -> Dictionary
+63:29 Parameter target -> PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
 63:37 Parameter prop_names -> Array
 64:1 Iterator prop -> Variant
 64:13 GDIdentifierExpression prop_names -> Variant
@@ -5079,7 +5079,7 @@ test_scripts/dynamic_dispatch.gd
 66:20 GDIdentifierExpression source -> Variant
 66:31 GDIdentifierExpression prop -> Variant
 69:0 Method sync_properties -> void
-69:21 Parameter obj -> Dictionary|Object
+69:21 Parameter obj -> Dictionary
 71:1 Iterator prop -> Variant
 71:13 GDIdentifierExpression dynamic_properties -> Dictionary
 72:5 GDDualOperatorExpression propInobj -> bool
@@ -5094,7 +5094,7 @@ test_scripts/dynamic_dispatch.gd
 73:30 GDIdentifierExpression obj -> Variant
 73:38 GDIdentifierExpression prop -> Variant
 76:0 Method apply_properties -> void
-76:22 Parameter obj -> (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+76:22 Parameter obj -> PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
 78:1 Iterator prop -> Variant
 78:13 GDIdentifierExpression dynamic_properties -> Dictionary
 79:5 GDDualOperatorExpression propInobj -> bool
@@ -5119,7 +5119,7 @@ test_scripts/dynamic_dispatch.gd
 89:34 GDIdentifierExpression handler -> Variant
 92:0 Method send_message -> Variant|null
 92:18 Parameter target -> Variant
-92:26 Parameter message -> Dictionary[String, Variant]|Object
+92:26 Parameter message -> Dictionary[String, Variant]
 94:1 Variable msg_type -> Variant
 94:16 GDCallExpression message.get() -> Variant
 94:16 GDMemberOperatorExpression message.get -> Variant
@@ -5334,7 +5334,7 @@ test_scripts/dynamic_dispatch.gd
 162:8 GDIdentifierExpression str -> Callable(Array...) -> String
 162:12 GDIdentifierExpression value -> Variant
 165:0 Method deserialize_to_object -> void
-165:27 Parameter obj -> (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+165:27 Parameter obj -> PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
 165:32 Parameter data -> Array
 166:1 Iterator key -> Variant
 166:12 GDIdentifierExpression data -> Variant
@@ -5353,7 +5353,7 @@ test_scripts/dynamic_dispatch.gd
 169:11 GDIdentifierExpression key -> Variant
 169:16 GDIdentifierExpression value -> Variant
 172:0 Method _deserialize_value -> Array|Color|Dictionary|Variant|Vector2|Vector3|null
-172:24 Parameter data -> Array|Dictionary|PackedStringArray|String|bool|float|int
+172:24 Parameter data -> Array|Dictionary|EditorExportPreset|PackedStringArray|String|bool|float|int
 173:4 GDDualOperatorExpression dataEqualnull -> bool
 173:4 GDIdentifierExpression data -> Variant
 173:12 GDIdentifierExpression null -> null
@@ -5504,7 +5504,7 @@ test_scripts/dynamic_dispatch.gd
 223:6 GDDualOperatorExpression class_refIsGDScript -> bool
 223:6 GDIdentifierExpression class_ref -> Variant
 223:19 GDIdentifierExpression GDScript -> GDScript
-224:2 GDDualOperatorExpression instanceAssignmentclass_ref.new() -> Variant
+224:2 GDDualOperatorExpression instanceAssignmentclass_ref.new() -> Node
 224:2 GDIdentifierExpression instance -> Node
 224:13 GDCallExpression class_ref.new() -> Variant
 224:13 GDMemberOperatorExpression class_ref.new -> Variant
@@ -5703,7 +5703,7 @@ test_scripts/dynamic_dispatch.gd
 303:28 GDIdentifierExpression handler_name -> Variant
 303:44 GDIdentifierExpression handler -> Variant
 306:0 Method dispatch -> Dictionary
-306:14 Parameter event -> Dictionary[String, Variant]|Object
+306:14 Parameter event -> Dictionary[String, Variant]
 307:1 Variable event_type -> Variant
 307:18 GDCallExpression event.get() -> Variant
 307:18 GDMemberOperatorExpression event.get -> Variant
@@ -5737,7 +5737,7 @@ test_scripts/dynamic_dispatch.gd
 315:1 GDReturnExpression return results -> Variant
 315:8 GDIdentifierExpression results -> Dictionary
 318:0 Method dispatch_to_handler -> Variant|null
-318:25 Parameter event -> Dictionary[String, Variant]|Object
+318:25 Parameter event -> Dictionary[String, Variant]
 318:32 Parameter handler_name -> Variant
 319:1 Variable event_type -> Variant
 319:18 GDCallExpression event.get() -> Variant
@@ -5750,7 +5750,7 @@ test_scripts/dynamic_dispatch.gd
 321:4 GDIdentifierExpression dispatch_table -> Dictionary
 321:23 GDIdentifierExpression event_type -> Variant
 322:5 GDCallExpression dispatch_table[].has() -> bool
-322:5 GDMemberOperatorExpression dispatch_table[].has -> Variant
+322:5 GDMemberOperatorExpression dispatch_table[].has -> bool
 322:5 GDIndexerExpression dispatch_table[] -> Variant
 322:5 GDIdentifierExpression dispatch_table -> Dictionary
 322:20 GDIdentifierExpression event_type -> Variant
@@ -5849,7 +5849,7 @@ test_scripts/dynamic_dispatch.gd
 366:1 GDReturnExpression return proxy -> Variant
 366:8 GDIdentifierExpression proxy -> DynamicProxy
 369:0 Method _create_logging_interceptor -> Callable
-369:33 Parameter logger -> Callable|Object
+369:33 Parameter logger -> Callable
 370:1 GDReturnExpression return func(...) -> Variant
 370:8 GDMethodExpression func(...) -> Callable
 370:13 Parameter t -> Variant
@@ -5902,8 +5902,8 @@ test_scripts/dynamic_dispatch.gd
 386:2 GDIdentifierExpression before_advice -> Dictionary
 386:16 GDIdentifierExpression method_pattern -> Variant
 386:34 GDArrayInitializerExpression [...] -> Array
-387:1 GDCallExpression before_advice[].append() -> Variant
-387:1 GDMemberOperatorExpression before_advice[].append -> Variant
+387:1 GDCallExpression before_advice[].append() -> void
+387:1 GDMemberOperatorExpression before_advice[].append -> void
 387:1 GDIndexerExpression before_advice[] -> Variant
 387:1 GDIdentifierExpression before_advice -> Dictionary
 387:15 GDIdentifierExpression method_pattern -> Variant
@@ -5921,8 +5921,8 @@ test_scripts/dynamic_dispatch.gd
 392:2 GDIdentifierExpression after_advice -> Dictionary
 392:15 GDIdentifierExpression method_pattern -> Variant
 392:33 GDArrayInitializerExpression [...] -> Array
-393:1 GDCallExpression after_advice[].append() -> Variant
-393:1 GDMemberOperatorExpression after_advice[].append -> Variant
+393:1 GDCallExpression after_advice[].append() -> void
+393:1 GDMemberOperatorExpression after_advice[].append -> void
 393:1 GDIndexerExpression after_advice[] -> Variant
 393:1 GDIdentifierExpression after_advice -> Dictionary
 393:14 GDIdentifierExpression method_pattern -> Variant
@@ -5936,7 +5936,7 @@ test_scripts/dynamic_dispatch.gd
 397:15 GDIdentifierExpression method_pattern -> Variant
 397:33 GDIdentifierExpression advice -> Variant
 400:0 Method advised_call -> void
-400:18 Parameter obj -> Callable|Object
+400:18 Parameter obj -> Callable
 400:23 Parameter method_name -> String
 400:36 Parameter args -> Array
 400:43 GDArrayInitializerExpression [...] -> Array
@@ -6074,8 +6074,8 @@ test_scripts/ecs_like_system.gd
 41:9 GDBoolExpression false -> bool
 44:1 Iterator comp_type -> Variant
 44:18 GDIdentifierExpression components -> Dictionary
-45:2 GDCallExpression components[].erase() -> Variant
-45:2 GDMemberOperatorExpression components[].erase -> Variant
+45:2 GDCallExpression components[].erase() -> bool
+45:2 GDMemberOperatorExpression components[].erase -> bool
 45:2 GDIndexerExpression components[] -> Variant
 45:2 GDIdentifierExpression components -> Dictionary
 45:13 GDIdentifierExpression comp_type -> Variant
@@ -6141,8 +6141,8 @@ test_scripts/ecs_like_system.gd
 73:4 GDIdentifierExpression components -> Dictionary
 73:19 GDIdentifierExpression component_type -> Variant
 74:2 GDReturnExpression return components[].erase() -> Variant
-74:9 GDCallExpression components[].erase() -> Variant
-74:9 GDMemberOperatorExpression components[].erase -> Variant
+74:9 GDCallExpression components[].erase() -> bool
+74:9 GDMemberOperatorExpression components[].erase -> bool
 74:9 GDIndexerExpression components[] -> Variant
 74:9 GDIdentifierExpression components -> Dictionary
 74:20 GDIdentifierExpression component_type -> Variant
@@ -6159,7 +6159,7 @@ test_scripts/ecs_like_system.gd
 79:8 GDIdentifierExpression components -> Dictionary
 79:23 GDIdentifierExpression component_type -> Variant
 79:43 GDCallExpression components[].has() -> bool
-79:43 GDMemberOperatorExpression components[].has -> Variant
+79:43 GDMemberOperatorExpression components[].has -> bool
 79:43 GDIndexerExpression components[] -> Variant
 79:43 GDIdentifierExpression components -> Dictionary
 79:54 GDIdentifierExpression component_type -> Variant
@@ -6171,7 +6171,7 @@ test_scripts/ecs_like_system.gd
 85:1 Iterator comp_type -> Variant
 85:18 GDIdentifierExpression components -> Dictionary
 86:5 GDCallExpression components[].has() -> bool
-86:5 GDMemberOperatorExpression components[].has -> Variant
+86:5 GDMemberOperatorExpression components[].has -> bool
 86:5 GDIndexerExpression components[] -> Variant
 86:5 GDIdentifierExpression components -> Dictionary
 86:16 GDIdentifierExpression comp_type -> Variant
@@ -6253,7 +6253,7 @@ test_scripts/ecs_like_system.gd
 125:12 GDIdentifierExpression entities -> Dictionary
 126:5 GDDualOperatorExpression tagInentities[].tags -> bool
 126:5 GDIdentifierExpression tag -> Variant
-126:12 GDMemberOperatorExpression entities[].tags -> Variant
+126:12 GDMemberOperatorExpression entities[].tags -> Array
 126:12 GDIndexerExpression entities[] -> Variant
 126:12 GDIdentifierExpression entities -> Dictionary
 126:21 GDIdentifierExpression eid -> Variant
@@ -6264,7 +6264,7 @@ test_scripts/ecs_like_system.gd
 128:1 GDReturnExpression return result -> Variant
 128:8 GDIdentifierExpression result -> Array
 131:0 Method query_by_predicate -> Array
-131:24 Parameter predicate -> Callable|Object
+131:24 Parameter predicate -> Callable
 133:1 Variable result -> Array
 133:14 GDArrayInitializerExpression [...] -> Array
 134:1 Iterator eid -> Variant
@@ -6521,7 +6521,7 @@ test_scripts/ecs_like_system.gd
 245:20 GDIdentifierExpression component_defs -> Variant
 247:0 Method create_from_archetype -> Entity|null
 247:27 Parameter archetype_name -> Variant
-247:43 Parameter overrides -> Array|Dictionary
+247:43 Parameter overrides -> Array|Dictionary|EditorExportPreset
 247:55 GDDictionaryInitializerExpression {...} -> Dictionary
 248:4 GDSingleOperatorExpression Not2archetypes.has() -> bool
 248:8 GDCallExpression archetypes.has() -> bool
@@ -6631,7 +6631,7 @@ test_scripts/ecs_like_system.gd
 282:15 GDMemberOperatorExpression Time.get_ticks_msec -> int
 282:15 GDIdentifierExpression Time -> Time
 286:0 Method process_events -> void
-286:20 Parameter handler -> Callable|Object
+286:20 Parameter handler -> Callable
 288:7 GDSingleOperatorExpression Not2event_queue.is_empty() -> bool
 288:11 GDCallExpression event_queue.is_empty() -> bool
 288:11 GDMemberOperatorExpression event_queue.is_empty -> bool
@@ -6697,8 +6697,8 @@ test_scripts/ecs_like_system.gd
 316:3 GDIdentifierExpression spatial_grid -> Dictionary
 316:16 GDIdentifierExpression cell -> Vector2i
 316:24 GDArrayInitializerExpression [...] -> Array
-317:2 GDCallExpression spatial_grid[].append() -> Variant
-317:2 GDMemberOperatorExpression spatial_grid[].append -> Variant
+317:2 GDCallExpression spatial_grid[].append() -> void
+317:2 GDMemberOperatorExpression spatial_grid[].append -> void
 317:2 GDIndexerExpression spatial_grid[] -> Variant
 317:2 GDIdentifierExpression spatial_grid -> Dictionary
 317:15 GDIdentifierExpression cell -> Vector2i
@@ -6818,13 +6818,13 @@ test_scripts/ecs_like_system.gd
 355:19 GDIdentifierExpression eid -> Variant
 355:26 GDDictionaryInitializerExpression {...} -> Dictionary[String, Variant]
 356:3 GDStringExpression "name" -> String
-356:11 GDMemberOperatorExpression entity.name -> Variant
+356:11 GDMemberOperatorExpression entity.name -> String
 356:11 GDIdentifierExpression entity -> Variant
 357:3 GDStringExpression "tags" -> String
-357:11 GDMemberOperatorExpression entity.tags -> Variant
+357:11 GDMemberOperatorExpression entity.tags -> Array
 357:11 GDIdentifierExpression entity -> Variant
 358:3 GDStringExpression "active" -> String
-358:13 GDMemberOperatorExpression entity.active -> Variant
+358:13 GDMemberOperatorExpression entity.active -> bool
 358:13 GDIdentifierExpression entity -> Variant
 361:1 Iterator comp_type -> Variant
 361:18 GDIdentifierExpression components -> Dictionary
@@ -6855,7 +6855,7 @@ test_scripts/ecs_like_system.gd
 366:1 GDReturnExpression return data -> Variant
 366:8 GDIdentifierExpression data -> Dictionary[String, Dictionary]
 368:0 Method deserialize_world -> void
-368:23 Parameter data -> Dictionary[String, Variant]|Object
+368:23 Parameter data -> Dictionary[String, Variant]
 369:1 GDCallExpression entities.clear() -> void
 369:1 GDMemberOperatorExpression entities.clear -> void
 369:1 GDIdentifierExpression entities -> Dictionary
@@ -6965,7 +6965,7 @@ test_scripts/ecs_like_system.gd
 396:12 GDStringExpression "Entity %d ..." -> String
 396:33 GDArrayInitializerExpression [...] -> Array
 396:34 GDIdentifierExpression entity_id -> Variant
-396:45 GDMemberOperatorExpression entity.name -> Variant
+396:45 GDMemberOperatorExpression entity.name -> String
 396:45 GDIdentifierExpression entity -> Variant
 397:1 GDDualOperatorExpression infoAddAndAssign"  Tags: %s..."Modstr() -> String
 397:1 GDIdentifierExpression info -> String
@@ -6973,7 +6973,7 @@ test_scripts/ecs_like_system.gd
 397:9 GDStringExpression "  Tags: %s..." -> String
 397:26 GDCallExpression str() -> String
 397:26 GDIdentifierExpression str -> Callable(Array...) -> String
-397:30 GDMemberOperatorExpression entity.tags -> Variant
+397:30 GDMemberOperatorExpression entity.tags -> Array
 397:30 GDIdentifierExpression entity -> Variant
 398:1 GDDualOperatorExpression infoAddAndAssign"  Active: ..."Modstr() -> String
 398:1 GDIdentifierExpression info -> String
@@ -6981,7 +6981,7 @@ test_scripts/ecs_like_system.gd
 398:9 GDStringExpression "  Active: ..." -> String
 398:28 GDCallExpression str() -> String
 398:28 GDIdentifierExpression str -> Callable(Array...) -> String
-398:32 GDMemberOperatorExpression entity.active -> Variant
+398:32 GDMemberOperatorExpression entity.active -> bool
 398:32 GDIdentifierExpression entity -> Variant
 399:1 GDDualOperatorExpression infoAddAndAssign"  Componen..." -> String
 399:1 GDIdentifierExpression info -> String
@@ -7028,7 +7028,7 @@ test_scripts/ecs_like_system.gd
 416:2 GDIdentifierExpression stats -> Dictionary[String, int]
 416:8 GDStringExpression "total_comp..." -> String
 416:31 GDCallExpression components[].size() -> int
-416:31 GDMemberOperatorExpression components[].size -> Variant
+416:31 GDMemberOperatorExpression components[].size -> int
 416:31 GDIndexerExpression components[] -> Variant
 416:31 GDIdentifierExpression components -> Dictionary
 416:42 GDIdentifierExpression comp_type -> Variant
@@ -7667,7 +7667,7 @@ test_scripts/game_patterns.gd
 23:8 GDIdentifierExpression inventory -> Array
 23:25 GDIdentifierExpression index -> Variant
 26:0 Method find_item -> Variant|null
-26:15 Parameter predicate -> Callable|Object
+26:15 Parameter predicate -> Callable
 29:1 Iterator item -> Variant
 29:13 GDIdentifierExpression inventory -> Array
 30:5 GDCallExpression predicate.call() -> Variant
@@ -7679,7 +7679,7 @@ test_scripts/game_patterns.gd
 32:1 GDReturnExpression return null -> Variant
 32:8 GDIdentifierExpression null -> null
 35:0 Method find_all_items -> Array
-35:20 Parameter predicate -> Callable|Object
+35:20 Parameter predicate -> Callable
 36:1 Variable result -> Array
 36:14 GDArrayInitializerExpression [...] -> Array
 37:1 Iterator item -> Variant
@@ -7695,7 +7695,7 @@ test_scripts/game_patterns.gd
 40:1 GDReturnExpression return result -> Variant
 40:8 GDIdentifierExpression result -> Array
 43:0 Method get_item_property -> Variant
-43:23 Parameter item -> Dictionary|Object
+43:23 Parameter item -> Dictionary
 43:29 Parameter prop_name -> Variant
 43:40 Parameter default_val -> null
 43:54 GDIdentifierExpression null -> null
@@ -7920,7 +7920,7 @@ test_scripts/game_patterns.gd
 140:1 GDReturnExpression return available -> Variant
 140:8 GDIdentifierExpression available -> Array
 143:0 Method _check_choice_condition -> Variant|bool
-143:29 Parameter choice -> Dictionary[String, Variant]|Object
+143:29 Parameter choice -> Dictionary[String, Variant]
 144:1 Variable condition -> Variant
 144:17 GDCallExpression choice.get() -> Variant
 144:17 GDMemberOperatorExpression choice.get -> Variant
@@ -8095,7 +8095,7 @@ test_scripts/game_patterns.gd
 205:0 Variable quest_progress -> Dictionary[Variant, Variant]
 205:21 GDDictionaryInitializerExpression {...} -> Dictionary
 208:0 Method accept_quest -> Variant
-208:18 Parameter quest_data -> Dictionary[String, Variant]|Object
+208:18 Parameter quest_data -> Dictionary[String, Variant]
 209:1 Variable quest_id -> Variant
 209:16 GDCallExpression quest_data.get() -> Variant
 209:16 GDMemberOperatorExpression quest_data.get -> Variant
@@ -8716,7 +8716,7 @@ test_scripts/game_patterns.gd
 443:8 GDIdentifierExpression null -> null
 446:0 Method _matches_filter -> Variant|bool
 446:21 Parameter item -> Variant
-446:27 Parameter item_filter -> Callable|Object|String
+446:27 Parameter item_filter -> Callable|String
 447:4 GDDualOperatorExpression item_filterIsString -> bool
 447:4 GDIdentifierExpression item_filter -> Variant
 447:19 GDIdentifierExpression String -> String
@@ -8869,7 +8869,7 @@ test_scripts/game_patterns.gd
 502:15 GDMemberOperatorExpression Time.get_unix_time_from_system -> float
 502:15 GDIdentifierExpression Time -> Time
 506:0 Method load_game_state -> void
-506:21 Parameter data -> Dictionary[String, Variant]|Object
+506:21 Parameter data -> Dictionary[String, Variant]
 507:1 GDDualOperatorExpression inventoryAssignment_deserialize_array() -> Array
 507:1 GDIdentifierExpression inventory -> Array
 507:13 GDCallExpression _deserialize_array() -> Array
@@ -9058,7 +9058,7 @@ test_scripts/game_patterns.gd
 555:1 GDReturnExpression return result -> Variant
 555:8 GDIdentifierExpression result -> Dictionary
 558:0 Method _deserialize_value -> Array|Dictionary|Variant|Vector2|Vector3
-558:24 Parameter value -> Array|Dictionary[String, Variant]|PackedStringArray
+558:24 Parameter value -> Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
 559:4 GDDualOperatorExpression valueIsDictionary -> bool
 559:4 GDIdentifierExpression value -> Variant
 559:13 GDIdentifierExpression Dictionary -> Dictionary
@@ -10176,7 +10176,7 @@ test_scripts/method_chains.gd
 42:1 GDReturnExpression return filtered_keys -> Variant
 42:8 GDIdentifierExpression filtered_keys -> Array
 45:0 Method optional_chain_pattern -> Variant|null
-45:28 Parameter data -> Dictionary[String, Variant]|Object
+45:28 Parameter data -> Dictionary[String, Variant]
 47:4 GDDualOperatorExpression dataEqualnull -> bool
 47:4 GDIdentifierExpression data -> Variant
 47:12 GDIdentifierExpression null -> null
@@ -10843,8 +10843,8 @@ test_scripts/polymorphic_interfaces.gd
 139:2 GDIdentifierExpression observers -> Dictionary
 139:12 GDIdentifierExpression event_name -> Variant
 139:26 GDArrayInitializerExpression [...] -> Array
-140:1 GDCallExpression observers[].append() -> Variant
-140:1 GDMemberOperatorExpression observers[].append -> Variant
+140:1 GDCallExpression observers[].append() -> void
+140:1 GDMemberOperatorExpression observers[].append -> void
 140:1 GDIndexerExpression observers[] -> Variant
 140:1 GDIdentifierExpression observers -> Dictionary
 140:11 GDIdentifierExpression event_name -> Variant
@@ -10856,8 +10856,8 @@ test_scripts/polymorphic_interfaces.gd
 144:4 GDMemberOperatorExpression observers.has -> bool
 144:4 GDIdentifierExpression observers -> Dictionary
 144:18 GDIdentifierExpression event_name -> Variant
-145:2 GDCallExpression observers[].erase() -> Variant
-145:2 GDMemberOperatorExpression observers[].erase -> Variant
+145:2 GDCallExpression observers[].erase() -> void
+145:2 GDMemberOperatorExpression observers[].erase -> void
 145:2 GDIndexerExpression observers[] -> Variant
 145:2 GDIdentifierExpression observers -> Dictionary
 145:12 GDIdentifierExpression event_name -> Variant
@@ -10920,7 +10920,7 @@ test_scripts/polymorphic_interfaces.gd
 174:37 GDIdentifierExpression children_results -> Array
 177:0 Method find_in_tree -> Variant|null
 177:18 Parameter component -> Node
-177:29 Parameter predicate -> Callable|Object
+177:29 Parameter predicate -> Callable
 179:4 GDCallExpression predicate.call() -> Variant
 179:4 GDMemberOperatorExpression predicate.call -> Variant
 179:4 GDIdentifierExpression predicate -> Variant
@@ -10947,7 +10947,7 @@ test_scripts/polymorphic_interfaces.gd
 188:8 GDIdentifierExpression null -> null
 191:0 Method collect_from_tree -> Array
 191:23 Parameter component -> Node
-191:34 Parameter collector -> Callable|Object
+191:34 Parameter collector -> Callable
 193:1 Variable results -> Array
 193:15 GDArrayInitializerExpression [...] -> Array
 195:1 Variable value -> Variant
@@ -11181,7 +11181,7 @@ test_scripts/polymorphic_interfaces.gd
 300:8 GDIdentifierExpression results -> Array
 303:0 Method iterate_with_transform -> Array
 303:28 Parameter iterator -> Variant
-303:38 Parameter transform -> Callable|Object
+303:38 Parameter transform -> Callable
 304:1 Variable results -> Array
 304:15 GDArrayInitializerExpression [...] -> Array
 305:1 GDCallExpression iterator.reset() -> Variant
@@ -11205,7 +11205,7 @@ test_scripts/polymorphic_interfaces.gd
 309:8 GDIdentifierExpression results -> Array
 312:0 Method iterate_until -> Array
 312:19 Parameter iterator -> Variant
-312:29 Parameter predicate -> Callable|Object
+312:29 Parameter predicate -> Callable
 314:1 Variable results -> Array
 314:15 GDArrayInitializerExpression [...] -> Array
 315:1 GDCallExpression iterator.reset() -> Variant
@@ -12980,8 +12980,8 @@ test_scripts/signal_callback_chains.gd
 37:2 GDIdentifierExpression callback_chains -> Dictionary
 37:18 GDIdentifierExpression name -> Variant
 37:26 GDArrayInitializerExpression [...] -> Array
-38:1 GDCallExpression callback_chains[].append() -> Variant
-38:1 GDMemberOperatorExpression callback_chains[].append -> Variant
+38:1 GDCallExpression callback_chains[].append() -> void
+38:1 GDMemberOperatorExpression callback_chains[].append -> void
 38:1 GDIndexerExpression callback_chains[] -> Variant
 38:1 GDIdentifierExpression callback_chains -> Dictionary
 38:17 GDIdentifierExpression name -> Variant
@@ -13141,7 +13141,7 @@ test_scripts/signal_callback_chains.gd
 126:1 GDReturnExpression return op -> Variant
 126:8 GDIdentifierExpression op -> AsyncOperation
 129:0 Method _run_task -> void
-129:15 Parameter task_func -> Callable|Object
+129:15 Parameter task_func -> Callable
 129:26 Parameter operation -> AsyncOperation|SignalCallbackChains.AsyncOperation
 130:1 Variable resolve -> Callable(Variant)
 130:15 GDMethodExpression func(...) -> Callable
@@ -13179,8 +13179,8 @@ test_scripts/signal_callback_chains.gd
 144:2 GDIdentifierExpression event_handlers -> Dictionary
 144:17 GDIdentifierExpression event_name -> Variant
 144:31 GDArrayInitializerExpression [...] -> Array
-145:1 GDCallExpression event_handlers[].append() -> Variant
-145:1 GDMemberOperatorExpression event_handlers[].append -> Variant
+145:1 GDCallExpression event_handlers[].append() -> void
+145:1 GDMemberOperatorExpression event_handlers[].append -> void
 145:1 GDIndexerExpression event_handlers[] -> Variant
 145:1 GDIdentifierExpression event_handlers -> Dictionary
 145:16 GDIdentifierExpression event_name -> Variant
@@ -13198,8 +13198,8 @@ test_scripts/signal_callback_chains.gd
 150:2 GDIdentifierExpression once_handlers -> Dictionary
 150:16 GDIdentifierExpression event_name -> Variant
 150:30 GDArrayInitializerExpression [...] -> Array
-151:1 GDCallExpression once_handlers[].append() -> Variant
-151:1 GDMemberOperatorExpression once_handlers[].append -> Variant
+151:1 GDCallExpression once_handlers[].append() -> void
+151:1 GDMemberOperatorExpression once_handlers[].append -> void
 151:1 GDIndexerExpression once_handlers[] -> Variant
 151:1 GDIdentifierExpression once_handlers -> Dictionary
 151:15 GDIdentifierExpression event_name -> Variant
@@ -13211,8 +13211,8 @@ test_scripts/signal_callback_chains.gd
 155:4 GDMemberOperatorExpression event_handlers.has -> bool
 155:4 GDIdentifierExpression event_handlers -> Dictionary
 155:23 GDIdentifierExpression event_name -> Variant
-156:2 GDCallExpression event_handlers[].erase() -> Variant
-156:2 GDMemberOperatorExpression event_handlers[].erase -> Variant
+156:2 GDCallExpression event_handlers[].erase() -> void
+156:2 GDMemberOperatorExpression event_handlers[].erase -> void
 156:2 GDIndexerExpression event_handlers[] -> Variant
 156:2 GDIdentifierExpression event_handlers -> Dictionary
 156:17 GDIdentifierExpression event_name -> Variant
@@ -13221,8 +13221,8 @@ test_scripts/signal_callback_chains.gd
 157:4 GDMemberOperatorExpression once_handlers.has -> bool
 157:4 GDIdentifierExpression once_handlers -> Dictionary
 157:22 GDIdentifierExpression event_name -> Variant
-158:2 GDCallExpression once_handlers[].erase() -> Variant
-158:2 GDMemberOperatorExpression once_handlers[].erase -> Variant
+158:2 GDCallExpression once_handlers[].erase() -> void
+158:2 GDMemberOperatorExpression once_handlers[].erase -> void
 158:2 GDIndexerExpression once_handlers[] -> Variant
 158:2 GDIdentifierExpression once_handlers -> Dictionary
 158:16 GDIdentifierExpression event_name -> Variant
@@ -13255,18 +13255,18 @@ test_scripts/signal_callback_chains.gd
 171:4 GDIdentifierExpression once_handlers -> Dictionary
 171:22 GDIdentifierExpression event_name -> Variant
 172:2 Variable handlers -> Variant
-172:17 GDCallExpression once_handlers[].duplicate() -> Variant
-172:17 GDMemberOperatorExpression once_handlers[].duplicate -> Variant
+172:17 GDCallExpression once_handlers[].duplicate() -> Array
+172:17 GDMemberOperatorExpression once_handlers[].duplicate -> Array
 172:17 GDIndexerExpression once_handlers[] -> Variant
 172:17 GDIdentifierExpression once_handlers -> Dictionary
 172:31 GDIdentifierExpression event_name -> Variant
 173:2 GDCallExpression once_handlers[].clear() -> void
-173:2 GDMemberOperatorExpression once_handlers[].clear -> Variant
+173:2 GDMemberOperatorExpression once_handlers[].clear -> void
 173:2 GDIndexerExpression once_handlers[] -> Variant
 173:2 GDIdentifierExpression once_handlers -> Dictionary
 173:16 GDIdentifierExpression event_name -> Variant
 174:2 Iterator handler -> Variant
-174:17 GDIdentifierExpression handlers -> Variant
+174:17 GDIdentifierExpression handlers -> Array
 175:3 Variable result -> Variant
 175:16 GDCallExpression handler.call() -> Variant
 175:16 GDMemberOperatorExpression handler.call -> Variant
@@ -13471,7 +13471,7 @@ test_scripts/signal_callback_chains.gd
 270:7 GDStringExpression "active" -> String
 270:19 GDBoolExpression false -> bool
 272:1 Method map -> Observable
-272:10 Parameter transform -> Callable|Object
+272:10 Parameter transform -> Callable
 273:2 Variable mapped -> Observable
 273:15 GDCallExpression Observable.new() -> Observable
 273:15 GDMemberOperatorExpression Observable.new -> Variant
@@ -13500,7 +13500,7 @@ test_scripts/signal_callback_chains.gd
 279:2 GDReturnExpression return mapped -> Variant
 279:9 GDIdentifierExpression mapped -> Observable
 281:1 Method filter -> Observable
-281:13 Parameter predicate -> Callable|Object
+281:13 Parameter predicate -> Callable
 282:2 Variable filtered -> Observable
 282:17 GDCallExpression Observable.new() -> Observable
 282:17 GDMemberOperatorExpression Observable.new -> Variant
@@ -13570,7 +13570,7 @@ test_scripts/signal_callback_chains.gd
 317:51 GDIdentifierExpression debounce_timers -> Dictionary
 317:67 GDIdentifierExpression key -> Variant
 318:2 GDCallExpression debounce_timers[].queue_free() -> void
-318:2 GDMemberOperatorExpression debounce_timers[].queue_free -> Variant
+318:2 GDMemberOperatorExpression debounce_timers[].queue_free -> void
 318:2 GDIndexerExpression debounce_timers[] -> Variant
 318:2 GDIdentifierExpression debounce_timers -> Dictionary
 318:18 GDIdentifierExpression key -> Variant
@@ -13625,7 +13625,7 @@ test_scripts/signal_callback_chains.gd
 338:0 Method throttle -> bool
 338:14 Parameter key -> Variant
 338:19 Parameter delay -> Variant
-338:26 Parameter callback -> Callable|Object
+338:26 Parameter callback -> Callable
 339:4 GDCallExpression throttle_locks.get() -> Variant
 339:4 GDMemberOperatorExpression throttle_locks.get -> Variant
 339:4 GDIdentifierExpression throttle_locks -> Dictionary
@@ -13672,8 +13672,8 @@ test_scripts/signal_callback_chains.gd
 353:8 GDBoolExpression true -> bool
 358:0 Method async_fetch -> void
 358:17 Parameter url -> Variant
-358:22 Parameter on_success -> Callable|Object
-358:34 Parameter on_failure -> Callable|Object
+358:22 Parameter on_success -> Callable
+358:34 Parameter on_failure -> Callable
 360:1 Variable result -> Dictionary[String, bool]
 360:14 GDCallExpression _simulate_fetch() -> Dictionary[String, bool]
 360:14 GDIdentifierExpression _simulate_fetch -> Callable
@@ -13708,7 +13708,7 @@ test_scripts/signal_callback_chains.gd
 373:21 Parameter operations -> Array
 373:33 Parameter index -> Variant
 373:40 Parameter previous_result -> Variant
-373:57 Parameter on_complete -> Callable|Object
+373:57 Parameter on_complete -> Callable
 373:70 Parameter on_error -> Variant
 374:4 GDDualOperatorExpression indexMoreThanOrEqualoperations.size() -> bool
 374:4 GDIdentifierExpression index -> Variant
@@ -13919,7 +13919,7 @@ test_scripts/signal_callback_chains.gd
 453:2 GDIdentifierExpression ctx -> SignalWaitContext
 453:23 GDStringExpression "Timeout" -> String
 456:0 Method wait_for_signal -> AsyncOperation
-456:21 Parameter target -> Object|Signal
+456:21 Parameter target -> Signal
 456:29 Parameter signal_name -> Variant
 456:42 Parameter timeout -> float
 456:52 GDNumberExpression 5.0 -> float
@@ -15592,7 +15592,7 @@ test_scripts/type_guards.gd
 58:1 GDReturnExpression return null -> Variant
 58:8 GDIdentifierExpression null -> null
 61:0 Method type_guard_with_or -> Variant|float|null
-61:24 Parameter value -> (+8 more)|String|StringName|float|int
+61:24 Parameter value -> (+8 more)|String|StringName|Vector2i|float|int
 63:4 GDDualOperatorExpression valueIsintOr2valueIsfloat -> bool
 63:4 GDDualOperatorExpression valueIsint -> bool
 63:4 GDIdentifierExpression value -> Variant
@@ -15642,7 +15642,7 @@ test_scripts/type_guards.gd
 92:4 GDDualOperatorExpression valueIsint -> bool
 92:4 GDIdentifierExpression value -> Variant
 92:13 GDIdentifierExpression int -> int
-93:2 GDDualOperatorExpression resultAssignmentvalueMultiply2 -> Variant
+93:2 GDDualOperatorExpression resultAssignmentvalueMultiply2 -> String
 93:2 GDIdentifierExpression result -> String
 93:11 GDDualOperatorExpression valueMultiply2 -> Variant
 93:11 GDIdentifierExpression value -> Variant
@@ -15747,7 +15747,7 @@ test_scripts/type_guards.gd
 134:64 GDStringExpression "type" -> String
 134:75 GDStringExpression "player" -> String
 137:0 Method using_custom_guard -> String|Variant
-137:24 Parameter value -> Dictionary[String, Variant]|Object
+137:24 Parameter value -> Dictionary[String, Variant]
 138:4 GDCallExpression custom_type_guard() -> bool
 138:4 GDIdentifierExpression custom_type_guard -> Callable
 138:22 GDIdentifierExpression value -> Variant
@@ -16809,7 +16809,7 @@ test_scripts/union_returns.gd
 136:8 GDIdentifierExpression result -> Variant
 139:0 Method exception_pattern -> Dictionary[String, String]|Variant|bool
 139:23 Parameter operation -> String
-139:42 Parameter data -> Dictionary[String, Variant]|Object
+139:42 Parameter data -> Dictionary[String, Variant]
 141:7 GDIdentifierExpression operation -> String
 142:2 GDStringExpression "read" -> String
 143:6 GDDualOperatorExpression dataIsDictionary -> bool
@@ -17527,7 +17527,7 @@ test_scripts/union_types_complex.gd
 221:9 GDStringExpression "tag" -> String
 221:16 GDStringExpression "loading" -> String
 224:0 Method handle_result -> String|Variant|null
-224:19 Parameter result -> Dictionary[String, Variant]|Object
+224:19 Parameter result -> Dictionary[String, Variant]
 226:7 GDCallExpression result.get() -> Variant
 226:7 GDMemberOperatorExpression result.get -> Variant
 226:7 GDIdentifierExpression result -> Variant
@@ -17552,7 +17552,7 @@ test_scripts/union_types_complex.gd
 234:10 GDStringExpression "Unknown st..." -> String
 239:0 Method map_with_fallback -> Array
 239:23 Parameter array -> Array
-239:30 Parameter transform -> Callable|Object
+239:30 Parameter transform -> Callable
 239:41 Parameter fallback -> Variant
 242:1 Variable results -> Array
 242:15 GDArrayInitializerExpression [...] -> Array
@@ -17578,8 +17578,8 @@ test_scripts/union_types_complex.gd
 249:8 GDIdentifierExpression results -> Array
 252:0 Method filter_map -> Array
 252:16 Parameter array -> Array
-252:23 Parameter predicate -> Callable|Object
-252:34 Parameter transform -> Callable|Object
+252:23 Parameter predicate -> Callable
+252:34 Parameter transform -> Callable
 256:1 Variable results -> Array
 256:15 GDArrayInitializerExpression [...] -> Array
 257:1 Iterator item -> Variant
@@ -17599,7 +17599,7 @@ test_scripts/union_types_complex.gd
 260:8 GDIdentifierExpression results -> Array
 263:0 Method reduce_or_default -> Variant
 263:23 Parameter array -> Array|Dictionary[int, Variant]
-263:30 Parameter reducer -> Callable|Object
+263:30 Parameter reducer -> Callable
 263:39 Parameter default_value -> Variant
 265:4 GDCallExpression array.is_empty() -> bool
 265:4 GDMemberOperatorExpression array.is_empty -> Variant
@@ -17746,7 +17746,7 @@ test_scripts/union_types_complex.gd
 337:1 GDReturnExpression return 0 -> Variant
 337:8 GDNumberExpression 0 -> int
 340:0 Method validate_and_process -> Dictionary[String, String]
-340:26 Parameter data -> Array|PackedStringArray
+340:26 Parameter data -> Array|EditorExportPreset|PackedStringArray
 342:4 GDDualOperatorExpression dataEqualnull -> bool
 342:4 GDIdentifierExpression data -> Variant
 342:12 GDIdentifierExpression null -> null
@@ -17791,7 +17791,7 @@ test_scripts/union_types_complex.gd
 356:43 GDIdentifierExpression data -> Variant
 356:49 GDIdentifierExpression type_field -> Variant
 359:0 Method _process_typed_data -> Variant
-359:25 Parameter data -> Dictionary[String, Variant]|Object
+359:25 Parameter data -> Dictionary[String, Variant]
 359:31 Parameter type_str -> Variant
 360:7 GDIdentifierExpression type_str -> Variant
 361:2 GDStringExpression "number" -> String

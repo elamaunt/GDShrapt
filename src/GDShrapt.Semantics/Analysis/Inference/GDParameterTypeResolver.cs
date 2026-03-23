@@ -131,6 +131,15 @@ internal class GDParameterTypeResolver
 
                 filtered = DeduplicatePackedArrays(typesProvider, filtered, constraints);
 
+                if (filtered.Count > 1)
+                {
+                    var withoutBase = filtered
+                        .Where(s => s.Type != GDWellKnownTypes.Object && s.Type != GDWellKnownTypes.RefCounted)
+                        .ToList();
+                    if (withoutBase.Count > 0)
+                        filtered = withoutBase;
+                }
+
                 matches.AddRange(filtered.Select(s => (s.Type, s.Confidence)).Distinct());
                 return matches;
             }

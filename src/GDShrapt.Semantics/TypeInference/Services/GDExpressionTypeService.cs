@@ -313,9 +313,9 @@ internal class GDExpressionTypeService : IGDExpressionTypeProvider
                 if (containerFallback != null && containerFallback.HasElementTypes)
                     return GDSemanticType.FromRuntimeTypeName(containerFallback.ToString());
 
-                // Fall back to union type
+                // Fall back to union type (exclude type guards — they are location-specific narrowing, not global type)
                 var symbol = _findSymbol?.Invoke(varName);
-                var unionType = _unionTypeService.GetUnionType(varName, symbol, null);
+                var unionType = _unionTypeService.GetUnionType(varName, symbol, null, excludeTypeGuards: true);
                 if (unionType != null && unionType.IsSingleType)
                 {
                     var effectiveType = unionType.EffectiveType;

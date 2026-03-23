@@ -28,4 +28,5 @@ public class GDNullLogger : IGDLogger
     public void Warning(string message) { }
     public void Error(string message) { }
     public void Error(string message, Exception ex) { }
+    public IGDLogger WithContext(string context) => this;
 }

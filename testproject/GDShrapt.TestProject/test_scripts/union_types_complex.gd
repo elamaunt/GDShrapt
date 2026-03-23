@@ -221,7 +221,7 @@ func create_loading():
 	return {"tag": "loading"}
 
 
-func handle_result(result):
+func handle_result(result):  # 224:19-GD7020-OK
 	# result is Tagged Union: Success|Error|Loading
 	match result.get("tag"): # 226:7-GD7007-OK
 		"success":
@@ -236,7 +236,7 @@ func handle_result(result):
 
 # === Higher-Order Functions with Union Returns ===
 
-func map_with_fallback(array, transform, fallback):  # 239:23-GD7020-OK
+func map_with_fallback(array, transform, fallback):  # 239:23-GD7020-OK, 239:30-GD7020-OK
 	# transform returns T|null, fallback is T
 	# Result is Array[T]
 	var results = []
@@ -249,7 +249,7 @@ func map_with_fallback(array, transform, fallback):  # 239:23-GD7020-OK
 	return results
 
 
-func filter_map(array, predicate, transform):  # 252:16-GD7020-OK
+func filter_map(array, predicate, transform):  # 252:16-GD7020-OK, 252:23-GD7020-OK, 252:34-GD7020-OK
 	# predicate: T -> bool
 	# transform: T -> U
 	# Returns Array[U] (subset)
@@ -260,7 +260,7 @@ func filter_map(array, predicate, transform):  # 252:16-GD7020-OK
 	return results
 
 
-func reduce_or_default(array, reducer, default_value):
+func reduce_or_default(array, reducer, default_value):  # 263:30-GD7020-OK
 	# Returns same type as default_value, but actual type unknown
 	if array.is_empty():
 		return default_value
@@ -356,7 +356,7 @@ func validate_and_process(data):
 	return create_success(_process_typed_data(data, type_field))
 
 
-func _process_typed_data(data, type_str):
+func _process_typed_data(data, type_str):  # 359:25-GD7020-OK
 	match type_str:
 		"number":
 			return data.get("value", 0) # 362:10-GD7007-OK

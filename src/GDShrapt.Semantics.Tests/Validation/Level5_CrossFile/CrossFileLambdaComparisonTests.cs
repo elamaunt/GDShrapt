@@ -544,7 +544,7 @@ func test(h: Holder) -> void:
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 

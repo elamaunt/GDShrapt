@@ -1019,7 +1019,11 @@ public class GDSymbolReferenceCollector
 
         while (!string.IsNullOrEmpty(current) && visited.Add(current))
         {
-            var baseScript = _project.GetScriptByTypeName(current);
+            GDScriptFile? baseScript;
+            if (current.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+                baseScript = _project.GetScriptByResourcePath(current);
+            else
+                baseScript = _project.GetScriptByTypeName(current);
             if (baseScript?.SemanticModel != null)
             {
                 var baseSymbol = baseScript.SemanticModel.FindSymbol(memberName);

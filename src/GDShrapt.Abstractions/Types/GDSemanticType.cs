@@ -92,8 +92,24 @@ public abstract class GDSemanticType
     public virtual bool IsValueType => false;
 
     /// <summary>
+    /// Source location info for project-defined types. Null for built-in Godot types.
+    /// </summary>
+    public GDTypeSourceInfo? SourceInfo { get; set; }
+
+    /// <summary>
+    /// Whether this type is defined in the project (has source info).
+    /// </summary>
+    public bool IsProjectType => SourceInfo != null;
+
+    /// <summary>
     /// Checks whether this type matches a given type name.
     /// </summary>
+    /// <summary>
+    /// Base runtime type name for provider lookups.
+    /// For simple types returns DisplayName, for containers returns "Array" or "Dictionary".
+    /// </summary>
+    public virtual string RuntimeTypeName => DisplayName;
+
     public virtual bool IsType(string typeName) => DisplayName == typeName;
 
     /// <summary>
@@ -179,6 +195,55 @@ public abstract class GDSemanticType
         }
 
         return new GDSimpleSemanticType(typeName);
+    }
+
+    /// <summary>
+    /// Converts a runtime type name string to GDSemanticType with source info resolution.
+    /// When a provider is given, project-defined types will have SourceInfo populated.
+    /// </summary>
+    public static GDSemanticType FromRuntimeTypeName(string? typeName, IGDRuntimeProvider? provider)
+    {
+        if (string.IsNullOrEmpty(typeName) || typeName == "Variant")
+            return GDVariantSemanticType.Instance;
+
+        if (typeName == "null")
+            return GDNullSemanticType.Instance;
+
+        if (GDGenericTypeHelper.IsUnionType(typeName))
+        {
+            var parts = GDGenericTypeHelper.SplitUnionTypes(typeName);
+            var types = parts
+                .Select(p => FromRuntimeTypeName(p, provider))
+                .ToList();
+            return new GDUnionSemanticType(types);
+        }
+
+        if (GDGenericTypeHelper.IsGenericArrayType(typeName))
+        {
+            var inner = GDGenericTypeHelper.ExtractArrayElementType(typeName);
+            return new GDContainerSemanticType(isDictionary: false,
+                elementType: FromRuntimeTypeName(inner, provider));
+        }
+
+        if (GDGenericTypeHelper.IsGenericDictionaryType(typeName))
+        {
+            var (key, val) = GDGenericTypeHelper.ExtractDictionaryTypes(typeName);
+            if (!string.IsNullOrEmpty(key))
+            {
+                return new GDContainerSemanticType(isDictionary: true,
+                    elementType: FromRuntimeTypeName(val, provider),
+                    keyType: FromRuntimeTypeName(key, provider));
+            }
+        }
+
+        var type = new GDSimpleSemanticType(typeName);
+        if (provider != null)
+        {
+            var typeInfo = provider.GetTypeInfo(typeName);
+            if (typeInfo?.SourceInfo != null)
+                type.SourceInfo = typeInfo.SourceInfo;
+        }
+        return type;
     }
 
     /// <summary>

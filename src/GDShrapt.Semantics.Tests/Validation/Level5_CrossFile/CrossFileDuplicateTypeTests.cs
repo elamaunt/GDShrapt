@@ -172,7 +172,7 @@ func _on_health_depleted() -> void:
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 
@@ -213,7 +213,7 @@ func _on_health_depleted() -> void:
         }
         finally
         {
-            try { Directory.Delete(tempDir, true); } catch { }
+            try { Directory.Delete(tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 

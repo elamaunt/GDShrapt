@@ -102,9 +102,9 @@ public class GDDocumentManager
             {
                 script.Analyze(_project.CreateRuntimeProvider(), _project.CreateNodeTypeInjector());
             }
-            catch
+            catch (Exception ex)
             {
-                // Best effort
+                GDLspPerformanceTrace.Log("invalidate", $"ERROR {filename}: {ex.Message}");
             }
             sw.Stop();
             GDLspPerformanceTrace.Log("invalidate", $"FALLBACK-DONE {filename} {sw.ElapsedMilliseconds}ms");

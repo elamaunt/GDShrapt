@@ -235,11 +235,10 @@ test_scripts/cross_file_inference.gd
     confidence: Unknown
 
   237:37 Parameter params in create_game_object
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   274:22 Parameter target in _on_hit_callback
     inferred-type: Variant
@@ -278,11 +277,10 @@ test_scripts/cross_file_inference.gd
 
 test_scripts/cycles_test.gd
   22:15 Parameter input in transform
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   52:26 Parameter depth in recursive_type_cycle
     inferred-type: int
@@ -363,7 +361,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   75:16 Parameter context in state_idle
-    inferred-type: Array|Dictionary|PackedStringArray
+    inferred-type: Array|Dictionary|EditorExportPreset|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -374,11 +372,10 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   82:18 Parameter context in state_active
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: has(-1)
       properties: has
@@ -428,11 +425,10 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   121:27 Parameter func_ref in accumulate_left
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   121:37 Parameter initial in accumulate_left
     inferred-type: Variant
@@ -449,11 +445,10 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   131:28 Parameter func_ref in accumulate_right
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   131:38 Parameter initial in accumulate_right
     inferred-type: Variant
@@ -488,7 +483,7 @@ test_scripts/cyclic_inference.gd
     confidence: Unknown
 
   180:16 Parameter node in visit_node
-    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -507,7 +502,7 @@ test_scripts/cyclic_inference.gd
       signals: (none)
 
   192:28 Parameter root in traverse_and_transform
-    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -904,7 +899,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   152:21 Parameter action in _execute_action
-    inferred-type: Callable|Dictionary|Object|String
+    inferred-type: Callable|Dictionary|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -915,7 +910,7 @@ test_scripts/duck_typing_advanced.gd
     confidence: Unknown
 
   167:26 Parameter action_dict in _execute_dict_action
-    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -933,11 +928,10 @@ test_scripts/duck_typing_advanced.gd
     union: yes
 
   175:26 Parameter transformer in transform_data
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   196:19 Parameter initial_value in process_chain
     inferred-type: Variant
@@ -1072,11 +1066,10 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   50:18 Parameter obj in get_property
-    inferred-type: Dictionary|Object
+    inferred-type: Dictionary
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: duplicate(-1), clone(-1)
       properties: duplicate, clone
@@ -1113,14 +1106,13 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   63:21 Parameter source in copy_properties
-    inferred-type: Dictionary|Object
+    inferred-type: Dictionary
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   63:29 Parameter target in copy_properties
-    inferred-type: (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+    inferred-type: PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1137,18 +1129,17 @@ test_scripts/dynamic_dispatch.gd
     duck-typed: yes
 
   69:21 Parameter obj in sync_properties
-    inferred-type: Dictionary|Object
+    inferred-type: Dictionary
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: duplicate(-1), clone(-1)
       properties: duplicate, clone
       signals: (none)
 
   76:22 Parameter obj in apply_properties
-    inferred-type: (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+    inferred-type: PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1175,11 +1166,10 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   92:26 Parameter message in send_message
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   113:23 Parameter targets in broadcast_message
     inferred-type: Array
@@ -1213,7 +1203,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   165:27 Parameter obj in deserialize_to_object
-    inferred-type: (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+    inferred-type: PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1234,7 +1224,7 @@ test_scripts/dynamic_dispatch.gd
       signals: (none)
 
   172:24 Parameter data in _deserialize_value
-    inferred-type: Array|Dictionary|PackedStringArray|String|bool|float|int
+    inferred-type: Array|Dictionary|EditorExportPreset|PackedStringArray|String|bool|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1359,18 +1349,16 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   306:14 Parameter event in dispatch
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   318:25 Parameter event in dispatch_to_handler
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   318:32 Parameter handler_name in dispatch_to_handler
     inferred-type: Variant
@@ -1431,11 +1419,10 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   369:33 Parameter logger in _create_logging_interceptor
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   384:16 Parameter method_pattern in add_before
     inferred-type: Variant
@@ -1462,11 +1449,10 @@ test_scripts/dynamic_dispatch.gd
     confidence: Unknown
 
   400:18 Parameter obj in advised_call
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: duplicate(-1), clone(-1)
       properties: duplicate, clone
@@ -1565,11 +1551,10 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   131:24 Parameter predicate in query_by_predicate
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   144:21 Parameter system in register_system
     inferred-type: Variant
@@ -1694,7 +1679,7 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   247:43 Parameter overrides in create_from_archetype
-    inferred-type: Array|Dictionary
+    inferred-type: Array|Dictionary|EditorExportPreset
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -1717,11 +1702,10 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   286:20 Parameter handler in process_events
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   293:24 Parameter event_type in get_events_by_type
     inferred-type: Variant
@@ -1750,11 +1734,10 @@ test_scripts/ecs_like_system.gd
     confidence: Unknown
 
   368:23 Parameter data in deserialize_world
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   391:18 Parameter entity_id in debug_entity
     inferred-type: Variant
@@ -1906,25 +1889,22 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   26:15 Parameter predicate in find_item
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   35:20 Parameter predicate in find_all_items
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   43:23 Parameter item in get_item_property
-    inferred-type: Dictionary|Object
+    inferred-type: Dictionary
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   43:29 Parameter prop_name in get_item_property
     inferred-type: Variant
@@ -1989,11 +1969,10 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   143:29 Parameter choice in _check_choice_condition
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: has(-1)
       properties: has
@@ -2004,11 +1983,10 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   208:18 Parameter quest_data in accept_quest
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   221:28 Parameter quest_id in update_quest_objective
     inferred-type: Variant
@@ -2112,7 +2090,7 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   446:27 Parameter item_filter in _matches_filter
-    inferred-type: Callable|Object|String
+    inferred-type: Callable|String
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2123,11 +2101,10 @@ test_scripts/game_patterns.gd
     confidence: Unknown
 
   506:21 Parameter data in load_game_state
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   516:22 Parameter arr in _serialize_array
     inferred-type: Array
@@ -2165,7 +2142,7 @@ test_scripts/game_patterns.gd
     duck-typed: yes
 
   558:24 Parameter value in _deserialize_value
-    inferred-type: Array|Dictionary[String, Variant]|PackedStringArray
+    inferred-type: Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -2384,11 +2361,10 @@ test_scripts/method_chains.gd
       signals: (none)
 
   45:28 Parameter data in optional_chain_pattern
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   73:15 Parameter name in set_name
     inferred-type: String
@@ -2591,11 +2567,10 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   177:29 Parameter predicate in find_in_tree
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   191:23 Parameter component in collect_from_tree
     inferred-type: Node
@@ -2608,11 +2583,10 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   191:34 Parameter collector in collect_from_tree
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   212:19 Parameter decorator in add_decorator
     inferred-type: Variant
@@ -2674,11 +2648,10 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   303:38 Parameter transform in iterate_with_transform
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   312:19 Parameter iterator in iterate_until
     inferred-type: Variant
@@ -2689,11 +2662,10 @@ test_scripts/polymorphic_interfaces.gd
       signals: (none)
 
   312:29 Parameter predicate in iterate_until
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   329:22 Parameter type_name in register_factory
     inferred-type: Variant
@@ -3065,11 +3037,10 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   129:15 Parameter task_func in _run_task
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   129:26 Parameter operation in _run_task
     inferred-type: AsyncOperation|SignalCallbackChains.AsyncOperation
@@ -3181,18 +3152,16 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   272:10 Parameter transform in map
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   281:13 Parameter predicate in filter
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   308:26 Parameter timer in _on_debounce_timeout
     inferred-type: Timer
@@ -3238,11 +3207,10 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   338:26 Parameter callback in throttle
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   358:17 Parameter url in async_fetch
     inferred-type: Variant
@@ -3253,18 +3221,16 @@ test_scripts/signal_callback_chains.gd
       signals: (none)
 
   358:22 Parameter on_success in async_fetch
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   358:34 Parameter on_failure in async_fetch
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   368:17 Parameter operations in async_chain
     inferred-type: Variant
@@ -3301,11 +3267,10 @@ test_scripts/signal_callback_chains.gd
     confidence: Unknown
 
   373:57 Parameter on_complete in _run_chain_step
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   373:70 Parameter on_error in _run_chain_step
     inferred-type: Variant
@@ -3386,11 +3351,10 @@ test_scripts/signal_callback_chains.gd
       signals: (none)
 
   456:21 Parameter target in wait_for_signal
-    inferred-type: Object|Signal
+    inferred-type: Signal
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   456:29 Parameter signal_name in wait_for_signal
     inferred-type: Variant
@@ -3607,7 +3571,7 @@ test_scripts/type_guards.gd
       signals: (none)
 
   61:24 Parameter value in type_guard_with_or
-    inferred-type: (+8 more)|String|StringName|float|int
+    inferred-type: (+8 more)|String|StringName|Vector2i|float|int
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -3660,11 +3624,10 @@ test_scripts/type_guards.gd
       signals: (none)
 
   137:24 Parameter value in using_custom_guard
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
       properties: length, size, keys, is_empty, has, to_upper, front
@@ -3873,11 +3836,10 @@ test_scripts/union_returns.gd
     reason: explicit type annotation
 
   139:42 Parameter data in exception_pattern
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: has(-1)
       properties: has
@@ -4067,11 +4029,10 @@ test_scripts/union_types_complex.gd
     confidence: Unknown
 
   224:19 Parameter result in handle_result
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   239:23 Parameter array in map_with_fallback
     inferred-type: Array
@@ -4084,11 +4045,10 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   239:30 Parameter transform in map_with_fallback
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   239:41 Parameter fallback in map_with_fallback
     inferred-type: Variant
@@ -4105,18 +4065,16 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   252:23 Parameter predicate in filter_map
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   252:34 Parameter transform in filter_map
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   263:23 Parameter array in reduce_or_default
     inferred-type: Array|Dictionary[int, Variant]
@@ -4130,11 +4088,10 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   263:30 Parameter reducer in reduce_or_default
-    inferred-type: Callable|Object
+    inferred-type: Callable
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
 
   263:39 Parameter default_value in reduce_or_default
     inferred-type: Variant
@@ -4208,7 +4165,7 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   340:26 Parameter data in validate_and_process
-    inferred-type: Array|PackedStringArray
+    inferred-type: Array|EditorExportPreset|PackedStringArray
     confidence: High
     reason: union from type checks
     duck-typed: yes
@@ -4219,11 +4176,10 @@ test_scripts/union_types_complex.gd
       signals: (none)
 
   359:25 Parameter data in _process_typed_data
-    inferred-type: Dictionary[String, Variant]|Object
+    inferred-type: Dictionary[String, Variant]
     confidence: High
-    reason: union from type checks
+    reason: single type from constraints
     duck-typed: yes
-    union: yes
     duck-constraints:
       methods: has(-1)
       properties: has

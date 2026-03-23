@@ -199,7 +199,7 @@ public class GDProgressReportingTests
         await WriteJsonRpcAsync(pipeWriter,
             "{\"jsonrpc\":\"2.0\",\"method\":\"exit\",\"params\":{}}");
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
 
@@ -239,7 +239,7 @@ public class GDProgressReportingTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
 

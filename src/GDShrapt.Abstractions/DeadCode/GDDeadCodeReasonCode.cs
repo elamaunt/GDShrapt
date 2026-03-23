@@ -64,4 +64,7 @@ public enum GDDeadCodeReasonCode
 
     /// <summary>Member suppressed by custom user annotation (--suppress-annotation).</summary>
     CUA,
+
+    /// <summary>Addon Public API — member in addon path, non-private, may be used by addon consumers.</summary>
+    APA,
 }

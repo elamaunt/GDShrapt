@@ -37,7 +37,7 @@ public class GDExecuteCommandTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
         written.Should().Contain("\"id\":2");
@@ -66,7 +66,7 @@ public class GDExecuteCommandTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
         written.Should().Contain("\"id\":2");
@@ -92,7 +92,7 @@ public class GDExecuteCommandTests
 
         await server.InitializeAsync(transport, cts.Token);
 
-        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { }
+        try { await server.RunAsync(cts.Token); } catch (OperationCanceledException) { /* Expected — server intentionally cancelled */ }
 
         var written = output.ToString();
         written.Should().Contain("executeCommandProvider");

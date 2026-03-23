@@ -626,4 +626,196 @@ signal item_changed(type: ItemTypes)
         hover!.Content.Should().NotContain("class ItemTypes extends int",
             "enum types should not show as 'class ... extends int'");
     }
+
+    // ========================================
+    // Keyword hover tests (keywords that don't resolve to symbols)
+    // ========================================
+
+    [TestMethod]
+    public void Hover_OnIfKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tif true:\n\t\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 2);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("if");
+        hover!.Content.Should().Contain("Conditional branch");
+    }
+
+    [TestMethod]
+    public void Hover_OnWhileKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\twhile true:\n\t\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 2);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("while");
+        hover!.Content.Should().Contain("Repeats while");
+    }
+
+    [TestMethod]
+    public void Hover_OnMatchKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tvar x = 1\n\tmatch x:\n\t\t1:\n\t\t\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 5, 2);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("match");
+        hover!.Content.Should().Contain("Pattern matching");
+    }
+
+    [TestMethod]
+    public void Hover_OnReturnKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc get_value() -> int:\n\treturn 42\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 2);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("return");
+        hover!.Content.Should().Contain("Returns a value");
+    }
+
+    [TestMethod]
+    public void Hover_OnPassKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 2);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("pass");
+        hover!.Content.Should().Contain("Empty statement");
+    }
+
+    [TestMethod]
+    public void Hover_OnBreakKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tfor i in range(10):\n\t\tbreak\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 5, 3);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("break");
+        hover!.Content.Should().Contain("Exits the current loop");
+    }
+
+    [TestMethod]
+    public void Hover_OnContinueKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tfor i in range(10):\n\t\tcontinue\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 5, 3);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("continue");
+        hover!.Content.Should().Contain("Skips to the next");
+    }
+
+    [TestMethod]
+    public void Hover_OnExtendsKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 1, 1);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("extends");
+        hover!.Content.Should().Contain("Specifies the base class");
+    }
+
+    [TestMethod]
+    public void Hover_OnAwaitKeyword_ReturnsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tawait get_tree().create_timer(1.0).timeout\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 2);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("await");
+        hover!.Content.Should().Contain("Waits for a signal or coroutine");
+    }
+
+    [TestMethod]
+    public void Hover_OnDeclarationKeyword_FallsBackToSymbol()
+    {
+        // When hovering on "func" keyword that is part of a declaration,
+        // the symbol hover should take priority (shows method signature)
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 3, 1);
+        hover.Should().NotBeNull();
+        // Should show the method signature, not the keyword description
+        hover!.Content.Should().Contain("func _ready");
+    }
+
+    // ========================================
+    // Special identifier hover tests
+    // ========================================
+
+    [TestMethod]
+    public void Hover_OnSelf_ShowsClassName()
+    {
+        SetupProject(("test.gd", "class_name TestClass\nextends Node\n\nfunc _ready():\n\tprint(self)\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 5, 8);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("self");
+        hover!.Content.Should().Contain("TestClass");
+    }
+
+    [TestMethod]
+    public void Hover_OnNull_ShowsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tvar x = null\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 10);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("null");
+        hover!.Content.Should().Contain("absence of a value");
+    }
+
+    [TestMethod]
+    public void Hover_OnTrue_ShowsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tvar x = true\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 10);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("true");
+        hover!.Content.Should().Contain("Boolean true");
+    }
+
+    [TestMethod]
+    public void Hover_OnFalse_ShowsDescription()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tvar x = false\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 10);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("false");
+        hover!.Content.Should().Contain("Boolean false");
+    }
+
+    [TestMethod]
+    public void Hover_OnPIConstant_ShowsValue()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tvar x = PI\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        var hover = _handler!.GetHover(filePath, 4, 10);
+        hover.Should().NotBeNull();
+        hover!.Content.Should().Contain("PI");
+        hover!.Content.Should().Contain("3.14159");
+    }
+
+    // ========================================
+    // Keyword hover range tests
+    // ========================================
+
+    [TestMethod]
+    public void Hover_Keyword_HasCorrectRange()
+    {
+        SetupProject(("test.gd", "extends Node\n\nfunc _ready():\n\tpass\n"));
+        var filePath = Path.Combine(_tempProjectPath!, "test.gd");
+        // "pass" at line 4, col 2 (after \t)
+        var hover = _handler!.GetHover(filePath, 4, 2);
+        hover.Should().NotBeNull();
+        hover!.SymbolName.Should().Be("pass");
+        hover!.StartLine.Should().Be(4);
+        hover!.EndLine.Should().Be(4);
+    }
 }

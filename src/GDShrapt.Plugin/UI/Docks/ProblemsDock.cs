@@ -137,7 +137,7 @@ internal partial class ProblemsDock : Control
         {
             _refreshButton.Icon = EditorInterface.Singleton.GetBaseControl().GetThemeIcon("Reload", "EditorIcons");
         }
-        catch { }
+        catch { /* Icon may not exist in all Godot versions */ }
         _refreshButton.Pressed += OnRefreshPressed;
         toolbar.AddChild(_refreshButton);
 
@@ -287,7 +287,7 @@ internal partial class ProblemsDock : Control
             {
                 fileItem.SetIcon(0, EditorInterface.Singleton.GetBaseControl().GetThemeIcon("GDScript", "EditorIcons"));
             }
-            catch { }
+            catch { /* Icon may not exist in all Godot versions */ }
 
             fileItem.Collapsed = false;
 
@@ -319,7 +319,7 @@ internal partial class ProblemsDock : Control
             {
                 severityItem.SetIcon(0, EditorInterface.Singleton.GetBaseControl().GetThemeIcon(GetSeverityIcon(severity), "EditorIcons"));
             }
-            catch { }
+            catch { /* Icon may not exist in all Godot versions */ }
 
             severityItem.Collapsed = false;
 
@@ -379,7 +379,7 @@ internal partial class ProblemsDock : Control
         {
             row.SetIcon(0, EditorInterface.Singleton.GetBaseControl().GetThemeIcon(GetSeverityIcon(diag.Severity), "EditorIcons"));
         }
-        catch { }
+        catch { /* Icon may not exist in all Godot versions */ }
     }
 
     private void OnItemActivated()

@@ -64,10 +64,10 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             _typeCache[typeName] = typeInfo;
 
             // Register inner classes as separate types
-            RegisterInnerClasses(scriptInfo.Class, typeName);
+            RegisterInnerClasses(scriptInfo.Class, typeName, scriptInfo.FullPath);
 
             // Register enums as qualified types (e.g., Constants.TowerType)
-            RegisterEnumTypes(scriptInfo.Class, typeName);
+            RegisterEnumTypes(scriptInfo.Class, typeName, scriptInfo.FullPath);
 
             // Index by script path for "extends 'res://path/to/script.gd'" support
             if (!string.IsNullOrEmpty(scriptInfo.FullPath))
@@ -86,7 +86,15 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             }
         }
 
-        // Second pass: build preload alias index
+        // Second pass: register enums from scripts without class_name
+        foreach (var scriptInfo in _scriptProvider.Scripts)
+        {
+            if (scriptInfo.Class == null || !string.IsNullOrEmpty(scriptInfo.TypeName))
+                continue;
+            RegisterEnumTypes(scriptInfo.Class, "", scriptInfo.FullPath, allowOverwrite: false);
+        }
+
+        // Third pass: build preload alias index
         // Maps "const Alias := preload('res://...script.gd')" alias names to canonical type names
         foreach (var scriptInfo in _scriptProvider.Scripts)
         {
@@ -123,7 +131,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
     /// Registers inner classes as separate types in the cache.
     /// This enables proper inheritance resolution for inner class hierarchies.
     /// </summary>
-    private void RegisterInnerClasses(GDClassDeclaration classDecl, string parentTypeName)
+    private void RegisterInnerClasses(GDClassDeclaration classDecl, string parentTypeName, string? scriptPath)
     {
         foreach (var member in classDecl.Members)
         {
@@ -143,32 +151,36 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 RegisterNestedInnerClasses(innerClass, qualifiedName);
 
                 // Register enums from inner classes
-                RegisterEnumTypesFromInnerClass(innerClass, qualifiedName);
+                RegisterEnumTypesFromInnerClass(innerClass, qualifiedName, scriptPath);
             }
         }
     }
 
-    private void RegisterEnumTypes(GDClassDeclaration classDecl, string parentTypeName)
+    private void RegisterEnumTypes(GDClassDeclaration classDecl, string parentTypeName, string? scriptPath, bool allowOverwrite = true)
     {
         foreach (var member in classDecl.Members)
         {
             if (member is GDEnumDeclaration enumDecl && enumDecl.Identifier != null)
             {
                 var enumName = enumDecl.Identifier.Sequence;
-                var qualifiedName = $"{parentTypeName}.{enumName}";
+                var enumTypeInfo = BuildEnumTypeInfo(enumDecl, scriptPath);
 
-                var enumTypeInfo = BuildEnumTypeInfo(enumDecl);
+                if (allowOverwrite)
+                    _typeCache[enumName] = enumTypeInfo;
+                else if (!_typeCache.ContainsKey(enumName))
+                    _typeCache[enumName] = enumTypeInfo;
 
-                // Register by short name for unqualified access (e.g., AIState.IDLE)
-                _typeCache[enumName] = enumTypeInfo;
-
-                // Also register by qualified name (Parent.EnumName) for proper resolution
-                _typeCache[qualifiedName] = enumTypeInfo;
+                // Register by qualified name only when parent type exists
+                if (!string.IsNullOrEmpty(parentTypeName))
+                {
+                    var qualifiedName = $"{parentTypeName}.{enumName}";
+                    _typeCache[qualifiedName] = enumTypeInfo;
+                }
             }
         }
     }
 
-    private void RegisterEnumTypesFromInnerClass(GDInnerClassDeclaration innerClass, string parentTypeName)
+    private void RegisterEnumTypesFromInnerClass(GDInnerClassDeclaration innerClass, string parentTypeName, string? scriptPath)
     {
         foreach (var member in innerClass.Members)
         {
@@ -177,7 +189,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                 var enumName = enumDecl.Identifier.Sequence;
                 var qualifiedName = $"{parentTypeName}.{enumName}";
 
-                var enumTypeInfo = BuildEnumTypeInfo(enumDecl);
+                var enumTypeInfo = BuildEnumTypeInfo(enumDecl, scriptPath);
 
                 // Register by short name for unqualified access
                 _typeCache[enumName] = enumTypeInfo;
@@ -188,14 +200,18 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         }
     }
 
-    private static GDProjectTypeInfo BuildEnumTypeInfo(GDEnumDeclaration enumDecl)
+    private static GDProjectTypeInfo BuildEnumTypeInfo(GDEnumDeclaration enumDecl, string? scriptPath)
     {
-        var enumName = enumDecl.Identifier!.Sequence;
+        var id = enumDecl.Identifier!;
         var info = new GDProjectTypeInfo
         {
-            Name = enumName,
+            Name = id.Sequence,
             BaseTypeName = "int",
-            IsEnum = true
+            IsEnum = true,
+            ScriptPath = scriptPath,
+            DeclarationLine = id.StartLine,
+            DeclarationStartColumn = id.StartColumn,
+            DeclarationEndColumn = id.EndColumn
         };
 
         if (enumDecl.Values != null)
@@ -207,7 +223,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     info.Properties[value.Identifier.Sequence] = new GDProjectPropertyInfo
                     {
                         Name = value.Identifier.Sequence,
-                        TypeName = enumName,
+                        TypeName = id.Sequence,
                         IsConstant = true
                     };
                 }
@@ -344,12 +360,16 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         var isClassAbstract = classDecl.CustomAttributes
             .Any(attr => attr.Attribute?.IsAbstract() == true);
 
+        var classNameId = classDecl.ClassName?.Identifier;
         var info = new GDProjectTypeInfo
         {
             Name = scriptInfo.TypeName ?? "",
             ScriptPath = scriptInfo.FullPath,
             BaseTypeName = classDecl.Extends?.Type?.BuildName(),
-            IsAbstract = isClassAbstract
+            IsAbstract = isClassAbstract,
+            DeclarationLine = classNameId?.StartLine ?? 0,
+            DeclarationStartColumn = classNameId?.StartColumn ?? 0,
+            DeclarationEndColumn = classNameId?.EndColumn ?? 0
         };
 
         // Extract members
@@ -489,7 +509,15 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         {
             Members = members,
             IsAbstract = projectType.IsAbstract,
-            IsEnum = projectType.IsEnum
+            IsEnum = projectType.IsEnum,
+            SourceInfo = projectType.ScriptPath != null ? new GDTypeSourceInfo
+            {
+                FilePath = projectType.ScriptPath,
+                Line = projectType.DeclarationLine,
+                StartColumn = projectType.DeclarationStartColumn,
+                EndColumn = projectType.DeclarationEndColumn,
+                TypeName = projectType.Name
+            } : null
         };
     }
 
@@ -526,7 +554,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             if (prop.IsConstant)
                 members.Add(GDRuntimeMemberInfo.Constant(prop.Name, prop.TypeName));
             else
-                members.Add(GDRuntimeMemberInfo.Property(prop.Name, prop.TypeName, prop.IsStatic));
+            {
+                var mi = GDRuntimeMemberInfo.Property(prop.Name, prop.TypeName, prop.IsStatic);
+                mi.HasExplicitType = prop.HasExplicitType;
+                members.Add(mi);
+            }
         }
 
         foreach (var signal in typeInfo.Signals.Values)
@@ -621,7 +653,10 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
             else if (property.IsConstant)
                 memberInfo = GDRuntimeMemberInfo.Constant(property.Name, propertyType);
             else
+            {
                 memberInfo = GDRuntimeMemberInfo.Property(property.Name, propertyType, property.IsStatic);
+                memberInfo.HasExplicitType = property.HasExplicitType;
+            }
             return (memberInfo, typeName);
         }
         // Check signals
@@ -993,6 +1028,9 @@ public class GDProjectTypeInfo
     public string? BaseTypeName { get; init; }
     public bool IsAbstract { get; init; }
     public bool IsEnum { get; init; }
+    public int DeclarationLine { get; init; }
+    public int DeclarationStartColumn { get; init; }
+    public int DeclarationEndColumn { get; init; }
     public Dictionary<string, GDProjectMethodInfo> Methods { get; } = new();
     public Dictionary<string, GDProjectPropertyInfo> Properties { get; } = new();
     public Dictionary<string, GDProjectSignalInfo> Signals { get; } = new();

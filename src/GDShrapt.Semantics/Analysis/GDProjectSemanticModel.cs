@@ -304,7 +304,7 @@ public class GDProjectSemanticModel : IDisposable
 
     /// <summary>
     /// Gets the full inheritance chain of type names for a script file.
-    /// Walks script-based parents via BaseTypeName → GetScriptByTypeName,
+    /// Walks script-based parents via BaseTypeName → GetScriptByTypeName or GetScriptByResourcePath,
     /// then continues via RuntimeProvider.GetBaseType for built-in types.
     /// Does not include the file's own type name.
     /// </summary>
@@ -321,7 +321,7 @@ public class GDProjectSemanticModel : IDisposable
         while (!string.IsNullOrEmpty(current) && visited.Add(current))
         {
             chain.Add(current);
-            var parentFile = _project.GetScriptByTypeName(current);
+            var parentFile = ResolveScriptByTypeNameOrPath(current);
             if (parentFile == null)
                 break;
             var parentModel = GetSemanticModel(parentFile);
@@ -344,8 +344,20 @@ public class GDProjectSemanticModel : IDisposable
     }
 
     /// <summary>
+    /// Resolves a script file by type name or resource path.
+    /// Handles both <c>extends ClassName</c> and <c>extends "res://path.gd"</c>.
+    /// </summary>
+    internal GDScriptFile? ResolveScriptByTypeNameOrPath(string typeNameOrPath)
+    {
+        if (typeNameOrPath.StartsWith("res://", System.StringComparison.OrdinalIgnoreCase))
+            return _project.GetScriptByResourcePath(typeNameOrPath);
+
+        return _project.GetScriptByTypeName(typeNameOrPath);
+    }
+
+    /// <summary>
     /// Checks if a file's class inherits from a specific type name anywhere in the chain.
-    /// Case-insensitive.
+    /// Case-insensitive. Also matches resource paths in the chain against the base file's TypeName.
     /// </summary>
     public bool IsSubclassOf(GDScriptFile file, string baseTypeName)
     {
@@ -356,6 +368,33 @@ public class GDProjectSemanticModel : IDisposable
         foreach (var typeName in chain)
         {
             if (string.Equals(typeName, baseTypeName, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // Chain may contain resource paths — resolve to file and compare TypeName
+            if (typeName.StartsWith("res://", StringComparison.OrdinalIgnoreCase))
+            {
+                var resolved = _project.GetScriptByResourcePath(typeName);
+                if (resolved != null && string.Equals(resolved.TypeName, baseTypeName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a file's class inherits from a specific base script file anywhere in the chain.
+    /// </summary>
+    public bool IsSubclassOf(GDScriptFile file, GDScriptFile baseFile)
+    {
+        if (baseFile == null)
+            return false;
+
+        var chain = GetInheritanceChain(file);
+        foreach (var typeName in chain)
+        {
+            var resolved = ResolveScriptByTypeNameOrPath(typeName);
+            if (resolved == baseFile)
                 return true;
         }
 
@@ -985,7 +1024,7 @@ public class GDProjectSemanticModel : IDisposable
         var chain = GetInheritanceChain(fromFile);
         foreach (var parentTypeName in chain)
         {
-            var parentFile = _project.GetScriptByTypeName(parentTypeName);
+            var parentFile = ResolveScriptByTypeNameOrPath(parentTypeName);
             if (parentFile != null)
             {
                 var parentModel = GetSemanticModel(parentFile);
@@ -1356,7 +1395,7 @@ public class GDProjectSemanticModel : IDisposable
         if (_pendingInvalidations.TryRemove(e.FilePath, out var oldCts))
         {
             try { oldCts.Cancel(); }
-            catch { /* Ignore cancellation exceptions */ }
+            catch (ObjectDisposedException) { }
             oldCts.Dispose();
         }
 
@@ -1455,7 +1494,7 @@ public class GDProjectSemanticModel : IDisposable
                 foreach (var cts in _pendingInvalidations.Values)
                 {
                     try { cts.Cancel(); cts.Dispose(); }
-                    catch { }
+                    catch (ObjectDisposedException) { }
                 }
                 _pendingInvalidations.Clear();
                 _fileModels.Clear();

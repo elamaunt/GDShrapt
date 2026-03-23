@@ -270,10 +270,18 @@ namespace GDShrapt.Semantics.Validator
                         if (!string.IsNullOrEmpty(ownerType))
                         {
                             var profile = _semanticModel?.TypeSystem.GetClassContainerProfile(ownerType, memberName);
-                            // Only suppress if profile exists and is confirmed empty (no appends tracked)
                             if (profile != null && profile.ValueUsages.Count == 0)
                             {
-                                return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, "Variant", paramInfo.CallableParameterCount ?? 1);
+                                // For bare Array/Dictionary with explicit type annotation
+                                // (e.g., "var items: Array"), unknown contents — keep warning.
+                                // For inferred type from empty literal (e.g., "var data = []"), suppress.
+                                var memberInfo = _semanticModel?.RuntimeProvider?.GetMember(ownerType, memberName);
+                                var isBareExplicit = memberInfo?.HasExplicitType == true
+                                    && (memberInfo.Type == "Array" || memberInfo.Type == "Dictionary");
+                                if (!isBareExplicit)
+                                {
+                                    return BuildLambdaParameterTypes(paramInfo.CallableReceivesType, "Variant", paramInfo.CallableParameterCount ?? 1);
+                                }
                             }
                         }
                     }

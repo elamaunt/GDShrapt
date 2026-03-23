@@ -91,7 +91,7 @@ func die() -> void:
 	# Award experience to player who killed this enemy
 	if last_damage_source is PlayerEntity:
 		var player = last_damage_source as PlayerEntity
-		player.gain_experience(experience_reward)  # 94:2-GD7007-OK
+		player.gain_experience(experience_reward)  # 94:2-GD7007-OK, 94:2-GD4002-OK
 
 	super.die()
 
@@ -101,7 +101,7 @@ func take_damage(amount: int, source: Node = null) -> void:
 
 	# HACK: Aggro on damage source
 	if is_alive and source is BaseEntity:
-		set_target(source as BaseEntity)
+		set_target(source as BaseEntity)  # 104:13-GD3010-OK
 
 
 func patrol_to(target_position: Vector2, speed: float, delta: float) -> void:

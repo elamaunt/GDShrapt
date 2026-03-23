@@ -3,9 +3,9 @@ DEAD CODE ANALYSIS: godot-open-rpg
 ================================================================================
 
 SUMMARY
-Items: 183
+Items: 86
 Variable: 20
-Function: 155
+Function: 58
 Signal: 2
 Constant: 6
 
@@ -14,25 +14,11 @@ BY FILE
 addons/dialogic/Core/DialogicGameHandler.gd:
   231:5 Function: preload_timeline [FNC] [Strict]
 
-addons/dialogic/Core/Dialogic_Subsystem.gd:
-  10:5 Function: post_install [FNC] [Strict]
-  30:5 Function: save_game_state [FNC] [Strict]
-  35:5 Function: pause [FNC] [Strict]
-  40:5 Function: resume [FNC] [Strict]
-
 addons/dialogic/Core/index_class.gd:
   105:5 Function: _get_style_presets [FNC] [Strict]
 
-addons/dialogic/Editor/CharacterEditor/character_editor_portrait_tree.gd:
-  17:5 Function: clear_tree [FNC] [Strict]
-  57:5 Function: create_necessary_group_items [FNC] [Strict]
-
 addons/dialogic/Editor/Common/BrowserItem.gd:
   58:5 Function: set_current [FNC] [Strict]
-
-addons/dialogic/Editor/Common/ReferenceManager_AddReplacementPanel.gd:
-  19:5 Function: _on_add_pressed [FNC] [Strict]
-  38:5 Function: open_existing [FNC] [Strict]
 
 addons/dialogic/Editor/Common/broken_reference_manager.gd:
   209:6 Variable: timeline_event [VNR] [Strict]
@@ -52,13 +38,8 @@ addons/dialogic/Editor/Common/update_install_window.gd:
 addons/dialogic/Editor/Common/update_manager.gd:
   16:4 Variable: current_version [VNR] [Strict]
 
-addons/dialogic/Editor/Events/BranchEnd.gd:
-  25:5 Function: visual_select [FNC] [Strict]
-  48:5 Function: unhighlight [FNC] [Strict]
-
 addons/dialogic/Editor/Events/EventBlock/event_block.gd:
   10:4 Variable: editor_reference [VNR] [Strict]
-  118:5 Function: visual_select [FNC] [Strict]
 
 addons/dialogic/Editor/Events/Fields/array_part.gd:
   8:4 Variable: value_field [VNR] [Strict]
@@ -73,13 +54,6 @@ addons/dialogic/Editor/Events/Fields/field_text_multiline.gd:
   56:5 Function: _confirm_code_completion [FNC] [Strict]
   66:5 Function: _on_symbol_lookup [FNC] [Strict]
   71:5 Function: _on_symbol_validate [FNC] [Strict]
-
-addons/dialogic/Editor/Inspector/inspector_plugin.gd:
-  5:5 Function: _can_handle [FNC] [Strict]
-  9:5 Function: _parse_property [FNC] [Strict]
-
-addons/dialogic/Editor/Inspector/timeline_inspector_field.gd:
-  51:5 Function: _update_property [FNC] [Strict]
 
 addons/dialogic/Editor/Settings/csv_file.gd:
   42:6 Constant: TRANSLATION_ID [CNU] [Strict]
@@ -105,111 +79,15 @@ addons/dialogic/Editor/editors_manager.gd:
 addons/dialogic/Example Assets/portraits/CustomPortrait_FaceAtlas.gd:
   11:4 Variable: does_custom_portrait_change [VNR] [Strict]
 
-addons/dialogic/Modules/Audio/subsystem_audio.gd:
-  84:5 Function: pause [FNC] [Strict]
-  90:5 Function: resume [FNC] [Strict]
-
-addons/dialogic/Modules/Background/dialogic_background.gd:
-  30:5 Function: _custom_fade_in [FNC] [Strict]
-  36:5 Function: _custom_fade_out [FNC] [Strict]
-
-addons/dialogic/Modules/Background/subsystem_backgrounds.gd:
-  30:5 Function: clear_game_state [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/bounce.gd:
-  13:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/bounce_in_out.gd:
-  35:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/fade_down_in_out.gd:
-  40:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/fade_in_out.gd:
-  28:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/fade_up_in_out.gd:
-  40:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/heartbeat.gd:
-  10:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/instant_in_out.gd:
-  8:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/shake_x.gd:
-  17:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/shake_y.gd:
-  20:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/slide_down_in_out.gd:
-  22:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/slide_left_in_out.gd:
-  22:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/slide_right_in_out.gd:
-  23:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/slide_up_in.gd:
-  21:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/tada.gd:
-  22:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/zoom_center_in_out.gd:
-  32:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/DefaultAnimations/zoom_in_out.gd:
-  31:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/class_dialogic_animation.gd:
-  53:5 Function: pause [FNC] [Strict]
-  58:5 Function: resume [FNC] [Strict]
-  63:5 Function: _get_named_variations [FNC] [Strict]
-
-addons/dialogic/Modules/Character/dialogic_portrait.gd:
-  69:5 Function: _highlight [FNC] [Strict]
-  74:5 Function: _unhighlight [FNC] [Strict]
-
 addons/dialogic/Modules/Character/subsystem_containers.gd:
   27:5 Function: get_containers [FNC] [Strict]
   33:5 Function: get_container_container [FNC] [Strict]
 
 addons/dialogic/Modules/Character/subsystem_portraits.gd:
-  21:5 Function: clear_game_state [FNC] [Strict]
-  51:5 Function: pause [FNC] [Strict]
-  57:5 Function: resume [FNC] [Strict]
   158:8 Variable: _fade_in [VNR] [Strict]
-  185:5 Function: _update_character_transform [FNC] [Strict]
   288:5 Function: get_character_portrait [FNC] [Strict]
   304:5 Function: _remove_portrait [FNC] [Strict]
   577:5 Function: get_current_character [FNC] [Strict]
-  605:5 Function: get_character_info [FNC] [Strict]
-
-addons/dialogic/Modules/Choice/event_choice.gd:
-  56:5 Function: get_end_branch_control [FNC] [Strict]
-
-addons/dialogic/Modules/Choice/subsystem_choices.gd:
-  43:5 Function: clear_game_state [FNC] [Strict]
-  60:5 Function: post_install [FNC] [Strict]
-
-addons/dialogic/Modules/Condition/event_condition.gd:
-  63:5 Function: get_end_branch_control [FNC] [Strict]
-
-addons/dialogic/Modules/Core/event_end_branch.gd:
-  37:5 Function: find_opening_index [FNC] [Strict]
-
-addons/dialogic/Modules/Core/subsystem_animation.gd:
-  15:5 Function: clear_game_state [FNC] [Strict]
-
-addons/dialogic/Modules/Core/subsystem_input.gd:
-  31:5 Function: clear_game_state [FNC] [Strict]
-  39:5 Function: pause [FNC] [Strict]
-  45:5 Function: resume [FNC] [Strict]
-  52:5 Function: post_install [FNC] [Strict]
-  122:5 Function: handle_node_gui_input [FNC] [Strict]
 
 addons/dialogic/Modules/DefaultLayoutParts/Layer_Glossary/glossary_popup_layer.gd:
   42:6 Constant: MISSING_INDEX [CNU] [Strict]
@@ -221,19 +99,7 @@ addons/dialogic/Modules/DefaultLayoutParts/Layer_Textbubble/text_bubble_layer.gd
 addons/dialogic/Modules/Glossary/glossary_resource.gd:
   26:6 Constant: TITLE_PROPERTY [CNU] [Strict]
 
-addons/dialogic/Modules/Glossary/subsystem_glossary.gd:
-  19:5 Function: clear_game_state [FNC] [Strict]
-  105:5 Function: find_glossary [FNC] [Strict]
-  116:5 Function: get_entry [FNC] [Strict]
-
-addons/dialogic/Modules/HighlightPortrait/simple_highlight_portrait.gd:
-  22:5 Function: _highlight [FNC] [Strict]
-  28:5 Function: _unhighlight [FNC] [Strict]
-
 addons/dialogic/Modules/History/subsystem_history.gd:
-  101:5 Function: post_install [FNC] [Strict]
-  106:5 Function: clear_game_state [FNC] [Strict]
-  134:5 Function: save_game_state [FNC] [Strict]
   147:5 Function: open_history [FNC] [Strict]
   151:5 Function: close_history [FNC] [Strict]
   241:5 Function: has_last_event_been_visited [FNC] [Strict]
@@ -241,15 +107,10 @@ addons/dialogic/Modules/History/subsystem_history.gd:
   299:5 Function: reset_visited_history [FNC] [Strict]
 
 addons/dialogic/Modules/Jump/subsystem_jump.gd:
-  14:5 Function: clear_game_state [FNC] [Strict]
   77:5 Function: get_last_label_identifier [FNC] [Strict]
   85:5 Function: get_last_label_name [FNC] [Strict]
 
 addons/dialogic/Modules/Save/subsystem_save.gd:
-  80:5 Function: clear_game_state [FNC] [Strict]
-  85:5 Function: pause [FNC] [Strict]
-  90:5 Function: resume [FNC] [Strict]
-  137:5 Function: load [FNC] [Strict]
   283:6 Variable: _list_dir [VNR] [Strict]
   307:5 Function: delete_slot [FNC] [Strict]
   314:6 Variable: _list_dir [VNR] [Strict]
@@ -258,54 +119,27 @@ addons/dialogic/Modules/Save/subsystem_save.gd:
   451:5 Function: get_slot_thumbnail [FNC] [Strict]
   475:5 Variable: _result [VNR] [Strict]
 
-addons/dialogic/Modules/Settings/subsystem_settings.gd:
-  22:5 Function: clear_game_state [FNC] [Strict]
-  74:5 Function: has_setting [FNC] [Strict]
-
 addons/dialogic/Modules/Style/subsystem_styles.gd:
-  11:5 Function: clear_game_state [FNC] [Strict]
   142:5 Function: get_current_style [FNC] [Strict]
-
-addons/dialogic/Modules/StyleEditor/Components/style_browser_window.gd:
-  14:5 Function: get_picked_info [FNC] [Strict]
 
 addons/dialogic/Modules/StyleEditor/style_editor.gd:
   115:5 Function: delete_style_by_name [FNC] [Strict]
-
-addons/dialogic/Modules/Text/auto_advance.gd:
-  223:5 Function: get_progress [FNC] [Strict]
 
 addons/dialogic/Modules/Text/character_settings/character_moods_settings.gd:
   41:5 Function: get_portrait_data [FNC] [Strict]
   47:5 Function: set_portrait_data [FNC] [Strict]
 
-addons/dialogic/Modules/Text/character_settings/character_portrait_mood_settings.gd:
-  18:5 Function: update_visibility [FNC] [Strict]
-
 addons/dialogic/Modules/Text/subsystem_text.gd:
   27:4 Variable: text_already_read [VNR] [Strict]
-  51:5 Function: clear_game_state [FNC] [Strict]
-  76:5 Function: post_install [FNC] [Strict]
   224:5 Function: is_textbox_visible [FNC] [Strict]
   249:5 Function: set_text_voice_synced [FNC] [Strict]
-  255:5 Function: is_text_voice_synced [FNC] [Strict]
-  356:5 Function: execute_effects [FNC] [Strict]
   417:5 Function: get_current_speaker [FNC] [Strict]
 
-addons/dialogic/Modules/TextInput/subsystem_text_input.gd:
-  13:5 Function: clear_game_state [FNC] [Strict]
-
 addons/dialogic/Modules/Variable/subsystem_variables.gd:
-  28:5 Function: clear_game_state [FNC] [Strict]
   188:5 Function: folders [FNC] [Strict]
   196:5 Function: variables [FNC] [Strict]
   260:6 Function: folders [FNC] [Strict]
   268:6 Function: variables [FNC] [Strict]
-
-addons/dialogic/Modules/Voice/subsystem_voice.gd:
-  47:5 Function: pause [FNC] [Strict]
-  52:5 Function: resume [FNC] [Strict]
-  134:5 Function: is_running [FNC] [Strict]
 
 addons/dialogic/Resources/dialogic_layout_base.gd:
   15:5 Function: get_layer [FNC] [Strict]
@@ -315,26 +149,11 @@ addons/dialogic/Resources/dialogic_style.gd:
   44:5 Function: get_layer_index [FNC] [Strict]
   261:5 Function: prepare [FNC] [Strict]
 
-addons/dialogic/Resources/event.gd:
-  151:5 Function: get_end_branch_control [FNC] [Strict]
-
-addons/dialogic/plugin.gd:
-  23:5 Function: _enable_plugin [FNC] [Strict]
-  28:5 Function: _disable_plugin [FNC] [Strict]
-  64:5 Function: _has_main_screen [FNC] [Strict]
-  68:5 Function: _get_plugin_name [FNC] [Strict]
-  72:5 Function: _get_plugin_icon [FNC] [Strict]
-  100:5 Function: _get_unsaved_status [FNC] [Strict]
-  106:5 Function: _handles [FNC] [Strict]
-  112:5 Function: _edit [FNC] [Strict]
-  153:5 Function: _build [FNC] [Strict]
-
 src/combat/actions/battler_action.gd:
   69:5 Function: is_target_valid [FNC] [Strict]
   112:5 Function: can_target_battler [FNC] [Strict]
 
 src/combat/battlers/battler_anim.gd:
-  98:5 Function: is_playing [FNC] [Strict]
   103:5 Function: queue_animation [FNC] [Strict]
 
 src/combat/battlers/battler_stats.gd:
@@ -344,12 +163,6 @@ src/combat/battlers/battler_stats.gd:
 
 src/combat/elements.gd:
   10:6 Constant: ADVANTAGES [CNU] [Strict]
-
-src/common/music/music_player.gd:
-  50:5 Function: get_playing_track [FNC] [Strict]
-
-src/common/screen_transitions/screen_transition.gd:
-  65:5 Function: cover [FNC] [Strict]
 
 src/field/cutscenes/cutscene.gd:
   39:12 Function: is_cutscene_in_progress [FNC] [Strict]

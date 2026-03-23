@@ -2130,9 +2130,9 @@ test_scripts/cross_file_inference.gd
 --- 217:2 Variable callback ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Callable
+    effective:    Callable
+    confidence:   High
     nullable:     no
 
 --- 225:0 Method _on_effect_result ---
@@ -2219,9 +2219,9 @@ test_scripts/cross_file_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 241:3 Variable entity ---
@@ -2566,9 +2566,9 @@ test_scripts/cycles_test.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 26:0 Method accumulator_cycle ---
@@ -3185,7 +3185,7 @@ test_scripts/cyclic_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary|PackedStringArray
+    inferred:     Array|Dictionary|EditorExportPreset|PackedStringArray
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -3209,9 +3209,9 @@ test_scripts/cyclic_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      has(-1)
@@ -3362,9 +3362,9 @@ test_scripts/cyclic_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 121:37 Parameter initial ---
@@ -3434,9 +3434,9 @@ test_scripts/cyclic_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 131:38 Parameter initial ---
@@ -3631,7 +3631,7 @@ test_scripts/cyclic_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary[String, Variant]|PackedStringArray
+    inferred:     Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -3693,7 +3693,7 @@ test_scripts/cyclic_inference.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary[String, Variant]|PackedStringArray
+    inferred:     Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -3756,9 +3756,9 @@ test_scripts/cyclic_inference.gd
 --- 215:1 Variable state ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Dictionary[String, int]
+    effective:    Dictionary[String, int]
+    confidence:   Medium
     nullable:     no
 
 --- 216:1 Variable current ---
@@ -3799,9 +3799,9 @@ test_scripts/cyclic_inference.gd
 --- 226:24 Parameter state ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Dictionary[String, int]
+    effective:    Dictionary[String, int]
+    confidence:   Medium
     nullable:     no
   Parameter Inference:
     inferred:     Array|String|float|int
@@ -9245,7 +9245,7 @@ test_scripts/duck_typing_advanced.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Dictionary|Object|String
+    inferred:     Callable|Dictionary|String
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -9285,7 +9285,7 @@ test_scripts/duck_typing_advanced.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary[String, Variant]|PackedStringArray
+    inferred:     Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -9322,9 +9322,9 @@ test_scripts/duck_typing_advanced.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 181:2 Variable result ---
@@ -9889,9 +9889,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary|Object
+    inferred:     Dictionary
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      duplicate(-1), clone(-1)
@@ -9983,9 +9983,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary|Object
+    inferred:     Dictionary
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 63:29 Parameter target ---
@@ -9996,7 +9996,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+    inferred:     PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -10041,9 +10041,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary|Object
+    inferred:     Dictionary
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      duplicate(-1), clone(-1)
@@ -10073,7 +10073,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+    inferred:     PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -10157,9 +10157,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 94:1 Variable msg_type ---
@@ -10369,7 +10369,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+6 more)|PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array
+    inferred:     PackedByteArray|PackedColorArray|PackedFloat32Array|PackedFloat64Array|PackedInt32Array|PackedInt64Array|PackedStringArray|PackedVector2Array|PackedVector3Array|PackedVector4Array
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -10425,7 +10425,7 @@ test_scripts/dynamic_dispatch.gd
     confidence:   High
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary|PackedStringArray|String|bool|float|int
+    inferred:     Array|Dictionary|EditorExportPreset|PackedStringArray|String|bool|float|int
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -10903,9 +10903,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 307:1 Variable event_type ---
@@ -10956,9 +10956,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 318:32 Parameter handler_name ---
@@ -11205,9 +11205,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 370:13 Parameter t ---
@@ -11372,9 +11372,9 @@ test_scripts/dynamic_dispatch.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      duplicate(-1), clone(-1)
@@ -12069,9 +12069,9 @@ test_scripts/ecs_like_system.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 133:1 Variable result ---
@@ -12655,7 +12655,7 @@ test_scripts/ecs_like_system.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary
+    inferred:     Array|Dictionary|EditorExportPreset
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -12769,9 +12769,9 @@ test_scripts/ecs_like_system.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 289:2 Variable event ---
@@ -13058,9 +13058,9 @@ test_scripts/ecs_like_system.gd
     nullable:     no
     container:    Dictionary[String, Variant]
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 374:1 Iterator eid_str ---
@@ -14483,9 +14483,9 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 29:1 Iterator item ---
@@ -14512,9 +14512,9 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 36:1 Variable result ---
@@ -14549,9 +14549,9 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary|Object
+    inferred:     Dictionary
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 43:29 Parameter prop_name ---
@@ -14904,9 +14904,9 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      has(-1)
@@ -14933,7 +14933,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   Medium
     nullable:     no
 
 --- 155:2 Variable value ---
@@ -15051,9 +15051,9 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 209:1 Variable quest_id ---
@@ -15550,7 +15550,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   Medium
     nullable:     no
 
 --- 358:4 Variable scaling ---
@@ -15558,7 +15558,7 @@ test_scripts/game_patterns.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   Medium
     nullable:     no
 
 --- 359:4 Variable total ---
@@ -15623,9 +15623,9 @@ test_scripts/game_patterns.gd
 --- 384:2 Variable effect ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Dictionary[String, Variant]
+    effective:    Dictionary[String, Variant]
+    confidence:   Medium
     nullable:     no
 
 --- 395:1 Iterator i ---
@@ -15846,7 +15846,7 @@ test_scripts/game_patterns.gd
     confidence:   Unknown
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object|String
+    inferred:     Callable|String
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -15958,9 +15958,9 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 516:0 Method _serialize_array ---
@@ -16151,7 +16151,7 @@ test_scripts/game_patterns.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Array|Dictionary[String, Variant]|PackedStringArray
+    inferred:     Array|Dictionary[String, Variant]|EditorExportPreset|PackedStringArray
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -17691,25 +17691,25 @@ test_scripts/local_variables.gd
 --- 30:1 Variable sum ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     int
+    effective:    int
+    confidence:   High
     nullable:     no
 
 --- 31:1 Variable product ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     int
+    effective:    int
+    confidence:   High
     nullable:     no
 
 --- 32:1 Variable combined ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     int
+    effective:    int
+    confidence:   High
     nullable:     no
 
 --- 36:0 Method conditional_assignment ---
@@ -18536,17 +18536,17 @@ test_scripts/method_chains.gd
     nullable:     no
     container:    Dictionary[String, Dictionary] (homogeneous)
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 50:1 Variable level1 ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Dictionary
+    effective:    Dictionary
+    confidence:   High
     nullable:     no
 
 --- 54:1 Variable level2 ---
@@ -20025,9 +20025,9 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 183:2 Iterator child ---
@@ -20078,9 +20078,9 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 193:1 Variable results ---
@@ -20439,9 +20439,9 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 304:1 Variable results ---
@@ -20490,9 +20490,9 @@ test_scripts/polymorphic_interfaces.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 314:1 Variable results ---
@@ -24371,9 +24371,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 129:26 Parameter operation ---
@@ -24587,9 +24587,9 @@ test_scripts/signal_callback_chains.gd
 --- 172:2 Variable handlers ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Array
+    effective:    Array
+    confidence:   High
     nullable:     no
 
 --- 174:2 Iterator handler ---
@@ -24988,9 +24988,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 273:2 Variable mapped ---
@@ -25033,9 +25033,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 282:2 Variable filtered ---
@@ -25255,9 +25255,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 346:1 Variable timer ---
@@ -25298,9 +25298,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 358:34 Parameter on_failure ---
@@ -25311,9 +25311,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 360:1 Variable result ---
@@ -25422,9 +25422,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Unknown
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 373:70 Parameter on_error ---
@@ -25799,9 +25799,9 @@ test_scripts/signal_callback_chains.gd
     confidence:   Unknown
     nullable:     no
   Parameter Inference:
-    inferred:     Object|Signal
+    inferred:     Signal
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 456:29 Parameter signal_name ---
@@ -29113,7 +29113,7 @@ test_scripts/type_guards.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   Medium
     nullable:     no
 
 --- 44:0 Method type_guard_with_and ---
@@ -29156,7 +29156,7 @@ test_scripts/type_guards.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     (+8 more)|String|StringName|float|int
+    inferred:     (+8 more)|String|StringName|Vector2i|float|int
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -29341,9 +29341,9 @@ test_scripts/type_guards.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      length(-1), size(-1), keys(-1), is_empty(-1), has(-1), to_upper(-1), front(-1)
@@ -29487,7 +29487,7 @@ test_scripts/type_guards.gd
     declared:     (none)
     inferred:     Variant
     effective:    Variant
-    confidence:   Unknown
+    confidence:   Medium
     nullable:     no
 
 --- 207:0 Method guard_with_method_call ---
@@ -31148,9 +31148,9 @@ test_scripts/union_returns.gd
     nullable:     no
     container:    Dictionary[String, Variant]
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      has(-1)
@@ -32016,9 +32016,9 @@ test_scripts/union_types_complex.gd
 --- 188:1 Variable current ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Dictionary[String, Dictionary[String, Dictionary[String, String]]]
+    effective:    Dictionary[String, Dictionary[String, Dictionary[String, String]]]
+    confidence:   Medium
     nullable:     no
 
 --- 189:1 Iterator key ---
@@ -32127,9 +32127,9 @@ test_scripts/union_types_complex.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 239:0 Method map_with_fallback ---
@@ -32164,9 +32164,9 @@ test_scripts/union_types_complex.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 239:41 Parameter fallback ---
@@ -32236,9 +32236,9 @@ test_scripts/union_types_complex.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 252:34 Parameter transform ---
@@ -32249,9 +32249,9 @@ test_scripts/union_types_complex.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 256:1 Variable results ---
@@ -32302,9 +32302,9 @@ test_scripts/union_types_complex.gd
     confidence:   Certain
     nullable:     no
   Parameter Inference:
-    inferred:     Callable|Object
+    inferred:     Callable
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
 
 --- 263:39 Parameter default_value ---
@@ -32561,7 +32561,7 @@ test_scripts/union_types_complex.gd
     nullable:     no
     container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
   Parameter Inference:
-    inferred:     Array|PackedStringArray
+    inferred:     Array|EditorExportPreset|PackedStringArray
     confidence:   High
     reason:       union from type checks
     duck-typed:   yes
@@ -32572,9 +32572,9 @@ test_scripts/union_types_complex.gd
 --- 351:1 Variable type_field ---
   Type Info:
     declared:     (none)
-    inferred:     Variant
-    effective:    Variant
-    confidence:   Unknown
+    inferred:     Dictionary[String, Dictionary[String, String]]
+    effective:    Dictionary[String, Dictionary[String, String]]
+    confidence:   Medium
     nullable:     no
 
 --- 359:0 Method _process_typed_data ---
@@ -32594,9 +32594,9 @@ test_scripts/union_types_complex.gd
     nullable:     no
     container:    Dictionary[String, Dictionary[String, Dictionary[String, String]]] (homogeneous)
   Parameter Inference:
-    inferred:     Dictionary[String, Variant]|Object
+    inferred:     Dictionary[String, Variant]
     confidence:   High
-    reason:       union from type checks
+    reason:       single type from constraints
     duck-typed:   yes
   Duck Constraints:
     methods:      has(-1)

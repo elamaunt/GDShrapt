@@ -2052,7 +2052,7 @@ test_scripts/scene_nodes.gd
     160:8 scene_owner -> Node (base: Node) # OK
 
   duplicate_node()
-    166:8 copy -> Node2D (base: Node2D) # OK
+    166:8 copy -> Node2D|null (base: Node2D|null) # OK
 
   get_node_configuration_warnings()
     174:2 warnings -> PackedStringArray (base: PackedStringArray) # OK
@@ -2091,10 +2091,10 @@ test_scripts/scene_references.gd
 
   spawn_enemy()
     48:14 enemy_scene -> PackedScene (base: PackedScene) # OK
-    49:1 enemy -> Node2D (base: Node2D) # OK
+    49:1 enemy -> Node2D|null (base: Node2D|null) # OK
     49:18 spawn_pos -> Vector2 (base: Vector2) # OK
-    50:27 enemy -> Node2D (base: Node2D) # OK
-    51:8 enemy -> Node2D (base: Node2D) # OK
+    50:27 enemy -> Node2D|null (base: Node2D|null) # OK
+    51:8 enemy -> Node2D|null (base: Node2D|null) # OK
 
   get_enemies()
     57:5 child -> Node2D (base: Node) # OK

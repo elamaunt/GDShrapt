@@ -19,7 +19,7 @@ func get_initial():
 	return {"level": 0}
 
 
-func transform(input):
+func transform(input):  # 22:15-GD7020-OK
 	return {"level": input.get("level", 0) + 1}  # 23:18-GD7007-OK
 
 

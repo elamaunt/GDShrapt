@@ -46,9 +46,9 @@ func spawn_enemy(enemy_scene: PackedScene, spawn_pos: Vector2) -> Node2D:
 	# FIXME: Should check if enemy_scene is valid before instantiating
 	# HACK: Using 'as Node2D' to force type, should use proper type checking
 	var enemy := enemy_scene.instantiate() as Node2D
-	enemy.position = spawn_pos
+	enemy.position = spawn_pos  # 49:1-GD3009-OK
 	enemy_container.add_child(enemy)  # 50:1-GD7007-OK
-	return enemy
+	return enemy  # 51:1-GD3007-OK
 
 
 func get_enemies() -> Array[Node2D]:

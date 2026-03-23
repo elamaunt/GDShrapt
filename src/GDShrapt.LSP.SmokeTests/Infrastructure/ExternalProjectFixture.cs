@@ -56,7 +56,8 @@ internal static class ExternalProjectFixture
         var context = new GDDefaultProjectContext(projectRoot);
         var project = new GDScriptProject(context, new GDScriptProjectOptions
         {
-            EnableSceneTypesProvider = true
+            EnableSceneTypesProvider = true,
+            EnableCallSiteRegistry = true
         });
 
         project.LoadScripts();

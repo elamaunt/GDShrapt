@@ -55,7 +55,12 @@ public sealed class GDCliLogger : IGDLogger
     public void Info(string message) => Log(GDLogLevel.Info, message);
     public void Warning(string message) => Log(GDLogLevel.Warning, message);
     public void Error(string message) => Log(GDLogLevel.Error, message);
-    public void Error(string message, Exception ex) => Log(GDLogLevel.Error, $"{message}: {ex.Message}");
+    public void Error(string message, Exception ex)
+    {
+        Log(GDLogLevel.Error, $"{message}: {ex.Message}");
+        if (IsEnabled(GDLogLevel.Debug))
+            Log(GDLogLevel.Debug, ex.ToString());
+    }
 
     private void Log(GDLogLevel level, string message)
     {
@@ -116,7 +121,7 @@ public sealed class GDCliLogger : IGDLogger
     /// </summary>
     /// <param name="context">Context name to add (e.g., "Parser", "Validator").</param>
     /// <returns>New logger with combined context prefix.</returns>
-    public GDCliLogger WithContext(string context)
+    public IGDLogger WithContext(string context)
     {
         var newPrefix = string.IsNullOrEmpty(_contextPrefix)
             ? context

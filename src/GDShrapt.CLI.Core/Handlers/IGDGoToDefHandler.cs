@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using GDShrapt.Abstractions;
 
 namespace GDShrapt.CLI.Core;
@@ -15,6 +16,11 @@ public interface IGDGoToDefHandler
     /// <param name="column">Column number (1-based).</param>
     /// <returns>Definition location or null if not found.</returns>
     GDDefinitionLocation? FindDefinition(string filePath, int line, int column);
+
+    /// <summary>
+    /// Finds definitions at the given position (multiple for union types).
+    /// </summary>
+    IReadOnlyList<GDDefinitionLocation> FindDefinitions(string filePath, int line, int column);
 
     /// <summary>
     /// Finds the definition of a symbol by name.

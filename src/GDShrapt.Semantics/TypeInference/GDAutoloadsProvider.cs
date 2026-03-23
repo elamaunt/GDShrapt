@@ -104,65 +104,62 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
         return false;
     }
 
-    private GDRuntimeTypeInfo? BuildAutoloadTypeInfo(GDAutoloadEntry autoload)
+    private IGDScriptInfo? ResolveScript(string path)
     {
-        // If it's a script, try to get type from script provider
-        if (autoload.IsScript && _scriptProvider != null)
+        return _scriptProvider?.GetScriptByPath(path)
+            ?? _scriptProvider?.Scripts.FirstOrDefault(s =>
+                s.ResPath != null && s.ResPath.Equals(path, System.StringComparison.OrdinalIgnoreCase))
+            ?? _scriptProvider?.Scripts.FirstOrDefault(s =>
+                s.FullPath != null && s.FullPath.EndsWith(
+                    path.Replace("res://", "").Replace('\\', '/'),
+                    System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    private IGDScriptInfo? ResolveAutoloadScript(GDAutoloadEntry autoload)
+    {
+        if (autoload.IsScript)
+            return ResolveScript(autoload.Path);
+
+        if (autoload.IsScene && _sceneTypesProvider != null)
         {
-            var scriptInfo = _scriptProvider.GetScriptByPath(autoload.Path)
-                ?? _scriptProvider.Scripts.FirstOrDefault(s =>
-                    s.ResPath != null && s.ResPath.Equals(autoload.Path, System.StringComparison.OrdinalIgnoreCase))
-                ?? _scriptProvider.Scripts.FirstOrDefault(s =>
-                    s.FullPath != null && s.FullPath.EndsWith(
-                        autoload.Path.Replace("res://", "").Replace('\\', '/'),
-                        System.StringComparison.OrdinalIgnoreCase));
-
-            if (scriptInfo != null)
-            {
-                var baseType = scriptInfo.Class?.Extends?.Type?.BuildName() ?? "Node";
-                var members = ExtractMembers(scriptInfo);
-
-                return new GDRuntimeTypeInfo(autoload.Name, baseType)
-                {
-                    Members = members
-                };
-            }
+            var rootScriptPath = _sceneTypesProvider.GetNodeScript(autoload.Path, ".");
+            if (!string.IsNullOrEmpty(rootScriptPath))
+                return ResolveScript(rootScriptPath);
         }
 
-        // If it's a scene, try to resolve the root node's attached script
-        if (autoload.IsScene)
+        return null;
+    }
+
+    private GDRuntimeTypeInfo? BuildAutoloadTypeInfo(GDAutoloadEntry autoload)
+    {
+        var scriptInfo = ResolveAutoloadScript(autoload);
+        if (scriptInfo != null)
         {
-            if (_sceneTypesProvider != null && _scriptProvider != null)
+            var baseType = scriptInfo.Class?.Extends?.Type?.BuildName() ?? "Node";
+            var members = ExtractMembers(scriptInfo);
+            var classNameId = scriptInfo.Class?.ClassName?.Identifier;
+
+            return new GDRuntimeTypeInfo(autoload.Name, baseType)
             {
-                var rootScriptPath = _sceneTypesProvider.GetNodeScript(autoload.Path, ".");
-                if (!string.IsNullOrEmpty(rootScriptPath))
+                Members = members,
+                SourceInfo = scriptInfo.FullPath != null ? new GDTypeSourceInfo
                 {
-                    var scriptInfo = _scriptProvider.GetScriptByPath(rootScriptPath)
-                        ?? _scriptProvider.Scripts.FirstOrDefault(s =>
-                            s.ResPath != null && s.ResPath.Equals(rootScriptPath, System.StringComparison.OrdinalIgnoreCase))
-                        ?? _scriptProvider.Scripts.FirstOrDefault(s =>
-                            s.FullPath != null && s.FullPath.EndsWith(
-                                rootScriptPath.Replace("res://", "").Replace('\\', '/'),
-                                System.StringComparison.OrdinalIgnoreCase));
+                    FilePath = scriptInfo.FullPath,
+                    Line = classNameId?.StartLine ?? 0,
+                    StartColumn = classNameId?.StartColumn ?? 0,
+                    EndColumn = classNameId?.EndColumn ?? 0,
+                    TypeName = autoload.Name
+                } : null
+            };
+        }
 
-                    if (scriptInfo != null)
-                    {
-                        var baseType = scriptInfo.Class?.Extends?.Type?.BuildName() ?? "Node";
-                        var members = ExtractMembers(scriptInfo);
-
-                        return new GDRuntimeTypeInfo(autoload.Name, baseType)
-                        {
-                            Members = members
-                        };
-                    }
-                }
-
-                // Try getting the root node type from the scene
-                var rootType = _sceneTypesProvider.GetRootNodeType(autoload.Path);
-                if (!string.IsNullOrEmpty(rootType))
-                {
-                    return new GDRuntimeTypeInfo(autoload.Name, rootType);
-                }
+        // If it's a scene without a script, try getting the root node type
+        if (autoload.IsScene && _sceneTypesProvider != null)
+        {
+            var rootType = _sceneTypesProvider.GetRootNodeType(autoload.Path);
+            if (!string.IsNullOrEmpty(rootType))
+            {
+                return new GDRuntimeTypeInfo(autoload.Name, rootType);
             }
 
             return new GDRuntimeTypeInfo(autoload.Name, "Node");

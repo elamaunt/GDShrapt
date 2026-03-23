@@ -180,9 +180,9 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
             {
                 break;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Log error but continue reading
+                GDLspPerformanceTrace.Log("transport", $"READ-ERROR: {ex.Message}");
             }
         }
     }
@@ -272,10 +272,9 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         }
         catch (Exception ex)
         {
+            GDLspPerformanceTrace.Log("transport", $"PROCESS-ERROR: {ex}");
             if (Logger != null)
                 _ = Logger.ErrorAsync($"Error processing message: {ex.Message}");
-            else
-                Console.Error.WriteLine($"Error processing message: {ex.Message}");
         }
     }
 
@@ -336,6 +335,7 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         }
         catch (Exception ex)
         {
+            GDLspPerformanceTrace.Log("request", $"ERROR {method} id={id}: {ex}");
             await SendErrorAsync(id, GDJsonRpcError.InternalError, ex.Message).ConfigureAwait(false);
         }
         finally
@@ -374,9 +374,9 @@ public class GDStdioJsonRpcTransport : IGDJsonRpcTransport
         {
             await handler.Handler(paramsElement).ConfigureAwait(false);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Notifications don't get responses, just log the error
+            GDLspPerformanceTrace.Log("notification", $"ERROR {method}: {ex.Message}");
         }
         finally
         {

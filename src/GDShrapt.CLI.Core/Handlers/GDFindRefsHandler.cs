@@ -58,10 +58,67 @@ public class GDFindRefsHandler : IGDFindRefsHandler
     /// <inheritdoc />
     public virtual IReadOnlyList<GDReferenceGroup> FindReferences(string symbolName, string? filePath = null)
     {
+        if (filePath != null && GDBuiltInFileHelper.IsBuiltInTypeFile(filePath))
+            return FindBuiltInMemberReferences(symbolName, filePath);
+
         var collector = new GDSymbolReferenceCollector(_project, _projectModel);
         var result = collector.CollectReferences(symbolName, filePath);
 
         return ConvertToGroups(result, symbolName);
+    }
+
+    private IReadOnlyList<GDReferenceGroup> FindBuiltInMemberReferences(string memberName, string filePath)
+    {
+        if (_projectModel == null)
+            return [];
+
+        var typeName = GDBuiltInFileHelper.ExtractTypeName(filePath);
+        var accesses = _projectModel.GetMemberAccessesInProject(typeName, memberName);
+
+        var byFile = new Dictionary<string, List<GDCliReferenceLocation>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (file, reference) in accesses)
+        {
+            var path = file.FullPath;
+            if (path == null) continue;
+
+            var refNode = reference.ReferenceNode;
+            var line = (refNode?.StartLine ?? 0) + 1;
+            var col = (refNode?.StartColumn ?? 0) + 1;
+
+            if (!byFile.TryGetValue(path, out var locations))
+            {
+                locations = new List<GDCliReferenceLocation>();
+                byFile[path] = locations;
+            }
+
+            locations.Add(new GDCliReferenceLocation
+            {
+                FilePath = path,
+                Line = line,
+                Column = col,
+                IsDeclaration = false,
+                Context = GetSourceLine(path, line)
+            });
+        }
+
+        if (byFile.Count == 0)
+            return [];
+
+        var groups = new List<GDReferenceGroup>();
+        foreach (var (path, locations) in byFile)
+        {
+            var script = _project.GetScript(path);
+            groups.Add(new GDReferenceGroup
+            {
+                ClassName = script != null ? ResolveDisplayName(script) : Path.GetFileNameWithoutExtension(path),
+                DeclarationFilePath = path,
+                SymbolName = memberName,
+                Locations = locations
+            });
+        }
+
+        return groups;
     }
 
     /// <inheritdoc />

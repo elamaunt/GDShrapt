@@ -23,7 +23,7 @@ public class GDConfigShowCommandTests
     {
         if (_tempDir != null && Directory.Exists(_tempDir))
         {
-            try { Directory.Delete(_tempDir, true); } catch { }
+            try { Directory.Delete(_tempDir, true); } catch { /* Best-effort cleanup */ }
         }
     }
 

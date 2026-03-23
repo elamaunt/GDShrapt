@@ -134,7 +134,7 @@ func custom_type_guard(value) -> bool:  # 132:23-GD7020-OK
 	return value is Dictionary and value.has("type") and value.get("type") == "player"
 
 
-func using_custom_guard(value):
+func using_custom_guard(value):  # 137:24-GD7020-OK
 	if custom_type_guard(value):
 		# Analyzer might not narrow here without special support
 		# but value should still be usable as Dictionary
@@ -246,7 +246,7 @@ func enum_like_guard(data: Dictionary):
 			return null
 
 
-func assert_type_guard(value):
+func assert_type_guard(value):  # 249:23-GD7020-OK
 	# Assert as type guard (development only)
 	assert(value is Dictionary, "Expected Dictionary")
 	# After assert, value is Dictionary (in debug builds)
@@ -259,7 +259,7 @@ func ternary_with_guard(value):
 	return result
 
 
-func guard_propagation(outer):
+func guard_propagation(outer):  # 262:23-GD7020-OK
 	# Type guard should propagate to inner scope
 	if outer is Dictionary:
 		var inner_func = func():

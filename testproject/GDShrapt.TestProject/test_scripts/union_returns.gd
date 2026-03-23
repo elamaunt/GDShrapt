@@ -136,7 +136,7 @@ func callback_return(callback: Callable):
 	return result                        # Variant (from callback)
 
 
-func exception_pattern(operation: String, data):  # 139:0-GD3023-OK
+func exception_pattern(operation: String, data):  # 139:0-GD3023-OK, 139:42-GD7020-OK
 	# Exception-like pattern with union return
 	match operation:
 		"read":

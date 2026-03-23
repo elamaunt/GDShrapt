@@ -1,0 +1,76 @@
+================================================================================
+DEAD CODE ANALYSIS: godot-open-rpg
+================================================================================
+
+SUMMARY
+Items: 30
+Variable: 6
+Function: 21
+Constant: 3
+
+BY FILE
+--------------------------------------------------------------------------------
+addons/dialogic/Core/index_class.gd:
+  105:5 Function: _get_style_presets [FNC] [Strict]
+
+addons/dialogic/Editor/Common/update_install_window.gd:
+  79:5 Function: _on_window_close_requested [FNC] [Strict]
+  95:5 Function: _on_update_manager_downdload_completed [FNC] [Strict]
+
+addons/dialogic/Editor/Events/Fields/field_flex_value.gd:
+  97:5 Function: _on_delete_pressed [FNC] [Strict]
+
+addons/dialogic/Editor/Events/Fields/field_text_multiline.gd:
+  44:5 Function: _request_code_completion [FNC] [Strict]
+  50:5 Function: _filter_code_completion_candidates [FNC] [Strict]
+  56:5 Function: _confirm_code_completion [FNC] [Strict]
+  66:5 Function: _on_symbol_lookup [FNC] [Strict]
+  71:5 Function: _on_symbol_validate [FNC] [Strict]
+
+addons/dialogic/Editor/Settings/csv_file.gd:
+  242:6 Variable: _glossary_translation_id [VNR] [Strict]
+
+addons/dialogic/Modules/Character/subsystem_portraits.gd:
+  158:8 Variable: _fade_in [VNR] [Strict]
+  304:5 Function: _remove_portrait [FNC] [Strict]
+
+addons/dialogic/Modules/DefaultLayoutParts/Layer_Glossary/glossary_popup_layer.gd:
+  73:5 Variable: _error [VNR] [Strict]
+
+addons/dialogic/Modules/Save/subsystem_save.gd:
+  283:6 Variable: _list_dir [VNR] [Strict]
+  314:6 Variable: _list_dir [VNR] [Strict]
+  475:5 Variable: _result [VNR] [Strict]
+
+src/combat/actions/battler_action.gd:
+  69:5 Function: is_target_valid [FNC] [Strict]
+  112:5 Function: can_target_battler [FNC] [Strict]
+
+src/combat/battlers/battler_anim.gd:
+  103:5 Function: queue_animation [FNC] [Strict]
+
+src/combat/battlers/battler_stats.gd:
+  99:5 Function: add_multiplier [FNC] [Strict]
+  110:5 Function: remove_modifier [FNC] [Strict]
+  118:5 Function: remove_multiplier [FNC] [Strict]
+
+src/combat/elements.gd:
+  10:6 Constant: ADVANTAGES [CNU] [Strict]
+
+src/field/cutscenes/cutscene.gd:
+  39:12 Function: is_cutscene_in_progress [FNC] [Strict]
+
+src/field/field_events.gd:
+  6:6 Constant: PROCESS_PRIORITY [CNU] [Strict]
+
+src/field/gameboard/gameboard_properties.gd:
+  12:6 Constant: INVALID_INDEX [CNU] [Strict]
+
+src/field/gamepieces/gamepiece_registry.gd:
+  67:5 Function: get_gamepiece_by_name [FNC] [Strict]
+  84:5 Function: get_occupied_cells [FNC] [Strict]
+  88:5 Function: get_gamepieces [FNC] [Strict]
+
+src/field/ui/popups/ui_popup.gd:
+  72:5 Function: _on_bounce_finished [FNC] [Strict]
+

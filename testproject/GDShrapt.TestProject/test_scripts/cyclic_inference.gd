@@ -79,7 +79,7 @@ func state_idle(context):
 	return {"state": "idle", "data": null}
 
 
-func state_active(context):
+func state_active(context):  # 82:18-GD7020-OK
 	# Receives from idle, can go to processing or back
 	var data = context.get("data") # 84:12-GD7007-OK
 	if data:
@@ -118,7 +118,7 @@ func process_item(item):
 
 # === Accumulator Pattern with Cycle ===
 
-func accumulate_left(list, func_ref, initial):  # 121:21-GD7020-OK
+func accumulate_left(list, func_ref, initial):  # 121:21-GD7020-OK, 121:27-GD7020-OK
 	# Standard fold-left, but calls itself
 	if list.is_empty(): # 123:4-GD7007-OK
 		return initial
@@ -128,7 +128,7 @@ func accumulate_left(list, func_ref, initial):  # 121:21-GD7020-OK
 	return accumulate_left(tail, func_ref, new_acc)
 
 
-func accumulate_right(list, func_ref, initial):  # 131:22-GD7020-OK
+func accumulate_right(list, func_ref, initial):  # 131:22-GD7020-OK, 131:28-GD7020-OK
 	# Fold-right, also recursive
 	if list.is_empty(): # 133:4-GD7007-OK
 		return initial

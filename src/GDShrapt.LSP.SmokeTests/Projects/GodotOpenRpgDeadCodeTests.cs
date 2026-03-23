@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -20,6 +21,8 @@ public class GodotOpenRpgDeadCodeTests : SmokeTestBase
         Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "verification"));
     private static readonly string OutputFile = Path.Combine(VerificationDir, "DEAD_CODE_OUTPUT.txt");
     private static readonly string VerifiedFile = Path.Combine(VerificationDir, "DEAD_CODE_VERIFIED.txt");
+    private static readonly string AddonOutputFile = Path.Combine(VerificationDir, "DEAD_CODE_ADDON_OUTPUT.txt");
+    private static readonly string AddonVerifiedFile = Path.Combine(VerificationDir, "DEAD_CODE_ADDON_VERIFIED.txt");
 
     [ClassInitialize]
     public static void Init(TestContext _) => InitProject(RepoUrl, RepoName);
@@ -65,6 +68,48 @@ public class GodotOpenRpgDeadCodeTests : SmokeTestBase
             $"Dead code output differs from verified baseline.\n" +
             $"Output:   {OutputFile}\n" +
             $"Verified: {VerifiedFile}\n" +
+            $"Review the diff and update the verified file if the change is intentional.");
+    }
+
+    [TestMethod]
+    [Timeout(120000)]
+    public void DeadCode_WithAddonPaths_MatchesVerifiedBaseline()
+    {
+        Project.BuildCallSiteRegistry(CancellationToken.None);
+
+        var projectModel = new GDProjectSemanticModel(Project);
+        var handler = new GDDeadCodeHandler(projectModel);
+
+        var options = new GDDeadCodeOptions
+        {
+            MaxConfidence = GDReferenceConfidence.Strict,
+            IncludeVariables = true,
+            IncludeFunctions = true,
+            IncludeSignals = true,
+            IncludeUnreachable = true,
+            CollectDroppedByReflection = true,
+            TreatClassNameAsPublicAPI = false,
+            AddonPathsAsPublicAPI = new() { "addons/" }
+        };
+
+        var report = handler.AnalyzeProject(options);
+
+        var reportText = GenerateReport(report, ProjectRoot);
+
+        Directory.CreateDirectory(VerificationDir);
+        File.WriteAllText(AddonOutputFile, reportText);
+
+        if (!File.Exists(AddonVerifiedFile))
+        {
+            Assert.Fail($"Verified baseline not found: {AddonVerifiedFile}\n" +
+                        $"Review {AddonOutputFile} and copy to {AddonVerifiedFile} if correct.");
+        }
+
+        var verified = File.ReadAllText(AddonVerifiedFile);
+        reportText.Should().Be(verified,
+            $"Dead code output differs from verified baseline.\n" +
+            $"Output:   {AddonOutputFile}\n" +
+            $"Verified: {AddonVerifiedFile}\n" +
             $"Review the diff and update the verified file if the change is intentional.");
     }
 

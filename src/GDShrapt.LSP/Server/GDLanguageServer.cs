@@ -568,8 +568,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private async Task<GDLspLocationLink[]?> HandleDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/definition", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+        _logger?.Debug($"[Definition] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return null;
@@ -580,6 +579,8 @@ public class GDLanguageServer : IGDLanguageServer
 
         var handler = new GDDefinitionHandler(coreHandler);
         var (links, infoMessage) = await handler.HandleAsync(@params, ct);
+
+        _logger?.Debug($"[Definition] END found={links?.Length ?? 0}");
 
         if (infoMessage != null && _transport != null)
         {
@@ -595,8 +596,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspLocation[]?> HandleReferencesAsync(GDReferencesParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/references", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+        _logger?.Debug($"[References] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return Task.FromResult<GDLspLocation[]?>(null);
@@ -613,7 +613,7 @@ public class GDLanguageServer : IGDLanguageServer
     private async Task<GDLspHover?> HandleHoverAsync(GDHoverParams @params, CancellationToken ct)
     {
         var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
-        GDLspPerformanceTrace.Log("hover", $"START {filename} L{@params.Position.Line}:{@params.Position.Character}");
+        _logger?.Debug($"[Hover] START {filename} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return null;
@@ -627,7 +627,7 @@ public class GDLanguageServer : IGDLanguageServer
         var result = await handler.HandleAsync(@params, ct).ConfigureAwait(false);
         sw.Stop();
 
-        GDLspPerformanceTrace.Log("hover", $"END {filename} {sw.ElapsedMilliseconds}ms L{@params.Position.Line}:{@params.Position.Character} hasResult={result != null}");
+        _logger?.Debug($"[Hover] END {filename} {sw.ElapsedMilliseconds}ms hasResult={result != null}");
 
         // When analysis is still in progress and handler returned null, show a loading indicator
         if (result == null && _analysisComplete != null && !_analysisComplete.Task.IsCompleted)
@@ -690,8 +690,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCompletionList?> HandleCompletionAsync(GDCompletionParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/completion", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+        _logger?.Debug($"[Completion] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character} trigger={@params.Context?.TriggerCharacter}");
 
         if (_registry == null)
             return Task.FromResult<GDLspCompletionList?>(null);
@@ -706,8 +705,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDWorkspaceEdit?> HandleRenameAsync(GDRenameParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/rename", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} newName={@params.NewName}" : null);
+        _logger?.Debug($"[Rename] START uri={@params.TextDocument.Uri} newName={@params.NewName} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return Task.FromResult<GDWorkspaceEdit?>(null);
@@ -723,8 +721,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDPrepareRenameResult?> HandlePrepareRenameAsync(GDPrepareRenameParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/prepareRename", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+        _logger?.Debug($"[PrepareRename] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return Task.FromResult<GDPrepareRenameResult?>(null);
@@ -739,6 +736,8 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDDocumentHighlight[]?> HandleDocumentHighlightAsync(GDDocumentHighlightParams @params, CancellationToken ct)
     {
+        _logger?.Debug($"[Highlight] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
+
         if (_registry == null)
             return Task.FromResult<GDDocumentHighlight[]?>(null);
 
@@ -753,8 +752,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDFoldingRange[]?> HandleFoldingRangeAsync(GDFoldingRangeParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/foldingRange", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        _logger?.Debug($"[FoldingRange] START uri={@params.TextDocument.Uri}");
 
         if (_registry == null)
             return Task.FromResult<GDFoldingRange[]?>(null);
@@ -769,8 +767,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspTextEdit[]?> HandleFormattingAsync(GDDocumentFormattingParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/formatting", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        _logger?.Debug($"[Formatting] START uri={@params.TextDocument.Uri}");
 
         if (_registry == null)
             return Task.FromResult<GDLspTextEdit[]?>(null);
@@ -785,8 +782,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCodeAction[]?> HandleCodeActionAsync(GDCodeActionParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/codeAction", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        _logger?.Debug($"[CodeAction] START uri={@params.TextDocument.Uri}");
 
         if (_registry == null)
             return Task.FromResult<GDLspCodeAction[]?>(null);
@@ -801,8 +797,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspSignatureHelp?> HandleSignatureHelpAsync(GDSignatureHelpParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/signatureHelp", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri} line={@params.Position.Line}" : null);
+        _logger?.Debug($"[SignatureHelp] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return Task.FromResult<GDLspSignatureHelp?>(null);
@@ -818,7 +813,7 @@ public class GDLanguageServer : IGDLanguageServer
     private async Task<GDLspInlayHint[]?> HandleInlayHintAsync(GDInlayHintParams @params, CancellationToken ct)
     {
         var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
-        GDLspPerformanceTrace.Log("inlayHint", $"START {filename}");
+        _logger?.Debug($"[InlayHint] START {filename}");
 
         if (_registry == null)
             return null;
@@ -832,7 +827,7 @@ public class GDLanguageServer : IGDLanguageServer
         var result = await handler.HandleAsync(@params, ct).ConfigureAwait(false);
         sw.Stop();
 
-        GDLspPerformanceTrace.Log("inlayHint", $"END {filename} {sw.ElapsedMilliseconds}ms");
+        _logger?.Debug($"[InlayHint] END {filename} {sw.ElapsedMilliseconds}ms");
 
         return result;
     }
@@ -840,12 +835,12 @@ public class GDLanguageServer : IGDLanguageServer
     private async Task<GDLspCodeLens[]?> HandleCodeLensAsync(GDCodeLensParams @params, CancellationToken ct)
     {
         var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
-        GDLspPerformanceTrace.Log("codeLens", $"START {filename}");
+        _logger?.Debug($"[CodeLens] START {filename}");
 
         // Return null before analysis completes — CodeLens will refresh after analysis via workspace/codeLens/refresh
         if (_analysisComplete != null && !_analysisComplete.Task.IsCompleted)
         {
-            GDLspPerformanceTrace.Log("codeLens", $"SKIP {filename} (analysis not complete)");
+            _logger?.Debug($"[CodeLens] SKIP {filename} (analysis not complete)");
             return null;
         }
 
@@ -861,15 +856,14 @@ public class GDLanguageServer : IGDLanguageServer
         var result = await handler.HandleAsync(@params, ct).ConfigureAwait(false);
         sw.Stop();
 
-        GDLspPerformanceTrace.Log("codeLens", $"END {filename} {sw.ElapsedMilliseconds}ms count={result?.Length ?? 0}");
+        _logger?.Debug($"[CodeLens] END {filename} {sw.ElapsedMilliseconds}ms count={result?.Length ?? 0}");
 
         return result;
     }
 
     private Task<GDLspLocation[]?> HandleCodeLensReferencesAsync(GDCodeLensReferencesParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("gdshrapt/codeLensReferences", _traceLevel == GDLspTraceLevel.Verbose ? $"symbol={@params.SymbolName}" : null);
+        _logger?.Debug($"[CodeLensRefs] START symbol={@params.SymbolName}");
 
         if (_registry == null)
             return Task.FromResult<GDLspLocation[]?>(null);
@@ -886,7 +880,7 @@ public class GDLanguageServer : IGDLanguageServer
     private async Task<GDSemanticTokens?> HandleSemanticTokensFullAsync(GDSemanticTokensParams @params, CancellationToken ct)
     {
         var filename = Path.GetFileName(GDDocumentManager.UriToPath(@params.TextDocument.Uri));
-        GDLspPerformanceTrace.Log("semTokens", $"START {filename}");
+        _logger?.Debug($"[SemanticTokens] START {filename}");
 
         if (_registry == null)
             return null;
@@ -900,15 +894,14 @@ public class GDLanguageServer : IGDLanguageServer
         var result = await handler.HandleAsync(@params, ct);
         sw.Stop();
 
-        GDLspPerformanceTrace.Log("semTokens", $"END {filename} {sw.ElapsedMilliseconds}ms");
+        _logger?.Debug($"[SemanticTokens] END {filename} {sw.ElapsedMilliseconds}ms");
 
         return result;
     }
 
     private async Task<GDLspLocationLink[]?> HandleTypeDefinitionAsync(GDDefinitionParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/typeDefinition", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        _logger?.Debug($"[TypeDefinition] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return null;
@@ -932,8 +925,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspLocation[]?> HandleImplementationAsync(GDDefinitionParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/implementation", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        _logger?.Debug($"[Implementation] START uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return Task.FromResult<GDLspLocation[]?>(null);
@@ -948,8 +940,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCallHierarchyItem[]?> HandlePrepareCallHierarchyAsync(GDCallHierarchyPrepareParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("textDocument/prepareCallHierarchy", _traceLevel == GDLspTraceLevel.Verbose ? $"uri={@params.TextDocument.Uri}" : null);
+        _logger?.Debug($"[CallHierarchy] PREPARE uri={@params.TextDocument.Uri} L{@params.Position.Line}:{@params.Position.Character}");
 
         if (_registry == null)
             return Task.FromResult<GDLspCallHierarchyItem[]?>(null);
@@ -964,8 +955,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCallHierarchyIncomingCall[]?> HandleIncomingCallsAsync(GDCallHierarchyIncomingCallsParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("callHierarchy/incomingCalls");
+        _logger?.Debug("[CallHierarchy] INCOMING");
 
         if (_registry == null)
             return Task.FromResult<GDLspCallHierarchyIncomingCall[]?>(null);
@@ -980,8 +970,7 @@ public class GDLanguageServer : IGDLanguageServer
 
     private Task<GDLspCallHierarchyOutgoingCall[]?> HandleOutgoingCallsAsync(GDCallHierarchyOutgoingCallsParams @params, CancellationToken ct)
     {
-        if (_traceLevel >= GDLspTraceLevel.Messages)
-            _ = TraceAsync("callHierarchy/outgoingCalls");
+        _logger?.Debug("[CallHierarchy] OUTGOING");
 
         if (_registry == null)
             return Task.FromResult<GDLspCallHierarchyOutgoingCall[]?>(null);

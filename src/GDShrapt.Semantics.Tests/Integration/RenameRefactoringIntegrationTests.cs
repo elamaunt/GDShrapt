@@ -422,7 +422,7 @@ public class RenameRefactoringIntegrationTests
 
     private static void DeleteTempProject(string path)
     {
-        try { if (System.IO.Directory.Exists(path)) System.IO.Directory.Delete(path, true); } catch { }
+        try { if (System.IO.Directory.Exists(path)) System.IO.Directory.Delete(path, true); } catch { /* Best-effort cleanup */ }
     }
 
     [TestMethod]
