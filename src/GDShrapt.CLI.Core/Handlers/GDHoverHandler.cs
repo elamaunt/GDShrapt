@@ -44,6 +44,10 @@ public class GDHoverHandler : IGDHoverHandler
                 semanticModel = builtInFile.SemanticModel;
                 effectiveFile = builtInFile;
             }
+            else if (script?.Class != null)
+            {
+                return GetAstOnlyHover(script, line, column);
+            }
             else
             {
                 return null;
@@ -727,6 +731,351 @@ public class GDHoverHandler : IGDHoverHandler
         }
 
         return docLines.Count > 0 ? string.Join("\n", docLines) : null;
+    }
+
+    private GDHoverInfo? GetAstOnlyHover(GDScriptFile script, int line, int column)
+    {
+        var classDecl = script.Class;
+        if (classDecl == null)
+            return null;
+
+        // Convert 1-based CLI position to 0-based AST position
+        var astLine = line - 1;
+        var astCol = column - 1;
+
+        if (!classDecl.TryGetTokenByPosition(astLine, astCol, out var token) || token == null)
+            return null;
+
+        // Try keyword/literal hover first (works without semantic model)
+        var keywordHover = GDKeywordHoverProvider.GetKeywordHover(token);
+        if (keywordHover != null)
+            return keywordHover;
+
+        var literalHover = TryGetLiteralHover(token);
+        if (literalHover != null)
+            return literalHover;
+
+        // Try attribute hover
+        var node = token.Parent;
+        if (node is GDCustomAttribute customAttr)
+        {
+            var attrHover = GDKeywordHoverProvider.GetAttributeHover(customAttr.Attribute?.Name, customAttr.Attribute);
+            if (attrHover != null) return attrHover;
+        }
+        if (node is GDAttribute attrNode && attrNode.Parent is GDCustomAttribute)
+        {
+            var attrHover = GDKeywordHoverProvider.GetAttributeHover(attrNode.Name, attrNode);
+            if (attrHover != null) return attrHover;
+        }
+
+        // Walk up to find the enclosing declaration
+        var current = node;
+        while (current != null)
+        {
+            switch (current)
+            {
+                case GDMethodDeclaration method:
+                    return BuildAstMethodHover(method, script, token);
+                case GDVariableDeclaration variable:
+                    return BuildAstVariableHover(variable, script, token);
+                case GDSignalDeclaration signal:
+                    return BuildAstSignalHover(signal, script, token);
+                case GDEnumDeclaration enumDecl:
+                    return BuildAstEnumHover(enumDecl, script, token);
+                case GDClassDeclaration cd when cd != classDecl:
+                    return BuildAstInnerClassHover(cd, token);
+                case GDClassDeclaration cd when cd == classDecl:
+                {
+                    // Hovering on class_name or extends
+                    var className = cd.ClassName?.Identifier;
+                    if (className != null && token.StartLine == className.StartLine
+                        && token.StartColumn >= className.StartColumn
+                        && token.StartColumn < className.StartColumn + (className.Sequence?.Length ?? 0))
+                    {
+                        return BuildAstClassHover(cd, token);
+                    }
+                    return null;
+                }
+            }
+            current = current.Parent;
+        }
+
+        return null;
+    }
+
+    private GDHoverInfo? BuildAstMethodHover(GDMethodDeclaration method, GDScriptFile script, GDSyntaxToken posToken)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+
+        if (method.IsStatic)
+            sb.Append("static ");
+
+        sb.Append("func ");
+        sb.Append(method.Identifier?.Sequence ?? "?");
+        sb.Append('(');
+
+        var parameters = method.Parameters;
+        if (parameters != null)
+        {
+            var paramParts = new List<string>();
+            foreach (var param in parameters)
+            {
+                if (param is GDParameterDeclaration p)
+                {
+                    var part = p.Identifier?.Sequence ?? "?";
+                    var typeStr = p.Type?.ToString();
+                    if (!string.IsNullOrEmpty(typeStr))
+                        part += ": " + typeStr;
+                    if (p.DefaultValue != null)
+                        part += " = " + p.DefaultValue.ToString();
+                    paramParts.Add(part);
+                }
+            }
+            sb.Append(string.Join(", ", paramParts));
+        }
+
+        sb.Append(')');
+
+        var returnType = method.ReturnType?.ToString();
+        if (!string.IsNullOrEmpty(returnType))
+        {
+            sb.Append(" -> ");
+            sb.Append(returnType);
+        }
+
+        sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(script.TypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(script.TypeName);
+            sb.Append('*');
+        }
+
+        var doc = ExtractDocComment(method);
+        if (!string.IsNullOrEmpty(doc))
+        {
+            sb.Append("\n\n---\n\n");
+            sb.Append(doc);
+        }
+
+        var name = method.Identifier?.Sequence ?? "?";
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            Kind = GDSymbolKind.Method,
+            SymbolName = name,
+            TypeName = returnType,
+            Documentation = doc,
+            StartLine = posToken.StartLine + 1,
+            StartColumn = posToken.StartColumn,
+            EndLine = posToken.EndLine + 1,
+            EndColumn = posToken.StartColumn + name.Length
+        };
+    }
+
+    private GDHoverInfo? BuildAstVariableHover(GDVariableDeclaration variable, GDScriptFile script, GDSyntaxToken posToken)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+
+        sb.Append(variable.IsConstant ? "const" : "var");
+        sb.Append(' ');
+
+        var name = variable.Identifier?.Sequence ?? "?";
+        sb.Append(name);
+
+        var typeStr = variable.Type?.ToString();
+        if (!string.IsNullOrEmpty(typeStr))
+        {
+            sb.Append(": ");
+            sb.Append(typeStr);
+        }
+
+        if (variable.IsConstant && variable.Initializer != null)
+        {
+            sb.Append(" = ");
+            sb.Append(variable.Initializer.ToString());
+        }
+
+        sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(script.TypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(script.TypeName);
+            sb.Append('*');
+        }
+
+        var doc = ExtractDocComment(variable);
+        if (!string.IsNullOrEmpty(doc))
+        {
+            sb.Append("\n\n---\n\n");
+            sb.Append(doc);
+        }
+
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            Kind = variable.IsConstant ? GDSymbolKind.Constant : GDSymbolKind.Variable,
+            SymbolName = name,
+            TypeName = typeStr,
+            Documentation = doc,
+            StartLine = posToken.StartLine + 1,
+            StartColumn = posToken.StartColumn,
+            EndLine = posToken.EndLine + 1,
+            EndColumn = posToken.StartColumn + name.Length
+        };
+    }
+
+    private GDHoverInfo? BuildAstSignalHover(GDSignalDeclaration signal, GDScriptFile script, GDSyntaxToken posToken)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("signal ");
+
+        var name = signal.Identifier?.Sequence ?? "?";
+        sb.Append(name);
+
+        var parameters = signal.Parameters;
+        if (parameters != null)
+        {
+            sb.Append('(');
+            var paramParts = new List<string>();
+            foreach (var param in parameters)
+            {
+                if (param is GDParameterDeclaration p)
+                {
+                    var part = p.Identifier?.Sequence ?? "?";
+                    var typeStr = p.Type?.ToString();
+                    if (!string.IsNullOrEmpty(typeStr))
+                        part += ": " + typeStr;
+                    paramParts.Add(part);
+                }
+            }
+            sb.Append(string.Join(", ", paramParts));
+            sb.Append(')');
+        }
+
+        sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(script.TypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(script.TypeName);
+            sb.Append('*');
+        }
+
+        var doc = ExtractDocComment(signal);
+        if (!string.IsNullOrEmpty(doc))
+        {
+            sb.Append("\n\n---\n\n");
+            sb.Append(doc);
+        }
+
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            Kind = GDSymbolKind.Signal,
+            SymbolName = name,
+            Documentation = doc,
+            StartLine = posToken.StartLine + 1,
+            StartColumn = posToken.StartColumn,
+            EndLine = posToken.EndLine + 1,
+            EndColumn = posToken.StartColumn + name.Length
+        };
+    }
+
+    private static GDHoverInfo? BuildAstEnumHover(GDEnumDeclaration enumDecl, GDScriptFile script, GDSyntaxToken posToken)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("enum ");
+
+        var name = enumDecl.Identifier?.Sequence ?? "?";
+        sb.Append(name);
+        sb.Append("\n```");
+
+        if (!string.IsNullOrEmpty(script.TypeName))
+        {
+            sb.Append("\n\n*");
+            sb.Append(script.TypeName);
+            sb.Append('*');
+        }
+
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            Kind = GDSymbolKind.Enum,
+            SymbolName = name,
+            StartLine = posToken.StartLine + 1,
+            StartColumn = posToken.StartColumn,
+            EndLine = posToken.EndLine + 1,
+            EndColumn = posToken.StartColumn + name.Length
+        };
+    }
+
+    private static GDHoverInfo? BuildAstInnerClassHover(GDClassDeclaration cd, GDSyntaxToken posToken)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("class ");
+
+        var name = cd.ClassName?.Identifier?.Sequence ?? "?";
+        sb.Append(name);
+
+        var extends = cd.Extends?.Type?.ToString();
+        if (!string.IsNullOrEmpty(extends))
+        {
+            sb.Append(" extends ");
+            sb.Append(extends);
+        }
+
+        sb.Append("\n```");
+
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            Kind = GDSymbolKind.Class,
+            SymbolName = name,
+            TypeName = extends,
+            StartLine = posToken.StartLine + 1,
+            StartColumn = posToken.StartColumn,
+            EndLine = posToken.EndLine + 1,
+            EndColumn = posToken.StartColumn + name.Length
+        };
+    }
+
+    private static GDHoverInfo? BuildAstClassHover(GDClassDeclaration cd, GDSyntaxToken posToken)
+    {
+        var sb = new StringBuilder();
+        sb.Append("```gdscript\n");
+        sb.Append("class ");
+
+        var name = cd.ClassName?.Identifier?.Sequence ?? "?";
+        sb.Append(name);
+
+        var extends = cd.Extends?.Type?.ToString();
+        if (!string.IsNullOrEmpty(extends))
+        {
+            sb.Append(" extends ");
+            sb.Append(extends);
+        }
+
+        sb.Append("\n```");
+
+        return new GDHoverInfo
+        {
+            Content = sb.ToString(),
+            Kind = GDSymbolKind.Class,
+            SymbolName = name,
+            TypeName = extends,
+            StartLine = posToken.StartLine + 1,
+            StartColumn = posToken.StartColumn,
+            EndLine = posToken.EndLine + 1,
+            EndColumn = posToken.StartColumn + name.Length
+        };
     }
 
     private static bool IsInsideAttribute(GDSyntaxToken token)
