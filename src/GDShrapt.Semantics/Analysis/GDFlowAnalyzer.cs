@@ -49,6 +49,9 @@ internal class GDFlowAnalyzer : GDVisitor
     // File path for origin tracking
     private string? _filePath;
 
+    // Coroutine detection: set to true when an await expression is encountered
+    private bool _hasAwait;
+
     public GDFlowAnalyzer(IGDExpressionTypeProvider? typeProvider)
     {
         _typeProvider = typeProvider;
@@ -153,6 +156,11 @@ internal class GDFlowAnalyzer : GDVisitor
     public GDFlowState? InitialState { get; private set; }
 
     /// <summary>
+    /// True if the analyzed scope contains at least one 'await' expression.
+    /// </summary>
+    public bool HasAwait => _hasAwait;
+
+    /// <summary>
     /// Analyzes a method declaration for flow-sensitive types.
     /// </summary>
     public void Analyze(GDMethodDeclaration method)
@@ -170,8 +178,21 @@ internal class GDFlowAnalyzer : GDVisitor
                 if (!string.IsNullOrEmpty(name))
                 {
                     var semType = GDSemanticType.FromRuntimeTypeName(declType);
-                    var origin = CreateOrigin(GDTypeOriginKind.ParameterDeclaration, param, GDTypeOriginConfidence.Exact);
-                    _currentState.DeclareVariable(name, semType, null, origin, null);
+                    var hasExplicitType = !string.IsNullOrEmpty(declType) && declType != GDWellKnownTypes.Variant;
+
+                    // Infer type from default value when no explicit annotation
+                    GDSemanticType? initType = null;
+                    if (!hasExplicitType && param.DefaultValue != null)
+                    {
+                        var resolved = ResolveSemanticType(param.DefaultValue);
+                        if (resolved != null && !resolved.IsVariant && resolved is not GDNullSemanticType)
+                            initType = resolved;
+                    }
+
+                    var origin = CreateOrigin(GDTypeOriginKind.ParameterDeclaration, param,
+                        hasExplicitType ? GDTypeOriginConfidence.Exact : GDTypeOriginConfidence.Inferred);
+                    _currentState.DeclareVariable(name, semType, initType, origin,
+                        initType != null ? CreateOrigin(GDTypeOriginKind.DefaultValue, param, GDTypeOriginConfidence.Inferred) : null);
                     _parameterNames.Add(name);
                 }
             }
@@ -1315,6 +1336,12 @@ internal class GDFlowAnalyzer : GDVisitor
         // Mark current state as terminated by continue
         _currentState.MarkTerminated(TerminationType.Continue);
         RecordState(continueExpr);
+    }
+
+    public override void Visit(GDAwaitExpression awaitExpr)
+    {
+        _hasAwait = true;
+        base.Visit(awaitExpr);
     }
 
     #endregion

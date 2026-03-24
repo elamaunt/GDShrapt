@@ -372,12 +372,10 @@ public class GDSemanticModel : IGDMemberAccessAnalyzer, IGDArgumentTypeAnalyzer
         var symbol = _symbolRegistry.GetSymbolForNode(node);
         if (symbol != null)
         {
-            // For member access nodes, the registry may contain a duck-typed/unresolved symbol
-            // from collection time. Try type-based resolution which may succeed at query time.
+            // For member access nodes, the registry may contain a stale symbol from collection time.
+            // Re-resolve external members (no DeclarationNode) to pick up post-analysis type info.
             if (node is GDMemberOperatorExpression memberAccessNode
-                && symbol.DeclarationNode == null
-                && symbol.Kind == GDSymbolKind.Property
-                && string.IsNullOrEmpty(symbol.TypeName))
+                && symbol.DeclarationNode == null)
             {
                 var memberName = memberAccessNode.Identifier?.Sequence;
                 if (!string.IsNullOrEmpty(memberName))

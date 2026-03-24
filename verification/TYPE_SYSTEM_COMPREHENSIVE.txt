@@ -2469,6 +2469,8 @@ test_scripts/cross_file_inference.gd
     setup_signal_handlers():
       73:1 op -> AsyncOperation (base: AsyncOperation)
       74:8 op -> AsyncOperation (base: AsyncOperation)
+    execute_on_handler():
+      137:39 args -> Array (base: Variant)
     complex_chain_operation():
       148:30 entity -> Entity (base: Entity)
       158:2 processed -> Array (base: Array)
@@ -2481,7 +2483,9 @@ test_scripts/cross_file_inference.gd
       175:15 processed -> Array (base: Array)
     create_game_object():
       242:32 entity -> Entity (base: Entity)
+      243:46 params -> Dictionary (base: Variant)
       244:32 entity -> Entity (base: Entity)
+      245:43 params -> Dictionary (base: Variant)
       246:36 entity -> Entity (base: Entity)
       247:34 entity -> Entity (base: Entity)
       248:10 entity -> Entity (base: Entity)
@@ -11472,9 +11476,17 @@ test_scripts/dynamic_dispatch.gd
     nullable:     no
 
   Flow Narrowing:
+    call_if_exists():
+      16:32 args -> Array (base: Variant)
+    call_with_fallback():
+      22:32 args -> Array (base: Variant)
+      24:36 args -> Array (base: Variant)
+    call_first_available():
+      31:28 args -> Array (base: Variant)
     call_all_matching():
       39:13 method -> Dictionary (base: Dictionary)
       41:3 results -> Dictionary (base: Dictionary)
+      41:35 args -> Array (base: Variant)
       42:8 results -> Dictionary (base: Dictionary)
     send_message():
       103:22 handler_method -> String (base: String)
@@ -11529,8 +11541,10 @@ test_scripts/dynamic_dispatch.gd
       222:13 class_ref -> PackedScene (base: Variant)
       223:6 class_ref -> GDScript (base: Variant)
       224:13 class_ref -> GDScript (base: Variant)
+      229:12 init_params -> Dictionary (base: Variant)
       230:12 instance -> Node (base: Node)
       231:3 instance -> Node (base: Node)
+      231:21 init_params -> Dictionary (base: Variant)
       233:8 instance -> Node (base: Node)
     clone_object():
       247:44 class_name_str -> String (base: String)
@@ -11538,6 +11552,8 @@ test_scripts/dynamic_dispatch.gd
       249:24 new_instance -> null (base: null)
       249:38 data -> Dictionary (base: Dictionary)
       250:8 new_instance -> null (base: null)
+    call_method():
+      273:56 args -> Array (base: Variant)
     dispatch():
       313:3 results -> Dictionary (base: Dictionary)
       315:8 results -> Dictionary (base: Dictionary)
@@ -11547,9 +11563,14 @@ test_scripts/dynamic_dispatch.gd
       364:31 interceptor -> Callable (base: Callable)
       366:8 proxy -> DynamicProxy (base: DynamicProxy)
     advised_call():
+      405:34 args -> Array (base: Variant)
+      412:55 args -> Array (base: Variant)
+      413:58 args -> Array (base: Variant)
       413:64 proceed -> Callable() (base: Callable)
       414:3 has_around -> bool (base: bool)
       417:8 has_around -> null (base: bool)
+      418:34 args -> Array (base: Variant)
+      424:34 args -> Array (base: Variant)
 
 
 test_scripts/ecs_like_system.gd
@@ -13191,7 +13212,9 @@ test_scripts/ecs_like_system.gd
     _init():
       28:2 id -> int (base: int)
       29:2 name -> String (base: String)
+      29:9 entity_name -> String (base: Variant)
     create_entity():
+      33:41 entity_name -> String (base: Variant)
       34:28 entity -> Entity (base: Entity)
       35:1 next_entity_id -> int (base: int)
       36:8 entity -> Entity (base: Entity)
@@ -13216,16 +13239,36 @@ test_scripts/ecs_like_system.gd
       137:33 comps -> Dictionary (base: Dictionary)
       138:3 result -> Array (base: Array)
       139:8 result -> Array (base: Array)
+    create_transform_component():
+      169:21 pos -> Vector2 (base: Variant)
+      169:38 rot -> float (base: Variant)
+      169:52 scl -> Vector2 (base: Variant)
+    create_velocity_component():
+      173:19 linear -> Vector2 (base: Variant)
+      173:38 angular -> float (base: Variant)
+    create_health_component():
+      177:4 maximum -> int (base: Variant)
+      178:2 maximum -> int (base: Variant)
+      179:36 maximum -> int (base: Variant)
+    create_render_component():
+      183:36 color -> Color (base: Variant)
+      183:54 visible -> bool (base: Variant)
+    create_ai_component():
+      187:18 initial_state -> String (base: Variant)
     update():
       197:13 movers -> Array (base: Array)
       211:13 with_health -> Array (base: Array)
       222:13 ai_entities -> Array (base: Array)
       233:53 context -> Dictionary[String, Variant] (base: Dictionary[String, Variant])
     create_from_archetype():
+      258:5 overrides -> Dictionary (base: Variant)
+      259:15 overrides -> Dictionary (base: Variant)
       265:3 component -> Dictionary (base: Variant)
       267:16 entity -> Entity (base: Entity)
       267:38 component -> Dictionary (base: Variant)
       269:8 entity -> Entity (base: Entity)
+    emit_event():
+      281:12 source_entity -> int (base: Variant)
     get_events_by_type():
       297:3 result -> Array (base: Array)
       298:8 result -> Array (base: Array)
@@ -16194,6 +16237,8 @@ test_scripts/game_patterns.gd
     select_choice():
       179:40 choices -> Array (base: Array)
       182:14 choices -> Array (base: Array)
+    update_quest_objective():
+      228:46 delta -> int (base: Variant)
     _check_quest_completion():
       245:3 all_complete -> bool (base: bool)
       248:4 all_complete -> bool (base: bool)
@@ -16204,9 +16249,12 @@ test_scripts/game_patterns.gd
       328:4 effect_func -> Callable (base: Variant)
       329:2 result -> null (base: null)
       329:11 effect_func -> Callable (base: Variant)
+      329:34 targets -> Array (base: Variant)
       330:6 effect_func -> Dictionary (base: Variant)
       331:2 result -> Array (base: null)
       331:34 effect_func -> Dictionary (base: Variant)
+      331:53 targets -> Array (base: Variant)
+      338:14 targets -> Array (base: Variant)
     _apply_effect_template():
       354:6 dmg -> int (base: Variant)
       355:4 effect_result -> Dictionary (base: Dictionary)
@@ -20959,7 +21007,10 @@ test_scripts/polymorphic_interfaces.gd
       320:2 results -> Array (base: Array)
       320:17 item -> void (base: void)
       321:8 results -> Array (base: Array)
+    create_instance():
+      338:23 params -> Dictionary (base: Variant)
     create_multiple():
+      344:44 params -> Dictionary (base: Variant)
       345:5 instance -> null (base: null)
       346:3 instances -> Array (base: Array)
       346:20 instance -> null (base: null)
@@ -26287,6 +26338,8 @@ test_scripts/signal_callback_chains.gd
     nullable:     no
 
   Flow Narrowing:
+    invoke_callback():
+      46:23 args -> Array (base: Variant)
     then():
       71:5 _state -> String (base: String)
     catch_error():
@@ -26379,6 +26432,7 @@ test_scripts/signal_callback_chains.gd
       446:23 ctx -> SignalWaitContext (base: SignalWaitContext)
       446:40 ctx -> SignalWaitContext (base: SignalWaitContext)
       447:1 ctx -> SignalWaitContext (base: SignalWaitContext)
+      447:23 args -> Array (base: Variant)
     _on_wait_timeout():
       451:4 ctx -> SignalWaitContext (base: SignalWaitContext)
       451:28 ctx -> SignalWaitContext (base: SignalWaitContext)
@@ -26395,6 +26449,8 @@ test_scripts/signal_callback_chains.gd
       463:1 ctx -> SignalWaitContext (base: SignalWaitContext)
       463:43 ctx -> SignalWaitContext (base: SignalWaitContext)
       465:29 ctx -> SignalWaitContext (base: SignalWaitContext)
+      468:4 timeout -> float (base: Variant)
+      469:38 timeout -> float (base: Variant)
       470:46 ctx -> SignalWaitContext (base: SignalWaitContext)
       472:8 operation -> AsyncOperation (base: AsyncOperation)
     call_parallel():

@@ -1305,6 +1305,76 @@ public class GodotOpenRpgNodeAnalysisTests : SmokeTestBase
     }
 
     [TestMethod]
+    public void ScreenTransition_MoveChild_NoFalsePositiveGD4002()
+    {
+        var script = FindScript("common/screen_transitions/screen_transition.gd");
+        script.Should().NotBeNull("screen_transition.gd should exist in godot-open-rpg");
+
+        var projectModel = new GDProjectSemanticModel(Project);
+        var semanticModel = projectModel.GetSemanticModel(script!);
+        semanticModel.Should().NotBeNull();
+
+        var options = new GDSemanticValidatorOptions
+        {
+            CheckTypes = true,
+            CheckMemberAccess = true,
+            CheckArgumentTypes = true
+        };
+        var validator = new GDSemanticValidator(semanticModel!, options);
+        var result = validator.Validate(script!.Class!);
+
+        var gd4002 = result.Diagnostics
+            .Where(d => d.Code == GDDiagnosticCode.MethodNotFound)
+            .ToList();
+
+        Console.WriteLine($"[DIAG] Total GD4002 diagnostics: {gd4002.Count}");
+        foreach (var diag in gd4002)
+            Console.WriteLine($"[DIAG]   {diag.CodeString} L{diag.StartLine}: {diag.Message}");
+
+        var callDeferredDiags = gd4002
+            .Where(d => d.Message.Contains("call_deferred"))
+            .ToList();
+
+        callDeferredDiags.Should().BeEmpty(
+            "move_child.call_deferred() should not produce GD4002 — call_deferred is a valid Callable method");
+    }
+
+    [TestMethod]
+    public void InventoryScript_Restore_NoFalsePositiveGD3007()
+    {
+        var script = FindScript("common/inventory.gd");
+        script.Should().NotBeNull("inventory.gd should exist in godot-open-rpg");
+
+        var projectModel = new GDProjectSemanticModel(Project);
+        var semanticModel = projectModel.GetSemanticModel(script!);
+        semanticModel.Should().NotBeNull();
+
+        var options = new GDSemanticValidatorOptions
+        {
+            CheckTypes = true,
+            CheckMemberAccess = true,
+            CheckArgumentTypes = true
+        };
+        var validator = new GDSemanticValidator(semanticModel!, options);
+        var result = validator.Validate(script!.Class!);
+
+        var gd3007 = result.Diagnostics
+            .Where(d => d.Code == GDDiagnosticCode.IncompatibleReturnType)
+            .ToList();
+
+        Console.WriteLine($"[DIAG] Total GD3007 (IncompatibleReturnType) diagnostics: {gd3007.Count}");
+        foreach (var diag in gd3007)
+            Console.WriteLine($"[DIAG]   {diag.CodeString} L{diag.StartLine}: {diag.Message}");
+
+        var restoreDiags = gd3007
+            .Where(d => d.Message.Contains("Inventory"))
+            .ToList();
+
+        restoreDiags.Should().BeEmpty(
+            "inventory.gd restore() returns Inventory after null check — GD3007 is a false positive");
+    }
+
+    [TestMethod]
     public void InventoryScript_HoverNewInventory_ShowsInventoryType()
     {
         var script = FindScript("common/inventory.gd");

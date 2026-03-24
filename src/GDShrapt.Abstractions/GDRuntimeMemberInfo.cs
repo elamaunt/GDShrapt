@@ -58,6 +58,11 @@ public class GDRuntimeMemberInfo
     public bool IsVirtual { get; set; }
 
     /// <summary>
+    /// For methods: true if the method body contains 'await' expressions.
+    /// </summary>
+    public bool IsCoroutine { get; set; }
+
+    /// <summary>
     /// For methods: role of return type relative to container for type inference.
     /// Values: "element", "key", "value", "self", "keys_array", "values_array", "callable_return_array"
     /// </summary>

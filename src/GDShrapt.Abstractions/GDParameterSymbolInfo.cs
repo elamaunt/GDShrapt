@@ -9,7 +9,7 @@ namespace GDShrapt.Abstractions;
 public class GDParameterSymbolInfo
 {
     public string Name { get; }
-    public string? TypeName { get; }
+    public string? TypeName { get; set; }
     public bool HasDefaultValue { get; }
     public int Position { get; }
 

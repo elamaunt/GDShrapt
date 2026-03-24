@@ -340,7 +340,40 @@ internal class GDSemanticReferenceCollector : GDVisitor
     public override void Left(GDMethodDeclaration methodDeclaration)
     {
         // Ensure flow analysis is cached for this method (used by diagnostics, nullability, etc.)
-        _model?.EnsureFlowAnalyzer(methodDeclaration);
+        var analyzer = _model?.EnsureFlowAnalyzer(methodDeclaration);
+
+        var methodName = methodDeclaration.Identifier?.Sequence;
+        if (!string.IsNullOrEmpty(methodName) && analyzer != null)
+        {
+            var symbol = _model!.FindSymbol(methodName);
+            if (symbol?.Kind == GDSymbolKind.Method)
+            {
+                // Propagate coroutine flag from flow analysis
+                if (analyzer.HasAwait)
+                {
+                    if (symbol.Symbol != null)
+                        symbol.Symbol.IsCoroutine = true;
+                    symbol.IsCoroutine = true;
+                }
+
+                // Fill in parameter types from flow analysis for untyped parameters
+                var parameters = symbol.Symbol?.Parameters ?? symbol.Parameters;
+                if (parameters != null && analyzer.InitialState != null)
+                {
+                    foreach (var param in parameters)
+                    {
+                        if (string.IsNullOrEmpty(param.TypeName))
+                        {
+                            var flowType = analyzer.InitialState.GetVariableType(param.Name);
+                            var effectiveType = flowType?.EffectiveType;
+                            if (effectiveType != null && !effectiveType.IsVariant)
+                                param.TypeName = effectiveType.DisplayName;
+                        }
+                    }
+                }
+            }
+        }
+
         PopScope();
         _validationContext?.Scopes.Pop();
     }
@@ -1165,7 +1198,7 @@ internal class GDSemanticReferenceCollector : GDVisitor
             if (typeInfo?.Members != null)
             {
                 if (typeInfo.Members.Any(m => m.Name == memberName))
-                    return currentType;
+                    return typeInfo.ClassName ?? currentType;
             }
 
             currentType = _runtimeProvider.GetBaseType(currentType);

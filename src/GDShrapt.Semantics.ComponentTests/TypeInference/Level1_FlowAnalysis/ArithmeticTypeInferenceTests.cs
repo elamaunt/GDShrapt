@@ -122,19 +122,60 @@ func test(x: int, y: int) -> int:
 
     #endregion
 
+    #region Nullable Narrowing and Return Type
+
+    [TestMethod]
+    public void ReturnNarrowedNullable_NoGD3007()
+    {
+        var code = @"
+class_name Test
+extends Resource
+
+static func restore() -> Test:
+    var result = Test.new() if randf() > 0.5 else null
+    if result:
+        return result
+    return Test.new()
+";
+        var diagnostics = ValidateCode(code);
+
+        var returnDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.IncompatibleReturnType).ToList();
+        Assert.AreEqual(0, returnDiagnostics.Count,
+            $"Return narrowed non-null variable should not produce GD3007. Found: {FormatDiagnostics(returnDiagnostics)}");
+    }
+
+    [TestMethod]
+    public void ReturnNullableWithoutNarrowing_GD3007()
+    {
+        var code = @"
+class_name Test
+extends Resource
+
+static func restore() -> Test:
+    var result = Test.new() if randf() > 0.5 else null
+    return result
+";
+        var diagnostics = ValidateCode(code);
+
+        var returnDiagnostics = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.IncompatibleReturnType).ToList();
+        Assert.AreEqual(1, returnDiagnostics.Count,
+            $"Returning nullable without narrowing should produce GD3007. Found: {FormatDiagnostics(returnDiagnostics)}");
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private static IEnumerable<GDDiagnostic> ValidateCode(string code)
     {
-        var reader = new GDScriptReader();
-        var classDecl = reader.ParseFileContent(code);
-
-        if (classDecl == null)
-            return Enumerable.Empty<GDDiagnostic>();
-
         var reference = new GDScriptReference("test://virtual/test_script.gd");
         var scriptFile = new GDScriptFile(reference);
         scriptFile.Reload(code);
+
+        if (scriptFile.Class == null)
+            return Enumerable.Empty<GDDiagnostic>();
 
         var runtimeProvider = new GDCompositeRuntimeProvider(
             new GDGodotTypesProvider(),
@@ -151,7 +192,7 @@ func test(x: int, y: int) -> int:
             CheckArgumentTypes = true
         };
         var validator = new GDSemanticValidator(semanticModel, options);
-        var result = validator.Validate(classDecl);
+        var result = validator.Validate(scriptFile.Class);
 
         return result.Diagnostics;
     }

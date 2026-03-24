@@ -25,6 +25,8 @@ public class GDDocumentManager
         _projectModel = projectModel;
     }
 
+    public bool IsInitialAnalysisComplete => _initialAnalysisComplete;
+
     public void SetInitialAnalysisComplete()
     {
         _initialAnalysisComplete = true;

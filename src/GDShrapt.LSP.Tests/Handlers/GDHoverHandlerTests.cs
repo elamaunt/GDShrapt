@@ -437,4 +437,53 @@ public class GDHoverHandlerTests
         content.Should().NotContain("Reference to the health bar node",
             "should not pick up doc comment from another variable");
     }
+
+    // --- Scene autoload hover tests ---
+
+    private static (GDScriptProject project, GDLspHoverHandler handler) SetupProjectWithScenesAndHandler()
+    {
+        var context = new GDDefaultProjectContext(TestProjectPath);
+        var project = new GDScriptProject(context, new GDScriptProjectOptions
+        {
+            EnableSceneTypesProvider = true
+        });
+        project.LoadScripts();
+        project.LoadScenes();
+        project.AnalyzeAll();
+
+        var handler = CreateHandler(project);
+        return (project, handler);
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnSceneAutoloadMethod_ShowsFullSignature()
+    {
+        var (_, handler) = SetupProjectWithScenesAndHandler();
+
+        // scene_autoload_usage.gd line 4 (1-based): \tawait Transition.cover(0.2)
+        // "cover" starts at column 18 (0-based), line 3 (0-based)
+        var @params = CreateParams("scene_autoload_usage.gd", 3, 18);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull("Hover on scene autoload method 'cover' should return a result");
+        result!.Contents.Should().NotBeNull();
+        result.Contents.Value.Should().Contain("func cover(duration: float)",
+            "Should show full method signature with parameter from scene autoload's root script");
+    }
+
+    [TestMethod]
+    public async Task HandleAsync_HoverOnSceneAutoloadName_ShowsClassInfo()
+    {
+        var (_, handler) = SetupProjectWithScenesAndHandler();
+
+        // scene_autoload_usage.gd line 4 (1-based): \tawait Transition.cover(0.2)
+        // "Transition" starts at column 7 (0-based), line 3 (0-based)
+        var @params = CreateParams("scene_autoload_usage.gd", 3, 7);
+
+        var result = await handler.HandleAsync(@params, CancellationToken.None);
+
+        result.Should().NotBeNull("Hover on scene autoload name 'Transition' should return a result");
+        result!.Contents.Should().NotBeNull();
+    }
 }

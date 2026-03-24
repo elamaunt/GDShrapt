@@ -1,3 +1,4 @@
+using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -35,6 +36,15 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
     /// Gets all autoload entries.
     /// </summary>
     public IEnumerable<GDAutoloadEntry> Autoloads => _autoloads.Values;
+
+    /// <summary>
+    /// Invalidates the cached type info so that next access rebuilds from current semantic models.
+    /// Should be called after AnalyzeAll() completes to pick up flow-inferred types.
+    /// </summary>
+    public void InvalidateCache()
+    {
+        _typeCache.Clear();
+    }
 
     public bool IsKnownType(string typeName)
     {
@@ -138,9 +148,11 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
             var baseType = scriptInfo.Class?.Extends?.Type?.BuildName() ?? "Node";
             var members = ExtractMembers(scriptInfo);
             var classNameId = scriptInfo.Class?.ClassName?.Identifier;
+            var className = classNameId?.Sequence;
 
             return new GDRuntimeTypeInfo(autoload.Name, baseType)
             {
+                ClassName = className,
                 Members = members,
                 SourceInfo = scriptInfo.FullPath != null ? new GDTypeSourceInfo
                 {
@@ -148,7 +160,7 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
                     Line = classNameId?.StartLine ?? 0,
                     StartColumn = classNameId?.StartColumn ?? 0,
                     EndColumn = classNameId?.EndColumn ?? 0,
-                    TypeName = autoload.Name
+                    TypeName = className ?? autoload.Name
                 } : null
             };
         }
@@ -171,6 +183,104 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
 
     private List<GDRuntimeMemberInfo> ExtractMembers(IGDScriptInfo scriptInfo)
     {
+        if (scriptInfo is GDScriptFile file && file.SemanticModel != null)
+            return ExtractMembersFromSemanticModel(file.SemanticModel);
+
+        return ExtractMembersFromAst(scriptInfo);
+    }
+
+    private List<GDRuntimeMemberInfo> ExtractMembersFromSemanticModel(GDSemanticModel model)
+    {
+        var members = new List<GDRuntimeMemberInfo>();
+
+        foreach (var method in model.GetMethods())
+        {
+            var inferredParams = model.InferParameterTypes(method.Name);
+            var returnTypeName = method.ReturnTypeName;
+
+            // Use inferred return type if no explicit annotation
+            if (string.IsNullOrEmpty(returnTypeName) || returnTypeName == GDWellKnownTypes.Variant)
+            {
+                var analysis = model.AnalyzeMethodReturns(method.Name);
+                if (analysis != null && !analysis.ReturnUnionType.IsEmpty)
+                {
+                    var inferredReturn = analysis.ReturnUnionType.UnionTypeName;
+                    if (!string.IsNullOrEmpty(inferredReturn) && inferredReturn != "null")
+                        returnTypeName = inferredReturn;
+                }
+            }
+
+            var minArgs = method.Parameters?.Count(p => !p.HasDefaultValue) ?? 0;
+            var memberInfo = GDRuntimeMemberInfo.Method(
+                method.Name,
+                returnTypeName ?? GDWellKnownTypes.Variant,
+                minArgs, method.ParameterCount,
+                isVarArgs: false, isStatic: method.IsStatic);
+
+            // Get AST parameter declarations for default value type inference
+            var paramDecls = (method.DeclarationNode as GDMethodDeclaration)?.Parameters?.ToArray();
+
+            if (method.Parameters != null && method.Parameters.Count > 0)
+            {
+                memberInfo.Parameters = method.Parameters
+                    .Select((p, i) =>
+                    {
+                        var typeName = p.TypeName;
+
+                        // Try inferred types from usage analysis
+                        if (string.IsNullOrEmpty(typeName) && inferredParams.TryGetValue(p.Name, out var inferred))
+                            typeName = inferred.TypeName?.DisplayName;
+
+                        // Infer type from default value expression
+                        if (string.IsNullOrEmpty(typeName) && paramDecls != null && i < paramDecls.Length)
+                        {
+                            var defaultValue = paramDecls[i].DefaultValue;
+                            if (defaultValue != null)
+                            {
+                                // Try semantic model first
+                                var defaultType = model.GetTypeForNode(defaultValue);
+                                if (string.IsNullOrEmpty(defaultType) || defaultType == GDWellKnownTypes.Variant)
+                                {
+                                    // Fallback to AST-based literal type
+                                    defaultType = InferLiteralType(defaultValue);
+                                }
+                                if (!string.IsNullOrEmpty(defaultType) && defaultType != GDWellKnownTypes.Variant)
+                                    typeName = defaultType;
+                            }
+                        }
+
+                        return new GDRuntimeParameterInfo(p.Name, typeName, p.HasDefaultValue);
+                    })
+                    .ToList();
+            }
+
+            memberInfo.IsCoroutine = method.IsCoroutine;
+            members.Add(memberInfo);
+        }
+
+        foreach (var signal in model.GetSignals())
+        {
+            var signalInfo = GDRuntimeMemberInfo.Signal(signal.Name);
+            if (signal.Parameters != null && signal.Parameters.Count > 0)
+            {
+                signalInfo.Parameters = signal.Parameters
+                    .Select(p => new GDRuntimeParameterInfo(p.Name, p.TypeName, p.HasDefaultValue))
+                    .ToList();
+            }
+            members.Add(signalInfo);
+        }
+
+        foreach (var variable in model.GetVariables())
+            members.Add(GDRuntimeMemberInfo.Property(variable.Name, variable.TypeName ?? GDWellKnownTypes.Variant, variable.IsStatic));
+
+        foreach (var constant in model.GetConstants())
+            members.Add(GDRuntimeMemberInfo.Constant(constant.Name, constant.TypeName ?? GDWellKnownTypes.Variant));
+
+        return members;
+    }
+
+    private List<GDRuntimeMemberInfo> ExtractMembersFromAst(IGDScriptInfo scriptInfo)
+    {
         var members = new List<GDRuntimeMemberInfo>();
 
         if (scriptInfo.Class == null)
@@ -184,13 +294,23 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
                     var allParams = method.Parameters?.ToList() ?? new List<GDParameterDeclaration>();
                     var minArgs = allParams.Count(p => p.DefaultValue == null);
                     var maxArgs = allParams.Count;
-                    members.Add(GDRuntimeMemberInfo.Method(
+                    var methodInfo = GDRuntimeMemberInfo.Method(
                         method.Identifier.Sequence,
                         method.ReturnType?.BuildName() ?? GDWellKnownTypes.Variant,
                         minArgs,
                         maxArgs,
                         isVarArgs: false,
-                        isStatic: method.IsStatic));
+                        isStatic: method.IsStatic);
+                    if (allParams.Count > 0)
+                    {
+                        methodInfo.Parameters = allParams
+                            .Select(p => new GDRuntimeParameterInfo(
+                                p.Identifier?.Sequence ?? "param",
+                                p.Type?.BuildName(),
+                                p.DefaultValue != null))
+                            .ToList();
+                    }
+                    members.Add(methodInfo);
                     break;
 
                 case GDVariableDeclaration variable when variable.Identifier != null:
@@ -210,7 +330,18 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
                     break;
 
                 case GDSignalDeclaration signal when signal.Identifier != null:
-                    members.Add(GDRuntimeMemberInfo.Signal(signal.Identifier.Sequence));
+                    var signalInfo = GDRuntimeMemberInfo.Signal(signal.Identifier.Sequence);
+                    var signalParams = signal.Parameters?.ToList();
+                    if (signalParams != null && signalParams.Count > 0)
+                    {
+                        signalInfo.Parameters = signalParams
+                            .Select(p => new GDRuntimeParameterInfo(
+                                p.Identifier?.Sequence ?? "param",
+                                p.Type?.BuildName(),
+                                p.DefaultValue != null))
+                            .ToList();
+                    }
+                    members.Add(signalInfo);
                     break;
             }
         }
@@ -261,4 +392,18 @@ public class GDAutoloadsProvider : IGDRuntimeProvider
     public IReadOnlyList<GDAvoidanceLayerInfo> GetAvoidanceLayerDetails() => Array.Empty<GDAvoidanceLayerInfo>();
     public GDExpression? GetConstantInitializer(string typeName, string constantName) => null;
     public bool IsVirtualMethod(string typeName, string methodName) => false;
+
+    private static string? InferLiteralType(GDExpression expr)
+    {
+        return expr switch
+        {
+            GDNumberExpression num => num.Number?.Sequence?.Contains('.') == true ? "float" : "int",
+            GDStringExpression => "String",
+            GDBoolExpression => "bool",
+            GDArrayInitializerExpression => "Array",
+            GDDictionaryInitializerExpression => "Dictionary",
+            GDNodePathExpression => "NodePath",
+            _ => null
+        };
+    }
 }

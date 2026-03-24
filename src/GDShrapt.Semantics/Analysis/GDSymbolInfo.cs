@@ -99,6 +99,11 @@ public class GDSymbolInfo
     public string? ReturnTypeName { get; }
 
     /// <summary>
+    /// For methods: true if the method body contains 'await' expressions.
+    /// </summary>
+    public bool IsCoroutine { get; set; }
+
+    /// <summary>
     /// For methods: parameter information.
     /// </summary>
     public IReadOnlyList<GDParameterSymbolInfo>? Parameters { get; }
@@ -177,6 +182,7 @@ public class GDSymbolInfo
         TypeNode = symbol.TypeNode;
         IsStatic = symbol.IsStatic;
         ReturnTypeName = symbol.ReturnTypeName;
+        IsCoroutine = symbol.IsCoroutine;
         Parameters = symbol.Parameters;
         DeclaringTypeName = declaringTypeName;
         DeclaringScript = declaringScript;
@@ -319,6 +325,7 @@ public class GDSymbolInfo
             parameters: parameters,
             returnTypeName: returnTypeName);
         symbol.Documentation = memberInfo.Description;
+        symbol.IsCoroutine = memberInfo.IsCoroutine;
         return symbol;
     }
 

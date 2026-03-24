@@ -1,7 +1,6 @@
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace GDShrapt.Semantics.Validator;
 
@@ -89,26 +88,12 @@ public class GDAwaitConsistencyValidator : GDValidationVisitor
     {
         var result = new HashSet<string>();
 
-        var methods = _semanticModel.GetMethods();
-        foreach (var method in methods)
+        foreach (var method in _semanticModel.GetMethods())
         {
-            if (method.DeclarationNode is GDMethodDeclaration methodDecl)
-            {
-                var detector = new AwaitDetector();
-                methodDecl.WalkIn(detector);
-
-                if (detector.HasAwait)
-                    result.Add(method.Name);
-            }
+            if (method.IsCoroutine)
+                result.Add(method.Name);
         }
 
         return result;
-    }
-
-    private sealed class AwaitDetector : GDVisitor
-    {
-        public bool HasAwait { get; private set; }
-
-        public override void Visit(GDAwaitExpression expr) => HasAwait = true;
     }
 }

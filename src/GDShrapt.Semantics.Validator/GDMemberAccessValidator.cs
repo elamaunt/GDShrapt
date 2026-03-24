@@ -166,10 +166,6 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (string.IsNullOrEmpty(typeName))
             return;
 
-        // Normalize Signal type with signature to base "Signal" for member lookup
-        if (typeName.StartsWith("Signal("))
-            typeName = "Signal";
-
         var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
 
         // Variant can have any properties (duck typing)
@@ -221,10 +217,6 @@ public class GDMemberAccessValidator : GDValidationVisitor
     {
         if (string.IsNullOrEmpty(typeName))
             return;
-
-        // Normalize Signal type with signature to base "Signal" for member lookup
-        if (typeName == "Signal" || typeName.StartsWith("Signal("))
-            typeName = "Signal";
 
         var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
 
@@ -348,9 +340,15 @@ public class GDMemberAccessValidator : GDValidationVisitor
     private GDRuntimeMemberInfo? FindMember(string typeName, string memberName)
     {
         var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
-        var baseTypeName = semanticType is GDContainerSemanticType ct
-            ? (ct.IsDictionary ? "Dictionary" : "Array")
-            : typeName;
+        string baseTypeName;
+        if (semanticType is GDContainerSemanticType ct)
+            baseTypeName = ct.IsDictionary ? "Dictionary" : "Array";
+        else if (semanticType.IsCallable)
+            baseTypeName = "Callable";
+        else if (semanticType.IsSignal)
+            baseTypeName = "Signal";
+        else
+            baseTypeName = typeName;
 
         // Check direct member on base type
         var memberInfo = _runtimeProvider.GetMember(baseTypeName, memberName);

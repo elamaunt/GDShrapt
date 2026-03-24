@@ -226,9 +226,14 @@ test_scripts/cross_file_inference.gd
     174:12 entity -> Entity (base: Entity) # OK
     175:15 processed -> Array (base: Array) # OK
 
+  execute_on_handler()
+    137:39 args -> Array (base: Variant) # OK
+
   create_game_object()
     242:32 entity -> Entity (base: Entity) # OK
+    243:46 params -> Dictionary (base: Variant) # OK
     244:32 entity -> Entity (base: Entity) # OK
+    245:43 params -> Dictionary (base: Variant) # OK
     246:36 entity -> Entity (base: Entity) # OK
     247:34 entity -> Entity (base: Entity) # OK
     248:10 entity -> Entity (base: Entity) # OK
@@ -931,9 +936,20 @@ test_scripts/duck_typing_advanced.gd
 
 
 test_scripts/dynamic_dispatch.gd
+  call_if_exists()
+    16:32 args -> Array (base: Variant) # OK
+
+  call_with_fallback()
+    22:32 args -> Array (base: Variant) # OK
+    24:36 args -> Array (base: Variant) # OK
+
+  call_first_available()
+    31:28 args -> Array (base: Variant) # OK
+
   call_all_matching()
     39:13 method -> Dictionary (base: Dictionary) # OK
     41:3 results -> Dictionary (base: Dictionary) # OK
+    41:35 args -> Array (base: Variant) # OK
     42:8 results -> Dictionary (base: Dictionary) # OK
 
   send_message()
@@ -994,9 +1010,14 @@ test_scripts/dynamic_dispatch.gd
     222:13 class_ref -> PackedScene (base: Variant) # OK
     223:6 class_ref -> GDScript (base: Variant) # OK
     224:13 class_ref -> GDScript (base: Variant) # OK
+    229:12 init_params -> Dictionary (base: Variant) # OK
     230:12 instance -> Node (base: Node) # OK
     231:3 instance -> Node (base: Node) # OK
+    231:21 init_params -> Dictionary (base: Variant) # OK
     233:8 instance -> Node (base: Node) # OK
+
+  call_method()
+    273:56 args -> Array (base: Variant) # OK
 
   clone_object()
     247:44 class_name_str -> String (base: String) # OK
@@ -1016,17 +1037,24 @@ test_scripts/dynamic_dispatch.gd
     366:8 proxy -> DynamicProxy (base: DynamicProxy) # OK
 
   advised_call()
+    405:34 args -> Array (base: Variant) # OK
+    412:55 args -> Array (base: Variant) # OK
+    413:58 args -> Array (base: Variant) # OK
     413:64 proceed -> Callable() (base: Callable) # OK
     414:3 has_around -> bool (base: bool) # OK
     417:8 has_around -> null (base: bool) # OK
+    418:34 args -> Array (base: Variant) # OK
+    424:34 args -> Array (base: Variant) # OK
 
 
 test_scripts/ecs_like_system.gd
   _init()
     28:2 id -> int (base: int) # OK
     29:2 name -> String (base: String) # OK
+    29:9 entity_name -> String (base: Variant) # OK
 
   create_entity()
+    33:41 entity_name -> String (base: Variant) # OK
     34:28 entity -> Entity (base: Entity) # OK
     35:1 next_entity_id -> int (base: int) # OK
     36:8 entity -> Entity (base: Entity) # OK
@@ -1057,6 +1085,27 @@ test_scripts/ecs_like_system.gd
     138:3 result -> Array (base: Array) # OK
     139:8 result -> Array (base: Array) # OK
 
+  create_transform_component()
+    169:21 pos -> Vector2 (base: Variant) # OK
+    169:38 rot -> float (base: Variant) # OK
+    169:52 scl -> Vector2 (base: Variant) # OK
+
+  create_velocity_component()
+    173:19 linear -> Vector2 (base: Variant) # OK
+    173:38 angular -> float (base: Variant) # OK
+
+  create_health_component()
+    177:4 maximum -> int (base: Variant) # OK
+    178:2 maximum -> int (base: Variant) # OK
+    179:36 maximum -> int (base: Variant) # OK
+
+  create_render_component()
+    183:36 color -> Color (base: Variant) # OK
+    183:54 visible -> bool (base: Variant) # OK
+
+  create_ai_component()
+    187:18 initial_state -> String (base: Variant) # OK
+
   update()
     197:13 movers -> Array (base: Array) # OK
     211:13 with_health -> Array (base: Array) # OK
@@ -1064,10 +1113,15 @@ test_scripts/ecs_like_system.gd
     233:53 context -> Dictionary[String, Variant] (base: Dictionary[String, Variant]) # OK
 
   create_from_archetype()
+    258:5 overrides -> Dictionary (base: Variant) # OK
+    259:15 overrides -> Dictionary (base: Variant) # OK
     265:3 component -> Dictionary (base: Variant) # OK
     267:16 entity -> Entity (base: Entity) # OK
     267:38 component -> Dictionary (base: Variant) # OK
     269:8 entity -> Entity (base: Entity) # OK
+
+  emit_event()
+    281:12 source_entity -> int (base: Variant) # OK
 
   get_events_by_type()
     297:3 result -> Array (base: Array) # OK
@@ -1303,6 +1357,9 @@ test_scripts/game_patterns.gd
     179:40 choices -> Array (base: Array) # OK
     182:14 choices -> Array (base: Array) # OK
 
+  update_quest_objective()
+    228:46 delta -> int (base: Variant) # OK
+
   _check_quest_completion()
     245:3 all_complete -> bool (base: bool) # OK
     248:4 all_complete -> bool (base: bool) # OK
@@ -1315,9 +1372,12 @@ test_scripts/game_patterns.gd
     328:4 effect_func -> Callable (base: Variant) # OK
     329:2 result -> null (base: null) # OK
     329:11 effect_func -> Callable (base: Variant) # OK
+    329:34 targets -> Array (base: Variant) # OK
     330:6 effect_func -> Dictionary (base: Variant) # OK
     331:2 result -> Array (base: null) # OK
     331:34 effect_func -> Dictionary (base: Variant) # OK
+    331:53 targets -> Array (base: Variant) # OK
+    338:14 targets -> Array (base: Variant) # OK
 
   _apply_effect_template()
     354:6 dmg -> int (base: Variant) # OK
@@ -1791,7 +1851,11 @@ test_scripts/polymorphic_interfaces.gd
     320:17 item -> void (base: void) # OK
     321:8 results -> Array (base: Array) # OK
 
+  create_instance()
+    338:23 params -> Dictionary (base: Variant) # OK
+
   create_multiple()
+    344:44 params -> Dictionary (base: Variant) # OK
     345:5 instance -> null (base: null) # OK
     346:3 instances -> Array (base: Array) # OK
     346:20 instance -> null (base: null) # OK
@@ -2202,6 +2266,9 @@ test_scripts/semantic_validation_demo.gd
 
 
 test_scripts/signal_callback_chains.gd
+  invoke_callback()
+    46:23 args -> Array (base: Variant) # OK
+
   then()
     71:5 _state -> String (base: String) # OK
 
@@ -2315,6 +2382,7 @@ test_scripts/signal_callback_chains.gd
     446:23 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
     446:40 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
     447:1 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
+    447:23 args -> Array (base: Variant) # OK
 
   _on_wait_timeout()
     451:4 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
@@ -2333,6 +2401,8 @@ test_scripts/signal_callback_chains.gd
     463:1 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
     463:43 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
     465:29 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
+    468:4 timeout -> float (base: Variant) # OK
+    469:38 timeout -> float (base: Variant) # OK
     470:46 ctx -> SignalWaitContext (base: SignalWaitContext) # OK
     472:8 operation -> AsyncOperation (base: AsyncOperation) # OK
 

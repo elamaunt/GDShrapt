@@ -58,12 +58,28 @@ public class GDHoverHandler : IGDHoverHandler
         var symbol = semanticModel.GetSymbolForNode(node);
         if (symbol == null)
         {
+            // Check for attribute annotations (@onready, @export, etc.)
+            if (node is GDCustomAttribute customAttr)
+            {
+                var attrHover = GDKeywordHoverProvider.GetAttributeHover(customAttr.Attribute?.Name, customAttr.Attribute);
+                if (attrHover != null) return attrHover;
+            }
+            if (node is GDAttribute attrNode && attrNode.Parent is GDCustomAttribute)
+            {
+                var attrHover = GDKeywordHoverProvider.GetAttributeHover(attrNode.Name, attrNode);
+                if (attrHover != null) return attrHover;
+            }
+
             var token = semanticModel.GetTokenAtPosition(line - 1, column - 1);
             if (token != null)
             {
                 var specialHover = TryGetSpecialIdentifierHover(token, semanticModel);
                 if (specialHover != null)
                     return specialHover;
+
+                var literalHover = TryGetLiteralHover(token);
+                if (literalHover != null)
+                    return literalHover;
 
                 return GDKeywordHoverProvider.GetKeywordHover(token);
             }
@@ -86,6 +102,13 @@ public class GDHoverHandler : IGDHoverHandler
         // Fallback: extract from AST for same-file symbols not yet cached
         if (string.IsNullOrEmpty(documentation))
             documentation = ExtractDocComment(symbol.DeclarationNode);
+
+        // Fallback: extract from cross-file declaration (autoloads, class_name types)
+        if (string.IsNullOrEmpty(documentation) && symbol.DeclarationNode == null
+            && !string.IsNullOrEmpty(symbol.DeclaringTypeName))
+        {
+            documentation = ExtractCrossFileDocComment(symbol);
+        }
 
         if (!string.IsNullOrEmpty(documentation))
         {
@@ -212,6 +235,9 @@ public class GDHoverHandler : IGDHoverHandler
         }
 
         sb.Append("\n```");
+
+        if (symbol.IsCoroutine)
+            sb.Append("\n\n⚡ *coroutine*");
 
         if (!string.IsNullOrEmpty(symbol.DeclaringTypeName))
         {
@@ -624,6 +650,26 @@ public class GDHoverHandler : IGDHoverHandler
     }
 
     /// <summary>
+    /// Extracts documentation from a cross-file declaration (autoloads, class_name types).
+    /// </summary>
+    protected string? ExtractCrossFileDocComment(Semantics.GDSymbolInfo symbol)
+    {
+        var declaringScript = _projectModel.Project.GetScriptByTypeName(symbol.DeclaringTypeName!);
+        if (declaringScript == null)
+            return null;
+
+        var declaringModel = _projectModel.GetSemanticModel(declaringScript);
+        if (declaringModel == null)
+            return null;
+
+        var declaringSymbol = declaringModel.FindSymbol(symbol.Name);
+        if (declaringSymbol == null)
+            return null;
+
+        return ExtractDocComment(declaringSymbol.DeclarationNode);
+    }
+
+    /// <summary>
     /// Extracts documentation comments from above the declaration.
     /// GDScript uses ## for doc comments.
     /// </summary>
@@ -821,6 +867,31 @@ public class GDHoverHandler : IGDHoverHandler
             StartColumn = startCol,
             EndLine = line,
             EndColumn = endCol
+        };
+    }
+
+    private GDHoverInfo? TryGetLiteralHover(GDSyntaxToken token)
+    {
+        string? typeName = token switch
+        {
+            GDNumber num => num.ResolveNumberType() == GDNumberType.Double ? "float" : "int",
+            GDStringPart => "String",
+            _ => null
+        };
+
+        if (typeName == null)
+            return null;
+
+        return new GDHoverInfo
+        {
+            Content = $"```gdscript\n({typeName}) {token}\n```",
+            Kind = GDSymbolKind.Constant,
+            SymbolName = token.ToString() ?? "",
+            TypeName = typeName,
+            StartLine = token.StartLine + 1,
+            StartColumn = token.StartColumn,
+            EndLine = token.EndLine + 1,
+            EndColumn = token.EndColumn
         };
     }
 

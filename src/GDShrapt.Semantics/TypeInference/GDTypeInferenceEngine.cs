@@ -555,6 +555,27 @@ namespace GDShrapt.Semantics
                     return GDSemanticType.FromRuntimeTypeName(asResult);
             }
 
+            // Ternary (if expression) → union of both branches when they differ
+            if (expression is GDIfExpression ternary)
+            {
+                var trueType = InferSemanticType(ternary.TrueExpression);
+                var falseType = InferSemanticType(ternary.FalseExpression);
+
+                if (trueType != null && falseType != null && !trueType.Equals(falseType)
+                    && !trueType.IsVariant && !falseType.IsVariant)
+                {
+                    // Numeric promotion: int + float → float (not a union)
+                    var promoted = GDTypeCompatibility.ResolveNumericPromotion(
+                        trueType.DisplayName, falseType.DisplayName);
+                    if (promoted != null)
+                        return GDSemanticType.FromRuntimeTypeName(promoted);
+
+                    return new GDUnionSemanticType(new List<GDSemanticType> { trueType, falseType });
+                }
+
+                return trueType ?? falseType ?? GDVariantSemanticType.Instance;
+            }
+
             var typeNode = InferTypeNode(expression);
             return GDSemanticType.FromTypeNode(typeNode);
         }

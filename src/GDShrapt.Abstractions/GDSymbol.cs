@@ -57,6 +57,11 @@ public class GDSymbol
     public string? ReturnTypeName { get; set; }
 
     /// <summary>
+    /// For methods: true if the method body contains 'await' expressions.
+    /// </summary>
+    public bool IsCoroutine { get; set; }
+
+    /// <summary>
     /// For methods: parameter information extracted during symbol registration.
     /// </summary>
     public IReadOnlyList<GDParameterSymbolInfo>? Parameters { get; set; }

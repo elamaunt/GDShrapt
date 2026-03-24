@@ -142,6 +142,13 @@ public class GDRuntimeTypeInfo
     }
 
     /// <summary>
+    /// The class_name declared in the script, if different from the type registration name.
+    /// For autoloads, Name is the autoload identifier (e.g., "Transition") while
+    /// ClassName is the declared class_name (e.g., "ScreenTransition").
+    /// </summary>
+    public string? ClassName { get; set; }
+
+    /// <summary>
     /// Source location info for project-defined types. Null for built-in Godot types.
     /// </summary>
     public GDTypeSourceInfo? SourceInfo { get; set; }

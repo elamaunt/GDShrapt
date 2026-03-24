@@ -546,6 +546,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     .ToList();
             }
 
+            memberInfo.IsCoroutine = method.IsCoroutine;
             members.Add(memberInfo);
         }
 
@@ -640,6 +641,7 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
                     .ToList();
             }
 
+            memberInfo.IsCoroutine = method.IsCoroutine;
             return (memberInfo, typeName);
         }
 
@@ -1061,6 +1063,11 @@ public class GDProjectMethodInfo
     /// Whether the return type has been inferred (for lazy inference).
     /// </summary>
     internal bool ReturnTypeInferred { get; set; }
+
+    /// <summary>
+    /// True if the method body contains 'await' expressions.
+    /// </summary>
+    public bool IsCoroutine { get; set; }
 }
 
 public class GDProjectPropertyInfo

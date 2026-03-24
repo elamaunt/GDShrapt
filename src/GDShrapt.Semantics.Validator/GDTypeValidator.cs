@@ -1425,25 +1425,45 @@ namespace GDShrapt.Semantics.Validator
         /// </summary>
         private string InferSimpleType(GDExpression expr)
         {
-            // First check local scope for variables registered during validation
-            if (expr is GDIdentifierExpression identExpr)
+            // For identifiers: use flow-aware variable type (preserves narrowing AND nullable unions)
+            if (expr is GDIdentifierExpression identExpr && _semanticModel != null)
             {
-                var name = identExpr.Identifier?.Sequence;
-                if (!string.IsNullOrEmpty(name))
+                var varName = identExpr.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(varName))
                 {
-                    var symbol = Context.Scopes.Lookup(name);
-                    if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
+                    var flowVar = _semanticModel.TypeSystem.GetVariableTypeAt(varName, expr);
+                    if (flowVar != null)
                     {
-                        return symbol.TypeName;
+                        var effective = flowVar.EffectiveType;
+                        if (!effective.IsVariant)
+                            return effective.DisplayName;
+
+                        // EffectiveType collapsed to Variant — use union type name to preserve nullable info
+                        var unionName = flowVar.CurrentType.UnionTypeName;
+                        if (unionName != "Variant")
+                            return unionName;
                     }
                 }
             }
 
-            // Fall back to semantic model for complex expressions
+            // Non-identifier expressions: use semantic model
             var typeInfo = _semanticModel?.TypeSystem.GetType(expr);
-            if (typeInfo == null || typeInfo.IsVariant)
-                return "Unknown";
-            return typeInfo.DisplayName;
+            if (typeInfo != null && !typeInfo.IsVariant)
+                return typeInfo.DisplayName;
+
+            // Fall back to local scope for variables not tracked by semantic model
+            if (expr is GDIdentifierExpression fallbackIdent)
+            {
+                var name = fallbackIdent.Identifier?.Sequence;
+                if (!string.IsNullOrEmpty(name))
+                {
+                    var symbol = Context.Scopes.Lookup(name);
+                    if (symbol != null && !string.IsNullOrEmpty(symbol.TypeName))
+                        return symbol.TypeName;
+                }
+            }
+
+            return "Unknown";
         }
 
         private bool AreTypesCompatibleForArithmetic(

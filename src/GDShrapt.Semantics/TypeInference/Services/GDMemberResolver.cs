@@ -132,7 +132,14 @@ internal class GDMemberResolver
     /// </summary>
     public static string ExtractBaseTypeName(string? typeName)
     {
-        return GDSemanticType.FromRuntimeTypeName(typeName) is GDContainerSemanticType ct ? (ct.IsDictionary ? "Dictionary" : "Array") : (typeName ?? string.Empty);
+        var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+        if (semanticType is GDContainerSemanticType ct)
+            return ct.IsDictionary ? "Dictionary" : "Array";
+        if (semanticType.IsCallable)
+            return "Callable";
+        if (semanticType.IsSignal)
+            return "Signal";
+        return typeName ?? string.Empty;
     }
 
     /// <summary>
@@ -181,7 +188,7 @@ internal class GDMemberResolver
                 foreach (var member in typeInfo.Members)
                 {
                     if (member.Name == memberName)
-                        return current;
+                        return typeInfo.ClassName ?? current;
                 }
             }
             return null;

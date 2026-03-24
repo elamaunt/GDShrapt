@@ -549,4 +549,58 @@ public class GodotOpenRpgSmokeTests : SmokeTestBase
                 "cover() definition should be in screen_transition.gd");
         }
     }
+
+    // ========================================================================
+    // Hover regression — Transition.cover() should show full method signature
+    // ========================================================================
+
+    [TestMethod]
+    [Timeout(30000)]
+    public void Hover_CombatGd_TransitionCover_ShowsParameters()
+    {
+        var script = FindScript("combat/combat.gd");
+        script.Should().NotBeNull("combat.gd should exist in godot-open-rpg");
+
+        var line = FindLineContaining(script!, "await Transition.cover");
+        line.Should().BeGreaterThanOrEqualTo(0, "combat.gd should contain await Transition.cover");
+
+        var col = GetColumnOf(script!, line, "cover");
+
+        var handler = Registry.GetService<IGDHoverHandler>()!;
+        var lspHandler = new GDLspHoverHandler(handler);
+        var uri = GDDocumentManager.PathToUri(script!.FullPath!);
+
+        var result = lspHandler.HandleAsync(new GDHoverParams
+        {
+            TextDocument = new GDLspTextDocumentIdentifier { Uri = uri },
+            Position = new GDLspPosition(line, col)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        result.Should().NotBeNull("Hover on Transition.cover should return a result");
+
+        var content = result!.Contents.Value;
+        Console.WriteLine($"[SMOKE] Hover Transition.cover:\n{content}");
+
+        // Parameter name
+        content.Should().Contain("duration",
+            "Hover should show the 'duration' parameter");
+
+        // Parameter type must be float (inferred from default 0.0), not Variant
+        content.Should().Contain("float",
+            "Parameter type should be inferred as 'float' from default value 0.0");
+        content.Should().NotContain("Variant",
+            "Parameter type should NOT be Variant — semantic model infers float from 0.0");
+
+        // Return type
+        content.Should().Contain("void",
+            "Return type should be void");
+
+        // Coroutine marker (method contains await)
+        content.Should().Contain("coroutine",
+            "Method contains 'await' and should be marked as coroutine");
+
+        // Declaring type
+        content.Should().Contain("ScreenTransition",
+            "Declaring type should be ScreenTransition");
+    }
 }

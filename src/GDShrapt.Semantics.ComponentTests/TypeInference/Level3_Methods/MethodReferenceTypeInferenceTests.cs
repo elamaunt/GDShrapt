@@ -236,6 +236,25 @@ func test():
             "callv() should work on method reference");
     }
 
+    [TestMethod]
+    public void MethodReference_CallDeferredWorks_NoGD4002()
+    {
+        var code = @"
+class_name Test
+extends Node
+
+func test():
+    get_parent().move_child.call_deferred(self, get_parent().get_child_count()-1)
+";
+        var diagnostics = ValidateCode(code);
+        var methodNotFound = diagnostics.Where(d =>
+            d.Code == GDDiagnosticCode.MethodNotFound &&
+            d.Message.Contains("call_deferred")).ToList();
+
+        methodNotFound.Should().BeEmpty(
+            "call_deferred() should work on method reference (Callable)");
+    }
+
     #endregion
 
     #region is_valid() / is_null() Work on Method Reference - No GD4002

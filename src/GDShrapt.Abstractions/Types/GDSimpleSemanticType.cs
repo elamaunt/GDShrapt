@@ -28,7 +28,8 @@ public class GDSimpleSemanticType : GDSemanticType
 
     public override bool IsCallable => GDGenericTypeHelper.IsCallableType(TypeName);
 
-    public override bool IsSignal => TypeName == "Signal";
+    public override bool IsSignal => TypeName == "Signal"
+        || (!string.IsNullOrEmpty(TypeName) && TypeName.StartsWith("Signal("));
 
     public override bool IsNumeric => TypeName == "int" || TypeName == "float";
 

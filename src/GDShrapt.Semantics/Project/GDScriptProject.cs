@@ -312,7 +312,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
     public void AnalyzeAll(CancellationToken cancellationToken = default)
     {
         var config = _options?.SemanticsConfig ?? new GDSemanticsConfig();
-        var runtimeProvider = CreateRuntimeProvider();
+        var compositeProvider = CreateRuntimeProvider();
         var nodeTypeInjector = CreateNodeTypeInjector();
 
         // Sequential fallback when parallel is disabled or degree is 0
@@ -321,8 +321,11 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             foreach (var script in _scripts.Values)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                script.Analyze(runtimeProvider, nodeTypeInjector);
+                script.Analyze(compositeProvider, nodeTypeInjector);
             }
+
+            // Invalidate autoloads cache so subsequent queries pick up flow-inferred types
+            (compositeProvider as GDCompositeRuntimeProvider)?.AutoloadsProvider?.InvalidateCache();
             return;
         }
 
@@ -341,7 +344,7 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
             {
                 try
                 {
-                    script.Analyze(runtimeProvider, nodeTypeInjector);
+                    script.Analyze(compositeProvider, nodeTypeInjector);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -354,6 +357,9 @@ public class GDScriptProject : IGDScriptProvider, IDisposable
         {
             throw;
         }
+
+        // Invalidate autoloads cache so subsequent queries pick up flow-inferred types
+        (compositeProvider as GDCompositeRuntimeProvider)?.AutoloadsProvider?.InvalidateCache();
 
         if (!exceptions.IsEmpty)
         {

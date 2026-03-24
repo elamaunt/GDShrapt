@@ -1,30 +1,30 @@
 ================================================================================
 GDShrapt Diagnostics Report
-Generated: 2026-03-23 16:08:39
+Generated: 2026-03-23 22:41:30
 Project: testproject/GDShrapt.TestProject
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total diagnostics: 747
+Total diagnostics: 743
 Scripts analyzed:  63
 
 By Severity:
   Error     :    30
   Hint      :    99
   Info      :    40
-  Warning   :   578
+  Warning   :   574
 
 By Source:
   Linter              :   309
-  SemanticValidator   :   404
+  SemanticValidator   :   400
   Validator           :    34
 
 By Code (Top 30):
-  GD7007    :  183  (Variable 'timer_node' is @onready - _ready() may not have...)
+  GD7007    :  181  (Variable 'timer_node' is @onready - _ready() may not have...)
   GDL201    :  158  (Local variable 'level' is declared but never used)
-  GD7006    :   38  (Variable 'data' may be null when accessing '[...]')
   GD3020    :   37  (Variable 'depth' may be null; comparison with '<=' would ...)
+  GD7006    :   36  (Variable 'data' may be null when accessing '[...]')
   GD3023    :   33  (Function 'create_game_object' returns inconsistent types:...)
   GD7003    :   31  (Calling method 'visit' on untyped variable 'visitor' with...)
   GDL203    :   30  (Function '_process_idle' only contains 'pass')
@@ -80,7 +80,7 @@ DIAGNOSTICS BY FILE
    100:1   [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'one_shot'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
    101:17  [GD7005] Hint - Variable 'timer_node' is @onready - _ready() may not have been called. Use 'if is_node_ready():' guard when accessing 'time_left'. Accessed in completion_test.gd:95:0 test_timer_completion (no in-file callers)
 
---- test_scripts/cross_file_inference.gd (66 diagnostics) ---
+--- test_scripts/cross_file_inference.gd (65 diagnostics) ---
 
     37:14  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'. Accessed in cross_file_inference.gd:35:0 process_entity <- cross_file_inference.gd:81:0 _on_spawn_event (no in-file callers)
     37:43  [GD7007] Warning - Variable 'entity_data' may be null when accessing 'get'
@@ -124,7 +124,6 @@ DIAGNOSTICS BY FILE
    241:16  [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_entity'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
    242:3   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
    243:4   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_transform_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
-   243:46  [GD7007] Warning - Variable 'params' may be null when accessing 'get'
    244:3   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'add_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
    245:4   [GD7007] Hint - Variable 'entity_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'create_health_component'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
    246:3   [GD7007] Hint - Variable 'poly_manager' is initialized in _ready() - may be accessed before _ready() is called. Use 'if is_node_ready():' guard or a null check when accessing 'register_damageable'. Accessed in cross_file_inference.gd:237:0 create_game_object (no in-file callers)
@@ -406,7 +405,7 @@ DIAGNOSTICS BY FILE
    248:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    251:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
 
---- test_scripts/dynamic_dispatch.gd (30 diagnostics) ---
+--- test_scripts/dynamic_dispatch.gd (29 diagnostics) ---
 
      2:11  [GDL222] Warning - 'DynamicDispatch' has 27 public methods (max 20)
     21:4   [GD7007] Warning - Variable 'obj' may be null when accessing 'has_method'
@@ -426,7 +425,6 @@ DIAGNOSTICS BY FILE
    172:0   [GD3023] Warning - Function '_deserialize_value' returns inconsistent types: null, Array, Dictionary
    193:0   [GD3023] Warning - Function '_deserialize_typed' returns inconsistent types: Vector2, Vector3, Color
    194:17  [GD7006] Warning - Variable 'data' may be null when accessing '[...]'
-   231:21  [GD7006] Warning - Variable 'init_params' may be null when accessing '[...]'
    256:8   [GD7003] Warning - Calling method 'get_file' on untyped expression without type guard
    256:8   [GD7003] Warning - Calling method 'get_path' on untyped expression without type guard
    256:8   [GD7007] Warning - Variable 'obj' may be null when accessing 'get_script'
@@ -439,7 +437,7 @@ DIAGNOSTICS BY FILE
    405:4   [GD7007] Warning - Variable 'advice' may be null when accessing 'call'
    412:32  [GD7007] Warning - Variable 'obj' may be null when accessing 'callv'
 
---- test_scripts/ecs_like_system.gd (29 diagnostics) ---
+--- test_scripts/ecs_like_system.gd (27 diagnostics) ---
 
      2:11  [GDL222] Warning - 'ECSLikeSystem' has 31 public methods (max 20)
    137:5   [GD7007] Warning - Variable 'predicate' may be null when accessing 'call'
@@ -454,8 +452,6 @@ DIAGNOSTICS BY FILE
    233:20  [GD7007] Warning - Variable 'ai' may be null when accessing 'call'
    247:0   [GDL513] Hint - Expected 2 empty line(s) before function, found 1
    255:18  [GD7006] Warning - Variable 'comp_def' may be null when accessing '[...]'
-   258:5   [GD7007] Warning - Variable 'overrides' may be null when accessing 'has'
-   259:15  [GD7006] Warning - Variable 'overrides' may be null when accessing '[...]'
    263:0   [GDL101] Warning - Line 263 exceeds 120 characters (length: 159)
    290:2   [GD7007] Warning - Variable 'handler' may be null when accessing 'call'
    296:5   [GD7006] Warning - Variable 'event' may be null when accessing '[...]'

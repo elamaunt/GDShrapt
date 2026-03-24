@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using GDShrapt.Abstractions;
 using GDShrapt.CLI.Core;
+using GDShrapt.Reader;
 using GDShrapt.Semantics;
 
 namespace GDShrapt.LSP;
@@ -296,19 +297,24 @@ public class GDLanguageServer : IGDLanguageServer
                 try
                 {
                     // Phase 1: Per-file semantic analysis
+                    _ = _logger?.InfoAsync("[analysis] Starting AnalyzeAll...");
                     _project.AnalyzeAll();
+                    _ = _logger?.InfoAsync("[analysis] AnalyzeAll complete");
 
                     if (progressSupported)
                         await SendProgressAsync(progressToken, "report", message: "Building cross-file index...", percentage: 60).ConfigureAwait(false);
 
                     // Phase 1 complete — hover, completion, diagnostics, go-to-def now fully functional
                     _documentManager?.SetInitialAnalysisComplete();
+                    // Signal analysis ready BEFORE publishing — PublishDiagnosticsAsync awaits this task
+                    _analysisComplete?.TrySetResult(true);
 
                     // Publish diagnostics for open documents
                     if (_diagnosticPublisher != null && _documentManager != null)
                         await _diagnosticPublisher.PublishAllAsync(_documentManager).ConfigureAwait(false);
 
                     // Phase 2: Cross-file enrichment (references, rename, CodeLens)
+                    _ = _logger?.InfoAsync("[analysis] Starting cross-file enrichment...");
                     _project.BuildCallSiteRegistry();
                     _project.EnrichWithCallSiteAnalysis();
                     _project.ResolveTresClassNames();
@@ -319,11 +325,13 @@ public class GDLanguageServer : IGDLanguageServer
                 }
                 catch (Exception ex)
                 {
+                    _ = _logger?.ErrorAsync($"[analysis] Background analysis failed: {ex.Message}\n{ex.StackTrace}");
                     _ = ShowCriticalErrorAsync($"Background analysis failed: {ex.Message}");
                 }
                 finally
                 {
                     _analysisComplete?.TrySetResult(true);
+                    _ = _logger?.InfoAsync("[analysis] Analysis pipeline complete");
 
                     if (progressSupported)
                         await SendProgressAsync(progressToken, "end", message: "Analysis complete").ConfigureAwait(false);
@@ -630,7 +638,8 @@ public class GDLanguageServer : IGDLanguageServer
         _logger?.Debug($"[Hover] END {filename} {sw.ElapsedMilliseconds}ms hasResult={result != null}");
 
         // When analysis is still in progress and handler returned null, show a loading indicator
-        if (result == null && _analysisComplete != null && !_analysisComplete.Task.IsCompleted)
+        // But first try keyword/operator hover — these don't need semantic analysis
+        if (result == null && _documentManager != null && !_documentManager.IsInitialAnalysisComplete)
         {
             var filePath = GDDocumentManager.UriToPath(@params.TextDocument.Uri);
             var script = _project?.GetScript(filePath);
@@ -638,6 +647,20 @@ public class GDLanguageServer : IGDLanguageServer
             {
                 if (script.Class.TryGetTokenByPosition(@params.Position.Line, @params.Position.Character, out var token) && token != null)
                 {
+                    // Try keyword/operator hover — doesn't require semantic analysis
+                    var keywordHover = GDKeywordHoverProvider.GetKeywordHover(token);
+                    if (keywordHover != null)
+                    {
+                        return new GDLspHover
+                        {
+                            Contents = GDLspMarkupContent.Markdown(keywordHover.Content)
+                        };
+                    }
+
+                    // For literals and comments, don't show "Analysis in progress" — they never have semantic hover
+                    if (token is GDLiteralToken or GDComment)
+                        return null;
+
                     return new GDLspHover
                     {
                         Contents = GDLspMarkupContent.Markdown($"`{token}`\n\n*\u23f3 Analysis in progress...*")
