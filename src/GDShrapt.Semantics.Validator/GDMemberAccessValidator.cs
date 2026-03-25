@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GDShrapt.Abstractions;
 using GDShrapt.Reader;
 
@@ -172,6 +173,22 @@ public class GDMemberAccessValidator : GDValidationVisitor
         if (semanticType.IsVariant)
             return;
 
+        // Handle union types: check non-null components
+        if (semanticType is GDUnionSemanticType unionType)
+        {
+            foreach (var t in unionType.GetNonNullTypes())
+            {
+                if (t.IsVariant || t.IsDictionary) return;
+                if (FindMember(t.RuntimeTypeName, memberName) != null) return;
+            }
+            var nonNullDisplay = unionType.WithoutNull().DisplayName;
+            ReportWarning(
+                GDDiagnosticCode.PropertyNotFound,
+                $"Property '{memberName}' not found on type '{nonNullDisplay}'",
+                memberAccess);
+            return;
+        }
+
         // Dictionary supports dot access for key lookup (dict.key == dict["key"])
         if (semanticType.IsDictionary)
             return;
@@ -223,6 +240,54 @@ public class GDMemberAccessValidator : GDValidationVisitor
         // Variant can have any methods (duck typing)
         if (semanticType.IsVariant)
             return;
+
+        // Handle union types: check non-null components
+        if (semanticType is GDUnionSemanticType unionType)
+        {
+            foreach (var t in unionType.GetNonNullTypes())
+            {
+                if (t.IsVariant) return;
+                var m = FindMember(t.RuntimeTypeName, methodName);
+                if (m != null)
+                {
+                    // Member found on non-null component — validate callable + arg count
+                    if (m.Kind != GDRuntimeMemberKind.Method)
+                    {
+                        var nonNullName = unionType.WithoutNull().DisplayName;
+                        ReportError(
+                            GDDiagnosticCode.NotCallable,
+                            $"'{methodName}' on type '{nonNullName}' is not a method",
+                            call);
+                        return;
+                    }
+
+                    var unionArgCount = call.Parameters?.Count ?? 0;
+                    var nonNullDisplay = unionType.WithoutNull().DisplayName;
+                    if (unionArgCount < m.MinArgs)
+                    {
+                        ReportError(
+                            GDDiagnosticCode.WrongArgumentCount,
+                            $"'{nonNullDisplay}.{methodName}' requires at least {m.MinArgs} argument(s), got {unionArgCount}",
+                            call);
+                    }
+                    else if (!m.IsVarArgs && m.MaxArgs >= 0 && unionArgCount > m.MaxArgs)
+                    {
+                        ReportError(
+                            GDDiagnosticCode.WrongArgumentCount,
+                            $"'{nonNullDisplay}.{methodName}' takes at most {m.MaxArgs} argument(s), got {unionArgCount}",
+                            call);
+                    }
+                    return; // Let GDNullableAccessValidator handle GD7007
+                }
+            }
+            // Method not found on any non-null component
+            var nonNull = unionType.WithoutNull().DisplayName;
+            ReportWarning(
+                GDDiagnosticCode.MethodNotFound,
+                $"Method '{methodName}' not found on type '{nonNull}'",
+                call);
+            return;
+        }
 
         GDRuntimeMemberInfo? memberInfo;
 
@@ -340,6 +405,18 @@ public class GDMemberAccessValidator : GDValidationVisitor
     private GDRuntimeMemberInfo? FindMember(string typeName, string memberName)
     {
         var semanticType = GDSemanticType.FromRuntimeTypeName(typeName);
+
+        // Handle union types by checking each non-null component
+        if (semanticType is GDUnionSemanticType unionType)
+        {
+            foreach (var t in unionType.GetNonNullTypes())
+            {
+                var m = FindMember(t.RuntimeTypeName, memberName);
+                if (m != null) return m;
+            }
+            return null;
+        }
+
         string baseTypeName;
         if (semanticType is GDContainerSemanticType ct)
             baseTypeName = ct.IsDictionary ? "Dictionary" : "Array";

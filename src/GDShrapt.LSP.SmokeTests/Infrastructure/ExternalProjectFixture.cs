@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using GDShrapt.Abstractions;
 using GDShrapt.Semantics;
 
@@ -11,10 +12,25 @@ internal static class ExternalProjectFixture
     private static readonly string CacheRoot = Path.Combine(
         Path.GetTempPath(), "GDShrapt.SmokeTests");
 
+    private static readonly Mutex RepoMutex = new(false, "GDShrapt_SmokeTests_RepoMutex");
+
     public static string EnsureRepo(string repoUrl, string repoName, string? pinnedCommit = null)
     {
         var repoPath = Path.Combine(CacheRoot, repoName);
 
+        RepoMutex.WaitOne(TimeSpan.FromMinutes(5));
+        try
+        {
+            return EnsureRepoCore(repoUrl, repoName, repoPath, pinnedCommit);
+        }
+        finally
+        {
+            RepoMutex.ReleaseMutex();
+        }
+    }
+
+    private static string EnsureRepoCore(string repoUrl, string repoName, string repoPath, string? pinnedCommit)
+    {
         if (Directory.Exists(Path.Combine(repoPath, ".git")))
         {
             if (pinnedCommit != null)
@@ -23,7 +39,15 @@ internal static class ExternalProjectFixture
                 if (currentCommit != null && currentCommit.StartsWith(pinnedCommit, StringComparison.Ordinal))
                     return repoPath;
 
-                Directory.Delete(repoPath, true);
+                try
+                {
+                    Directory.Delete(repoPath, true);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Pack files locked by another test class — repo is likely at the right commit
+                    return repoPath;
+                }
             }
             else
             {
@@ -34,7 +58,14 @@ internal static class ExternalProjectFixture
                 }
                 catch
                 {
-                    Directory.Delete(repoPath, true);
+                    try
+                    {
+                        Directory.Delete(repoPath, true);
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        return repoPath;
+                    }
                 }
             }
         }
@@ -58,19 +89,21 @@ internal static class ExternalProjectFixture
     {
         try
         {
-            var psi = new ProcessStartInfo("git", "rev-parse HEAD")
-            {
-                WorkingDirectory = repoPath,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            // Read HEAD directly to avoid git process needing pack file access
+            var headPath = Path.Combine(repoPath, ".git", "HEAD");
+            if (!File.Exists(headPath))
+                return null;
 
-            using var process = Process.Start(psi)!;
-            var output = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit(10_000);
-            return process.ExitCode == 0 ? output : null;
+            var headContent = File.ReadAllText(headPath).Trim();
+
+            // Detached HEAD: contains the commit hash directly
+            if (!headContent.StartsWith("ref:", StringComparison.Ordinal))
+                return headContent;
+
+            // Symbolic ref: resolve by reading the ref file
+            var refPath = headContent.Substring(5).Trim();
+            var refFile = Path.Combine(repoPath, ".git", refPath);
+            return File.Exists(refFile) ? File.ReadAllText(refFile).Trim() : null;
         }
         catch
         {

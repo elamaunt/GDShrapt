@@ -90,6 +90,17 @@ public class GDHoverHandler : IGDHoverHandler
             return null;
         }
 
+        // Treat 'void' as keyword, not navigable type
+        if (symbol.Name == "void" && node is GDTypeNode)
+        {
+            return new GDHoverInfo
+            {
+                Content = "```gdscript\nvoid\n```\n\nIndicates a function returns no value.",
+                Kind = GDSymbolKind.Class,
+                SymbolName = "void"
+            };
+        }
+
         var content = BuildHoverContent(symbol, semanticModel, node);
 
         // Show cross-hierarchy bridge info for class members (skip for built-in files)
@@ -766,6 +777,25 @@ public class GDHoverHandler : IGDHoverHandler
         {
             var attrHover = GDKeywordHoverProvider.GetAttributeHover(attrNode.Name, attrNode);
             if (attrHover != null) return attrHover;
+        }
+
+        // Treat 'void' as keyword in AST-only mode
+        if (token.ToString() == "void")
+        {
+            var typeParent = node;
+            while (typeParent != null)
+            {
+                if (typeParent is GDTypeNode)
+                {
+                    return new GDHoverInfo
+                    {
+                        Content = "```gdscript\nvoid\n```\n\nIndicates a function returns no value.",
+                        Kind = GDSymbolKind.Class,
+                        SymbolName = "void"
+                    };
+                }
+                typeParent = typeParent.Parent;
+            }
         }
 
         // Walk up to find the enclosing declaration

@@ -636,6 +636,9 @@ public class GDGoToDefinitionService : GDRefactoringServiceBase
         if (string.IsNullOrEmpty(typeName))
             return GDGoToDefinitionResult.Failed("Type name is empty");
 
+        if (typeName == "void")
+            return GDGoToDefinitionResult.Failed("void is a keyword, not a navigable type");
+
         var semanticModel = context.GetSemanticModel();
         if (semanticModel == null)
             return GDGoToDefinitionResult.RequiresGodot(GDDefinitionType.ExternalType, typeName);
