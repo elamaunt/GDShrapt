@@ -228,7 +228,7 @@ func create_instance_by_name(class_name_str, init_params = {}):  # 214:45-GD7020
 	# Apply init params
 	for key in init_params:
 		if key in instance:
-			instance.set(key, init_params[key]) # 231:21-GD7006-OK
+			instance.set(key, init_params[key])
 
 	return instance
 

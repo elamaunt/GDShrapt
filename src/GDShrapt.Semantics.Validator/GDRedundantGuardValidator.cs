@@ -194,6 +194,13 @@ public class GDRedundantGuardValidator : GDValidationVisitor
             return;
         }
 
+        // If flow analysis at the actual location says variable is potentially null,
+        // the null check is not redundant regardless of parent scope state.
+        // This handles cases like loop iteration merges where the parent state
+        // may carry stale non-null narrowing from a previous iteration.
+        if (flowVarType.IsPotentiallyNull)
+            return;
+
         // For flow-based non-null check, we need to check the parent scope
         // to see if variable was already marked non-null before this if branch
         var parentNode = GetParentScopeNode(contextNode);

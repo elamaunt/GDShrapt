@@ -51,6 +51,11 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
         _pathToTypeName.Clear();
         _preloadAliasToTypeName.Clear();
 
+        // First pass: register types, inner classes, enums, and path index
+        // Also collect scripts without class_name and preload alias candidates for second pass
+        var scriptsWithoutTypeName = new List<IGDScriptInfo>();
+        var preloadAliasCandidates = new List<(string alias, string preloadPath)>();
+
         foreach (var scriptInfo in _scriptProvider.Scripts)
         {
             if (scriptInfo.Class == null)
@@ -58,71 +63,82 @@ public class GDProjectTypesProvider : IGDRuntimeProvider
 
             var typeName = scriptInfo.TypeName;
             if (string.IsNullOrEmpty(typeName))
-                continue;
-
-            var typeInfo = BuildTypeInfo(scriptInfo);
-            _typeCache[typeName] = typeInfo;
-
-            // Register inner classes as separate types
-            RegisterInnerClasses(scriptInfo.Class, typeName, scriptInfo.FullPath);
-
-            // Register enums as qualified types (e.g., Constants.TowerType)
-            RegisterEnumTypes(scriptInfo.Class, typeName, scriptInfo.FullPath);
-
-            // Index by script path for "extends 'res://path/to/script.gd'" support
-            if (!string.IsNullOrEmpty(scriptInfo.FullPath))
             {
-                // Store both the full path and the res:// path
-                _pathToTypeName[scriptInfo.FullPath] = typeName;
+                scriptsWithoutTypeName.Add(scriptInfo);
+            }
+            else
+            {
+                var typeInfo = BuildTypeInfo(scriptInfo);
+                _typeCache[typeName] = typeInfo;
 
-                // Also store the res:// path if available
-                var resPath = scriptInfo.ResPath;
-                if (!string.IsNullOrEmpty(resPath))
+                // Register inner classes as separate types
+                RegisterInnerClasses(scriptInfo.Class, typeName, scriptInfo.FullPath);
+
+                // Register enums as qualified types (e.g., Constants.TowerType)
+                RegisterEnumTypes(scriptInfo.Class, typeName, scriptInfo.FullPath);
+
+                // Index by script path for "extends 'res://path/to/script.gd'" support
+                if (!string.IsNullOrEmpty(scriptInfo.FullPath))
                 {
-                    _pathToTypeName[resPath] = typeName;
-                    // Also without quotes (in case BuildName returns "res://..." with quotes)
-                    _pathToTypeName[$"\"{resPath}\""] = typeName;
+                    _pathToTypeName[scriptInfo.FullPath] = typeName;
+
+                    var resPath = scriptInfo.ResPath;
+                    if (!string.IsNullOrEmpty(resPath))
+                    {
+                        _pathToTypeName[resPath] = typeName;
+                        _pathToTypeName[$"\"{resPath}\""] = typeName;
+                    }
+                }
+            }
+
+            // Collect preload alias candidates (for all scripts)
+            if (scriptInfo.Class?.Members != null)
+            {
+                foreach (var member in scriptInfo.Class.Members)
+                {
+                    if (member is GDVariableDeclaration varDecl
+                        && varDecl.ConstKeyword != null
+                        && varDecl.Initializer is GDCallExpression preloadCall
+                        && preloadCall.CallerExpression is GDIdentifierExpression preloadId
+                        && preloadId.Identifier?.Sequence == "preload")
+                    {
+                        var alias = varDecl.Identifier?.Sequence;
+                        if (string.IsNullOrEmpty(alias))
+                            continue;
+
+                        GDStringExpression strExpr = null;
+                        int argCount = 0;
+                        foreach (var arg in preloadCall.Parameters ?? Enumerable.Empty<GDExpression>())
+                        {
+                            if (argCount == 0)
+                                strExpr = arg as GDStringExpression;
+                            argCount++;
+                            if (argCount > 1) break;
+                        }
+
+                        if (argCount == 1 && strExpr != null)
+                        {
+                            var preloadPath = strExpr.String?.Sequence;
+                            if (!string.IsNullOrEmpty(preloadPath) && preloadPath.EndsWith(".gd"))
+                                preloadAliasCandidates.Add((alias, preloadPath));
+                        }
+                    }
                 }
             }
         }
 
-        // Second pass: register enums from scripts without class_name
-        foreach (var scriptInfo in _scriptProvider.Scripts)
+        // Second pass: register enums from scripts without class_name + resolve preload aliases
+        foreach (var scriptInfo in scriptsWithoutTypeName)
         {
-            if (scriptInfo.Class == null || !string.IsNullOrEmpty(scriptInfo.TypeName))
-                continue;
             RegisterEnumTypes(scriptInfo.Class, "", scriptInfo.FullPath, allowOverwrite: false);
         }
 
-        // Third pass: build preload alias index
-        // Maps "const Alias := preload('res://...script.gd')" alias names to canonical type names
-        foreach (var scriptInfo in _scriptProvider.Scripts)
+        foreach (var (alias, preloadPath) in preloadAliasCandidates)
         {
-            if (scriptInfo.Class?.Members == null) continue;
-            foreach (var member in scriptInfo.Class.Members)
+            if (_pathToTypeName.TryGetValue(preloadPath, out var canonicalName)
+                && !_typeCache.ContainsKey(alias))
             {
-                if (member is GDVariableDeclaration varDecl
-                    && varDecl.ConstKeyword != null
-                    && varDecl.Initializer is GDCallExpression preloadCall
-                    && preloadCall.CallerExpression is GDIdentifierExpression preloadId
-                    && preloadId.Identifier?.Sequence == "preload")
-                {
-                    var args = preloadCall.Parameters?.ToList();
-                    if (args?.Count == 1 && args[0] is GDStringExpression strExpr)
-                    {
-                        var preloadPath = strExpr.String?.Sequence;
-                        if (!string.IsNullOrEmpty(preloadPath) && preloadPath.EndsWith(".gd"))
-                        {
-                            var alias = varDecl.Identifier?.Sequence;
-                            if (!string.IsNullOrEmpty(alias)
-                                && _pathToTypeName.TryGetValue(preloadPath, out var canonicalName)
-                                && !_typeCache.ContainsKey(alias))
-                            {
-                                _preloadAliasToTypeName[alias] = canonicalName;
-                            }
-                        }
-                    }
-                }
+                _preloadAliasToTypeName[alias] = canonicalName;
             }
         }
     }

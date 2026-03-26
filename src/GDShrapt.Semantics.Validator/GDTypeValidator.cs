@@ -916,7 +916,21 @@ namespace GDShrapt.Semantics.Validator
 
                 // Assignment operators - check type compatibility
                 case GDDualOperatorType.Assignment:
-                    ValidateAssignment(left, right, leftType, rightType, expr);
+                    // For assignment target, prefer DeclaredType over flow-inferred type.
+                    // Flow analysis records post-assignment state on the assignment node,
+                    // so InferSimpleType returns the RHS type for the target variable.
+                    var assignTargetType = leftType;
+                    if (left is GDIdentifierExpression assignIdent && _semanticModel != null)
+                    {
+                        var varName = assignIdent.Identifier?.Sequence;
+                        if (!string.IsNullOrEmpty(varName))
+                        {
+                            var flowVar = _semanticModel.TypeSystem.GetVariableTypeAt(varName, assignIdent);
+                            if (flowVar?.DeclaredType != null && !flowVar.DeclaredType.IsVariant)
+                                assignTargetType = flowVar.DeclaredType.DisplayName;
+                        }
+                    }
+                    ValidateAssignment(left, right, assignTargetType, rightType, expr);
                     break;
 
                 // Ordered comparison operators - check for null and type compatibility

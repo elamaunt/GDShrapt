@@ -18,7 +18,9 @@ public class GDDiagnosticPublisher : IAsyncDisposable
     private readonly IGDJsonRpcTransport _transport;
     private readonly GDScriptProject _project;
     private readonly ConcurrentDictionary<string, CancellationTokenSource> _pendingUpdates = new();
+    private readonly ConcurrentDictionary<string, CancellationTokenSource> _pendingSemanticUpdates = new();
     private readonly TimeSpan _debounceDelay;
+    private readonly TimeSpan _semanticDebounceDelay;
     private readonly Task? _analysisReady;
     private GDDiagnosticsService _diagnosticsService;
     private GDProjectConfig? _config;
@@ -43,6 +45,7 @@ public class GDDiagnosticPublisher : IAsyncDisposable
         _transport = transport;
         _project = project;
         _debounceDelay = debounceDelay ?? TimeSpan.FromMilliseconds(300);
+        _semanticDebounceDelay = TimeSpan.FromMilliseconds(800);
         _config = config;
         _analysisReady = analysisReady;
         _diagnosticsService = config != null
@@ -69,55 +72,138 @@ public class GDDiagnosticPublisher : IAsyncDisposable
 
     /// <summary>
     /// Schedules a diagnostic update for the specified document.
-    /// Uses debouncing to avoid excessive updates.
+    /// Uses two-tier debouncing: fast syntax diagnostics + delayed semantic diagnostics.
     /// </summary>
     public void ScheduleUpdate(string uri, int? version = null)
     {
         if (_disposed)
             return;
 
-        // Cancel any pending update for this URI
+        // Cancel any pending syntax update for this URI
         if (_pendingUpdates.TryRemove(uri, out var existingCts))
         {
             existingCts.Cancel();
             existingCts.Dispose();
         }
 
-        // Create new cancellation token for this update
-        var cts = new CancellationTokenSource();
-        _pendingUpdates[uri] = cts;
+        // Cancel any pending semantic update for this URI
+        if (_pendingSemanticUpdates.TryRemove(uri, out var existingSemanticCts))
+        {
+            existingSemanticCts.Cancel();
+            existingSemanticCts.Dispose();
+        }
 
-        // Schedule the update with debounce delay
+        // Tier 1: Fast syntax + linting diagnostics (short debounce)
+        var syntaxCts = new CancellationTokenSource();
+        _pendingUpdates[uri] = syntaxCts;
+
         _ = Task.Run(async () =>
         {
             try
             {
-                await Task.Delay(_debounceDelay, cts.Token).ConfigureAwait(false);
+                await Task.Delay(_debounceDelay, syntaxCts.Token).ConfigureAwait(false);
 
-                if (!cts.Token.IsCancellationRequested)
+                if (!syntaxCts.Token.IsCancellationRequested)
                 {
-                    await PublishDiagnosticsAsync(uri, version).ConfigureAwait(false);
+                    await PublishSyntaxDiagnosticsAsync(uri, version).ConfigureAwait(false);
                 }
             }
-            catch (OperationCanceledException)
-            {
-                // Expected when update is cancelled
-            }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                GDLspPerformanceTrace.Log("diagnostics", $"ERROR {uri}: {ex}");
+                GDLspPerformanceTrace.Log("diagnostics", $"SYNTAX-ERROR {uri}: {ex}");
             }
             finally
             {
                 _pendingUpdates.TryRemove(uri, out _);
-                cts.Dispose();
+                syntaxCts.Dispose();
+            }
+        });
+
+        // Tier 2: Full semantic diagnostics (longer debounce)
+        var semanticCts = new CancellationTokenSource();
+        _pendingSemanticUpdates[uri] = semanticCts;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(_semanticDebounceDelay, semanticCts.Token).ConfigureAwait(false);
+
+                if (!semanticCts.Token.IsCancellationRequested)
+                {
+                    await PublishDiagnosticsAsync(uri, version).ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                GDLspPerformanceTrace.Log("diagnostics", $"SEMANTIC-ERROR {uri}: {ex}");
+            }
+            finally
+            {
+                _pendingSemanticUpdates.TryRemove(uri, out _);
+                semanticCts.Dispose();
             }
         });
     }
 
     /// <summary>
-    /// Immediately publishes diagnostics for the specified document.
-    /// Uses GDDiagnosticsService for unified validation and linting.
+    /// Publishes fast syntax + linting diagnostics (Tier 1).
+    /// Does NOT wait for initial analysis or rebuild semantic model.
+    /// </summary>
+    private async Task PublishSyntaxDiagnosticsAsync(string uri, int? version = null)
+    {
+        if (_disposed)
+            return;
+
+        // Skip syntax-only tier if initial analysis hasn't completed — full diagnostics will handle it
+        if (_analysisReady != null && !_analysisReady.IsCompleted)
+            return;
+
+        var filename = System.IO.Path.GetFileName(GDDocumentManager.UriToPath(uri));
+        GDLspPerformanceTrace.Log("diagnostics", $"SYNTAX-START {filename}");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+
+        var filePath = GDDocumentManager.UriToPath(uri);
+        var script = _project.GetScript(filePath);
+
+        GDLspDiagnostic[] diagnostics;
+
+        if (script != null)
+        {
+            // Syntax validation + linting only (no semantic model needed)
+            var result = _diagnosticsService.Diagnose(script);
+            diagnostics = result.Diagnostics.Select(d => GDDiagnosticAdapter.FromUnifiedDiagnostic(d)).ToArray();
+        }
+        else if (GDSceneDiagnosticsHandler.IsSceneFile(filePath))
+        {
+            var sceneHandler = new GDSceneDiagnosticsHandler(_project);
+            var sceneDiags = sceneHandler.AnalyzeScene(filePath);
+            diagnostics = sceneDiags.Select(d => GDDiagnosticAdapter.FromUnifiedDiagnostic(d)).ToArray();
+        }
+        else
+        {
+            diagnostics = [];
+        }
+
+        var @params = new GDPublishDiagnosticsParams
+        {
+            Uri = uri,
+            Version = version,
+            Diagnostics = diagnostics
+        };
+
+        await _transport.SendNotificationAsync("textDocument/publishDiagnostics", @params)
+            .ConfigureAwait(false);
+
+        sw.Stop();
+        GDLspPerformanceTrace.Log("diagnostics", $"SYNTAX-END {filename} {sw.ElapsedMilliseconds}ms count={diagnostics.Length}");
+    }
+
+    /// <summary>
+    /// Immediately publishes full diagnostics for the specified document.
+    /// Includes syntax + validator + linter + semantic validator.
     /// </summary>
     public async Task PublishDiagnosticsAsync(string uri, int? version = null)
     {
@@ -201,11 +287,16 @@ public class GDDiagnosticPublisher : IAsyncDisposable
         if (_disposed)
             return;
 
-        // Cancel any pending update
+        // Cancel any pending updates
         if (_pendingUpdates.TryRemove(uri, out var cts))
         {
             cts.Cancel();
             cts.Dispose();
+        }
+        if (_pendingSemanticUpdates.TryRemove(uri, out var semanticCts))
+        {
+            semanticCts.Cancel();
+            semanticCts.Dispose();
         }
 
         var @params = new GDPublishDiagnosticsParams
@@ -245,8 +336,14 @@ public class GDDiagnosticPublisher : IAsyncDisposable
             kvp.Value.Cancel();
             kvp.Value.Dispose();
         }
-
         _pendingUpdates.Clear();
+
+        foreach (var kvp in _pendingSemanticUpdates)
+        {
+            kvp.Value.Cancel();
+            kvp.Value.Dispose();
+        }
+        _pendingSemanticUpdates.Clear();
 
         await Task.CompletedTask;
     }

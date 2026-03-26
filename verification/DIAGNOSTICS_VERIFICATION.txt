@@ -1,16 +1,16 @@
 ================================================================================
 DIAGNOSTICS VERIFICATION REPORT
-Generated: 2026-03-23 22:42:37
+Generated: 2026-03-26 06:24:30
 ================================================================================
 
 SUMMARY
 --------------------------------------------------------------------------------
-Total:           952
-Verified (OK):   945
+Total:           941
+Verified (OK):   934
 Unverified:      5
 False Positives: 0
 Skipped:         2
-Orphaned Markers:4
+Orphaned Markers:0
 
 ================================================================================
 UNVERIFIED DIAGNOSTICS
@@ -34,18 +34,4 @@ SKIPPED (NEEDS ANALYSIS)
 
   test_scripts/polymorphic_interfaces.gd:40:15 [GD7007]
   test_scripts/signal_callback_chains.gd:55:12 [GD7007]
-
-================================================================================
-ORPHANED MARKERS (MARKERS WITHOUT DIAGNOSTICS)
-================================================================================
-
---- cross_file_inference.gd (1 orphaned) ---
-  # 243:46-GD7007-OK <- No diagnostic at this location
-
---- dynamic_dispatch.gd (1 orphaned) ---
-  # 231:21-GD7006-OK <- No diagnostic at this location
-
---- ecs_like_system.gd (2 orphaned) ---
-  # 258:5-GD7007-OK <- No diagnostic at this location
-  # 259:15-GD7006-OK <- No diagnostic at this location
 

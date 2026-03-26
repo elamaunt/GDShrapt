@@ -26,7 +26,7 @@ func try_operation(input):  # 24:0-GD3023-OK
 	if input == null:
 		return "Error: null input"
 	if input is int:
-		if input < 0:  # 29:5-GD3020-OK
+		if input < 0:
 			return "Error: negative value"
 		return input * 2
 	if input is String:

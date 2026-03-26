@@ -240,7 +240,7 @@ func create_game_object(object_type, params = {}):  # 237:0-GD3023-OK, 237:37-GD
 		"player":
 			var entity = entity_manager.create_entity("Player") # 241:16-GD7007-OK
 			entity_manager.add_component(entity.id, "Transform", # 242:3-GD7007-OK
-				entity_manager.create_transform_component(params.get("position", Vector2.ZERO))) # 243:4-GD7007-OK, 243:46-GD7007-OK
+				entity_manager.create_transform_component(params.get("position", Vector2.ZERO))) # 243:4-GD7007-OK
 			entity_manager.add_component(entity.id, "Health", # 244:3-GD7007-OK
 				entity_manager.create_health_component(params.get("health", 100))) # 245:4-GD7007-OK
 			poly_manager.register_damageable(entity) # 246:3-GD7007-OK

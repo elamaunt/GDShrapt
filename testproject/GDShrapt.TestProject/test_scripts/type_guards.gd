@@ -62,7 +62,7 @@ func type_guard_with_or(value):
 	# OR conditions - type is union of both
 	if value is int or value is float:
 		# value is int|float - both are numeric
-		return value * 2
+		return value * 2  # 65:9-GD3002-OK
 
 	if value is String or value is StringName:
 		# value is String|StringName - both have length

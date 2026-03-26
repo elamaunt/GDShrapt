@@ -94,7 +94,7 @@ func early_returns(value):  # 88:0-GD3023-OK
 		return value              # bool
 
 	if value is int:
-		if value < 0:  # 97:5-GD3020-OK
+		if value < 0:
 			return "negative"     # String
 		if value == 0:
 			return false          # bool

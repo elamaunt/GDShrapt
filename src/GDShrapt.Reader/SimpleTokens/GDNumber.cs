@@ -6,9 +6,12 @@ namespace GDShrapt.Reader
 {
     public sealed class GDNumber : GDLiteralToken
     {
+        private static readonly char[] FloatIndicators = { '.', 'e' };
+
         readonly StringBuilder _stringBuilder = new StringBuilder();
 
         string _literalValue;
+        string _preparedValue;
 
         GDNumberType _type;
         int _digitsCounter = 0;
@@ -29,13 +32,13 @@ namespace GDShrapt.Reader
                     case GDNumberType.LongHexadecimal:
                         throw new InvalidOperationException("The value is in a Int64 format");
                     case GDNumberType.Double:
-                        return double.Parse(PrepareString(_literalValue), CultureInfo.InvariantCulture);
+                        return double.Parse(GetPreparedValue(), CultureInfo.InvariantCulture);
                     default:
                         throw new InvalidOperationException("The value is undefined");
                 }
 
             }
-            set => _literalValue = Convert.ToString(value);
+            set { _literalValue = Convert.ToString(value); _preparedValue = null; }
         }
 
         public long ValueInt64
@@ -47,11 +50,11 @@ namespace GDShrapt.Reader
                     case GDNumberType.Undefined:
                         throw new InvalidOperationException("The value is undefined");
                     case GDNumberType.LongDecimal:
-                        return Convert.ToInt64(PrepareString(_literalValue), CultureInfo.InvariantCulture);
+                        return Convert.ToInt64(GetPreparedValue(), CultureInfo.InvariantCulture);
                     case GDNumberType.LongBinary:
-                        return Convert.ToInt64(PrepareString(_literalValue).Substring(2), 2);
+                        return Convert.ToInt64(GetPreparedValue().Substring(2), 2);
                     case GDNumberType.LongHexadecimal:
-                        return long.Parse(PrepareString(_literalValue).Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
+                        return long.Parse(GetPreparedValue().Substring(2), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture);
                     case GDNumberType.Double:
                         throw new InvalidOperationException("The value is in a Double format");
                     default:
@@ -59,7 +62,7 @@ namespace GDShrapt.Reader
                 }
 
             }
-            set => _literalValue = Convert.ToString(value);
+            set { _literalValue = Convert.ToString(value); _preparedValue = null; }
         }
 
         public override string Sequence
@@ -69,6 +72,7 @@ namespace GDShrapt.Reader
             {
                 CheckIsValidString(value);
                 _literalValue = value;
+                _preparedValue = null;
             }
         }
 
@@ -77,13 +81,15 @@ namespace GDShrapt.Reader
             if (_literalValue.IsNullOrEmpty())
                 return GDNumberType.Undefined;
 
-            if (PrepareString(_literalValue).StartsWith("0x", StringComparison.Ordinal))
+            var prepared = GetPreparedValue();
+
+            if (prepared.StartsWith("0x", StringComparison.Ordinal))
                 return GDNumberType.LongHexadecimal;
 
-            if (PrepareString(_literalValue).StartsWith("0b", StringComparison.Ordinal))
+            if (prepared.StartsWith("0b", StringComparison.Ordinal))
                 return GDNumberType.LongBinary;
 
-            if (_literalValue.IndexOfAny(new[] { '.', 'e' }) != -1)
+            if (_literalValue.IndexOfAny(FloatIndicators) != -1)
                 return GDNumberType.Double;
 
             return GDNumberType.LongDecimal;
@@ -202,6 +208,7 @@ namespace GDShrapt.Reader
         private void CompleteString()
         {
             _literalValue = _stringBuilder.ToString();
+            _preparedValue = null;
             _stringBuilder.Clear();
         }
 
@@ -264,9 +271,11 @@ namespace GDShrapt.Reader
             {
                 case true:
                     _literalValue = _literalValue.Substring(1);
+                    _preparedValue = null;
                     break;
                 case false:
                     _literalValue = "-" + _literalValue;
+                    _preparedValue = null;
                     break;
                 default:
                     break;
@@ -286,9 +295,16 @@ namespace GDShrapt.Reader
             }
         }
 
+        private string GetPreparedValue()
+        {
+            if (_preparedValue == null && _literalValue != null)
+                _preparedValue = _literalValue.IndexOf('_') >= 0 ? _literalValue.Replace("_", "") : _literalValue;
+            return _preparedValue;
+        }
+
         private static string PrepareString(string value)
         {
-            return value.Replace("_", "");
+            return value.IndexOf('_') >= 0 ? value.Replace("_", "") : value;
         }
 
         public override GDSyntaxToken Clone()

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Text;
 
 namespace GDShrapt.Reader
@@ -33,8 +32,12 @@ namespace GDShrapt.Reader
             if (char.IsNumber(value[0]))
                 throw new ArgumentException("Invalid identifier format");
 
-            if (value.Any(x => !char.IsLetter(x) && !char.IsDigit(x) && x != '_'))
-                throw new ArgumentException("Invalid identifier format");
+            for (int i = 0; i < value.Length; i++)
+            {
+                var c = value[i];
+                if (!char.IsLetter(c) && !char.IsDigit(c) && c != '_')
+                    throw new ArgumentException("Invalid identifier format");
+            }
 
         }
 

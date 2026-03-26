@@ -91,7 +91,7 @@ func die() -> void:
 	# Award experience to player who killed this enemy
 	if last_damage_source is PlayerEntity:
 		var player = last_damage_source as PlayerEntity
-		player.gain_experience(experience_reward)  # 94:2-GD7007-OK, 94:2-GD4002-OK
+		player.gain_experience(experience_reward)  # 94:2-GD7007-OK
 
 	super.die()
 

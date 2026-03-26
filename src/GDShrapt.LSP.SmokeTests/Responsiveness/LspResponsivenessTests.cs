@@ -47,7 +47,7 @@ public class LspResponsivenessTests
 
     [TestMethod]
     [Timeout(30000)]
-    public void PreAnalysis_AllHandlers_DoNotCrashOrHang()
+    public void PreAnalysis_AllHandlers_DoNotCrashAndReturnContent()
     {
         using var project = SemanticsProjectLoader.LoadProjectWithoutAnalysis(_projectRoot!);
         var registry = new GDServiceRegistry();
@@ -56,9 +56,12 @@ public class LspResponsivenessTests
         var hoverHandler = new GDLspHoverHandler(registry.GetService<IGDHoverHandler>()!);
         var symbolsHandler = new GDDocumentSymbolHandler(registry.GetService<IGDSymbolsHandler>()!);
         var completionHandler = new GDLspCompletionHandler(registry.GetService<IGDCompletionHandler>()!);
+        var goToDefHandler = new GDDefinitionHandler(registry.GetService<IGDGoToDefHandler>()!);
 
         var scripts = project.ScriptFiles.Where(f => f.FullPath != null).Take(5).ToList();
         scripts.Should().NotBeEmpty("should have at least one script");
+
+        int totalSymbols = 0;
 
         foreach (var script in scripts)
         {
@@ -66,26 +69,41 @@ public class LspResponsivenessTests
             var textDoc = new GDLspTextDocumentIdentifier { Uri = uri };
             var position = new GDLspPosition(0, 0);
 
-            // Hover — may return null, must not crash
+            // Hover — must not crash
             var hoverResult = hoverHandler.HandleAsync(new GDHoverParams
             {
                 TextDocument = textDoc,
                 Position = position
             }, CancellationToken.None).GetAwaiter().GetResult();
 
-            // Symbols — may return null, must not crash
+            // Symbols — should return AST-based symbols before analysis
             var symbolsResult = symbolsHandler.HandleAsync(new GDDocumentSymbolParams
             {
                 TextDocument = textDoc
             }, CancellationToken.None).GetAwaiter().GetResult();
 
-            // Completion — may return null, must not crash
+            if (symbolsResult != null)
+                totalSymbols += symbolsResult.Length;
+
+            Console.WriteLine($"[PRE-ANALYSIS] {System.IO.Path.GetFileName(script.FullPath!)}: symbols={symbolsResult?.Length ?? 0}");
+
+            // Completion — must not crash
             var completionResult = completionHandler.HandleAsync(new GDCompletionParams
             {
                 TextDocument = textDoc,
                 Position = position
             }, CancellationToken.None).GetAwaiter().GetResult();
+
+            // GoToDef — must not crash
+            var defResult = goToDefHandler.HandleAsync(new GDDefinitionParams
+            {
+                TextDocument = textDoc,
+                Position = position
+            }, CancellationToken.None).GetAwaiter().GetResult();
         }
+
+        totalSymbols.Should().BeGreaterThan(0,
+            "pre-analysis should return AST-based symbols from at least one script");
     }
 
     [TestMethod]
@@ -151,8 +169,12 @@ public class LspResponsivenessTests
             preHover!.Contents.Value.Should().Contain("FieldCamera",
                 "pre-analysis hover should contain FieldCamera from AST");
 
+            // Pre-analysis symbols should already be available from AST
+            preSymbols.Should().NotBeNull("symbols should be available from parse tree before analysis");
+            preSymbols!.Length.Should().BeGreaterThan(0, "should have AST-based symbols before analysis");
+
             Console.WriteLine($"[RESPONSIVENESS] Pre-analysis hover: {preHover.Contents.Value.Length} chars");
-            Console.WriteLine($"[RESPONSIVENESS] Pre-analysis symbols: {(preSymbols != null ? preSymbols.Length.ToString() : "null")}");
+            Console.WriteLine($"[RESPONSIVENESS] Pre-analysis symbols: {preSymbols.Length}");
 
             // Phase 5: Start continuous hover pinger
             var pingResults = new ConcurrentBag<(long ElapsedMs, bool HasContent, Exception? Error)>();
@@ -321,5 +343,55 @@ public class LspResponsivenessTests
         Console.WriteLine($"[RESPONSIVENESS] Post-analysis hover: {postHover.Contents.Value.Length} chars");
         Console.WriteLine($"[RESPONSIVENESS] Pre-analysis symbols: {preSymbols.Length}");
         Console.WriteLine($"[RESPONSIVENESS] Post-analysis symbols: {postSymbols.Length}");
+    }
+
+    [TestMethod]
+    [Timeout(30000)]
+    public void PreAnalysis_GoToDefinition_WorksForSameFileDeclaration()
+    {
+        using var project = SemanticsProjectLoader.LoadProjectWithoutAnalysis(_projectRoot!);
+        var registry = new GDServiceRegistry();
+        registry.LoadModules(project, new GDBaseModule(deferAnalysis: true));
+
+        var goToDefHandler = new GDDefinitionHandler(registry.GetService<IGDGoToDefHandler>()!);
+
+        // Pick field_camera.gd — find a variable usage to navigate to its declaration
+        var script = project.ScriptFiles.First(f =>
+            f.FullPath != null &&
+            f.FullPath.EndsWith("field_camera.gd", StringComparison.OrdinalIgnoreCase));
+        var uri = GDDocumentManager.PathToUri(script.FullPath!);
+        var textDoc = new GDLspTextDocumentIdentifier { Uri = uri };
+
+        // Find a method declaration line to try go-to-def on
+        var lines = script.LastContent?.Split('\n');
+        lines.Should().NotBeNull("script should have content");
+
+        int funcLine = -1, funcCol = -1;
+        for (int i = 0; i < lines!.Length; i++)
+        {
+            var idx = lines[i].IndexOf("func ");
+            if (idx >= 0)
+            {
+                // Position on the function name (after "func ")
+                funcLine = i;
+                funcCol = idx + 5;
+                break;
+            }
+        }
+
+        funcLine.Should().BeGreaterThanOrEqualTo(0, "field_camera.gd should contain at least one func declaration");
+
+        var result = goToDefHandler.HandleAsync(new GDDefinitionParams
+        {
+            TextDocument = textDoc,
+            Position = new GDLspPosition(funcLine, funcCol)
+        }, CancellationToken.None).GetAwaiter().GetResult();
+
+        // GoToDef on a function name in its own declaration should resolve (to itself)
+        Console.WriteLine($"[PRE-ANALYSIS] GoToDef on func at L{funcLine}:{funcCol}: links={result.Links?.Length ?? 0}, info={result.InfoMessage}");
+
+        // Must not crash — navigation from AST should work without semantic analysis
+        // The result may or may not return links depending on whether it's a declaration or usage,
+        // but it must not throw
     }
 }

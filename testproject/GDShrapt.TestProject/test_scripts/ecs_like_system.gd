@@ -174,7 +174,7 @@ func create_velocity_component(linear = Vector2.ZERO, angular = 0.0):
 
 
 func create_health_component(current, maximum = -1):
-	if maximum < 0:  # 177:4-GD3020-OK
+	if maximum < 0:
 		maximum = current
 	return {"current": current, "max": maximum}
 
@@ -255,8 +255,8 @@ func create_from_archetype(archetype_name, overrides = {}):
 		var comp_type = comp_def["type"]  # 255:18-GD7006-OK
 		var component
 
-		if overrides.has(comp_type):  # 258:5-GD7007-OK
-			component = overrides[comp_type]  # 259:15-GD7006-OK
+		if overrides.has(comp_type):
+			component = overrides[comp_type]
 		elif comp_def.has("factory") and comp_def["factory"] is Callable:
 			component = comp_def["factory"].call()
 		elif comp_def.has("default"):

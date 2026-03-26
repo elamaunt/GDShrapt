@@ -135,7 +135,7 @@ func instantiate_typed(scene: PackedScene) -> CharacterBody2D:
 	if instance:
 		add_child(instance)
 		return instance
-	return null  # 137:2-GD3007-OK
+	return null
 
 
 func queue_free_child(child_name: String):

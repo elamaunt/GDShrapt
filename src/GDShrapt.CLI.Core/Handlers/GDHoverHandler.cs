@@ -31,7 +31,7 @@ public class GDHoverHandler : IGDHoverHandler
             return GetHoverInTscn(filePath, line, column);
 
         var script = _projectModel.Project.GetScript(filePath);
-        var semanticModel = script != null ? _projectModel.GetSemanticModel(script) : null;
+        var semanticModel = script != null ? _projectModel.TryGetCachedSemanticModel(script) : null;
         GDScriptFile? effectiveFile = script;
 
         if (semanticModel == null || script?.Class == null)

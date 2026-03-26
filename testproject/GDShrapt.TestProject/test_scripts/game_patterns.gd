@@ -461,12 +461,12 @@ func craft(recipe_id):
 	# Consume ingredients
 	for ingredient in ingredients:
 		var item_filter = ingredient.get("filter")
-		var required = ingredient.get("count", 1)  # 466:8-GD3020-OK
+		var required = ingredient.get("count", 1)
 
 		while required > 0:
 			var item = _find_first_matching_item(item_filter)
 
-			if item == null:  # 469:6-GD7013-OK
+			if item == null:
 				break
 
 			var count = get_item_property(item, "count", 1)

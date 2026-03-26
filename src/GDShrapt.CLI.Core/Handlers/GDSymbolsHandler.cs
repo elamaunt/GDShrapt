@@ -26,6 +26,9 @@ public class GDSymbolsHandler : IGDSymbolsHandler
         var file = _project.GetScript(filePath);
         if (file?.SemanticModel == null)
         {
+            if (file?.Class != null)
+                return ExtractAstSymbols(file.Class);
+
             if (GDBuiltInFileHelper.IsBuiltInTypeFile(filePath))
             {
                 var builtInFile = GDBuiltInFileHelper.GetOrParse(filePath, _runtimeProvider);
@@ -52,6 +55,65 @@ public class GDSymbolsHandler : IGDSymbolsHandler
             .OrderBy(s => s.Line)
             .ThenBy(s => s.Column)
             .ToList();
+    }
+
+    private static IReadOnlyList<GDDocumentSymbol> ExtractAstSymbols(GDClassDeclaration classDecl)
+    {
+        var symbols = new List<GDDocumentSymbol>();
+
+        foreach (var member in classDecl.Members)
+        {
+            switch (member)
+            {
+                case GDMethodDeclaration method when method.Identifier != null:
+                    symbols.Add(new GDDocumentSymbol
+                    {
+                        Name = method.Identifier.Sequence ?? "",
+                        Kind = GDSymbolKind.Method,
+                        Line = method.Identifier.StartLine,
+                        Column = method.Identifier.StartColumn
+                    });
+                    break;
+                case GDVariableDeclaration variable when variable.Identifier != null:
+                    symbols.Add(new GDDocumentSymbol
+                    {
+                        Name = variable.Identifier.Sequence ?? "",
+                        Kind = variable.IsConstant ? GDSymbolKind.Constant : GDSymbolKind.Variable,
+                        Line = variable.Identifier.StartLine,
+                        Column = variable.Identifier.StartColumn
+                    });
+                    break;
+                case GDSignalDeclaration signal when signal.Identifier != null:
+                    symbols.Add(new GDDocumentSymbol
+                    {
+                        Name = signal.Identifier.Sequence ?? "",
+                        Kind = GDSymbolKind.Signal,
+                        Line = signal.Identifier.StartLine,
+                        Column = signal.Identifier.StartColumn
+                    });
+                    break;
+                case GDEnumDeclaration enumDecl when enumDecl.Identifier != null:
+                    symbols.Add(new GDDocumentSymbol
+                    {
+                        Name = enumDecl.Identifier.Sequence ?? "",
+                        Kind = GDSymbolKind.Enum,
+                        Line = enumDecl.Identifier.StartLine,
+                        Column = enumDecl.Identifier.StartColumn
+                    });
+                    break;
+                case GDInnerClassDeclaration innerClass when innerClass.Identifier != null:
+                    symbols.Add(new GDDocumentSymbol
+                    {
+                        Name = innerClass.Identifier.Sequence ?? "",
+                        Kind = GDSymbolKind.Class,
+                        Line = innerClass.Identifier.StartLine,
+                        Column = innerClass.Identifier.StartColumn
+                    });
+                    break;
+            }
+        }
+
+        return symbols.OrderBy(s => s.Line).ThenBy(s => s.Column).ToList();
     }
 
     /// <inheritdoc />

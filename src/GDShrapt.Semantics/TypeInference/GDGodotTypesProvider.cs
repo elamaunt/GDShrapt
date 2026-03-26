@@ -24,8 +24,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     public static GDGodotTypesProvider Shared => _sharedInstance.Value;
 
     private readonly GDAssemblyData? _assemblyData;
-    private readonly ConcurrentDictionary<string, GDTypeData> _typeCache = new();
-    private readonly ConcurrentDictionary<string, byte> _knownTypes = new(); // byte as placeholder for thread-safe set
+    private Dictionary<string, GDTypeData> _typeCache = new();
+    private HashSet<string> _knownTypes = new(); // write-once during construction, then read-only
     private readonly ConcurrentDictionary<string, string?> _baseTypeCache = new();
     private readonly ConcurrentDictionary<(string, string), bool> _assignabilityCache = new();
 
@@ -46,10 +46,13 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (_assemblyData?.TypeDatas == null)
             return;
 
+        var typeCache = new Dictionary<string, GDTypeData>();
+        var knownTypes = new HashSet<string>();
+
         foreach (var kvp in _assemblyData.TypeDatas)
         {
             var gdScriptName = kvp.Key;
-            _knownTypes.TryAdd(gdScriptName, 0);
+            knownTypes.Add(gdScriptName);
 
             // Take the first type data for each GDScript name
             if (kvp.Value.Count > 0)
@@ -74,7 +77,8 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
                     }
                 }
 
-                _typeCache.TryAdd(gdScriptName, typeData);
+                if (!typeCache.ContainsKey(gdScriptName))
+                    typeCache[gdScriptName] = typeData;
 
                 // Register C# enum type names as aliases (e.g., "LayoutDirectionEnum" → same data as "LayoutDirection")
                 // Property types reference the C# name while the cache key is the GDScript name
@@ -87,8 +91,9 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
 
                         if (csharpSimpleName != null && csharpSimpleName != gdScriptName)
                         {
-                            _typeCache.TryAdd(csharpSimpleName, typeData);
-                            _knownTypes.TryAdd(csharpSimpleName, 0);
+                            if (!typeCache.ContainsKey(csharpSimpleName))
+                                typeCache[csharpSimpleName] = typeData;
+                            knownTypes.Add(csharpSimpleName);
                         }
                     }
                 }
@@ -100,9 +105,13 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         {
             foreach (var globalType in _assemblyData.GlobalData.GlobalTypes.Keys)
             {
-                _knownTypes.TryAdd(globalType, 0);
+                knownTypes.Add(globalType);
             }
         }
+
+        // Assign completed caches (thread-safe: Lazy singleton ensures single-threaded construction)
+        _typeCache = typeCache;
+        _knownTypes = knownTypes;
     }
 
     public bool IsKnownType(string typeName)
@@ -110,7 +119,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
         if (string.IsNullOrEmpty(typeName))
             return false;
 
-        return _knownTypes.ContainsKey(typeName) || _typeCache.ContainsKey(typeName);
+        return _knownTypes.Contains(typeName) || _typeCache.ContainsKey(typeName);
     }
 
     public GDRuntimeTypeInfo? GetTypeInfo(string typeName)
@@ -768,7 +777,7 @@ public class GDGodotTypesProvider : IGDRuntimeProvider
     /// </summary>
     public IEnumerable<string> GetAllTypes()
     {
-        return _knownTypes.Keys;
+        return _knownTypes;
     }
 
     /// <summary>

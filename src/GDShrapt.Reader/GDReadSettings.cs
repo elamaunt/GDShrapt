@@ -21,7 +21,7 @@
         /// Set null and you will gain a real stackoverflow exception with unpredictable behavior.
         /// Use it only for debugging
         /// </summary>
-        public int? MaxStacktraceFramesCount { get; set; } = 512;
+        public int? MaxStacktraceFramesCount { get; set; } = null;
 
         /// <summary>
         /// Interval (in characters) between cancellation token checks during parsing.

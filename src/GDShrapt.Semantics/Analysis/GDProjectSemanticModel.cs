@@ -636,6 +636,25 @@ public class GDProjectSemanticModel : IDisposable
     #region Semantic Model Access
 
     /// <summary>
+    /// Returns the cached semantic model if available, without triggering on-demand analysis.
+    /// Used by handlers that have AST-only fallbacks for pre-analysis responsiveness.
+    /// </summary>
+    public GDSemanticModel? TryGetCachedSemanticModel(GDScriptFile scriptFile)
+    {
+        if (scriptFile == null)
+            return null;
+
+        var path = scriptFile.FullPath ?? scriptFile.Reference?.FullPath ?? "";
+        if (string.IsNullOrEmpty(path))
+            return null;
+
+        if (_fileModels.TryGetValue(path, out var cached))
+            return cached;
+
+        return scriptFile.SemanticModel;
+    }
+
+    /// <summary>
     /// Gets or creates the semantic model for a script file.
     /// Thread-safe via ConcurrentDictionary. Analysis runs outside GetOrAdd
     /// to avoid blocking concurrent readers during slow Analyze() calls.
