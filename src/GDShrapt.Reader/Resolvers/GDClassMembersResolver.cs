@@ -315,7 +315,23 @@ namespace GDShrapt.Reader
                     {
                         _handleEndOfTheLineAsInvalid = false;
 
-                        HandleStaticIfMet(null, () => Owner.HandleReceivedToken(state.Push(new GDInvalidToken(x => x.IsSpace() || x.IsNewLine()))));
+                        HandleStaticIfMet(null, () =>
+                        {
+                            var invalidToken = new GDInvalidToken(x => x.IsSpace() || x.IsNewLine());
+
+                            if (state.Settings.DetectKeywordFragments && sequence != null)
+                            {
+                                invalidToken.PossibleKeyword = GDKeywordPrefixMatcher.FindPrefixMatch(
+                                    sequence, GDKeywordPrefixMatcher.ClassLevelKeywords,
+                                    state.Settings.MinKeywordFragmentLength);
+
+                                if (invalidToken.PossibleKeyword == null)
+                                    invalidToken.StartsWithKeyword = GDKeywordPrefixMatcher.FindKeywordStartMatch(
+                                        sequence, GDKeywordPrefixMatcher.ClassLevelKeywords);
+                            }
+
+                            Owner.HandleReceivedToken(state.Push(invalidToken));
+                        });
 
                         if (sequence != null)
                             for (int i = 0; i < sequence.Length; i++)

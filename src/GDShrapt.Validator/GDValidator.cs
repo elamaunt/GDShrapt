@@ -24,7 +24,7 @@ namespace GDShrapt.Reader
 
             if (options.CheckSyntax)
             {
-                var syntaxValidator = new GDSyntaxValidator(context);
+                var syntaxValidator = new GDSyntaxValidator(context, options.ShowKeywordHints);
                 syntaxValidator.Validate(node);
             }
 

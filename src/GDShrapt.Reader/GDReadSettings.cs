@@ -40,5 +40,20 @@
         /// Default value is 1000.
         /// </summary>
         public int? MaxPassesWithoutProgress { get; set; } = 1000;
+
+        /// <summary>
+        /// Whether to detect possible keyword fragments in invalid tokens
+        /// and set PossibleKeyword/StartsWithKeyword metadata on GDInvalidToken.
+        /// Default: true
+        /// </summary>
+        public bool DetectKeywordFragments { get; set; } = true;
+
+        /// <summary>
+        /// Minimum fragment length for keyword prefix matching.
+        /// Fragments shorter than this are ignored to avoid false positives
+        /// on single-letter identifiers (e.g., "v", "f", "i").
+        /// Default: 2
+        /// </summary>
+        public int MinKeywordFragmentLength { get; set; } = 2;
     }
 }

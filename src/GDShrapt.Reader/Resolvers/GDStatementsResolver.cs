@@ -259,6 +259,27 @@ namespace GDShrapt.Reader
                     }
                 default:
                     {
+                        if (state.Settings.DetectKeywordFragments && sequence != null)
+                        {
+                            var possibleKw = GDKeywordPrefixMatcher.FindPrefixMatch(
+                                sequence, GDKeywordPrefixMatcher.StatementLevelKeywords,
+                                state.Settings.MinKeywordFragmentLength);
+
+                            if (possibleKw != null)
+                            {
+                                _statementResolved = false;
+                                _resolvedStatement = null;
+                                SendIntendationTokensToOwner();
+
+                                var invalidToken = new GDInvalidToken(x => x.IsSpace() || x.IsNewLine() || x.IsExpressionStopChar());
+                                invalidToken.PossibleKeyword = possibleKw;
+                                Owner.HandleReceivedToken(state.Push(invalidToken));
+
+                                state.PassString(sequence);
+                                return null;
+                            }
+                        }
+
                         _resolvedAsExpression = true;
                         return _resolvedStatement = CompleteAsExpressionStatement(state, sequence);
                     }

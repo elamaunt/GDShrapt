@@ -170,7 +170,15 @@ namespace GDShrapt.Reader
                     this.ResolveIdentifier(c, state);
                     break;
                 case State.OpenBracket:
-                    this.ResolveOpenBracket(c, state);
+                    if (c == '(')
+                    {
+                        ((ITokenReceiver<GDOpenBracket>)this).HandleReceivedToken(new GDOpenBracket());
+                    }
+                    else
+                    {
+                        _form.AddBeforeActiveToken(state.Push(new GDInvalidToken(x => x == '(' || x.IsSpace() || x.IsNewLine())));
+                        state.PassChar(c);
+                    }
                     break;
                 case State.Parameters:
                     _form.State = State.CloseBracket;

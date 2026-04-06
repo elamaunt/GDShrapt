@@ -121,6 +121,13 @@ namespace GDShrapt.Reader
         public bool EnableCommentSuppression { get; set; } = true;
 
         /// <summary>
+        /// Whether to include keyword hints ("Did you mean?") in invalid token messages.
+        /// Requires parser to be configured with DetectKeywordFragments=true in GDReadSettings.
+        /// Default: true
+        /// </summary>
+        public bool ShowKeywordHints { get; set; } = true;
+
+        /// <summary>
         /// Default validation options with all checks enabled.
         /// </summary>
         public static GDValidationOptions Default => new GDValidationOptions();
