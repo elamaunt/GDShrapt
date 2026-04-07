@@ -74,6 +74,7 @@ namespace GDShrapt.Reader
 
         readonly GDTokensForm<State, GDForKeyword, GDIdentifier, GDColon, GDTypeNode, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> _form;
         GDType _pendingTypeName;
+        GDType _pendingSubTypeName;
         public override GDTokensForm Form => _form;
         public GDTokensForm<State, GDForKeyword, GDIdentifier, GDColon, GDTypeNode, GDInKeyword, GDExpression, GDColon, GDExpression, GDStatementsList> TypedForm => _form;
 
@@ -140,7 +141,34 @@ namespace GDShrapt.Reader
                     }
                     else
                     {
-                        if (c == '[' && (_pendingTypeName.IsArray || _pendingTypeName.IsDictionary))
+                        if (_pendingSubTypeName != null)
+                        {
+                            // Finished reading sub-type name — build GDSubTypeNode
+                            var subTypeNode = new GDSubTypeNode();
+                            subTypeNode.OverType = new GDSingleTypeNode() { Type = _pendingTypeName };
+                            subTypeNode.Point = new GDPoint();
+                            subTypeNode.Type = _pendingSubTypeName;
+                            VariableType = subTypeNode;
+                            _pendingTypeName = null;
+                            _pendingSubTypeName = null;
+                            _form.State = State.In;
+                            if (c.IsSpace())
+                                this.ResolveSpaceToken(c, state);
+                            else
+                            {
+                                state.Push(new GDKeywordResolver<GDInKeyword>(this));
+                                state.PassChar(c);
+                            }
+                        }
+                        else if (c == '.')
+                        {
+                            // Qualified type: ClassName.EnumName
+                            // Read the sub-type name after the dot
+                            _pendingSubTypeName = new GDType();
+                            state.Push(_pendingSubTypeName);
+                            // Don't pass '.' — it's consumed as the separator
+                        }
+                        else if (c == '[' && (_pendingTypeName.IsArray || _pendingTypeName.IsDictionary))
                         {
                             // Generic type: Array[int] or Dictionary[String, int]
                             if (_pendingTypeName.IsArray)
