@@ -290,5 +290,76 @@ static func f():
                 }
             }
         }
+
+        [TestMethod]
+        public void ParseMethod_WithLocalConst_InferredType()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "func test():\n\tconst MAX := 10\n\treturn MAX";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            var method = declaration.Methods.First();
+            Assert.AreEqual(2, method.Statements.Count);
+
+            var statement = method.Statements[0] as GDVariableDeclarationStatement;
+            Assert.IsNotNull(statement);
+            Assert.IsTrue(statement.IsConstant);
+            Assert.IsNotNull(statement.ConstKeyword);
+            Assert.IsNull(statement.VarKeyword);
+            Assert.AreEqual("MAX", statement.Identifier?.ToString());
+            Assert.IsNotNull(statement.Initializer);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseMethod_WithLocalConst_ExplicitType()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "func test():\n\tconst LABEL: String = \"hello\"";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            var method = declaration.Methods.First();
+            Assert.AreEqual(1, method.Statements.Count);
+
+            var statement = method.Statements[0] as GDVariableDeclarationStatement;
+            Assert.IsNotNull(statement);
+            Assert.IsTrue(statement.IsConstant);
+            Assert.AreEqual("LABEL", statement.Identifier?.ToString());
+            Assert.IsNotNull(statement.Type);
+            Assert.AreEqual("String", statement.Type.ToString()?.Trim());
+            Assert.IsNotNull(statement.Initializer);
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
+
+        [TestMethod]
+        public void ParseMethod_WithLocalVar_IsNotConstant()
+        {
+            var reader = new GDScriptReader();
+
+            var code = "func test():\n\tvar x := 10";
+
+            var declaration = reader.ParseFileContent(code);
+            var method = declaration.Methods.First();
+
+            var statement = method.Statements[0] as GDVariableDeclarationStatement;
+            Assert.IsNotNull(statement);
+            Assert.IsFalse(statement.IsConstant);
+            Assert.IsNull(statement.ConstKeyword);
+            Assert.IsNotNull(statement.VarKeyword);
+            Assert.AreEqual("x", statement.Identifier?.ToString());
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
     }
 }
