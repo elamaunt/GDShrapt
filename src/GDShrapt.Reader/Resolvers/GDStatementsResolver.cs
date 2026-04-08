@@ -257,6 +257,13 @@ namespace GDShrapt.Reader
                         statement = s;
                         break;
                     }
+                case "const":
+                    {
+                        var s = new GDVariableDeclarationStatement(CurrentResolvedIntendationInSpaces);
+                        s.Add(new GDConstKeyword());
+                        statement = s;
+                        break;
+                    }
                 default:
                     {
                         if (state.Settings.DetectKeywordFragments && sequence != null)

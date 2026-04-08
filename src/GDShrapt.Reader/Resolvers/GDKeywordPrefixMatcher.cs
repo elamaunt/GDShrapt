@@ -8,7 +8,7 @@ namespace GDShrapt.Reader
             { "var", "const", "func", "class", "signal", "enum", "static", "extends", "class_name", "tool", "pass" };
 
         internal static readonly string[] StatementLevelKeywords =
-            { "if", "for", "while", "match", "var", "return", "break", "continue", "pass", "elif", "else", "await", "assert" };
+            { "if", "for", "while", "match", "var", "const", "return", "break", "continue", "pass", "elif", "else", "await", "assert" };
 
         /// <summary>
         /// Returns the shortest keyword that starts with the given fragment.
