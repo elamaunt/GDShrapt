@@ -290,5 +290,31 @@ static func f():
                 }
             }
         }
+
+        [TestMethod]
+        public void ParseMethod_IdentifierStartingWithKeyword_NotParsedAsStatement()
+        {
+            var reader = new GDScriptReader();
+
+            // Identifiers like match_id, var_name, for_each, if_enabled should not be
+            // split into keyword + remainder (e.g., "match" + "_id")
+            var code = "func test():\n\tmatch_id = 1\n\tvar_name = 2\n\tfor_each = 3\n\tif_enabled = 4\n\twhile_running = 5";
+
+            var declaration = reader.ParseFileContent(code);
+            Assert.IsNotNull(declaration);
+
+            var method = declaration.Methods.First();
+            Assert.AreEqual(5, method.Statements.Count);
+
+            // All should be expression statements (assignments), not keyword statements
+            foreach (var stmt in method.Statements)
+            {
+                Assert.IsInstanceOfType(stmt, typeof(GDExpressionStatement),
+                    $"Expected expression statement, got {stmt.GetType().Name}: {stmt.ToString()?.Trim()}");
+            }
+
+            AssertHelper.CompareCodeStrings(code, declaration.ToString());
+            AssertHelper.NoInvalidTokens(declaration);
+        }
     }
 }
