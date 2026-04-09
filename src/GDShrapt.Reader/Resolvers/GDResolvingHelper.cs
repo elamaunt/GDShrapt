@@ -522,6 +522,7 @@ namespace GDShrapt.Reader
         public static bool IsCommentStartChar(this char c) => c == '#';
         public static bool IsSpace(this char c) => c == ' ' || c == '\t';
         public static bool IsIdentifierStartChar(this char c) => c == '_' || char.IsLetter(c);
+        public static bool IsIdentifierChar(this char c) => c == '_' || char.IsLetterOrDigit(c);
         public static bool IsExternalNameChar(this char c) => c == '_' || char.IsLetter(c) || char.IsDigit(c);
         public static bool IsStringStartChar(this char c) => c == '\'' || c == '\"';
         public static bool IsExpressionStopChar(this char c) => c == ',' || c == '}' || c == ')' || c == ']' || c == ':' || c == ';';

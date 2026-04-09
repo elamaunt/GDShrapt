@@ -129,7 +129,7 @@ namespace GDShrapt.Reader
             }
             else
             {
-                if (char.IsLetter(c))
+                if (c.IsIdentifierChar())
                 {
                     _sequenceBuilder.Append(c);
                 }
