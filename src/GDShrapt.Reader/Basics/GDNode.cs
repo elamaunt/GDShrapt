@@ -241,7 +241,17 @@ namespace GDShrapt.Reader
         /// </summary>
         public override int OriginLength => Tokens.Sum(x => x.OriginLength);
 
-        public override int NewLinesCount => Tokens.Sum(x => x.NewLinesCount);
+        private int _cachedNewLinesCount = -1;
+        public override int NewLinesCount
+        {
+            get
+            {
+                if (_cachedNewLinesCount >= 0)
+                    return _cachedNewLinesCount;
+                _cachedNewLinesCount = Tokens.Sum(x => x.NewLinesCount);
+                return _cachedNewLinesCount;
+            }
+        }
 
         public override int EndColumn
         {
