@@ -299,5 +299,29 @@ func test():
         }
 
         #endregion
+
+        #region String format % on continuation line (Issue #16)
+
+        [TestMethod]
+        public void StringFormat_PercentOnContinuationLine_NoException()
+        {
+            var code = "class_name T\nextends RefCounted\n\nfunc foo() -> void:\n\tprint(\"hello %s %s\"\n\t\t% [\"world\", \"!\"])\n";
+            var tree = _reader.ParseFileContent(code);
+
+            var invalidTokens = tree.AllInvalidTokens.ToList();
+            invalidTokens.Should().BeEmpty("string format % on continuation line should not produce invalid tokens or exceptions");
+
+            var method = tree.Methods.First();
+            method.Should().NotBeNull();
+
+            var stmt = method.Statements.First() as GDExpressionStatement;
+            stmt.Should().NotBeNull();
+
+            var call = stmt!.Expression as GDCallExpression;
+            call.Should().NotBeNull("print should be parsed as a call expression");
+            call!.Parameters.Count.Should().Be(1, "print(\"hello %s %s\" % [...]) should have exactly 1 argument");
+        }
+
+        #endregion
     }
 }

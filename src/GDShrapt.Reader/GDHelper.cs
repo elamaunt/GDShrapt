@@ -93,16 +93,30 @@ namespace GDShrapt.Reader
             switch (type)
             {
                 case GDDualOperatorType.Null: return 20;
-                case GDDualOperatorType.Power:
+                case GDDualOperatorType.Is:
+                case GDDualOperatorType.As: return 19;
+                case GDDualOperatorType.Power: return 16;
                 case GDDualOperatorType.Mod:
                 case GDDualOperatorType.Division:
                 case GDDualOperatorType.Multiply: return 14;
-                case GDDualOperatorType.BitShiftLeft: 
-                case GDDualOperatorType.BitShiftRight: return 12;
                 case GDDualOperatorType.Subtraction:
                 case GDDualOperatorType.Addition: return 13;
+                case GDDualOperatorType.BitShiftLeft:
+                case GDDualOperatorType.BitShiftRight: return 12;
+                case GDDualOperatorType.BitwiseAnd: return 11;
+                case GDDualOperatorType.Xor: return 10;
+                case GDDualOperatorType.BitwiseOr: return 9;
                 case GDDualOperatorType.Equal:
-                case GDDualOperatorType.NotEqual: return 10;
+                case GDDualOperatorType.NotEqual: return 8;
+                case GDDualOperatorType.MoreThan:
+                case GDDualOperatorType.LessThan:
+                case GDDualOperatorType.LessThanOrEqual:
+                case GDDualOperatorType.MoreThanOrEqual: return 8;
+                case GDDualOperatorType.In: return 8;
+                case GDDualOperatorType.And:
+                case GDDualOperatorType.And2: return 6;
+                case GDDualOperatorType.Or:
+                case GDDualOperatorType.Or2: return 5;
                 case GDDualOperatorType.Assignment:
                 case GDDualOperatorType.AddAndAssign:
                 case GDDualOperatorType.ModAndAssign:
@@ -112,23 +126,9 @@ namespace GDShrapt.Reader
                 case GDDualOperatorType.BitwiseOrAndAssign:
                 case GDDualOperatorType.SubtractAndAssign:
                 case GDDualOperatorType.PowerAndAssign:
-                case GDDualOperatorType.BitShiftLeftAndAssign: 
+                case GDDualOperatorType.BitShiftLeftAndAssign:
                 case GDDualOperatorType.BitShiftRightAndAssign:
                 case GDDualOperatorType.XorAndAssign: return 3;
-                case GDDualOperatorType.MoreThan:
-                case GDDualOperatorType.LessThan:
-                case GDDualOperatorType.LessThanOrEqual:
-                case GDDualOperatorType.MoreThanOrEqual: return 11;
-                case GDDualOperatorType.Or: 
-                case GDDualOperatorType.Or2: return 5;
-                case GDDualOperatorType.And:
-                case GDDualOperatorType.And2: return 6;
-                case GDDualOperatorType.BitwiseAnd: return 9;
-                case GDDualOperatorType.Xor: return 8;
-                case GDDualOperatorType.BitwiseOr: return 7;
-                case GDDualOperatorType.Is:
-                case GDDualOperatorType.As: return 19;
-                case GDDualOperatorType.In: return 11;
 
                 default:
                     return -1;
@@ -141,9 +141,9 @@ namespace GDShrapt.Reader
             {
                 case GDSingleOperatorType.Null: return 20;
                 case GDSingleOperatorType.Negate:
+                case GDSingleOperatorType.BitwiseNegate: return 15;
                 case GDSingleOperatorType.Not:
-                case GDSingleOperatorType.Not2:
-                case GDSingleOperatorType.BitwiseNegate: return 16;
+                case GDSingleOperatorType.Not2: return 7;
                 default:
                     return -1;
             };
