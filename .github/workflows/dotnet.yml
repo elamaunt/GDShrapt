@@ -31,7 +31,8 @@ jobs:
           --filter "TestCategory!=StressTests&TestCategory!=LongRunning&TestCategory!=ManualVerification" \
           --collect:"XPlat Code Coverage" \
           --logger "trx" \
-          --results-directory ./TestResults
+          --results-directory ./TestResults \
+          -- RunConfiguration.MaxCpuCount=1
 
     - name: Parse test results
       if: always()
