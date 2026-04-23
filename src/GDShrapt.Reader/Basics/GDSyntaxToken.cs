@@ -106,20 +106,28 @@ namespace GDShrapt.Reader
         public abstract GDSyntaxToken Clone();
 
         /// <summary>
-        /// Starting token's line in the code which is represented by the tree. Calculating property.
+        /// Starting token's line in the code which is represented by the tree.
+        /// Cached after first access for performance (AST is immutable after parsing).
         /// </summary>
+        private int _cachedStartLine = -1;
         public int StartLine
         {
             get
             {
+                if (_cachedStartLine >= 0)
+                    return _cachedStartLine;
+
                 var parent = _parent;
 
                 if (parent == null)
+                {
+                    _cachedStartLine = 0;
                     return 0;
+                }
 
                 var tokensBefore = parent.Form.GetTokensBefore(this);
-
-                return parent.StartLine + tokensBefore.Sum(x => x.NewLinesCount);
+                _cachedStartLine = parent.StartLine + tokensBefore.Sum(x => x.NewLinesCount);
+                return _cachedStartLine;
             }
         }
 
