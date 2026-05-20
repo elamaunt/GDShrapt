@@ -260,6 +260,38 @@ func test():
 
         #endregion
 
+        #region Multi-line parenthesized ternary expressions
+
+        [TestMethod]
+        public void Ternary_ParenthesizedMultiLineWithFalseExpression_PreservesFalseExpression()
+        {
+            var code = @"var values = []
+var x: int = (
+    values.back()
+    if values.size() > 0
+    else 0
+)
+";
+
+            var tree = _reader.ParseFileContent(code);
+
+            var variable = tree.Variables.Single(x => x.Identifier.ToString() == "x");
+            var bracketExpression = variable.Initializer as GDBracketExpression;
+            var ifExpression = bracketExpression?.InnerExpression as GDIfExpression ?? variable.Initializer as GDIfExpression;
+            ifExpression.Should().NotBeNull("parenthesized initializer should contain a ternary if expression");
+            ifExpression!.TrueExpression.Should().NotBeNull();
+            ifExpression.IfKeyword.Should().NotBeNull();
+            ifExpression.Condition.Should().NotBeNull();
+            ifExpression.ElseKeyword.Should().NotBeNull();
+            ifExpression.FalseExpression.Should().NotBeNull("else branch should preserve the literal false expression");
+            ifExpression.FalseExpression!.ToString().Should().Be("0");
+
+            var invalidTokens = tree.AllInvalidTokens.ToList();
+            invalidTokens.Should().BeEmpty("valid parenthesized multi-line ternary should not produce invalid tokens");
+        }
+
+        #endregion
+
         #region Parenthesized lambda with empty else body
 
         [TestMethod]

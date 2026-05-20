@@ -44,8 +44,20 @@ namespace GDShrapt.Reader
                 _ifExpressionChecked = false;
                 _nextIfKeyword = null;
 
+                List<GDSyntaxToken> tokensBeforeIfKeyword = null;
+                if (_expression is GDDualOperatorExpression danglingDualOperatorExpression
+                    && danglingDualOperatorExpression.OperatorType == GDDualOperatorType.Null)
+                {
+                    _expression = danglingDualOperatorExpression.LeftExpression;
+                    tokensBeforeIfKeyword = new List<GDSyntaxToken>();
+
+                    foreach (var token in danglingDualOperatorExpression.Form.GetAllTokensAfter(0))
+                        tokensBeforeIfKeyword.Add(token);
+                }
+
                 var expr = new GDIfExpression(_intendation, NewLineReceiver != null);
                 PushAndSwap(state, expr);
+                FlushTokensBeforeIfKeyword(expr, tokensBeforeIfKeyword);
                 expr.Add(keyword);
 
                 state.PassChar(c);
@@ -223,6 +235,14 @@ namespace GDShrapt.Reader
                     return;
                 }
 
+                if (c == 'i' && !_ifExpressionChecked)
+                {
+                    _ifExpressionChecked = true;
+                    state.Push(new GDKeywordResolver<GDIfKeyword>(this));
+                    state.PassChar(c);
+                    return;
+                }
+
                 if (_expression is GDDualOperatorExpression dualOperatorExpression)
                 {
                     if (dualOperatorExpression.OperatorType == GDDualOperatorType.Null)
@@ -242,14 +262,6 @@ namespace GDShrapt.Reader
                         state.PassChar(c);
                         return;
                     }
-                }
-
-                if (c == 'i' && !_ifExpressionChecked)
-                {
-                    _ifExpressionChecked = true;
-                    state.Push(new GDKeywordResolver<GDIfKeyword>(this));
-                    state.PassChar(c);
-                    return;
                 }
 
                 if (c == '(')
@@ -303,6 +315,28 @@ namespace GDShrapt.Reader
                 receiver.HandleReceivedToken(space);
             else if (token is GDMultiLineSplitToken multiLine)
                 receiver.HandleReceivedToken(multiLine);
+        }
+
+        private void FlushTokensBeforeIfKeyword(GDIfExpression expression, IEnumerable<GDSyntaxToken> tokens)
+        {
+            if (tokens == null)
+                return;
+
+            foreach (var token in tokens)
+            {
+                if (token is GDNewLine newLine)
+                    ((ITokenReceiver<GDNewLine>)expression).HandleReceivedToken(newLine);
+                else if (token is GDSpace space)
+                    ((ITokenReceiver)expression).HandleReceivedToken(space);
+                else if (token is GDMultiLineSplitToken multiLineSplitToken)
+                    ((ITokenReceiver)expression).HandleReceivedToken(multiLineSplitToken);
+                else if (token is GDCarriageReturnToken carriageReturnToken)
+                    ((ITokenReceiver)expression).HandleReceivedToken(carriageReturnToken);
+                else if (token is GDComment comment)
+                    ((ITokenReceiver)expression).HandleReceivedToken(comment);
+                else if (token is GDInvalidToken invalidToken)
+                    ((ITokenReceiver)expression).HandleReceivedToken(invalidToken);
+            }
         }
 
         /// <summary>
